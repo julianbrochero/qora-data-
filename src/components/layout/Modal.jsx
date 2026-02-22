@@ -12,6 +12,7 @@ import FacturaForm from '../forms/FacturaForm';
 import PedidoForm from '../forms/pedido-form';
 import PedidoDetail from '../forms/PedidoDetail'; // ✅ NUEVO
 import VentaForm from '../forms/VentaForm';
+import FacturaDirectaForm from '../forms/FacturaDirectaForm';
 
 const Modal = ({
   isOpen,
@@ -59,6 +60,7 @@ const Modal = ({
         return (
           <PedidoDetail
             pedido={pedidoSeleccionado || {}}
+            clientes={formData.clientes || []}
             facturas={facturas}
             formActions={formActions}
             closeModal={onClose}
@@ -74,6 +76,18 @@ const Modal = ({
             productos={formData.productos || []}
             formActions={formActions}
             closeModal={onClose}
+            openModal={openModal}
+          />
+        );
+
+      case 'factura-directa':
+        return (
+          <FacturaDirectaForm
+            clientes={formData.clientes || []}
+            productos={formData.productos || []}
+            formActions={formActions}
+            closeModal={onClose}
+            openModal={openModal}
           />
         );
 
@@ -157,6 +171,9 @@ const Modal = ({
         return 'max-w-md';
 
       case 'nuevo-pedido':
+      case 'factura-directa':
+        return 'max-w-[400px]'; // Reduced width for compact view
+
       case 'nuevo-cliente':
       case 'editar-cliente':
       case 'cliente-rapido':
@@ -183,7 +200,7 @@ const Modal = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full max-h-[95vh] overflow-y-auto`}>
-        <div className="p-4 md:p-5">
+        <div className="p-3 md:p-4">
           {/* Botón de cerrar */}
           <div className="flex justify-end mb-1">
             <button

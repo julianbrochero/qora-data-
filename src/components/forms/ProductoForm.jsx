@@ -67,7 +67,12 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal })
     }
 
     if (result && result.success) {
-      closeModal();
+      const onSuccess = formData.selectedItem?.onSuccess || formData.onSuccess;
+      if (onSuccess) {
+        onSuccess(result.producto || result.data || result);
+      } else {
+        closeModal();
+      }
     }
   };
 

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Plus, Search, Calendar, Package, CheckCircle, Clock, XCircle, Truck, Edit, Eye, FileText, DollarSign, User, ChevronLeft, ChevronRight, List, CalendarDays } from 'lucide-react'
+import { Plus, Search, Calendar, Package, CheckCircle, Clock, XCircle, Truck, Edit, Eye, FileText, DollarSign, User, ChevronLeft, ChevronRight, List, CalendarDays, CheckSquare, Trash2 } from 'lucide-react'
 
 const Pedidos = ({
   pedidos = [],
@@ -21,14 +21,18 @@ const Pedidos = ({
   const [filtroFacturacion, setFiltroFacturacion] = useState("todos")
   const [vistaActiva, setVistaActiva] = useState("lista") // "lista" | "semana" | "mes"
   const [fechaActual, setFechaActual] = useState(new Date())
+  const [modoSeleccion, setModoSeleccion] = useState(false)
+  const [pedidosSeleccionados, setPedidosSeleccionados] = useState([])
+  const [eliminandoMasivo, setEliminandoMasivo] = useState(false)
 
   const pedidosSeguros = Array.isArray(pedidos) ? pedidos : []
 
   // Filtrar pedidos
   const filtrarPedidos = pedidosSeguros.filter((pedido) => {
+    const searchTermSafe = String(searchTerm || "").toLowerCase()
     const coincideBusqueda =
-      (pedido.codigo || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
-      (pedido.cliente_nombre || "").toLowerCase().includes((searchTerm || "").toLowerCase())
+      String(pedido.codigo || "").toLowerCase().includes(searchTermSafe) ||
+      String(pedido.cliente_nombre || "").toLowerCase().includes(searchTermSafe)
 
     const coincideEstadoOperativo =
       filtroEstado === "todos" || pedido.estado === filtroEstado
@@ -204,6 +208,49 @@ const Pedidos = ({
     }
   }
 
+  // Handlers de selección múltiple
+  const toggleModoSeleccion = () => {
+    setModoSeleccion(prev => !prev)
+    setPedidosSeleccionados([])
+  }
+
+  const toggleSeleccionPedido = (pedidoId) => {
+    setPedidosSeleccionados(prev =>
+      prev.includes(pedidoId)
+        ? prev.filter(id => id !== pedidoId)
+        : [...prev, pedidoId]
+    )
+  }
+
+  const toggleSeleccionarTodos = () => {
+    const idsPaginados = pedidosPaginados.map(p => p.id)
+    const todosSeleccionados = idsPaginados.every(id => pedidosSeleccionados.includes(id))
+    if (todosSeleccionados) {
+      setPedidosSeleccionados(prev => prev.filter(id => !idsPaginados.includes(id)))
+    } else {
+      setPedidosSeleccionados(prev => [...new Set([...prev, ...idsPaginados])])
+    }
+  }
+
+  const handleEliminarSeleccionados = async () => {
+    if (!eliminarPedido || pedidosSeleccionados.length === 0) return
+    const confirmar = window.confirm(
+      `¿Estás seguro de eliminar ${pedidosSeleccionados.length} pedido(s) seleccionado(s)? Esta acción no se puede deshacer.`
+    )
+    if (!confirmar) return
+    setEliminandoMasivo(true)
+    try {
+      for (const id of pedidosSeleccionados) {
+        await eliminarPedido(id)
+      }
+      setPedidosSeleccionados([])
+      setModoSeleccion(false)
+      if (recargarDatos) recargarDatos()
+    } finally {
+      setEliminandoMasivo(false)
+    }
+  }
+
   // ============ FUNCIONES DE CALENDARIO ============
   const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
   const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
@@ -365,9 +412,21 @@ const Pedidos = ({
             </button>
           </div>
 
+          {/* BOTÓN SELECCIONAR */}
+          <button
+            onClick={toggleModoSeleccion}
+            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm border ${modoSeleccion
+              ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+          >
+            <CheckSquare size={12} />
+            {modoSeleccion ? 'Cancelar selección' : 'Seleccionar'}
+          </button>
+
           {/* BOTÓN NUEVO PEDIDO */}
           <button
-            onClick={() => openModal && openModal("nueva-venta")}
+            onClick={() => openModal && openModal("nuevo-pedido")}
             className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
           >
             <Plus size={12} />
@@ -503,13 +562,26 @@ const Pedidos = ({
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
+                    {modoSeleccion && (
+                      <th className="px-2 py-1 text-left w-8">
+                        <input
+                          type="checkbox"
+                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 cursor-pointer"
+                          checked={pedidosPaginados.length > 0 && pedidosPaginados.every(p => pedidosSeleccionados.includes(p.id))}
+                          onChange={toggleSeleccionarTodos}
+                          title="Seleccionar todos"
+                        />
+                      </th>
+                    )}
                     <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Código</th>
                     <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Cliente</th>
                     <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
                     <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
                     <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado Operativo</th>
                     <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado Pago</th>
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+                    {!modoSeleccion && (
+                      <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
@@ -520,10 +592,31 @@ const Pedidos = ({
                       const EstadoPagoIcon = estadoPago.icon
                       const puedeEditar = sePuedeEditar(pedido)
                       const puedeFacturar = sePuedeFacturar(pedido)
-                      const saldoPendiente = Number.parseFloat(pedido.saldo_pendiente) || Number.parseFloat(pedido.total)
+                      const cliente = clientes.find(c => c.id === pedido.cliente_id)
+                      // Fix: Check if saldo_pendiente exists (even if 0), otherwise use total
+                      const saldoPendiente = pedido.saldo_pendiente !== null && pedido.saldo_pendiente !== undefined
+                        ? Number.parseFloat(pedido.saldo_pendiente)
+                        : Number.parseFloat(pedido.total)
 
                       return (
-                        <tr key={pedido.id} className="hover:bg-gray-50 transition-colors group">
+                        <tr
+                          key={pedido.id}
+                          className={`hover:bg-gray-50 transition-colors group cursor-pointer ${modoSeleccion && pedidosSeleccionados.includes(pedido.id)
+                            ? 'bg-blue-50 hover:bg-blue-50'
+                            : ''
+                            }`}
+                          onClick={modoSeleccion ? () => toggleSeleccionPedido(pedido.id) : undefined}
+                        >
+                          {modoSeleccion && (
+                            <td className="px-2 py-1.5" onClick={e => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 cursor-pointer"
+                                checked={pedidosSeleccionados.includes(pedido.id)}
+                                onChange={() => toggleSeleccionPedido(pedido.id)}
+                              />
+                            </td>
+                          )}
                           <td className="px-2 py-1.5">
                             <div className="flex items-center gap-1.5">
                               <div className="bg-blue-50 p-1 rounded border border-blue-200">
@@ -547,6 +640,11 @@ const Pedidos = ({
                               <User size={9} className="text-gray-400" />
                               {pedido.cliente_nombre || "Cliente no encontrado"}
                             </div>
+                            {cliente?.telefono && (
+                              <div className="text-[9px] text-gray-500 ml-3.5">
+                                {cliente.telefono}
+                              </div>
+                            )}
                             {pedido.notas && (
                               <div className="text-[9px] text-gray-500 mt-0.5 truncate max-w-[120px]" title={pedido.notas}>
                                 {pedido.notas}
@@ -572,8 +670,8 @@ const Pedidos = ({
                             <div className="text-xs font-semibold text-gray-900">
                               ${formatearMonto(pedido.total)}
                             </div>
-                            {saldoPendiente > 0 && (
-                              <div className="text-[10px] text-orange-600 font-medium mt-0.5">
+                            {saldoPendiente > 0.01 && (
+                              <div className="text-[10px] text-blue-600 font-medium mt-0.5">
                                 Saldo: ${formatearMonto(saldoPendiente)}
                               </div>
                             )}
@@ -594,71 +692,68 @@ const Pedidos = ({
                                 <EstadoPagoIcon size={9} />
                                 {estadoPago.label}
                               </span>
-                              {saldoPendiente > 0 && (
-                                <div className="text-[9px] text-orange-600">
-                                  ${formatearMonto(saldoPendiente)}
-                                </div>
-                              )}
                             </div>
                           </td>
 
-                          <td className="px-2 py-1.5">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => openModal && openModal("ver-pedido", pedido)}
-                                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 shadow-sm bg-white"
-                                title="Ver Detalles"
-                              >
-                                <Eye size={16} />
-                              </button>
-
-                              {puedeEditar && (
+                          {!modoSeleccion && (
+                            <td className="px-2 py-1.5">
+                              <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => openModal && openModal("editar-pedido", pedido)}
-                                  className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 shadow-sm bg-white"
-                                  title="Editar Pedido"
+                                  onClick={() => openModal && openModal("ver-pedido", pedido)}
+                                  className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 shadow-sm bg-white"
+                                  title="Ver Detalles"
                                 >
-                                  <Edit size={16} />
+                                  <Eye size={16} />
                                 </button>
-                              )}
 
-                              {puedeFacturar && (
-                                <button
-                                  onClick={() => handleFacturarPedido(pedido.id)}
-                                  className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-100 shadow-sm bg-white"
-                                  title="Facturar Pedido"
-                                >
-                                  <FileText size={16} />
-                                </button>
-                              )}
+                                {puedeEditar && (
+                                  <button
+                                    onClick={() => openModal && openModal("editar-pedido", pedido)}
+                                    className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 shadow-sm bg-white"
+                                    title="Editar Pedido"
+                                  >
+                                    <Edit size={16} />
+                                  </button>
+                                )}
 
-                              {pedido.factura_id && (
-                                <button
-                                  onClick={() => openModal && openModal("ver-factura", { id: pedido.factura_id })}
-                                  className="p-1.5 text-purple-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-100 shadow-sm bg-white"
-                                  title="Ver Factura"
-                                >
-                                  <DollarSign size={16} />
-                                </button>
-                              )}
+                                {puedeFacturar && (
+                                  <button
+                                    onClick={() => handleFacturarPedido(pedido.id)}
+                                    className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-100 shadow-sm bg-white"
+                                    title="Facturar Pedido"
+                                  >
+                                    <FileText size={16} />
+                                  </button>
+                                )}
 
-                              {!pedido.factura_id && (
-                                <button
-                                  onClick={() => handleEliminar(pedido.id)}
-                                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-100 shadow-sm bg-white"
-                                  title="Eliminar Pedido"
-                                >
-                                  <XCircle size={16} />
-                                </button>
-                              )}
-                            </div>
-                          </td>
+                                {pedido.factura_id && (
+                                  <button
+                                    onClick={() => openModal && openModal("ver-factura", { id: pedido.factura_id })}
+                                    className="p-1.5 text-purple-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-100 shadow-sm bg-white"
+                                    title="Ver Factura"
+                                  >
+                                    <DollarSign size={16} />
+                                  </button>
+                                )}
+
+                                {!pedido.factura_id && (
+                                  <button
+                                    onClick={() => handleEliminar(pedido.id)}
+                                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-100 shadow-sm bg-white"
+                                    title="Eliminar Pedido"
+                                  >
+                                    <XCircle size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       )
                     })
                   ) : (
                     <tr>
-                      <td colSpan="7" className="px-3 py-6 text-center">
+                      <td colSpan={modoSeleccion ? 8 : 7} className="px-3 py-6 text-center">
                         <div className="flex flex-col items-center">
                           <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
                             <Package size={16} className="text-gray-400" />
@@ -719,6 +814,47 @@ const Pedidos = ({
               </div>
             </div>
           </div>
+
+          {/* BARRA DE ACCIONES MASIVAS */}
+          {modoSeleccion && pedidosSeleccionados.length > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-200">
+              <div className="flex items-center gap-2">
+                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {pedidosSeleccionados.length}
+                </span>
+                <span className="text-sm font-medium">
+                  {pedidosSeleccionados.length === 1 ? 'pedido seleccionado' : 'pedidos seleccionados'}
+                </span>
+              </div>
+              <div className="w-px h-5 bg-gray-600" />
+              <button
+                onClick={handleEliminarSeleccionados}
+                disabled={eliminandoMasivo}
+                className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {eliminandoMasivo ? (
+                  <>
+                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={13} />
+                    Eliminar seleccionados
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setPedidosSeleccionados([])}
+                className="text-xs text-gray-400 hover:text-white transition-colors"
+              >
+                Limpiar
+              </button>
+            </div>
+          )}
         </>
       )}
 

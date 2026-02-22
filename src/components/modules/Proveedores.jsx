@@ -9,7 +9,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
 
   const proveedoresSeguros = Array.isArray(proveedores) ? proveedores : []
 
-  const filtrarProveedores = proveedoresSeguros.filter(proveedor => 
+  const filtrarProveedores = proveedoresSeguros.filter(proveedor =>
     (proveedor.nombre || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
     (proveedor.cuit || "").includes(searchTerm)
   ).sort((a, b) => a.nombre.localeCompare(b.nombre))
@@ -137,6 +137,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">CUIT</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Contacto</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Deuda</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
               </tr>
@@ -176,11 +177,15 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
                       </div>
                     </td>
                     <td className="px-2 py-1.5">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                        (proveedor.estado || "activo") === "activo"
+                      <span className={`text-xs font-semibold ${Number.parseFloat(proveedor.deuda) > 0 ? "text-red-600" : "text-gray-600"}`}>
+                        ${formatearMonto(proveedor.deuda)}
+                      </span>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${(proveedor.estado || "activo") === "activo"
                           ? "bg-green-50 text-green-700 border border-green-200"
                           : "bg-red-50 text-red-700 border border-red-200"
-                      }`}>
+                        }`}>
                         {proveedor.estado === "activo" ? "Activo" : "Inactivo"}
                       </span>
                     </td>
@@ -206,7 +211,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-3 py-6 text-center">
+                  <td colSpan="7" className="px-3 py-6 text-center">
                     <div className="flex flex-col items-center">
                       <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
                         <Building size={16} className="text-gray-400" />
@@ -242,9 +247,9 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
                 <option value="100">100 por página</option>
               </select>
             </div>
-            
+
             <div className="flex items-center gap-1">
-              <button 
+              <button
                 onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
                 disabled={paginaActual === 1}
                 className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -254,7 +259,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
               <span className="px-2 py-0.5 text-xs font-medium text-gray-700">
                 {paginaActual} / {totalPaginas || 1}
               </span>
-              <button 
+              <button
                 onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
                 disabled={paginaActual === totalPaginas || totalPaginas === 0}
                 className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"

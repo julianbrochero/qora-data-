@@ -145,14 +145,16 @@ export const useFacturacion = () => {
         setAbonos(abonosData)
       }
 
-      // Cargar movimientos de caja
+      // Cargar movimientos de caja del día (fecha es timestamp, filtramos por rango)
       const hoy = new Date().toISOString().split('T')[0]
+      const manana = new Date(Date.now() + 86400000).toISOString().split('T')[0]
       const { data: movimientosData, error: errorMovimientos } = await supabase
         .from('movimientos_caja')
         .select('*')
         .eq('user_id', user.id)
-        .eq('fecha', hoy)
-        .order('id', { ascending: false })
+        .gte('fecha', hoy)
+        .lt('fecha', manana)
+        .order('fecha', { ascending: false })
 
       if (errorMovimientos) {
         console.error('Error cargando movimientos de caja:', errorMovimientos)
@@ -185,14 +187,16 @@ export const useFacturacion = () => {
   // Función para calcular caja manualmente
   const calcularCajaManual = async () => {
     try {
-      // Obtener últimos movimientos de caja del día
+      // Filtrar por rango de timestamp porque fecha es timestamp with time zone
       const hoy = new Date().toISOString().split('T')[0]
+      const manana = new Date(Date.now() + 86400000).toISOString().split('T')[0]
       const { data: movimientosHoy, error } = await supabase
         .from('movimientos_caja')
         .select('*')
         .eq('user_id', user.id)
-        .eq('fecha', hoy)
-        .order('created_at', { ascending: false })
+        .gte('fecha', hoy)
+        .lt('fecha', manana)
+        .order('fecha', { ascending: false })
 
       if (error) {
         console.error('Error calculando caja:', error)
@@ -225,252 +229,280 @@ export const useFacturacion = () => {
 
   // ========== FUNCIONES NUEVAS PARA PEDIDOS SIMPLES ==========
 
-  // Función para crear solo pedido (SIN FACTURA)
-  const agregarPedidoSolo = async (pedidoData) => {
+  // 1. Helper para generar número de factura
+  const generarNumeroFactura = async () => {
+    const { data: ultimaFactura } = await supabase
+      .from('facturas')
+      .select('numero')
+      .eq('tipo', 'Factura A')
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    let ultimoNumero = 0
+    if (ultimaFactura && ultimaFactura.length > 0) {
+      const matches = ultimaFactura[0].numero.match(/\d+/g)
+      if (matches) ultimoNumero = parseInt(matches[matches.length - 1]) || 0
+    }
+    return `FA-${(ultimoNumero + 1).toString().padStart(8, '0')}`
+  }
+
+  // 2. Lógica UNIFICADA de cobro (Regla de Oro)
+  const registrarCobro = async (ventaId, monto, descripcion = '', metodoPago = 'Efectivo') => {
     try {
-      console.log('📦 Creando solo pedido:', pedidoData)
+      console.log(`💰 Registrando cobro unificado para venta ${ventaId}: $${monto}`)
 
-      // 1. Validar datos mínimos
-      if (!pedidoData.clienteNombre || pedidoData.clienteNombre.trim() === '') {
-        throw new Error('El nombre del cliente es requerido')
+      // A. Obtener Venta (Factura)
+      const { data: venta, error: ventaError } = await supabase
+        .from('facturas')
+        .select('*')
+        .eq('id', ventaId)
+        .single()
+
+      if (ventaError) throw new Error('Venta asociada no encontrada')
+
+      const montoCobro = parseFloat(monto)
+      if (montoCobro <= 0) throw new Error('Monto debe ser mayor a 0')
+
+      // B. Obtener código de pedido asociado (si existe)
+      let pedidoCodigo = null
+      if (venta.pedido_id) {
+        const { data: pedido } = await supabase
+          .from('pedidos')
+          .select('codigo')
+          .eq('id', venta.pedido_id)
+          .single()
+        pedidoCodigo = pedido?.codigo || null
       }
 
-      if (!pedidoData.items || !Array.isArray(pedidoData.items) || pedidoData.items.length === 0) {
-        throw new Error('Debe agregar al menos un producto')
+      // Armar descripción con número de pedido si está disponible
+      const descAuto = pedidoCodigo
+        ? `Cobro ${pedidoCodigo} (${venta.numero || 'FA'}) - ${venta.cliente || 'Cliente'}`
+        : `Cobro ${venta.numero || 'S/N'} - ${venta.cliente || 'Cliente'}`
+
+      // C. Crear Movimiento de Caja
+      const movData = {
+        tipo: 'ingreso',
+        monto: montoCobro,
+        description: descripcion || descAuto,
+        metodo: metodoPago || 'Efectivo',
+        referencia: pedidoCodigo ? `pedido:${venta.pedido_id}` : 'venta',
+        fecha: new Date().toISOString(),
+        user_id: user.id
       }
 
-      // 2. Generar código de pedido
-      const { data: ultimoPedido } = await supabase
-        .from('pedidos')
-        .select('codigo')
-        .order('created_at', { ascending: false })
-        .limit(1)
+      // Usamos el helper existente agregarMovimientoCaja para actualizar state local
+      await agregarMovimientoCaja(movData)
 
-      let numeroPedido = 1
-      if (ultimoPedido && ultimoPedido.length > 0) {
-        const ultimoCodigo = ultimoPedido[0].codigo
-        const matches = ultimoCodigo.match(/\d+/g)
-        if (matches) {
-          numeroPedido = parseInt(matches[matches.length - 1]) + 1
+      // C. Crear Abono (Registro histórico)
+      const abonoData = {
+        cliente_nombre: venta.cliente,
+        monto: montoCobro,
+        fecha: new Date().toISOString().split('T')[0],
+        metodo: 'Efectivo',
+        descripcion: movData.descripcion,
+        user_id: user.id
+      }
+      const { error: abonoError } = await supabase.from('abonos').insert([abonoData])
+      if (!abonoError) {
+        setAbonos(prev => [abonoData, ...prev])
+      }
+
+      // D. Actualizar Venta (Factura)
+      const nuevoPagado = (parseFloat(venta.montopagado) || 0) + montoCobro
+      const nuevoSaldo = Math.max(0, (parseFloat(venta.total) || 0) - nuevoPagado)
+      let nuevoEstado = venta.estado
+      if (nuevoSaldo === 0) nuevoEstado = 'pagada'
+      else if (nuevoPagado > 0) nuevoEstado = 'parcial'
+
+      const { error: updateVentaError } = await supabase
+        .from('facturas')
+        .update({
+          montopagado: nuevoPagado,
+          saldopendiente: nuevoSaldo,
+          estado: nuevoEstado
+        })
+        .eq('id', ventaId)
+
+      if (updateVentaError) throw updateVentaError
+
+      // Actualizar estado local Facturas
+      setFacturas(prev => prev.map(f => f.id === ventaId ? { ...f, montopagado: nuevoPagado, saldopendiente: nuevoSaldo, estado: nuevoEstado } : f))
+
+      // E. Sincronizar Pedido Asociado — usa FK pedido_id (no busca por texto en notas)
+      if (venta.pedido_id) {
+        const { data: pedido } = await supabase
+          .from('pedidos')
+          .select('*')
+          .eq('id', venta.pedido_id)
+          .single()
+
+        if (pedido) {
+          const nuevoPagadoPedido = (parseFloat(pedido.monto_abonado) || 0) + montoCobro
+          const nuevoSaldoPedido = Math.max(0, (parseFloat(pedido.total) || 0) - nuevoPagadoPedido)
+
+          await supabase.from('pedidos').update({
+            monto_abonado: nuevoPagadoPedido,
+            saldo_pendiente: nuevoSaldoPedido
+          }).eq('id', pedido.id)
+
+          // Actualizar estado local Pedidos
+          setPedidos(prev => prev.map(p =>
+            p.id === pedido.id
+              ? { ...p, monto_abonado: nuevoPagadoPedido, saldo_pendiente: nuevoSaldoPedido }
+              : p
+          ))
         }
       }
 
-      const codigoPedido = `PED-${numeroPedido.toString().padStart(3, '0')}`
+      return { success: true, nuevoSaldo }
 
-      // 3. Calcular total
-      const calcularTotalItems = (items) => {
-        return items.reduce((sum, item) => sum + (item.precio || 0) * (item.cantidad || 1), 0)
+    } catch (e) {
+      console.error('Error en registrarCobro:', e)
+      return { success: false, mensaje: e.message }
+    }
+  }
+
+  // 3. Crear Pedido (Crea Pedido + Venta automáticamente)
+  const agregarPedidoSolo = async (pedidoData) => {
+    try {
+      console.log('📦 Creando Pedido + Venta:', pedidoData)
+
+      // Validaciones
+      if (!pedidoData.clienteNombre) throw new Error('Nombre de cliente requerido')
+      if (!pedidoData.items?.length) throw new Error('Productos requeridos')
+
+      // Generar Código Pedido
+      const { data: ultimoPedido } = await supabase.from('pedidos').select('codigo').order('created_at', { ascending: false }).limit(1)
+      let num = 1
+      if (ultimoPedido?.[0]?.codigo) {
+        const m = ultimoPedido[0].codigo.match(/\d+/)
+        if (m) num = parseInt(m[0]) + 1
       }
-      const totalVenta = calcularTotalItems(pedidoData.items)
+      const codigoPedido = `PED-${num.toString().padStart(3, '0')}`
 
-      // 4. Crear SOLO el pedido
-      const pedidoDataDB = {
+      // Calcular Total
+      const total = pedidoData.items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)
+
+      // Generar Código Factura (Venta)
+      const numeroFactura = await generarNumeroFactura()
+
+      // Calcular fecha de entrega por defecto (7 días) si no se especifica
+      let fechaEntrega = pedidoData.fechaEntregaEstimada;
+      if (!fechaEntrega || String(fechaEntrega).trim() === '') {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        fechaEntrega = d.toISOString().split('T')[0];
+      }
+
+      // A. Insertar Pedido
+      const pedidoDB = {
         codigo: codigoPedido,
         cliente_id: pedidoData.clienteId,
         cliente_nombre: pedidoData.clienteNombre,
         fecha_pedido: pedidoData.fechaPedido || new Date().toISOString().split('T')[0],
-        fecha_entrega_estimada: pedidoData.fechaEntregaEstimada || null,
-        items: JSON.stringify(pedidoData.items || []),
-        total: totalVenta,
-        productos_count: (pedidoData.items || []).length,
-        notas: pedidoData.notas || '',
+        fecha_entrega_estimada: fechaEntrega,
+        items: JSON.stringify(pedidoData.items),
+        total: total,
+        productos_count: pedidoData.items.length,
+        notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
-        monto_abonado: 0, // Nuevo campo para guardar abonos
-        saldo_pendiente: totalVenta, // Nuevo campo
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      console.log('📦 Insertando pedido en BD:', pedidoDataDB)
-
-      const { data: pedidoGuardado, error: errorPedido } = await supabase
-        .from('pedidos')
-        .insert([pedidoDataDB])
-        .select()
-
-      if (errorPedido) {
-        console.error('❌ Error creando pedido:', errorPedido)
-        throw errorPedido
-      }
-
-      console.log('✅ Pedido creado:', pedidoGuardado[0])
-
-      // 5. Actualizar stock para productos que controlan stock
-      const itemsParaActualizarStock = pedidoData.items.filter(item =>
-        item.controlaStock !== false && item.productoId
-      )
-
-      for (const item of itemsParaActualizarStock) {
-        const { data: producto } = await supabase
-          .from('productos')
-          .select('stock, controlaStock')
-          .eq('id', item.productoId)
-          .single()
-
-        if (producto && producto.controlaStock !== false && producto.stock >= item.cantidad) {
-          await supabase
-            .from('productos')
-            .update({ stock: producto.stock - item.cantidad })
-            .eq('id', item.productoId)
-
-          console.log(`📊 Stock actualizado para producto ${item.productoId}: -${item.cantidad}`)
-        }
-      }
-
-      // 6. Actualizar estado local
-      setPedidos(prev => [pedidoGuardado[0], ...prev])
-
-      return {
-        success: true,
-        pedido: pedidoGuardado[0],
-        mensaje: `✅ Pedido ${codigoPedido} creado exitosamente`
-      }
-
-    } catch (error) {
-      console.error('❌ Error creando pedido:', error)
-      return {
-        success: false,
-        mensaje: error.message || 'Error al crear el pedido'
-      }
-    }
-  }
-
-  // Función para agregar abono directo al pedido
-  const agregarAbonoAPedido = async (pedidoId, monto) => {
-    try {
-      console.log(`💰 Agregando abono de $${monto} al pedido ${pedidoId}`)
-
-      // 1. Obtener pedido actual
-      const { data: pedido, error: pedidoError } = await supabase
-        .from('pedidos')
-        .select('*')
-        .eq('id', pedidoId)
-        .single()
-
-      if (pedidoError) throw pedidoError
-
-      const montoAbono = parseFloat(monto)
-      const montoAbonadoActual = parseFloat(pedido.monto_abonado) || 0
-      const saldoPendienteActual = parseFloat(pedido.saldo_pendiente) || parseFloat(pedido.total)
-      const totalPedido = parseFloat(pedido.total)
-
-      if (montoAbono <= 0 || montoAbono > saldoPendienteActual) {
-        throw new Error('Monto inválido. Debe ser mayor a 0 y no exceder el saldo pendiente')
-      }
-
-      // 2. Calcular nuevos valores
-      const nuevoMontoAbonado = montoAbonadoActual + montoAbono
-      const nuevoSaldoPendiente = saldoPendienteActual - montoAbono
-
-      // 3. Actualizar pedido
-      const { error: updateError } = await supabase
-        .from('pedidos')
-        .update({
-          monto_abonado: nuevoMontoAbonado,
-          saldo_pendiente: nuevoSaldoPendiente,
-          estado: nuevoSaldoPendiente === 0 ? 'entregado' : pedido.estado,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', pedidoId)
-
-      if (updateError) throw updateError
-
-      console.log(`✅ Pedido actualizado: abonado=$${nuevoMontoAbonado}, saldo=$${nuevoSaldoPendiente}`)
-
-      // 4. Registrar abono en tabla de abonos
-      const abonoData = {
-        pedido_id: pedidoId,
-        cliente_nombre: pedido.cliente_nombre,
-        monto: montoAbono,
-        fecha: new Date().toISOString().split('T')[0],
-        metodo: 'Efectivo',
-        descripcion: `Abono pedido ${pedido.codigo}`,
+        monto_abonado: 0,
+        saldo_pendiente: total,
         user_id: user.id,
         created_at: new Date().toISOString()
       }
+      const { data: pedidoRes, error: pErr } = await supabase.from('pedidos').insert([pedidoDB]).select()
+      if (pErr) throw pErr
+      const nuevoPedido = pedidoRes[0]
 
-      const { error: abonoError } = await supabase
-        .from('abonos')
-        .insert([abonoData])
-
-      if (abonoError) throw abonoError
-
-      console.log('✅ Abono registrado en tabla abonos')
-
-      // 5. Registrar movimiento de caja
-      await agregarMovimientoCaja({
-        tipo: 'ingreso',
-        monto: montoAbono,
-        descripcion: `Abono pedido ${pedido.codigo}`,
-        categoria: 'ventas',
+      // B. Insertar Venta (Factura) — vinculada al pedido por FK pedido_id
+      const ventaDB = {
+        tipo: 'Factura A',
+        numero: numeroFactura,
         fecha: new Date().toISOString().split('T')[0],
-        user_id: user.id,
-        created_at: new Date().toISOString()
-      })
+        cliente: pedidoData.clienteNombre,
+        pedido_id: nuevoPedido.id,  // ← FK directo (no texto en notas)
+        metodopago: 'Efectivo',
+        items: JSON.stringify(pedidoData.items),
+        total: total,
+        montopagado: 0,
+        saldopendiente: total,
+        estado: 'pendiente',
+        user_id: user.id
+      }
+      const { data: ventaRes, error: vErr } = await supabase.from('facturas').insert([ventaDB]).select()
+      if (vErr) throw vErr
+      const nuevaVenta = ventaRes[0]
 
-      console.log('✅ Movimiento de caja registrado')
+      // Actualizar estados locales
+      setPedidos(prev => [nuevoPedido, ...prev])
+      setFacturas(prev => [nuevaVenta, ...prev])
 
-      // 6. Actualizar estado local del pedido
-      setPedidos(prev => prev.map(p =>
-        p.id === pedidoId
-          ? {
-            ...p,
-            monto_abonado: nuevoMontoAbonado,
-            saldo_pendiente: nuevoSaldoPendiente,
-            estado: nuevoSaldoPendiente === 0 ? 'entregado' : p.estado
+      // C. Registrar Cobro Inicial — usa la función unificada registrarCobro()
+      if (pedidoData.montoPagado && parseFloat(pedidoData.montoPagado) > 0) {
+        await registrarCobro(nuevaVenta.id, pedidoData.montoPagado, `Seña Pedido ${codigoPedido}`)
+      }
+
+      // Actualizar stock
+      for (const item of pedidoData.items) {
+        if (item.controlaStock !== false && item.productoId) {
+          const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
+          if (prod) {
+            await supabase.from('productos').update({ stock: prod.stock - item.cantidad }).eq('id', item.productoId)
           }
-          : p
-      ))
-
-      // 7. Actualizar abonos local
-      setAbonos(prev => [abonoData, ...prev])
-
-      return {
-        success: true,
-        nuevoSaldo: nuevoSaldoPendiente,
-        mensaje: '✅ Abono registrado exitosamente'
-      }
-
-    } catch (error) {
-      console.error('❌ Error registrando abono:', error)
-      return {
-        success: false,
-        mensaje: error.message || 'Error registrando abono'
-      }
-    }
-  }
-
-  // Función para marcar pedido como pagado total
-  const marcarPedidoPagadoTotal = async (pedidoId) => {
-    try {
-      console.log(`💰 Marcando pedido ${pedidoId} como pagado total`)
-
-      const { data: pedido } = await supabase
-        .from('pedidos')
-        .select('*')
-        .eq('id', pedidoId)
-        .single()
-
-      if (!pedido) throw new Error('Pedido no encontrado')
-
-      const saldoPendiente = parseFloat(pedido.saldo_pendiente) || parseFloat(pedido.total)
-
-      if (saldoPendiente === 0) {
-        return {
-          success: true,
-          mensaje: '✅ El pedido ya está pagado totalmente'
         }
       }
 
-      return await agregarAbonoAPedido(pedidoId, saldoPendiente)
+      return { success: true, pedido: nuevoPedido, mensaje: 'Pedido y Venta creados' }
 
     } catch (error) {
-      console.error('❌ Error marcando pedido como pagado:', error)
-      return {
-        success: false,
-        mensaje: error.message
-      }
+      console.error('Error creando pedido:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
+  // 4. Agregar Abono a Pedido — llama registrarCobro() (función unificada)
+  const agregarAbonoAPedido = async (pedidoId, monto, metodoPago = 'Efectivo') => {
+    try {
+      const { data: venta, error: ventaError } = await supabase
+        .from('facturas')
+        .select('id')
+        .eq('pedido_id', pedidoId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (ventaError || !venta) throw new Error('No se encontró la Venta asociada a este pedido')
+
+      return await registrarCobro(venta.id, monto, '', metodoPago)
+
+    } catch (error) {
+      console.error('Error agregando abono:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
+  // 5. Marcar Pedido Pagado Total — llama registrarCobro() (función unificada)
+  const marcarPedidoPagadoTotal = async (pedidoId, metodoPago = 'Efectivo') => {
+    try {
+      const { data: venta, error: ventaError } = await supabase
+        .from('facturas')
+        .select('*')
+        .eq('pedido_id', pedidoId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (ventaError || !venta) throw new Error('Venta no encontrada')
+
+      const faltante = parseFloat(venta.saldopendiente) || 0
+      if (faltante <= 0) return { success: true, mensaje: 'Ya está pagado' }
+
+      return await registrarCobro(venta.id, faltante, 'Pago Total Pedido', metodoPago)
+
+    } catch (error) {
+      console.error('Error saldando pedido:', error)
+      return { success: false, mensaje: error.message }
     }
   }
 
@@ -569,23 +601,122 @@ export const useFacturacion = () => {
     }
   }
 
-  const eliminarPedido = async (pedidoId) => {
+  // Función genérica para actualizar campos de un pedido
+  const actualizarPedido = async (pedidoId, camposActualizados) => {
     try {
-      // Verificar si el pedido tiene factura asociada buscando en las notas de facturas
-      const pedido = pedidos.find(p => p.id === pedidoId)
-      if (pedido && pedido.codigo) {
-        // Buscar si existe una factura con referencia a este pedido en las notas
-        const { data: facturasAsociadas } = await supabase
-          .from('facturas')
-          .select('id, numero')
-          .ilike('notas', `%${pedido.codigo}%`)
-          .eq('user_id', user.id)
+      const { error } = await supabase
+        .from('pedidos')
+        .update({
+          ...camposActualizados,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', pedidoId)
 
-        if (facturasAsociadas && facturasAsociadas.length > 0) {
-          throw new Error(`No se puede eliminar el pedido. Tiene la factura ${facturasAsociadas[0].numero} asociada.`)
+      if (error) throw error
+
+      // Actualizar estado local
+      setPedidos(prev => prev.map(pedido =>
+        pedido.id === pedidoId
+          ? { ...pedido, ...camposActualizados }
+          : pedido
+      ))
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error actualizando pedido:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
+  const eliminarFactura = async (facturaId) => {
+    try {
+      // 1. Obtener la factura para conseguir datos
+      const { data: factura } = await supabase
+        .from('facturas')
+        .select('id, numero, pedido_id')
+        .eq('id', facturaId)
+        .single()
+
+      if (!factura) {
+        throw new Error('Factura no encontrada')
+      }
+
+      // 2. Eliminar abonos asociados
+      await supabase.from('abonos').delete().eq('factura_id', facturaId)
+      if (factura.numero) {
+        await supabase.from('abonos').delete().ilike('descripcion', `%${factura.numero}%`).eq('user_id', user.id)
+      }
+
+      // 3. Eliminar movimientos de caja relacionados
+      //    a) por referencia pedido:uuid (si tiene pedido asociado)
+      if (factura?.pedido_id) {
+        await supabase
+          .from('movimientos_caja')
+          .delete()
+          .eq('referencia', `pedido:${factura.pedido_id}`)
+          .eq('user_id', user.id)
+      }
+
+      //    b) por referencia 'venta' + descripción contiene el número de factura
+      if (factura?.numero) {
+        const { data: movRelacionados } = await supabase
+          .from('movimientos_caja')
+          .select('id')
+          .eq('user_id', user.id)
+          .ilike('description', `%${factura.numero}%`)
+
+        if (movRelacionados?.length) {
+          const ids = movRelacionados.map(m => m.id)
+          await supabase.from('movimientos_caja').delete().in('id', ids)
+          // Recargar movimientos en el estado local
+          setMovimientosCaja(prev => prev.filter(m => !ids.includes(m.id)))
         }
       }
 
+      // 4. Eliminar la factura
+      const { error } = await supabase
+        .from('facturas')
+        .delete()
+        .eq('id', facturaId)
+
+      if (error) throw error
+
+      setFacturas(prev => prev.filter(f => f.id !== facturaId))
+
+      // Actualizar abonos y recargar caja para que el frontend lo refleje
+      setAbonos(prev => prev.filter(a => !(a.descripcion && a.descripcion.includes(factura.numero))))
+      await calcularCajaManual()
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error eliminando factura:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
+  const eliminarPedido = async (pedidoId) => {
+    try {
+      // 1. Eliminar facturas asociadas a este pedido para limpiar abonos y caja
+      const { data: facturasAsociadas } = await supabase
+        .from('facturas')
+        .select('id')
+        .eq('pedido_id', pedidoId)
+        .eq('user_id', user.id)
+
+      if (facturasAsociadas && facturasAsociadas.length > 0) {
+        for (const f of facturasAsociadas) {
+          await eliminarFactura(f.id)
+        }
+      }
+
+      // 2. Por las dudas, eliminar cualquier movimiento restante del pedido
+      await supabase
+        .from('movimientos_caja')
+        .delete()
+        .eq('referencia', `pedido:${pedidoId}`)
+        .eq('user_id', user.id)
+
+      // 3. Eliminar el pedido
       const { error } = await supabase
         .from('pedidos')
         .delete()
@@ -595,6 +726,8 @@ export const useFacturacion = () => {
 
       // Actualizar estado local
       setPedidos(prev => prev.filter(p => p.id !== pedidoId))
+      setMovimientosCaja(prev => prev.filter(m => m.referencia !== `pedido:${pedidoId}`))
+      await calcularCajaManual()
 
       return { success: true }
     } catch (error) {
@@ -615,11 +748,11 @@ export const useFacturacion = () => {
 
       if (errorPedido) throw errorPedido
 
-      // 2. Verificar si ya tiene factura (buscar por código de pedido en notas)
+      // 2. Verificar si ya tiene factura — buscar por FK pedido_id
       const { data: facturasExistentes } = await supabase
         .from('facturas')
         .select('*')
-        .ilike('notas', `%${pedido.codigo}%`)
+        .eq('pedido_id', pedidoId)
         .eq('user_id', user.id)
         .limit(1)
 
@@ -663,13 +796,13 @@ export const useFacturacion = () => {
         numero: numeroFactura,
         fecha: new Date().toISOString().split('T')[0],
         cliente: pedido.cliente_nombre,
+        pedido_id: pedidoId,  // ← FK directo
         metodopago: 'Efectivo',
         items: JSON.stringify(items),
         total: pedido.total,
         montopagado: 0,
         saldopendiente: pedido.total,
         estado: 'pendiente',
-        notas: `Pedido: ${pedido.codigo}`,
         user_id: user.id
       }
 
@@ -803,18 +936,40 @@ export const useFacturacion = () => {
       // Actualizar abonos local
       setAbonos(prev => [pagoData, ...prev])
 
-      // Si el pago completa la factura, actualizar estado del pedido si existe
-      if (pedidoId && nuevoSaldoPendiente === 0) {
-        const { error: errorPedido } = await supabase
+      // ===== SINCRONIZAR PEDIDO ASOCIADO =====
+      // Buscar pedido asociado por FK pedido_id en la factura (igual que registrarCobro)
+      const pedidoAsociadoId = pedidoId || facturaActual.pedido_id
+      if (pedidoAsociadoId) {
+        const { data: pedido } = await supabase
           .from('pedidos')
-          .update({ estado: 'entregado' })
-          .eq('id', pedidoId)
+          .select('*')
+          .eq('id', pedidoAsociadoId)
+          .single()
 
-        if (!errorPedido) {
-          // Actualizar localmente el pedido
-          setPedidos(prev => prev.map(p =>
-            p.id === pedidoId ? { ...p, estado: 'entregado' } : p
-          ))
+        if (pedido) {
+          const nuevoPagadoPedido = (parseFloat(pedido.monto_abonado) || 0) + parseFloat(monto)
+          const nuevoSaldoPedido = Math.max(0, (parseFloat(pedido.total) || 0) - nuevoPagadoPedido)
+
+          const updatePedidoData = {
+            monto_abonado: nuevoPagadoPedido,
+            saldo_pendiente: nuevoSaldoPedido
+          }
+
+          // Si se completó el pago, opcionalmente actualizar estado
+          if (nuevoSaldoPedido === 0) {
+            updatePedidoData.estado = 'entregado'
+          }
+
+          const { error: errorPedido } = await supabase
+            .from('pedidos')
+            .update(updatePedidoData)
+            .eq('id', pedidoAsociadoId)
+
+          if (!errorPedido) {
+            setPedidos(prev => prev.map(p =>
+              p.id === pedidoAsociadoId ? { ...p, ...updatePedidoData } : p
+            ))
+          }
         }
       }
 
@@ -894,6 +1049,94 @@ export const useFacturacion = () => {
     }
   }
 
+  // ========== FACTURA DIRECTA (sin pedido) ==========
+  // Soporta dos modos:
+  //   1. Con items (venta de productos/servicios)
+  //   2. Cobro directo: esCobroDirecto=true, concepto + monto, sin items
+  const crearFacturaDirecta = async (facturaData) => {
+    try {
+      if (!facturaData.clienteNombre || facturaData.clienteNombre.trim() === '') {
+        throw new Error('El nombre del cliente es requerido')
+      }
+
+      // ── Modo Cobro Directo ──────────────────────────────────────────
+      // No requiere items: genera un ítem sintético con el concepto y el monto
+      if (facturaData.esCobroDirecto) {
+        const monto = parseFloat(facturaData.montoDirecto) || 0
+        if (monto <= 0) throw new Error('El monto debe ser mayor a 0')
+        if (!facturaData.concepto || !facturaData.concepto.trim()) {
+          throw new Error('Ingresá un concepto para el cobro')
+        }
+        facturaData = {
+          ...facturaData,
+          items: [{
+            id: Date.now(),
+            productoId: null,
+            producto: facturaData.concepto.trim(),
+            precio: monto,
+            cantidad: 1,
+            subtotal: monto,
+          }],
+          total: monto,
+          montoPagado: monto, // cobro directo siempre se cobra al momento
+        }
+      }
+      // ────────────────────────────────────────────────────────────────
+
+      if (!facturaData.items || facturaData.items.length === 0) {
+        throw new Error('Debe tener al menos un item o elegir cobro directo')
+      }
+
+      const total = facturaData.total || facturaData.items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)
+      const numeroFactura = await generarNumeroFactura()
+
+      // Insertar solo la factura, sin pedido (pedido_id = null)
+      const ventaDB = {
+        tipo: facturaData.tipo || 'Factura A',
+        numero: numeroFactura,
+        fecha: facturaData.fecha || new Date().toISOString().split('T')[0],
+        cliente: facturaData.clienteNombre,
+        pedido_id: null,
+        metodopago: facturaData.metodoPago || 'Efectivo',
+        items: JSON.stringify(facturaData.items),
+        total: total,
+        montopagado: 0,
+        saldopendiente: total,
+        estado: 'pendiente',
+        user_id: user.id
+      }
+
+      const { data: ventaRes, error: vErr } = await supabase.from('facturas').insert([ventaDB]).select()
+      if (vErr) throw vErr
+      const nuevaFactura = ventaRes[0]
+
+      // Actualizar estado local
+      setFacturas(prev => [nuevaFactura, ...prev])
+
+      // Registrar cobro inicial si hay monto pagado
+      const montoPagado = parseFloat(facturaData.montoPagado) || 0
+      if (montoPagado > 0) {
+        await registrarCobro(nuevaFactura.id, montoPagado, `Pago inicial - ${numeroFactura}`)
+      }
+
+      // Actualizar stock para productos del catálogo
+      for (const item of facturaData.items) {
+        if (item.productoId) {
+          const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
+          if (prod) {
+            await supabase.from('productos').update({ stock: prod.stock - item.cantidad }).eq('id', item.productoId)
+          }
+        }
+      }
+
+      return { success: true, factura: nuevaFactura, mensaje: `Factura ${numeroFactura} creada exitosamente` }
+
+    } catch (error) {
+      console.error('Error creando factura directa:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
   // ========== FUNCIONES BÁSICAS ==========
 
   const agregarCliente = async () => {
@@ -925,6 +1168,7 @@ export const useFacturacion = () => {
       return { success: false, mensaje: error.message }
     }
   }
+
 
   const editarCliente = async (clienteId, datosActualizados) => {
     try {
@@ -985,6 +1229,7 @@ export const useFacturacion = () => {
         user_id: user.id,
         created_at: new Date().toISOString()
       }
+      delete productoData.stockMinimo // Ensure camelCase version is removed
 
       const { data, error } = await supabase
         .from('productos')
@@ -994,7 +1239,7 @@ export const useFacturacion = () => {
       if (error) throw error
 
       setProductos(prev => [data[0], ...prev])
-      setNuevoProducto({ nombre: '', precio: 0, stock: 0, stockMinimo: 5 })
+      setNuevoProducto({ nombre: '', precio: 0, stock: 0 })
 
       return { success: true, producto: data[0] }
     } catch (error) {
@@ -1052,10 +1297,18 @@ export const useFacturacion = () => {
 
   const agregarMovimientoCaja = async (movimientoData) => {
     try {
+      // Mapear 'descripcion' → 'description' (nombre real de la columna en Supabase)
+      // y asegurar que fecha sea timestamp completo
+      const { descripcion, categoria, ...resto } = movimientoData
       const movimientoCompleto = {
-        ...movimientoData,
+        ...resto,
+        description: movimientoData.description || descripcion || '',
+        metodo: movimientoData.metodo || 'Efectivo',       // default si viene vacío
+        referencia: movimientoData.referencia || '',        // default vacío
+        fecha: movimientoData.fecha
+          ? (movimientoData.fecha.includes('T') ? movimientoData.fecha : new Date(movimientoData.fecha + 'T00:00:00').toISOString())
+          : new Date().toISOString(),
         user_id: user.id,
-        created_at: new Date().toISOString()
       }
 
       const { data, error } = await supabase
@@ -1085,21 +1338,55 @@ export const useFacturacion = () => {
     }
   }
 
-  // ========== FUNCIONES AUXILIARES ==========
+  // Eliminar movimiento de caja manualmente
+  const eliminarMovimientoCaja = async (movimientoId) => {
+    try {
+      // Obtener el movimiento para revertir el saldo local
+      const movimiento = movimientosCaja.find(m => m.id === movimientoId)
 
-  const agregarClienteRapido = async () => {
-    // Validar nombre
-    if (!clienteRapido.nombre || clienteRapido.nombre.trim() === '') {
-      return {
-        success: false,
-        mensaje: 'El nombre del cliente es requerido'
+      const { error } = await supabase
+        .from('movimientos_caja')
+        .delete()
+        .eq('id', movimientoId)
+        .eq('user_id', user.id)
+
+      if (error) throw error
+
+      // Revertir saldo local
+      if (movimiento) {
+        const monto = parseFloat(movimiento.monto) || 0
+        setCaja(prev => ({
+          ...prev,
+          saldo: movimiento.tipo === 'ingreso' ? prev.saldo - monto : prev.saldo + monto,
+          ingresos: movimiento.tipo === 'ingreso' ? Math.max(0, (prev.ingresos || 0) - monto) : (prev.ingresos || 0),
+          egresos: movimiento.tipo === 'egreso' ? Math.max(0, (prev.egresos || 0) - monto) : (prev.egresos || 0)
+        }))
       }
+
+      setMovimientosCaja(prev => prev.filter(m => m.id !== movimientoId))
+      return { success: true }
+    } catch (error) {
+      console.error('Error eliminando movimiento:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
+
+  // Acepta datos opcionales como parámetro para usarse directamente
+  // (ej: desde FacturaDirectaForm). Sin parámetro usa el estado interno clienteRapido.
+  const agregarClienteRapido = async (datosDirectos = null) => {
+    const nombre = datosDirectos?.nombre || clienteRapido.nombre
+    const telefono = datosDirectos?.telefono || clienteRapido.telefono || ''
+    const cuit = datosDirectos?.cuit?.trim() || ''
+
+    if (!nombre || nombre.trim() === '') {
+      return { success: false, mensaje: 'El nombre del cliente es requerido' }
     }
 
     const clienteData = {
-      nombre: clienteRapido.nombre,
-      telefono: clienteRapido.telefono || '',
-      cuit: '',
+      nombre: nombre.trim(),
+      telefono: telefono.trim(),
+      cuit: cuit,
       user_id: user.id,
       created_at: new Date().toISOString()
     }
@@ -1111,20 +1398,13 @@ export const useFacturacion = () => {
 
     if (error) {
       console.error('Error agregando cliente rápido:', error)
-      return {
-        success: false,
-        mensaje: error.message || 'Error al agregar cliente'
-      }
+      return { success: false, mensaje: error.message || 'Error al agregar cliente' }
     }
 
     setClientes(prev => [data[0], ...prev])
-    setClienteRapido({ nombre: '', telefono: '' })
+    if (!datosDirectos) setClienteRapido({ nombre: '', telefono: '' })
 
-    return {
-      success: true,
-      cliente: data[0],
-      mensaje: 'Cliente agregado exitosamente'
-    }
+    return { success: true, cliente: data[0], mensaje: 'Cliente agregado exitosamente' }
   }
 
   const agregarProductoRapido = async () => {
@@ -1140,7 +1420,6 @@ export const useFacturacion = () => {
       nombre: productoRapido.nombre,
       precio: parseFloat(productoRapido.precio) || 0,
       stock: 0,
-      stockMinimo: 5,
       user_id: user.id,
       created_at: new Date().toISOString()
     }
@@ -1285,8 +1564,7 @@ export const useFacturacion = () => {
       const { error } = await supabase
         .from('proveedores')
         .update({
-          ...datosActualizados,
-          updated_at: new Date().toISOString()
+          ...datosActualizados
         })
         .eq('id', proveedorId)
 
@@ -1322,16 +1600,19 @@ export const useFacturacion = () => {
     }
   }
 
-  const cerrarCaja = async () => {
+  const cerrarCaja = async (observaciones = '') => {
     try {
+      const ahora = new Date()
       const cierreData = {
-        fecha: new Date().toISOString().split('T')[0],
+        fecha: ahora.toISOString().split('T')[0],          // date
+        hora: ahora.toTimeString().split(' ')[0],          // time HH:MM:SS
         saldo_inicial: caja.saldo,
         ingresos: caja.ingresos || 0,
         egresos: caja.egresos || 0,
-        saldo_final: caja.saldo,
+        saldo_final: (caja.ingresos || 0) - (caja.egresos || 0),
+        movimientos: movimientosCaja.length,               // cantidad de movimientos del día
+        observaciones: observaciones?.trim() || `Cierre automático. ${movimientosCaja.length} movimientos del día.`,
         user_id: user.id,
-        created_at: new Date().toISOString()
       }
 
       const { error } = await supabase
@@ -1341,7 +1622,7 @@ export const useFacturacion = () => {
       if (error) throw error
 
       // Resetear caja del día
-      setCaja(prev => ({ ...prev, ingresos: 0, egresos: 0 }))
+      setCaja({ saldo: 0, ingresos: 0, egresos: 0 })
       setMovimientosCaja([])
 
       // Recargar cierres
@@ -1354,7 +1635,7 @@ export const useFacturacion = () => {
 
       if (cierresData) setCierresCaja(cierresData)
 
-      return { success: true, mensaje: 'Caja cerrada exitosamente' }
+      return { success: true, mensaje: 'Caja cerrada exitosamente', cierre: cierreData }
     } catch (error) {
       console.error('Error cerrando caja:', error)
       return { success: false, mensaje: error.message }
@@ -1425,6 +1706,7 @@ export const useFacturacion = () => {
 
     // Funciones para facturas y pagos
     crearFacturaConPedido,
+    crearFacturaDirecta,
     generarFactura,
     agregarAbono,
     marcarPagadoTotal,
@@ -1439,6 +1721,7 @@ export const useFacturacion = () => {
     agregarPedido,
     actualizarEstadoPedido,
     actualizarNotasPedido,
+    actualizarPedido, // ← genérica: actualiza cualquier campo del pedido
     eliminarPedido,
     facturarPedido,
 
@@ -1446,9 +1729,11 @@ export const useFacturacion = () => {
     agregarPedidoSolo, // ← NUEVA: crea solo pedido sin factura
     agregarAbonoAPedido, // ← NUEVA: agrega abono directo al pedido
     marcarPedidoPagadoTotal, // ← NUEVA: marca pedido como pagado total
-
+    registrarCobro, // ← FUNCIÓN UNIFICADA: todas las pantallas la llaman
+    eliminarFactura, // ← NUEVA: elimina factura desde Facturación
     // Funciones para caja
     agregarMovimientoCaja,
+    eliminarMovimientoCaja,
     cerrarCaja,
 
     // Funciones auxiliares

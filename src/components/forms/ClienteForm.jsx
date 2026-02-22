@@ -57,7 +57,12 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
     }
 
     if (result && result.success) {
-      closeModal();
+      const onSuccess = formData.selectedItem?.onSuccess || formData.onSuccess;
+      if (onSuccess) {
+        onSuccess(result.cliente || result.data || result);
+      } else {
+        closeModal();
+      }
     }
   };
 

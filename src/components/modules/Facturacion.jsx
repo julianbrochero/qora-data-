@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Download, Printer, Eye, DollarSign, FileText, Users, CreditCard, Calendar, MoreVertical, Package, CheckCircle, Clock } from "lucide-react"
+import { Search, Printer, Eye, DollarSign, FileText, Users, CreditCard, Calendar, Package, CheckCircle, Clock, Trash2, CheckSquare, Banknote, XCircle, Plus } from "lucide-react"
 
 const Facturacion = ({
   facturas = [],
@@ -10,7 +10,8 @@ const Facturacion = ({
   setSearchTerm,
   onNuevaFactura,
   abonos = [],
-  registrarPagoFactura,
+  registrarCobro,
+  eliminarFactura,
   recargarDatos
 }) => {
   const [filtroEstado, setFiltroEstado] = useState("todos")
@@ -23,6 +24,11 @@ const Facturacion = ({
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [detalleFactura, setDetalleFactura] = useState(null)
+  const [seleccionadas, setSeleccionadas] = useState(new Set())
+  const [eliminandoMasivo, setEliminandoMasivo] = useState(false)
+  const [modoSeleccion, setModoSeleccion] = useState(false)
+  const [cargandoPago, setCargandoPago] = useState(false)
+  const [mostrarFormAbono, setMostrarFormAbono] = useState(false)
 
   // Sincronizar abonos
   useEffect(() => {
@@ -38,7 +44,8 @@ const Facturacion = ({
       const coincideBusqueda =
         (factura.numero || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
         (factura.cliente_nombre || factura.cliente || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
-        (factura.pedido_id || "").toString().includes(searchTerm)
+        (factura.pedido_id || "").toString().includes(searchTerm) ||
+        (obtenerCodigoPedido(factura.pedido_id) || "").toLowerCase().includes((searchTerm || "").toLowerCase())
 
       const coincidePestaña =
         pestañaActiva === "todas" ||
@@ -67,13 +74,44 @@ const Facturacion = ({
   // Reset página al cambiar filtros o items por página
   useEffect(() => {
     setPaginaActual(1)
+    setSeleccionadas(new Set()) // limpiar selección al cambiar filtros
   }, [pestañaActiva, filtroEstado, searchTerm, itemsPorPagina])
+
+  // Helpers de selección
+  const toggleModoSeleccion = () => {
+    setModoSeleccion(prev => !prev)
+    setSeleccionadas(new Set())
+  }
+
+  const toggleSeleccion = (id) => {
+    setSeleccionadas(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleSeleccionarTodaPagina = () => {
+    const idsPagina = facturasPaginadas.map(f => f.id)
+    const todasSeleccionadas = idsPagina.every(id => seleccionadas.has(id))
+    setSeleccionadas(prev => {
+      const next = new Set(prev)
+      if (todasSeleccionadas) {
+        idsPagina.forEach(id => next.delete(id))
+      } else {
+        idsPagina.forEach(id => next.add(id))
+      }
+      return next
+    })
+  }
+
+  const limpiarSeleccion = () => setSeleccionadas(new Set())
 
   // Calcular resumen de deudas
   const resumenDeudas = {
     totalDeuda: facturasSeguras
       .filter((f) => f.estado !== "pagada")
-      .reduce((sum, f) => sum + (Number.parseFloat(f.saldoPendiente) || Number.parseFloat(f.total) || 0), 0),
+      .reduce((sum, f) => sum + (Number.parseFloat(f.saldopendiente) || Number.parseFloat(f.total) || 0), 0),
 
     facturasPendientes: facturasSeguras.filter((f) => f.estado !== "pagada").length,
 
@@ -126,6 +164,13 @@ const Facturacion = ({
     }
   }
 
+  // Helper para obtener código de pedido asociado a una factura
+  const obtenerCodigoPedido = (pedidoId) => {
+    if (!pedidoId) return null
+    const pedido = pedidos.find(p => p.id === pedidoId)
+    return pedido?.codigo || null
+  }
+
   // Funciones de utilidad
   const formatearMonto = (monto) => {
     const numero = Number.parseFloat(monto) || 0
@@ -148,41 +193,36 @@ const Facturacion = ({
     }
   }
 
-  // Handler para registrar pago
   const handleRegistrarPago = async () => {
     if (!facturaSeleccionada) return
-
     const monto = Number.parseFloat(montoPago) || 0
-    if (monto <= 0) {
-      alert("El monto debe ser mayor a 0")
-      return
-    }
-
-    const saldoPendiente = Number.parseFloat(facturaSeleccionada.saldoPendiente) ||
+    if (monto <= 0) { alert("El monto debe ser mayor a 0"); return }
+    const saldoPendiente = Number.parseFloat(facturaSeleccionada.saldopendiente) ||
       Number.parseFloat(facturaSeleccionada.total)
-
     if (monto > saldoPendiente) {
       alert(`El monto excede el saldo pendiente ($${formatearMonto(saldoPendiente)})`)
       return
     }
-
-    if (registrarPagoFactura) {
-      const resultado = await registrarPagoFactura(
+    if (!registrarCobro) return
+    setCargandoPago(true)
+    try {
+      const codigoAsociado = obtenerCodigoPedido(facturaSeleccionada.pedido_id);
+      const referenciaTexto = codigoAsociado ? `Pedido ${codigoAsociado}` : facturaSeleccionada.numero;
+      const resultado = await registrarCobro(
         facturaSeleccionada.id,
         monto,
-        metodoPago,
-        `Pago manual - ${facturaSeleccionada.numero}`
+        `Pago parcial - ${referenciaTexto}`
       )
-
-      if (resultado) {
-        setMostrarModalPago(false)
-        setMontoPago("")
-        setFacturaSeleccionada(null)
-
-        if (recargarDatos) {
-          recargarDatos()
-        }
+      if (resultado?.success) {
+        handleCerrarModal()
+        if (recargarDatos) recargarDatos()
+      } else {
+        alert('Error registrando pago: ' + (resultado?.mensaje || 'Error desconocido'))
       }
+    } catch (e) {
+      alert('Error: ' + e.message)
+    } finally {
+      setCargandoPago(false)
     }
   }
 
@@ -191,138 +231,278 @@ const Facturacion = ({
     setDetalleFactura(factura)
   }
 
-  // Handler para imprimir/descargar factura
+  const handleCerrarModal = () => {
+    setMostrarModalPago(false)
+    setFacturaSeleccionada(null)
+    setMontoPago('')
+    setMostrarFormAbono(false)
+    setCargandoPago(false)
+  }
+
+  const handleSaldarTodo = async () => {
+    if (!facturaSeleccionada || !registrarCobro) return
+    const saldo = Number.parseFloat(facturaSeleccionada.saldopendiente) ||
+      Number.parseFloat(facturaSeleccionada.total)
+    if (saldo <= 0) return
+    const confirmar = window.confirm(
+      `¿Registrar pago total del saldo restante?\n\nSaldo a saldar: $${formatearMonto(saldo)}`
+    )
+    if (!confirmar) return
+    setCargandoPago(true)
+    try {
+      const codigoAsociado = obtenerCodigoPedido(facturaSeleccionada.pedido_id);
+      const referenciaTexto = codigoAsociado ? `Pedido ${codigoAsociado}` : facturaSeleccionada.numero;
+      const resultado = await registrarCobro(
+        facturaSeleccionada.id,
+        saldo,
+        `Saldo total - ${referenciaTexto}`
+      )
+      if (resultado?.success) {
+        handleCerrarModal()
+        if (recargarDatos) recargarDatos()
+      } else {
+        alert('Error: ' + (resultado?.mensaje || 'Error desconocido'))
+      }
+    } catch (e) {
+      alert('Error: ' + e.message)
+    } finally {
+      setCargandoPago(false)
+    }
+  }
+
+  // Handlers de acciones individuales
   const handleImprimirFactura = (factura) => {
-    // Aquí iría la lógica para generar PDF
     alert(`Generando PDF de factura ${factura.numero}...`)
   }
 
-  // Handler para anular factura
-  const handleAnularFactura = (factura) => {
-    if (!window.confirm(`¿Estás seguro de anular la factura ${factura.numero}?`)) {
-      return
+  const handleEliminarFactura = async (factura) => {
+    const confirmMsg = factura.pedido_id
+      ? `¿Eliminar la factura ${factura.numero}? Esto NO eliminará el pedido asociado.`
+      : `¿Eliminar la factura ${factura.numero}? Esta acción no se puede deshacer.`
+    if (!window.confirm(confirmMsg)) return
+    if (eliminarFactura) {
+      const resultado = await eliminarFactura(factura.id)
+      if (resultado?.success) {
+        if (recargarDatos) recargarDatos()
+      } else {
+        alert('Error al eliminar: ' + (resultado?.mensaje || 'Error desconocido'))
+      }
     }
-    alert(`Factura ${factura.numero} anulada (implementar lógica completa)`)
   }
 
-  // Componente para modal de pago
-  const ModalPago = () => {
-    if (!mostrarModalPago || !facturaSeleccionada) return null
-
-    const saldoPendiente = Number.parseFloat(facturaSeleccionada.saldoPendiente) ||
-      Number.parseFloat(facturaSeleccionada.total)
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-gray-900">Registrar Pago</h3>
-            <button
-              onClick={() => {
-                setMostrarModalPago(false)
-                setFacturaSeleccionada(null)
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Contenido */}
-          <div className="p-4 space-y-3">
-            {/* Información de factura */}
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold text-blue-900">
-                  {facturaSeleccionada.numero}
-                </span>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${estadosConfig[facturaSeleccionada.estado]?.color}`}>
-                  {estadosConfig[facturaSeleccionada.estado]?.label}
-                </span>
-              </div>
-              <div className="text-xs text-blue-800">
-                Cliente: {facturaSeleccionada.cliente_nombre || facturaSeleccionada.cliente}
-              </div>
-              <div className="text-xs text-blue-800">
-                Total: ${formatearMonto(facturaSeleccionada.total)}
-              </div>
-              <div className="text-xs text-blue-800 font-semibold mt-1">
-                Saldo pendiente: ${formatearMonto(saldoPendiente)}
-              </div>
-            </div>
-
-            {/* Monto del pago */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Monto a pagar
-              </label>
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                <input
-                  type="number"
-                  className="w-full pl-6 pr-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="0.00"
-                  value={montoPago}
-                  onChange={(e) => setMontoPago(e.target.value)}
-                  step="0.01"
-                  min="0"
-                  max={saldoPendiente}
-                />
-              </div>
-              <div className="text-[10px] text-gray-500 mt-0.5">
-                Máximo: ${formatearMonto(saldoPendiente)}
-              </div>
-            </div>
-
-            {/* Método de pago */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Método de pago
-              </label>
-              <select
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                value={metodoPago}
-                onChange={(e) => setMetodoPago(e.target.value)}
-              >
-                <option value="Efectivo">Efectivo</option>
-                <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
-                <option value="Tarjeta de Débito">Tarjeta de Débito</option>
-                <option value="Transferencia">Transferencia</option>
-                <option value="MercadoPago">MercadoPago</option>
-                <option value="Cheque">Cheque</option>
-              </select>
-            </div>
-
-            {/* Botones */}
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setMostrarModalPago(false)
-                  setFacturaSeleccionada(null)
-                }}
-                className="flex-1 bg-white text-gray-700 px-3 py-1.5 text-xs rounded-md hover:bg-gray-50 transition-colors border border-gray-300"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleRegistrarPago}
-                disabled={!montoPago || Number.parseFloat(montoPago) <= 0}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 text-xs rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Registrar Pago
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+  const handleEliminarSeleccionadas = async () => {
+    if (seleccionadas.size === 0) return
+    const cantidad = seleccionadas.size
+    if (!window.confirm(`¿Eliminar ${cantidad} factura${cantidad > 1 ? 's' : ''}? Esta acción no se puede deshacer.`)) return
+    setEliminandoMasivo(true)
+    let errores = 0
+    let exitosas = 0
+    for (const id of seleccionadas) {
+      if (eliminarFactura) {
+        const resultado = await eliminarFactura(id)
+        if (resultado?.success) exitosas++
+        else errores++
+      }
+    }
+    setEliminandoMasivo(false)
+    limpiarSeleccion()
+    if (recargarDatos) recargarDatos()
+    if (errores > 0) {
+      alert(`Se eliminaron ${exitosas} facturas. ${errores} no pudieron eliminarse.`)
+    }
   }
 
   return (
+
     <div className="space-y-3">
-      {/* Modal de pago */}
-      <ModalPago />
+
+      {/* ===== MODAL DE PAGO INLINE ===== */}
+      {mostrarModalPago && facturaSeleccionada && (() => {
+        const total = Number.parseFloat(facturaSeleccionada.total) || 0
+        const montoPagado = Number.parseFloat(facturaSeleccionada.montopagado) || 0
+        const saldo = Number.parseFloat(facturaSeleccionada.saldopendiente) ?? (total - montoPagado)
+        const estaPagado = saldo <= 0.01
+        const porcentaje = total > 0 ? Math.min(100, (montoPagado / total) * 100) : 0
+
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Registrar Pago</h3>
+                  <p className="text-[10px] text-gray-500 font-mono">{facturaSeleccionada.numero}</p>
+                  {facturaSeleccionada.pedido_id && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Package size={9} className="text-blue-500" />
+                      <span className="text-[10px] text-blue-600 font-semibold">
+                        {obtenerCodigoPedido(facturaSeleccionada.pedido_id) || `Pedido #${facturaSeleccionada.pedido_id.toString().slice(-6)}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={handleCerrarModal}
+                  disabled={cargandoPago}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <XCircle size={18} />
+                </button>
+              </div>
+
+              {/* Cuerpo */}
+              <div className="p-4 space-y-3">
+
+                {/* Info del cliente */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-semibold text-blue-900">
+                      {facturaSeleccionada.cliente_nombre || facturaSeleccionada.cliente || 'Cliente'}
+                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${estadosConfig[facturaSeleccionada.estado]?.color}`}>
+                      {estadosConfig[facturaSeleccionada.estado]?.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Barra de progreso */}
+                <div>
+                  <div className="flex justify-between text-[10px] text-gray-500 mb-1">
+                    <span>Progreso de pago</span>
+                    <span className="font-bold">{porcentaje.toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-500 ${estaPagado ? 'bg-green-500' : 'bg-blue-500'}`}
+                      style={{ width: `${porcentaje}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Montos */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-200">
+                    <p className="text-[9px] text-gray-500 uppercase mb-0.5">Total</p>
+                    <p className="text-xs font-bold text-gray-900">${formatearMonto(total)}</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2 text-center border border-green-200">
+                    <p className="text-[9px] text-green-600 uppercase mb-0.5">Cobrado</p>
+                    <p className="text-xs font-bold text-green-600">${formatearMonto(montoPagado)}</p>
+                  </div>
+                  <div className={`rounded-lg p-2 text-center border ${estaPagado ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                    <p className={`text-[9px] uppercase mb-0.5 ${estaPagado ? 'text-green-600' : 'text-orange-600'}`}>Saldo</p>
+                    <p className={`text-xs font-bold ${estaPagado ? 'text-green-600' : 'text-orange-600'}`}>${formatearMonto(saldo)}</p>
+                  </div>
+                </div>
+
+                {/* Acciones de cobro */}
+                {estaPagado ? (
+                  <div className="flex items-center justify-center gap-2 bg-green-50 border border-green-300 py-3 rounded-lg">
+                    <CheckCircle size={16} className="text-green-600" />
+                    <span className="text-xs font-bold text-green-700">PAGADO COMPLETAMENTE</span>
+                  </div>
+                ) : mostrarFormAbono ? (
+                  /* Formulario de abono parcial */
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 space-y-2">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-gray-600 mb-1">
+                        Monto a cobrar <span className="text-gray-400">(máx: ${formatearMonto(saldo)})</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                        <input
+                          type="number"
+                          className="w-full border border-gray-300 rounded-lg pl-5 pr-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          placeholder="0.00"
+                          value={montoPago}
+                          onChange={(e) => setMontoPago(e.target.value)}
+                          autoFocus
+                          step="0.01"
+                          min="0.01"
+                          max={saldo}
+                          disabled={cargandoPago}
+                        />
+                      </div>
+                      <button
+                        onClick={() => setMontoPago(saldo.toString())}
+                        className="mt-1 text-[9px] text-blue-600 hover:underline"
+                      >
+                        Usar saldo completo (${formatearMonto(saldo)})
+                      </button>
+                    </div>
+
+                    {/* Método de pago */}
+                    <select
+                      className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg bg-white focus:ring-1 focus:ring-blue-500"
+                      value={metodoPago}
+                      onChange={(e) => setMetodoPago(e.target.value)}
+                    >
+                      <option value="Efectivo">Efectivo</option>
+                      <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                      <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                      <option value="Transferencia">Transferencia</option>
+                      <option value="MercadoPago">MercadoPago</option>
+                      <option value="Cheque">Cheque</option>
+                    </select>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setMostrarFormAbono(false); setMontoPago('') }}
+                        disabled={cargandoPago}
+                        className="flex-1 bg-white border border-gray-300 text-gray-700 px-2 py-1.5 rounded-lg text-[10px] font-medium hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleRegistrarPago}
+                        disabled={cargandoPago || !montoPago || Number.parseFloat(montoPago) <= 0}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                      >
+                        <Banknote size={11} />
+                        {cargandoPago ? 'Procesando...' : 'Confirmar Cobro'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Botones principales */
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setMostrarFormAbono(true)}
+                      disabled={cargandoPago}
+                      className="flex-1 bg-white border-2 border-blue-500 text-blue-600 hover:bg-blue-50 px-2 py-2.5 rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                    >
+                      <DollarSign size={12} />
+                      Registrar Cobro
+                    </button>
+                    <button
+                      onClick={handleSaldarTodo}
+                      disabled={cargandoPago}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-2.5 rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-1 shadow-sm"
+                    >
+                      <CheckCircle size={12} />
+                      {cargandoPago ? 'Procesando...' : 'Saldar Todo'}
+                    </button>
+                  </div>
+                )}
+
+              </div>
+
+              {/* Footer */}
+              <div className="px-4 pb-4">
+                <button
+                  onClick={handleCerrarModal}
+                  disabled={cargandoPago}
+                  className="w-full bg-white text-gray-600 px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors border border-gray-200 font-medium disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      })()}
 
       {/* HEADER */}
       <div className="flex justify-between items-start">
@@ -331,14 +511,28 @@ const Facturacion = ({
           <p className="text-xs text-gray-500 mt-0.5">Contabilidad, deudas y pagos</p>
         </div>
 
-        {/* BOTÓN NUEVA FACTURA - SOLO PARA FACTURAS DIRECTAS (sin pedido) */}
-        <button
-          onClick={() => onNuevaFactura && onNuevaFactura()}
-          className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-        >
-          <Plus size={12} />
-          Factura Directa
-        </button>
+        <div className="flex items-center gap-2">
+          {/* BOTÓN SELECCIONAR */}
+          <button
+            onClick={toggleModoSeleccion}
+            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm border ${modoSeleccion
+              ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+          >
+            <CheckSquare size={12} />
+            {modoSeleccion ? 'Cancelar selección' : 'Seleccionar'}
+          </button>
+
+          {/* BOTÓN NUEVA FACTURA - SOLO PARA FACTURAS DIRECTAS (sin pedido) */}
+          <button
+            onClick={() => onNuevaFactura && onNuevaFactura()}
+            className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
+          >
+            <Plus size={12} />
+            Factura Directa
+          </button>
+        </div>
       </div>
 
       {/* CARDS DE RESUMEN - ACTUALIZADAS */}
@@ -459,6 +653,17 @@ const Facturacion = ({
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                {modoSeleccion && (
+                  <th className="px-2 py-1 w-8">
+                    <input
+                      type="checkbox"
+                      className="w-3.5 h-3.5 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                      checked={facturasPaginadas.length > 0 && facturasPaginadas.every(f => seleccionadas.has(f.id))}
+                      onChange={() => toggleSeleccionarTodaPagina(facturasPaginadas)}
+                      title="Seleccionar toda la página"
+                    />
+                  </th>
+                )}
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Número</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Cliente</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
@@ -467,20 +672,42 @@ const Facturacion = ({
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Pagado</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Saldo</th>
                 <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+                {!modoSeleccion && (
+                  <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {facturasPaginadas.length > 0 ? (
                 facturasPaginadas.map((factura) => {
-                  const montoPagado = Number.parseFloat(factura.montoPagado) || 0
+                  const montoPagado = Number.parseFloat(factura.montopagado) || 0
                   const totalFactura = Number.parseFloat(factura.total) || 0
-                  const saldoPendiente = Number.parseFloat(factura.saldoPendiente) || (totalFactura - montoPagado)
+                  const saldoPendiente = Number.parseFloat(factura.saldopendiente) ?? (totalFactura - montoPagado)
                   const estado = factura.estado || "pendiente"
                   const EstadoIcon = estadosConfig[estado]?.icon || FileText
 
+                  const estaSeleccionada = seleccionadas.has(factura.id)
                   return (
-                    <tr key={factura.id} className="hover:bg-gray-50 transition-colors group">
+                    <tr
+                      key={factura.id}
+                      className={`transition-colors group ${modoSeleccion
+                        ? (estaSeleccionada ? 'bg-blue-50 hover:bg-blue-50 cursor-pointer' : 'hover:bg-gray-50 cursor-pointer')
+                        : 'hover:bg-gray-50'
+                        }`}
+                      onClick={modoSeleccion ? () => toggleSeleccion(factura.id) : undefined}
+                    >
+                      {/* Checkbox */}
+                      {modoSeleccion && (
+                        <td className="px-2 py-1.5 w-8" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className="w-3.5 h-3.5 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                            checked={estaSeleccionada}
+                            onChange={() => toggleSeleccion(factura.id)}
+                          />
+                        </td>
+                      )}
+
                       {/* Número */}
                       <td className="px-2 py-1.5">
                         <div className="flex items-center gap-1.5">
@@ -521,8 +748,8 @@ const Facturacion = ({
                             <div className="bg-blue-100 p-0.5 rounded">
                               <Package size={8} className="text-blue-600" />
                             </div>
-                            <span className="text-xs text-gray-700">
-                              Pedido #{factura.pedido_id?.toString().slice(-6)}
+                            <span className="text-xs font-medium text-blue-700 font-mono">
+                              {obtenerCodigoPedido(factura.pedido_id) || `PED-${factura.pedido_id.toString().slice(-6)}`}
                             </span>
                           </div>
                         ) : (
@@ -574,59 +801,60 @@ const Facturacion = ({
                       </td>
 
                       {/* Acciones */}
-                      <td className="px-2 py-1.5">
-                        <div className="flex items-center gap-2">
-                          {/* Ver Detalle */}
-                          <button
-                            onClick={() => handleVerDetalle(factura)}
-                            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 shadow-sm bg-white"
-                            title="Ver Detalle"
-                          >
-                            <Eye size={16} />
-                          </button>
-
-                          {/* Registrar Pago (solo si tiene saldo) */}
-                          {saldoPendiente > 0 && estado !== 'anulada' && (
+                      {!modoSeleccion && (
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center gap-2">
+                            {/* Ver Detalle */}
                             <button
-                              onClick={() => {
-                                setFacturaSeleccionada(factura)
-                                setMostrarModalPago(true)
-                                setMontoPago(saldoPendiente.toString())
-                              }}
-                              className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-100 shadow-sm bg-white"
-                              title="Registrar Pago"
+                              onClick={() => handleVerDetalle(factura)}
+                              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 shadow-sm bg-white"
+                              title="Ver Detalle"
                             >
-                              <DollarSign size={16} />
+                              <Eye size={16} />
                             </button>
-                          )}
 
-                          {/* Imprimir/Descargar */}
-                          <button
-                            onClick={() => handleImprimirFactura(factura)}
-                            className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 shadow-sm bg-white"
-                            title="Imprimir/Descargar"
-                          >
-                            <Printer size={16} />
-                          </button>
+                            {/* Registrar Pago (solo si tiene saldo) */}
+                            {saldoPendiente > 0 && estado !== 'anulada' && (
+                              <button
+                                onClick={() => {
+                                  setFacturaSeleccionada(factura)
+                                  setMostrarModalPago(true)
+                                  const saldo = Number.parseFloat(factura.saldopendiente) || Number.parseFloat(factura.total) || 0
+                                  setMontoPago(saldo.toString())
+                                }}
+                                className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-100 shadow-sm bg-white"
+                                title="Registrar Pago"
+                              >
+                                <DollarSign size={16} />
+                              </button>
+                            )}
 
-                          {/* Anular (solo si no está anulada y no está pagada) */}
-                          {estado !== 'anulada' && estado !== 'pagada' && (
+                            {/* Imprimir/Descargar */}
                             <button
-                              onClick={() => handleAnularFactura(factura)}
-                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-100 shadow-sm bg-white"
-                              title="Anular Factura"
+                              onClick={() => handleImprimirFactura(factura)}
+                              className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 shadow-sm bg-white"
+                              title="Imprimir/Descargar"
                             >
-                              <Clock size={16} />
+                              <Printer size={16} />
                             </button>
-                          )}
-                        </div>
-                      </td>
+
+                            {/* Eliminar factura */}
+                            <button
+                              onClick={() => handleEliminarFactura(factura)}
+                              className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100 shadow-sm bg-white"
+                              title="Eliminar Factura"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   )
                 })
               ) : (
                 <tr>
-                  <td colSpan="9" className="px-3 py-6 text-center">
+                  <td colSpan="10" className="px-3 py-6 text-center">
                     <div className="flex flex-col items-center">
                       <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
                         <FileText size={16} className="text-gray-400" />
@@ -690,6 +918,47 @@ const Facturacion = ({
         </div>
       </div>
 
+      {/* BARRA DE ACCIONES MASIVAS FLOTANTE */}
+      {modoSeleccion && seleccionadas.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-gray-700">
+          <div className="flex items-center gap-2">
+            <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              {seleccionadas.size}
+            </span>
+            <span className="text-sm font-medium">
+              {seleccionadas.size === 1 ? 'factura seleccionada' : 'facturas seleccionadas'}
+            </span>
+          </div>
+          <div className="w-px h-5 bg-gray-600" />
+          <button
+            onClick={handleEliminarSeleccionadas}
+            disabled={eliminandoMasivo}
+            className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {eliminandoMasivo ? (
+              <>
+                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+                Eliminando...
+              </>
+            ) : (
+              <>
+                <Trash2 size={13} />
+                Eliminar seleccionadas
+              </>
+            )}
+          </button>
+          <button
+            onClick={limpiarSeleccion}
+            className="text-xs text-gray-400 hover:text-white transition-colors"
+          >
+            Limpiar
+          </button>
+        </div>
+      )}
+
       {/* INFORMACIÓN ADICIONAL */}
       <div className="bg-green-50 border border-green-200 rounded-lg p-3">
         <div className="flex items-start gap-2">
@@ -750,9 +1019,18 @@ const Facturacion = ({
                 </div>
                 <div>
                   <p className="text-xs text-gray-600">Origen</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {detalleFactura.pedido_id ? `Pedido #${detalleFactura.pedido_id}` : 'Factura Directa'}
-                  </p>
+                  {detalleFactura.pedido_id ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="bg-blue-100 p-1 rounded">
+                        <Package size={10} className="text-blue-600" />
+                      </div>
+                      <span className="text-sm font-semibold text-blue-700 font-mono">
+                        {obtenerCodigoPedido(detalleFactura.pedido_id) || `PED-${detalleFactura.pedido_id.toString().slice(-6)}`}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-sm font-medium text-gray-900">Factura Directa</p>
+                  )}
                 </div>
               </div>
 

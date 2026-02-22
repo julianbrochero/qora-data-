@@ -3,7 +3,7 @@
 import { Package, Search, ChevronDown, Plus, Trash2, User, Calendar } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 
-const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, closeModal }) => {
+const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, closeModal, openModal }) => {
   const [busquedaCliente, setBusquedaCliente] = useState("")
   const [busquedaProducto, setBusquedaProducto] = useState("")
   const [mostrarDropdownCliente, setMostrarDropdownCliente] = useState(false)
@@ -13,14 +13,52 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
 
   const isEdit = type === "editar-pedido"
 
-  const [pedidoData, setPedidoData] = useState({
-    clienteId: pedido?.cliente_id || "",
-    clienteNombre: pedido?.cliente_nombre || "",
-    fechaPedido: pedido?.fecha_pedido?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-    fechaEntregaEstimada: pedido?.fecha_entrega_estimada?.slice(0, 10) || "",
-    estado: pedido?.estado || "pendiente",
-    notas: pedido?.notas || "",
-    items: pedido?.items || [],
+  const [pedidoData, setPedidoData] = useState(() => {
+    // Si hay estado guardado (al volver de crear cliente/producto)
+    if (pedido?.savedState) {
+      const newState = { ...pedido.savedState };
+
+      // Asegurar copia profunda de items
+      newState.items = (newState.items || []).map(i => ({ ...i }));
+
+      // Si volvemos de crear cliente
+      if (pedido.newClient) {
+        newState.clienteId = pedido.newClient.id;
+        newState.clienteNombre = pedido.newClient.nombre;
+      }
+
+      // Si volvemos de crear producto
+      if (pedido.newProduct) {
+        const prod = pedido.newProduct;
+        const exists = newState.items.find(i => i.productoId === prod.id);
+        if (exists) {
+          exists.cantidad += 1;
+          exists.subtotal = exists.precio * exists.cantidad;
+        } else {
+          newState.items.push({
+            id: Date.now(),
+            productoId: prod.id,
+            producto: prod.nombre,
+            precio: prod.precio, // Precio base
+            cantidad: 1,
+            subtotal: prod.precio,
+          });
+        }
+      }
+      return newState;
+    }
+
+    // Inicialización normal
+    return {
+      clienteId: pedido?.cliente_id || "",
+      clienteNombre: pedido?.cliente_nombre || "",
+      fechaPedido: pedido?.fecha_pedido?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+      fechaEntregaEstimada: pedido?.fecha_entrega_estimada?.slice(0, 10) || "",
+      estado: pedido?.estado || "pendiente",
+      notas: pedido?.notas || "",
+      items: pedido?.items || [],
+      montoPagado: pedido?.monto_abonado || "", // ✅ Inicializar
+    };
   })
 
   // Mock data si no hay datos
@@ -120,6 +158,14 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
     setPedidoData({ ...pedidoData, items: nuevosItems })
   }
 
+  const actualizarPrecio = (index, nuevoPrecio) => {
+    const nuevosItems = [...pedidoData.items]
+    const precio = parseFloat(nuevoPrecio) || 0
+    nuevosItems[index].precio = precio
+    nuevosItems[index].subtotal = precio * nuevosItems[index].cantidad
+    setPedidoData({ ...pedidoData, items: nuevosItems })
+  }
+
   const eliminarItem = (index) => {
     setPedidoData({
       ...pedidoData,
@@ -129,6 +175,32 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
 
   const calcularTotal = () => {
     return pedidoData.items.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
+  }
+
+  const handleNuevoCliente = () => {
+    if (openModal) {
+      openModal("nuevo-cliente", {
+        onSuccess: (cliente) => {
+          openModal("nuevo-pedido", {
+            savedState: pedidoData,
+            newClient: cliente
+          })
+        }
+      })
+    }
+  }
+
+  const handleNuevoProducto = () => {
+    if (openModal) {
+      openModal("nuevo-producto", {
+        onSuccess: (producto) => {
+          openModal("nuevo-pedido", {
+            savedState: pedidoData,
+            newProduct: producto
+          })
+        }
+      })
+    }
   }
 
   const handleGuardar = () => {
@@ -211,25 +283,28 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
   }
 
   return (
-    <div className="w-full max-w-[360px] mx-auto space-y-2">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (pedidoData.clienteId && pedidoData.items.length > 0) {
+          handleGuardar();
+        }
+      }}
+      className="w-full max-w-[360px] mx-auto space-y-1"
+    >
       {/* Header */}
-      <div className="pb-1.5 border-b border-gray-100">
+      <div className="pb-1 border-b border-gray-100 flex justify-between items-center">
         <h3 className="text-sm font-bold text-gray-900">{isEdit ? "Editar pedido" : "Nuevo pedido"}</h3>
-        <p className="text-[10px] text-gray-500">
-          {isEdit ? "Modifica los datos del pedido." : "Registra un nuevo pedido para tu cliente."}
-        </p>
+        {/* Description removed for compactness */}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {/* CLIENTE */}
-        <div ref={clienteRef}>
-          <div className="flex items-center justify-between mb-0.5">
-            <label className="text-[11px] font-medium text-gray-700">Cliente</label>
-          </div>
+        <div ref={clienteRef} className="relative z-20">
           <div className="relative">
             <input
               type="text"
-              className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full pl-7 pr-8 py-1 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
               placeholder="Buscar cliente..."
               value={busquedaCliente}
               onChange={(e) => {
@@ -239,11 +314,21 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
               onFocus={() => setMostrarDropdownCliente(true)}
             />
             <User className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+
+            <button
+              onClick={handleNuevoCliente}
+              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
+              title="Nuevo Cliente"
+              type="button"
+            >
+              <Plus size={12} />
+            </button>
             {mostrarDropdownCliente && clientesFiltrados.length > 0 && (
               <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto">
                 {clientesFiltrados.map((cliente) => (
                   <button
                     key={cliente.id}
+                    type="button"
                     onClick={() => seleccionarCliente(cliente)}
                     className="w-full px-2 py-1.5 text-left hover:bg-gray-50 transition-colors text-[11px] border-b border-gray-100 last:border-b-0"
                   >
@@ -262,27 +347,27 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         </div>
 
         {/* FECHAS Y ESTADO */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5">
           <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Fecha pedido</label>
+            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Fecha</label>
             <input
               type="date"
-              className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full px-1.5 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
               value={pedidoData.fechaPedido}
               onChange={(e) => setPedidoData({ ...pedidoData, fechaPedido: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Entrega estimada</label>
+            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Entrega</label>
             <input
               type="date"
-              className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
+              className="w-full px-1.5 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
               value={pedidoData.fechaEntregaEstimada}
               onChange={(e) => setPedidoData({ ...pedidoData, fechaEntregaEstimada: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Estado</label>
+            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Estado</label>
             <CustomSelect
               value={pedidoData.estado}
               options={estadosOptions}
@@ -293,13 +378,13 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         </div>
 
         {/* AGREGAR PRODUCTO */}
-        <div ref={productoRef}>
-          <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Agregar producto</label>
+        {/* AGREGAR PRODUCTO */}
+        <div ref={productoRef} className="relative z-10">
           <div className="relative">
             <input
               type="text"
-              className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-              placeholder="Buscar producto..."
+              className="w-full pl-7 pr-8 py-1 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+              placeholder="Agregar producto..."
               value={busquedaProducto}
               onChange={(e) => {
                 setBusquedaProducto(e.target.value)
@@ -308,11 +393,21 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
               onFocus={() => setMostrarDropdownProducto(true)}
             />
             <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+
+            <button
+              onClick={handleNuevoProducto}
+              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
+              title="Nuevo Producto"
+              type="button"
+            >
+              <Plus size={12} />
+            </button>
             {mostrarDropdownProducto && productosFiltrados.length > 0 && (
               <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto">
                 {productosFiltrados.map((producto) => (
                   <button
                     key={producto.id}
+                    type="button"
                     onClick={() => agregarProducto(producto)}
                     className="w-full px-2 py-1.5 text-left hover:bg-gray-50 transition-colors text-[11px] border-b border-gray-100 last:border-b-0"
                   >
@@ -330,10 +425,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
 
         {/* ITEMS DEL PEDIDO */}
         <div>
-          <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-            Productos ({pedidoData.items.length})
-          </label>
-          <div className="border border-gray-200 rounded-md h-[90px] overflow-hidden">
+          <div className="border border-gray-200 rounded-md h-[110px] overflow-hidden">
             {pedidoData.items.length > 0 ? (
               <div className="divide-y divide-gray-100 h-full overflow-y-auto">
                 {pedidoData.items.map((item, index) => (
@@ -343,10 +435,20 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[10px] font-medium text-gray-900 truncate">{item.producto}</div>
-                      <span className="text-[9px] text-gray-500">${item.precio?.toLocaleString()}</span>
+                      <div className="flex items-center">
+                        <span className="text-[9px] text-gray-500 mr-1">$</span>
+                        <input
+                          type="number"
+                          value={item.precio}
+                          onChange={(e) => actualizarPrecio(index, e.target.value)}
+                          className="w-16 text-[9px] border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-500"
+                          step="0.01"
+                        />
+                      </div>
                     </div>
                     <div className="flex items-center gap-0.5">
                       <button
+                        type="button"
                         onClick={() => actualizarCantidad(index, item.cantidad - 1)}
                         className="w-4 h-4 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:bg-gray-50 text-[10px]"
                       >
@@ -354,6 +456,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
                       </button>
                       <span className="w-5 text-center text-[10px] font-medium">{item.cantidad}</span>
                       <button
+                        type="button"
                         onClick={() => actualizarCantidad(index, item.cantidad + 1)}
                         className="w-4 h-4 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:bg-gray-50 text-[10px]"
                       >
@@ -363,7 +466,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
                     <div className="text-[10px] font-semibold text-gray-900 w-12 text-right">
                       ${(item.precio * item.cantidad).toLocaleString()}
                     </div>
-                    <button onClick={() => eliminarItem(index)} className="p-0.5 text-red-500 hover:bg-red-50 rounded">
+                    <button type="button" onClick={() => eliminarItem(index)} className="p-0.5 text-red-500 hover:bg-red-50 rounded">
                       <Trash2 className="w-2.5 h-2.5" />
                     </button>
                   </div>
@@ -375,48 +478,72 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
               </div>
             )}
           </div>
-        </div>
+        </div >
 
         {/* NOTAS */}
         <div>
-          <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Notas (opcional)</label>
           <input
             type="text"
-            className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-            placeholder="Instrucciones especiales, comentarios..."
+            className="w-full px-2 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+            placeholder="Notas (opcional)..."
             value={pedidoData.notas}
             onChange={(e) => setPedidoData({ ...pedidoData, notas: e.target.value })}
           />
         </div>
 
-        {/* TOTAL */}
-        <div className="bg-gray-50 border border-gray-200 rounded-md p-2">
+        {/* TOTAL Y PAGO */}
+        {/* TOTAL Y PAGO */}
+        <div className="bg-gray-50 border border-gray-200 rounded-md p-1.5 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-gray-600">Total del pedido:</span>
-            <span className="text-base font-bold text-gray-900">
+            <span className="text-[11px] font-medium text-gray-600">Total:</span>
+            <span className="text-sm font-bold text-gray-900">
               ${calcularTotal().toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
+
+          <div className="flex items-center justify-between pt-1 border-t border-gray-200">
+            <label className="text-[10px] font-medium text-gray-700">Abonado / Seña:</label>
+            <div className="relative w-24">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">$</span>
+              <input
+                type="number"
+                className="w-full pl-5 pr-1 py-0.5 text-[11px] border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                placeholder="0.00"
+                value={pedidoData.montoPagado}
+                onChange={(e) => setPedidoData({ ...pedidoData, montoPagado: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {(parseFloat(pedidoData.montoPagado) > 0) && (
+            <div className="flex items-center justify-between pt-0.5">
+              <span className="text-[10px] font-medium text-orange-600">Saldo:</span>
+              <span className="text-[11px] font-bold text-orange-600">
+                ${Math.max(0, calcularTotal() - (parseFloat(pedidoData.montoPagado) || 0)).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* BOTONES */}
       <div className="flex gap-2 pt-1">
         <button
+          type="button"
           onClick={closeModal}
           className="flex-1 bg-white text-gray-700 px-2.5 py-1.5 text-[11px] rounded-md hover:bg-gray-50 transition-colors border border-gray-200 font-medium"
         >
           Cancelar
         </button>
         <button
-          onClick={handleGuardar}
+          type="submit"
           disabled={!pedidoData.clienteId || pedidoData.items.length === 0}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 text-[11px] rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 text-[11px] rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isEdit ? "Guardar cambios" : "Crear pedido"}
         </button>
       </div>
-    </div>
+    </form>
   )
 }
 

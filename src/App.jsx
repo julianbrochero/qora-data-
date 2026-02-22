@@ -95,7 +95,14 @@ const SistemaFacturacion = () => {
     actualizarPedido,
     eliminarPedido,
     facturarPedido,
-    marcarPagadoTotal
+    marcarPagadoTotal,
+    agregarPedidoSolo, // ✅ NUEVO
+    marcarPedidoPagadoTotal, // ✅ NUEVO
+    agregarAbonoAPedido, // ✅ NUEVO
+    registrarCobro, // ✅ FUNCIÓN UNIFICADA
+    eliminarFactura, // ✅ NUEVA
+    crearFacturaDirecta, // ✅ NUEVA - para Factura Directa
+    eliminarMovimientoCaja // ✅ NUEVA - para borrar movimientos de caja
   } = useFacturacion();
 
   // ✅ FUNCIÓN CORREGIDA: openModal
@@ -133,45 +140,45 @@ const SistemaFacturacion = () => {
   };
 
   // Funciones de filtrado
+  const searchTermSafe = (searchTerm || '').toLowerCase();
+
   const filtrarClientes = clientes.filter(cliente =>
-    cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.cuit.includes(searchTerm)
+    String(cliente.nombre || '').toLowerCase().includes(searchTermSafe) ||
+    String(cliente.cuit || '').includes(searchTerm)
   );
 
   const filtrarProductos = productos.filter(producto =>
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+    String(producto.nombre || '').toLowerCase().includes(searchTermSafe) ||
+    String(producto.codigo || '').toLowerCase().includes(searchTermSafe)
   );
 
   const filtrarFacturas = facturas.filter(factura =>
-    factura.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    factura.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+    String(factura.numero || '').toLowerCase().includes(searchTermSafe) ||
+    String(factura.cliente || '').toLowerCase().includes(searchTermSafe)
   );
 
   const filtrarProveedores = proveedores.filter(proveedor =>
-    proveedor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    proveedor.cuit.includes(searchTerm)
+    String(proveedor.nombre || '').toLowerCase().includes(searchTermSafe) ||
+    String(proveedor.cuit || '').includes(searchTerm)
   );
 
   const filtrarPedidos = pedidos.filter(pedido =>
-    (pedido.codigo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (pedido.cliente_nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
+    String(pedido.codigo || '').toLowerCase().includes(searchTermSafe) ||
+    String(pedido.cliente_nombre || '').toLowerCase().includes(searchTermSafe)
   );
 
   // ✅ FUNCIÓN PARA GUARDAR VENTAS
+  // En App.jsx, reemplaza la función handleGuardarVenta con esta versión mejorada:
+
   const handleGuardarVenta = async (ventaData, tipoVenta) => {
     console.log('Guardando venta:', { ventaData, tipoVenta });
 
     try {
+      let resultado;
+
       if (tipoVenta === 'pedido') {
-        const resultado = await agregarPedido(ventaData);
-        if (resultado.success) {
-          alert(`Pedido ${resultado.pedido?.codigo} creado exitosamente`);
-          recargarTodosLosDatos();
-          closeModalHandler();
-        }
-      }
-      else if (tipoVenta === 'factura') {
+        resultado = await agregarPedido(ventaData);
+      } else if (tipoVenta === 'factura') {
         const facturaData = {
           id: ventaData.id,
           facturaId: ventaData.facturaId,
@@ -186,17 +193,22 @@ const SistemaFacturacion = () => {
           tipoOperacion: 'venta-productos',
           notas: ventaData.notas || ''
         };
+        resultado = await generarFactura(facturaData);
+      }
 
-        const resultado = await generarFactura(facturaData);
-        if (resultado.success) {
-          alert(`Factura ${resultado.factura?.numero || ''} generada exitosamente`);
-          recargarTodosLosDatos();
-          closeModalHandler();
-        }
+      // ✅ Verificar que resultado existe antes de acceder a .success
+      if (resultado && resultado.success) {
+        alert(`✅ ${tipoVenta === 'pedido' ? 'Pedido' : 'Factura'} creado exitosamente`);
+        await recargarTodosLosDatos(); // Asegúrate de esperar la recarga
+        closeModalHandler();
+      } else {
+        // Si no hay resultado o success es false, mostrar el mensaje de error
+        const mensajeError = resultado?.mensaje || resultado?.error || 'Error desconocido';
+        throw new Error(mensajeError);
       }
     } catch (error) {
-      console.error('Error guardando venta:', error);
-      alert('Error al guardar la venta: ' + error.message);
+      console.error('❌ Error guardando venta:', error);
+      alert('Error al guardar: ' + (error.message || 'Intenta nuevamente'));
     }
   };
 
@@ -248,7 +260,9 @@ const SistemaFacturacion = () => {
           {...commonProps}
           facturas={filtrarFacturas}
           pedidos={filtrarPedidos}
-          onNuevaFactura={() => openModalHandler('nueva-factura')}
+          onNuevaFactura={() => openModalHandler('factura-directa')}
+          registrarCobro={registrarCobro}
+          eliminarFactura={eliminarFactura}
           recargarDatos={recargarTodosLosDatos}
         />
       ),
@@ -270,6 +284,9 @@ const SistemaFacturacion = () => {
           caja={caja}
           movimientosCaja={movimientosCaja}
           cierresCaja={cierresCaja}
+          cerrarCaja={cerrarCaja}
+          eliminarMovimientoCaja={eliminarMovimientoCaja}
+          recargarDatos={recargarTodosLosDatos}
         />
       ),
       reportes: (
@@ -278,12 +295,14 @@ const SistemaFacturacion = () => {
           facturas={filtrarFacturas}
           productos={filtrarProductos}
           clientes={filtrarClientes}
+          pedidos={filtrarPedidos}
         />
       ),
       proveedores: (
         <Proveedores
           {...commonProps}
           proveedores={filtrarProveedores}
+          eliminarProveedor={eliminarProveedor}
         />
       ),
       pedidos: (
@@ -362,6 +381,7 @@ const SistemaFacturacion = () => {
           eliminarItemFactura,
           agregarAbono,
           agregarMovimientoCaja,
+          registrarMovimiento: agregarMovimientoCaja, // alias para MovimientoCajaForm
           cerrarCaja,
           agregarPedido,
           actualizarEstadoPedido,
@@ -371,7 +391,12 @@ const SistemaFacturacion = () => {
           guardarVenta: handleGuardarVenta,
           eliminarPedido,
           facturarPedido: handleFacturarPedido, // ✅ AÑADIDO
-          marcarPagadoTotal // ✅ AÑADIDO
+          marcarPagadoTotal, // ✅ AÑADIDO
+          agregarPedidoSolo, // ✅ NUEVO
+          marcarPedidoPagadoTotal, // ✅ NUEVO
+          agregarAbonoAPedido, // ✅ NUEVO
+          registrarCobro, // ✅ NUEVO - para Factura Directa
+          crearFacturaDirecta, // ✅ NUEVO - para Factura Directa
         }}
       />
     </div>

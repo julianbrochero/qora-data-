@@ -12,7 +12,6 @@ import {
   CheckCircle,
   AlertCircle,
   ChevronRight,
-  Plus,
   UserPlus,
   PackagePlus,
   FileBarChart,
@@ -480,10 +479,9 @@ const Dashboard = ({
     }
   };
 
-  // ✅ CORREGIDO: Ahora abre el modal 'nueva-venta'
   const handleNuevoPedido = () => {
     if (openModal) {
-      openModal('nueva-venta');
+      openModal('nuevo-pedido');
     }
   };
 
@@ -510,8 +508,8 @@ const Dashboard = ({
         {/* BOTONES DE ACCIÓN RÁPIDA - Tamaño ajustado */}
         <div className="flex gap-1.5">
           <QuickActionButton
-            icon={Plus}
-            label="Nueva Venta"
+            icon={PackagePlus}
+            label="Nuevo Pedido"
             onClick={handleNuevoPedido}
           />
           <QuickActionButton

@@ -12,7 +12,10 @@ const VentaForm = ({
   closeModal,
   openModal
 }) => {
-  const [busquedaCliente, setBusquedaCliente] = useState("")
+  const isEdit = type === "editar-pedido" || type === "editar-factura"
+
+  // En modo edición, pre-rellenar el campo de cliente con el nombre del pedido
+  const [busquedaCliente, setBusquedaCliente] = useState(isEdit && pedido?.cliente_nombre ? pedido.cliente_nombre : "")
   const [busquedaProducto, setBusquedaProducto] = useState("")
   const [mostrarDropdownCliente, setMostrarDropdownCliente] = useState(false)
   const [mostrarDropdownProducto, setMostrarDropdownProducto] = useState(false)
@@ -20,8 +23,6 @@ const VentaForm = ({
 
   const clienteRef = useRef(null)
   const productoRef = useRef(null)
-
-  const isEdit = type === "editar-pedido" || type === "editar-factura"
 
   const [ventaData, setVentaData] = useState({
     id: pedido?.id || null,
@@ -143,17 +144,43 @@ const VentaForm = ({
     setVentaData({ ...ventaData, items: items.filter((_, i) => i !== index) })
   }
 
-  const handleGuardarVenta = () => {
+  const handleGuardarVenta = async () => {
     if (!ventaData.clienteId) { alert("Selecciona un cliente"); return }
     if (items.length === 0) { alert("Agrega al menos un producto"); return }
 
+    const total = calcularTotal()
+
+    // ── MODO EDICIÓN: actualizar pedido existente ──────────────────────────
+    if (isEdit && ventaData.id) {
+      const camposActualizar = {
+        cliente_id: ventaData.clienteId,
+        cliente_nombre: ventaData.clienteNombre,
+        fecha_pedido: ventaData.fechaVenta,
+        fecha_entrega_estimada: ventaData.fechaEntrega || null,
+        items: JSON.stringify(ventaData.items),
+        total: total,
+        notas: ventaData.notas || null,
+        estado: ventaData.estadoOperativo || 'pendiente',
+      }
+
+      if (formActions?.actualizarPedido) {
+        const resultado = await formActions.actualizarPedido(ventaData.id, camposActualizar)
+        if (resultado?.success) {
+          closeModal()
+        } else {
+          alert('Error al guardar cambios: ' + (resultado?.mensaje || 'Error desconocido'))
+        }
+      }
+      return
+    }
+
+    // ── MODO CREACIÓN: crear nuevo pedido/factura ──────────────────────────
     const ventaCompleta = {
       ...ventaData,
-      total: calcularTotal(),
+      total,
       saldoPendiente: calcularSaldoPendiente(),
-      tipoVenta: "factura", // Siempre factura
+      tipoVenta: "factura",
       fechaRegistro: new Date().toISOString(),
-      // Determinar estado operativo basado en el pago
       estadoOperativo: calcularSaldoPendiente() === 0 ? "entregado" :
         ventaData.fechaEntrega ? "pendiente" : "preparando"
     }
@@ -210,10 +237,10 @@ const VentaForm = ({
       <div className="pb-1.5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-bold text-gray-900">
-            {isEdit ? "Editar venta" : "Nueva Venta"}
+            {isEdit ? "Editar Pedido" : "Nueva Venta"}
           </h3>
           <p className="text-[10px] text-gray-500">
-            Creará factura y pedido automáticamente
+            {isEdit ? "Modificá los datos del pedido" : "Creará factura y pedido automáticamente"}
           </p>
         </div>
       </div>

@@ -2,9 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Variables de tema ───────────────────────────────────────────────────── */
+:root {
+  --bg-app:       #f9fafb;
+  --bg-surface:   #ffffff;
+  --bg-muted:     #f3f4f6;
+  --border:       #e5e7eb;
+  --text-primary: #111827;
+  --text-muted:   #6b7280;
+  --text-xs:      #9ca3af;
+}
+
+.dark {
+  --bg-app:       #0f1117;
+  --bg-surface:   #1a1d27;
+  --bg-muted:     #252836;
+  --border:       #2e3347;
+  --text-primary: #f1f5f9;
+  --text-muted:   #94a3b8;
+  --text-xs:      #64748b;
+}
+
+/* ── Reset base ──────────────────────────────────────────────────────────── */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Transiciones globales suaves ────────────────────────────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* ── Scrollbar dark mode ─────────────────────────────────────────────────── */
+.dark ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #1a1d27;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2e3347;
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3d4460;
+}
+
+/* ── Inputs dark mode ────────────────────────────────────────────────────── */
+.dark input,
+.dark select,
+.dark textarea {
+  color-scheme: dark;
 }
