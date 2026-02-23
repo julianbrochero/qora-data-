@@ -23,10 +23,10 @@ import {
 const QuickActionButton = ({ icon: Icon, label, onClick }) => (
   <button
     onClick={onClick}
-    className="group flex items-center gap-2 px-3 py-1.5 bg-[#2b2b2b] hover:bg-[#3b3b3b] border border-[#3b3b3b] rounded-lg transition-all duration-200 hover:shadow-lg text-white text-xs"
+    className="group flex items-center justify-center gap-2 px-3 py-2 bg-[#2b2b2b] hover:bg-[#3b3b3b] border border-[#3b3b3b] rounded-lg transition-all duration-200 hover:shadow-lg text-white text-xs w-full"
   >
-    <Icon size={12} className="text-white" />
-    <span className="font-medium">{label}</span>
+    <Icon size={12} className="text-white flex-shrink-0" />
+    <span className="font-medium truncate">{label}</span>
   </button>
 )
 
@@ -501,8 +501,8 @@ const Dashboard = ({
 
   return (
     <div className="space-y-3">
-      {/* HEADER - Tamaño ajustado */}
-      <div className="flex justify-between items-start">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
           <p className="text-xs text-gray-500 mt-0.5">
@@ -515,8 +515,8 @@ const Dashboard = ({
           </p>
         </div>
 
-        {/* BOTONES DE ACCIÓN RÁPIDA - Tamaño ajustado */}
-        <div className="flex gap-1.5">
+        {/* BOTONES DE ACCIÓN RÁPIDA — grilla 2x2 en mobile, fila en desktop */}
+        <div className="grid grid-cols-2 sm:flex gap-1.5 sm:gap-1.5">
           <QuickActionButton
             icon={PackagePlus}
             label="Nuevo Pedido"

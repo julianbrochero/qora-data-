@@ -371,44 +371,44 @@ const Pedidos = ({
   return (
     <div className="space-y-3">
       {/* HEADER */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Gestión de Pedidos</h2>
           <p className="text-xs text-gray-500 mt-0.5">Seguimiento operativo y calendario de trabajo</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Selector de vista */}
           <div className="flex bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setVistaActiva("lista")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "lista"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "lista"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               <List size={12} />
-              Lista
+              <span className="hidden sm:inline">Lista</span>
             </button>
             <button
               onClick={() => setVistaActiva("semana")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "semana"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "semana"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               <CalendarDays size={12} />
-              Semana
+              <span className="hidden sm:inline">Semana</span>
             </button>
             <button
               onClick={() => setVistaActiva("mes")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "mes"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "mes"
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               <Calendar size={12} />
-              Mes
+              <span className="hidden sm:inline">Mes</span>
             </button>
           </div>
 
@@ -421,7 +421,7 @@ const Pedidos = ({
               }`}
           >
             <CheckSquare size={12} />
-            {modoSeleccion ? 'Cancelar selección' : 'Seleccionar'}
+            <span className="hidden sm:inline">{modoSeleccion ? 'Cancelar' : 'Seleccionar'}</span>
           </button>
 
           {/* BOTÓN NUEVO PEDIDO */}
@@ -430,7 +430,7 @@ const Pedidos = ({
             className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
           >
             <Plus size={12} />
-            Nuevo Pedido
+            <span>Nuevo Pedido</span>
           </button>
         </div>
       </div>
