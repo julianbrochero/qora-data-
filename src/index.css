@@ -4,62 +4,320 @@
 
 /* ── Variables de tema ───────────────────────────────────────────────────── */
 :root {
-  --bg-app:       #f9fafb;
-  --bg-surface:   #ffffff;
-  --bg-muted:     #f3f4f6;
-  --border:       #e5e7eb;
+  --bg-app: #f9fafb;
+  --bg-surface: #ffffff;
+  --bg-muted: #f3f4f6;
+  --border: #e5e7eb;
   --text-primary: #111827;
-  --text-muted:   #6b7280;
-  --text-xs:      #9ca3af;
+  --text-muted: #6b7280;
+  --text-xs: #9ca3af;
+  --accent: #2b2b2b;
+  --accent-hover: #3b3b3b;
+  --accent-light: rgba(43, 43, 43, 0.1);
 }
 
+/* ─── DARK MODE — Gris carbón puro, sin tinte azul ───────────────────────
+   bg-app:     #111111   negro carbón
+   bg-surface: #1a1a1a   gris oscuro cards
+   bg-muted:   #222222   hover / inputs / filas
+   border:     #2e2e2e   bordes neutros
+   accent:     #8B5CF6   violeta (único color de acento)
+   ────────────────────────────────────────────────────────────────────────── */
 .dark {
-  --bg-app:       #0f1117;
-  --bg-surface:   #1a1d27;
-  --bg-muted:     #252836;
-  --border:       #2e3347;
-  --text-primary: #f1f5f9;
-  --text-muted:   #94a3b8;
-  --text-xs:      #64748b;
+  --bg-app: #111111;
+  --bg-surface: #1a1a1a;
+  --bg-muted: #222222;
+  --border: #2e2e2e;
+  --text-primary: #f0f0f0;
+  --text-muted: #9ca3af;
+  --text-xs: #6b7280;
+  --accent: #8B5CF6;
+  --accent-hover: #7C3AED;
+  --accent-light: rgba(139, 92, 246, 0.12);
 }
 
 /* ── Reset base ──────────────────────────────────────────────────────────── */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   background-color: var(--bg-app);
   color: var(--text-primary);
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* ── Transiciones globales suaves ────────────────────────────────────────── */
-*, *::before, *::after {
-  transition-property: background-color, border-color, color;
-  transition-duration: 150ms;
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 200ms;
   transition-timing-function: ease;
 }
 
-/* ── Scrollbar dark mode ─────────────────────────────────────────────────── */
-.dark ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-.dark ::-webkit-scrollbar-track {
-  background: #1a1d27;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: #2e3347;
-  border-radius: 3px;
-}
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #3d4460;
+/* ══════════════════════════════════════════════════════════════════════════
+   DARK MODE GLOBAL OVERRIDES — Gris carbón, sin azul
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fondos ─────────────────────────────────────────────────────────────── */
+.dark .bg-white {
+  background-color: #1a1a1a !important;
 }
 
-/* ── Inputs dark mode ────────────────────────────────────────────────────── */
+.dark .bg-gray-50 {
+  background-color: #222222 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #272727 !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: #2e2e2e !important;
+}
+
+/* Filas dentro de cards — bg-gray-50/50 usa opacity, se captura así: */
+.dark [class*="bg-gray-50"] {
+  background-color: #242424 !important;
+}
+
+/* ── Bordes ─────────────────────────────────────────────────────────────── */
+.dark .border-gray-100 {
+  border-color: #2e2e2e !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #2e2e2e !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #383838 !important;
+}
+
+.dark [class*="divide-gray"]>* {
+  border-color: #2e2e2e !important;
+}
+
+/* ── Textos ─────────────────────────────────────────────────────────────── */
+.dark .text-gray-900 {
+  color: #f0f0f0 !important;
+}
+
+.dark .text-gray-800 {
+  color: #e0e0e0 !important;
+}
+
+.dark .text-gray-700 {
+  color: #b0b0b0 !important;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.dark .text-gray-500 {
+  color: #7a7a7a !important;
+}
+
+.dark .text-gray-400 {
+  color: #6b7280 !important;
+}
+
+/* ── Hover backgrounds ──────────────────────────────────────────────────── */
+.dark .hover\:bg-gray-50:hover {
+  background-color: #262626 !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #2e2e2e !important;
+}
+
+/* ── Inputs / Select / Textarea ─────────────────────────────────────────── */
 .dark input,
 .dark select,
 .dark textarea {
   color-scheme: dark;
+  background-color: #222222 !important;
+  border-color: #2e2e2e !important;
+  color: #f0f0f0 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #555555 !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.18) !important;
+  outline: none !important;
+}
+
+/* ── Sombras ─────────────────────────────────────────────────────────────── */
+.dark .shadow-sm {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55) !important;
+}
+
+.dark .shadow-xs {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65) !important;
+}
+
+/* ── Tabla thead ─────────────────────────────────────────────────────────── */
+.dark thead {
+  background-color: #141414 !important;
+}
+
+.dark tbody {
+  background-color: #1a1a1a !important;
+}
+
+/* ── Badges de estado ───────────────────────────────────────────────────── */
+.dark .bg-green-50,
+.dark .bg-green-100 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+.dark .border-green-200 {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.dark .text-green-700,
+.dark .text-green-600 {
+  color: #34d399 !important;
+}
+
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+}
+
+.dark .border-red-100,
+.dark .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.dark .text-red-700,
+.dark .text-red-600 {
+  color: #f87171 !important;
+}
+
+.dark .text-red-500 {
+  color: #f87171 !important;
+}
+
+.dark .bg-yellow-50,
+.dark .bg-yellow-100,
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+
+.dark .border-yellow-200,
+.dark .border-amber-200 {
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+
+.dark .text-yellow-700,
+.dark .text-amber-700 {
+  color: #fbbf24 !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
+
+.dark .border-blue-100,
+.dark .border-blue-200 {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .text-blue-700,
+.dark .text-blue-600 {
+  color: #60a5fa !important;
+}
+
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.12) !important;
+}
+
+.dark .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+}
+
+.dark .text-indigo-600 {
+  color: #a5b4fc !important;
+}
+
+/* ── Botones primarios → violeta ─────────────────────────────────────────── */
+.dark .bg-\[#2b2b2b\] {
+  background-color: #8B5CF6 !important;
+}
+
+.dark .hover\:bg-\[#3b3b3b\]:hover {
+  background-color: #7C3AED !important;
+}
+
+.dark .bg-blue-600 {
+  background-color: #8B5CF6 !important;
+}
+
+.dark .hover\:bg-blue-700:hover {
+  background-color: #7C3AED !important;
+}
+
+.dark .text-\[#2b2b2b\] {
+  color: #a78bfa !important;
+}
+
+.dark .bg-green-600 {
+  background-color: #10b981 !important;
+}
+
+.dark .hover\:bg-green-700:hover {
+  background-color: #059669 !important;
+}
+
+/* Hover de links con acento */
+.dark .hover\:bg-\[#2b2b2b\]\/10:hover {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+.dark .bg-\[#2b2b2b\]\/10 {
+  background-color: rgba(139, 92, 246, 0.08) !important;
+}
+
+.dark .border-\[#2b2b2b\]\/20 {
+  border-color: rgba(139, 92, 246, 0.18) !important;
+}
+
+.dark .border-\[#2b2b2b\]\/30 {
+  border-color: rgba(139, 92, 246, 0.25) !important;
+}
+
+/* ── Modal overlay ───────────────────────────────────────────────────────── */
+.dark .bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.78) !important;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+.dark ::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #8B5CF6;
 }

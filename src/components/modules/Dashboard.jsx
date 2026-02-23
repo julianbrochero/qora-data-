@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTheme } from "../../lib/ThemeContext"
 import {
   DollarSign,
   FileText,
@@ -29,39 +30,48 @@ const QuickActionButton = ({ icon: Icon, label, onClick }) => (
   </button>
 )
 
-const MetricCard = ({ title, value, subtitle, icon: Icon, change, period = "vs mes anterior" }) => (
-  <div className="bg-white border border-gray-300 shadow-sm p-3 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[110px] flex flex-col justify-between relative overflow-hidden">
-    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#2b2b2b]/5 to-transparent rounded-full blur-xl" />
+const MetricCard = ({ title, value, subtitle, icon: Icon, change, period = "vs mes anterior" }) => {
+  const { darkMode } = useTheme()
+  return (
+    <div className="bg-white border border-gray-300 shadow-sm p-3 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[110px] flex flex-col justify-between relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-[#2b2b2b]/5 to-transparent rounded-full blur-xl" />
 
-    <div className="flex items-start justify-between relative z-10">
-      <div className="flex-1">
-        <div className="flex items-center gap-1.5 mb-1">
-          <div className="p-1.5 rounded-full flex-shrink-0 transition-transform duration-200 bg-[#2b2b2b]/10 border border-[#2b2b2b]/20">
-            <Icon size={12} className="text-[#2b2b2b]" />
+      <div className="flex items-start justify-between relative z-10">
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5 mb-1">
+            <div
+              style={darkMode
+                ? { border: '1px solid rgba(249,115,22,0.45)', borderRadius: '50%', padding: '5px', color: '#fb923c' }
+                : { backgroundColor: 'rgba(43,43,43,0.1)', border: '1px solid rgba(43,43,43,0.2)', borderRadius: '50%', padding: '5px' }
+              }
+              className="flex-shrink-0 transition-all duration-200"
+            >
+              <Icon size={12} className={darkMode ? "" : "text-[#2b2b2b]"} />
+            </div>
+            <h3 className="text-xs font-medium text-gray-500 leading-tight">{title}</h3>
           </div>
-          <h3 className="text-xs font-medium text-gray-500 leading-tight">{title}</h3>
+          <p className="text-base font-bold text-gray-900 mb-0.5">{value}</p>
         </div>
-        <p className="text-base font-bold text-gray-900 mb-0.5">{value}</p>
       </div>
-    </div>
 
-    <div className="mt-1 relative z-10">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">{subtitle}</p>
-        {change && (
-          <div
-            className={`flex items-center gap-0.5 text-xs font-medium ${change > 0 ? "text-green-600" : "text-red-600"
-              }`}
-          >
-            {change > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-            <span>{Math.abs(change)}%</span>
-          </div>
-        )}
+      <div className="mt-1 relative z-10">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500">{subtitle}</p>
+          {change && (
+            <div
+              className={`flex items-center gap-0.5 text-xs font-medium ${change > 0 ? "text-green-600" : "text-red-600"
+                }`}
+            >
+              {change > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+              <span>{Math.abs(change)}%</span>
+            </div>
+          )}
+        </div>
+        {change && <p className="text-[10px] text-gray-400 text-right mt-0.5">{period}</p>}
       </div>
-      {change && <p className="text-[10px] text-gray-400 text-right mt-0.5">{period}</p>}
     </div>
-  </div>
-)
+  )
+}
 
 const SimpleChart = ({ data }) => {
   const maxValue = Math.max(...data.map((d) => d.value))

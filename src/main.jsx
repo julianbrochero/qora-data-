@@ -5,14 +5,17 @@ import App from './App'
 import './index.css'
 import { HeroUIProvider } from "@heroui/react";
 import { AuthProvider } from './lib/AuthContext';
+import { ThemeProvider } from './lib/ThemeContext';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <HeroUIProvider>
-          <App />
-        </HeroUIProvider>
+        <ThemeProvider>
+          <HeroUIProvider>
+            <App />
+          </HeroUIProvider>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

@@ -2,6 +2,7 @@
 
 import React from "react"
 import { useAuth } from "../../lib/AuthContext"
+import { useTheme } from "../../lib/ThemeContext"
 import {
   Home,
   FileText,
@@ -18,6 +19,7 @@ import {
 
 const Sidebar = ({ activeModule, setActiveModule }) => {
   const { user, logout } = useAuth()
+  const { darkMode } = useTheme()
 
   const menuItems = [
     { id: "dashboard", icon: Home, label: "Dashboard" },
@@ -31,7 +33,13 @@ const Sidebar = ({ activeModule, setActiveModule }) => {
   ]
 
   return (
-    <div className="w-52 bg-white border-r border-gray-200 flex flex-col fixed left-0 top-0 bottom-0 z-50">
+    <div
+      className="w-52 border-r flex flex-col fixed left-0 top-0 bottom-0 z-50"
+      style={{
+        backgroundColor: darkMode ? '#161616' : '#ffffff',
+        borderColor: darkMode ? '#2e2e2e' : '#e5e7eb'
+      }}
+    >
 
       {/* HEADER */}
       <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
@@ -55,22 +63,34 @@ const Sidebar = ({ activeModule, setActiveModule }) => {
             <button
               key={item.id}
               onClick={() => setActiveModule(item.id)}
+              style={isActive
+                ? darkMode
+                  ? { background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)', color: '#fff' }
+                  : { background: '#111111', color: '#fff' }
+                : {}}
               className={`
                 w-full flex items-center gap-2.5 py-2 px-3 rounded-lg
                 transition-all duration-150 outline-none border-0
                 focus:outline-none focus:ring-0 appearance-none
                 group relative
                 ${isActive
-                  ? "bg-[#2b2b2b] text-white shadow-sm"
+                  ? "text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }
               `}
               type="button"
             >
-              <item.icon
-                size={14}
-                className={`flex-shrink-0 transition-colors ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`}
-              />
+              <div
+                style={!isActive && darkMode
+                  ? { border: '1px solid rgba(249,115,22,0.45)', borderRadius: '6px', padding: '3px', color: '#fb923c' }
+                  : { padding: '3px' }
+                }
+              >
+                <item.icon
+                  size={13}
+                  className={`flex-shrink-0 transition-colors ${isActive ? "text-white" : darkMode ? "" : "text-gray-400 group-hover:text-gray-600"}`}
+                />
+              </div>
               <span className="text-[11.5px] font-medium tracking-tight flex-1 text-left">
                 {item.label}
               </span>
@@ -87,11 +107,21 @@ const Sidebar = ({ activeModule, setActiveModule }) => {
         {/* Configuración */}
         <div className="px-2.5 pt-2.5 pb-1">
           <button
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-lg transition-colors outline-none border-0 focus:outline-none focus:ring-0 appearance-none group"
+            onClick={() => setActiveModule("configuracion")}
+            style={activeModule === "configuracion"
+              ? darkMode
+                ? { background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)', color: '#fff' }
+                : { background: '#111111', color: '#fff' }
+              : {}}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors outline-none border-0 focus:outline-none focus:ring-0 appearance-none group ${activeModule === "configuracion"
+              ? "text-white shadow-sm"
+              : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+              }`}
             type="button"
           >
-            <Settings size={14} className="flex-shrink-0 text-gray-400 group-hover:text-gray-500" />
-            <span className="text-[11.5px] font-medium tracking-tight">Configuración</span>
+            <Settings size={14} className={`flex-shrink-0 ${activeModule === "configuracion" ? "text-white" : "text-gray-400 group-hover:text-gray-500"
+              }`} />
+            <span className="text-[11.5px] font-medium tracking-tight flex-1 text-left">Configuración</span>
           </button>
         </div>
 

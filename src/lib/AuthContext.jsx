@@ -23,21 +23,21 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth event:', event);
-        
+
         const currentUser = session?.user || null;
         setUser(currentUser);
-        
-        if (event === 'SIGNED_IN' && window.location.pathname === '/auth/callback') {
+
+        if (event === 'SIGNED_IN' && window.location.pathname.includes('/auth/callback')) {
           // Pequeño delay para asegurar que todo esté listo
           setTimeout(() => {
             navigate('/', { replace: true });
           }, 500);
         }
-        
+
         if (event === 'SIGNED_OUT') {
           navigate('/login', { replace: true });
         }
-        
+
         setLoading(false);
       }
     );
@@ -48,15 +48,17 @@ export const AuthProvider = ({ children }) => {
   // Login simplificado - CONFÍA EN SUPABASE
   const loginWithGoogle = async () => {
     setLoading(true);
-    
+
+    // Detectar si estamos en GitHub Pages (subfolder) o local
+    const base = import.meta.env.BASE_URL || '/'
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // Deja que Supabase maneje la redirección
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}${base}auth/callback`
       }
     });
-    
+
     if (error) {
       console.error('Error Google login:', error);
       alert('Error: ' + error.message);
@@ -71,11 +73,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading: loading && !authChecked, 
-      loginWithGoogle, 
-      logout 
+    <AuthContext.Provider value={{
+      user,
+      loading: loading && !authChecked,
+      loginWithGoogle,
+      logout
     }}>
       {children}
     </AuthContext.Provider>

@@ -12,6 +12,7 @@ import ControlCaja from './components/modules/ControlCaja';
 import Reportes from './components/modules/Reportes';
 import Proveedores from './components/modules/Proveedores';
 import Pedidos from './components/modules/Pedidos';
+import Configuracion from './components/modules/Configuracion';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
 
@@ -316,7 +317,8 @@ const SistemaFacturacion = () => {
           facturarPedido={handleFacturarPedido}
           recargarDatos={recargarTodosLosDatos}
         />
-      )
+      ),
+      configuracion: <Configuracion />,
     }[activeModule] || (
         <Dashboard
           {...commonProps}
@@ -330,7 +332,7 @@ const SistemaFacturacion = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-app)' }}>
       <Sidebar
         activeModule={activeModule}
         setActiveModule={setActiveModule}
