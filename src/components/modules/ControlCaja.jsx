@@ -1,7 +1,12 @@
-import React, { useState } from 'react'
-import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, X, Trash2 } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, X, Trash2, ChevronLeft, ChevronRight as ChevronR } from 'lucide-react'
 
-const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openModal, cerrarCaja, eliminarMovimientoCaja, recargarDatos }) => {
+const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openModal, cerrarCaja, eliminarMovimientoCaja, cargarMovimientosPorFecha, recargarDatos }) => {
+  const hoyStr = new Date().toISOString().split('T')[0]
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyStr)
+  const [movimientosVista, setMovimientosVista] = useState(null)   // null = usa prop del día actual
+  const [cajaVista, setCajaVista] = useState(null)                 // null = usa prop del día actual
+  const [cargandoFecha, setCargandoFecha] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filtroTipo, setFiltroTipo] = useState("todos")
   const [filtroCategoria, setFiltroCategoria] = useState("todas")
@@ -10,17 +15,54 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
   const [mostrarConfirmCierre, setMostrarConfirmCierre] = useState(false)
   const [observacionesCierre, setObservacionesCierre] = useState("")
   const [cerrando, setCerrando] = useState(false)
-  const [confirmandoBorrar, setConfirmandoBorrar] = useState(null) // id del movimiento a borrar
+  const [confirmandoBorrar, setConfirmandoBorrar] = useState(null)
   const [borrando, setBorrando] = useState(false)
 
-  // Datos seguros
-  const cajaSegura = {
-    ingresos: Number.parseFloat(caja.ingresos) || 0,
-    egresos: Number.parseFloat(caja.egresos) || 0,
-    saldo: Number.parseFloat(caja.saldo) || 0
+  const esHoy = fechaSeleccionada === hoyStr
+
+  // Fuente de datos: si es hoy usa las props en tiempo real, si es otro día usa lo cargado
+  const movimientosActivos = movimientosVista !== null ? movimientosVista : movimientosCaja
+  const cajaActiva = cajaVista !== null ? cajaVista : caja
+
+  // Cargar cuando cambia la fecha (solo para días que no son hoy)
+  const cambiarFecha = useCallback(async (nuevaFecha) => {
+    setFechaSeleccionada(nuevaFecha)
+    setPaginaActual(1)
+    setSearchTerm("")
+    setFiltroTipo("todos")
+    if (nuevaFecha === hoyStr) {
+      // Volver a datos en vivo
+      setMovimientosVista(null)
+      setCajaVista(null)
+    } else {
+      setCargandoFecha(true)
+      const resultado = await cargarMovimientosPorFecha(nuevaFecha)
+      setMovimientosVista(resultado.movimientos)
+      setCajaVista(resultado.caja)
+      setCargandoFecha(false)
+    }
+  }, [cargarMovimientosPorFecha, hoyStr])
+
+  const irDiaAnterior = () => {
+    const d = new Date(fechaSeleccionada)
+    d.setDate(d.getDate() - 1)
+    cambiarFecha(d.toISOString().split('T')[0])
   }
 
-  const movimientosSeguros = Array.isArray(movimientosCaja) ? movimientosCaja : []
+  const irDiaSiguiente = () => {
+    const d = new Date(fechaSeleccionada)
+    d.setDate(d.getDate() + 1)
+    const nueva = d.toISOString().split('T')[0]
+    if (nueva <= hoyStr) cambiarFecha(nueva)
+  }
+
+  const cajaSegura = {
+    ingresos: Number.parseFloat(cajaActiva.ingresos) || 0,
+    egresos: Number.parseFloat(cajaActiva.egresos) || 0,
+    saldo: Number.parseFloat(cajaActiva.saldo) || 0
+  }
+
+  const movimientosSeguros = Array.isArray(movimientosActivos) ? movimientosActivos : []
   const cierresSeguros = Array.isArray(cierresCaja) ? cierresCaja : []
 
   // Filtrar movimientos
@@ -113,35 +155,85 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
   return (
     <div className="space-y-3">
       {/* HEADER */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start flex-wrap gap-2">
         <div>
           <h2 className="text-xl font-bold text-gray-900">Control de Caja</h2>
           <p className="text-xs text-gray-500 mt-0.5">Gestión de ingresos y egresos</p>
         </div>
 
-        {/* BOTONES SUPERIORES */}
+        {/* SELECTOR DE FECHA */}
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
+          <Calendar size={13} className="text-gray-400 flex-shrink-0" />
+          <button
+            onClick={irDiaAnterior}
+            className="p-0.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+            title="Día anterior"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <input
+            type="date"
+            value={fechaSeleccionada}
+            max={hoyStr}
+            onChange={e => cambiarFecha(e.target.value)}
+            className="text-xs font-medium text-gray-700 border-0 bg-transparent outline-none cursor-pointer"
+          />
+          <button
+            onClick={irDiaSiguiente}
+            disabled={fechaSeleccionada >= hoyStr}
+            className="p-0.5 rounded hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Día siguiente"
+          >
+            <ChevronR size={14} />
+          </button>
+          {!esHoy && (
+            <button
+              onClick={() => cambiarFecha(hoyStr)}
+              className="ml-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              Hoy
+            </button>
+          )}
+          {cargandoFecha && (
+            <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin ml-1" />
+          )}
+        </div>
+
+        {/* BOTONES SUPERIORES — solo visibles si es hoy */}
         <div className="flex gap-1.5">
-          <button
-            onClick={() => openModal && openModal("ingreso-caja")}
-            className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-          >
-            <Plus size={12} />
-            Ingreso
-          </button>
-          <button
-            onClick={() => openModal && openModal("egreso-caja")}
-            className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-          >
-            <Plus size={12} />
-            Egreso
-          </button>
-          <button
-            onClick={() => setMostrarConfirmCierre(true)}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-          >
-            <CreditCard size={12} />
-            Cerrar Caja
-          </button>
+          {esHoy && (
+            <>
+              <button
+                onClick={() => openModal && openModal("ingreso-caja")}
+                className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
+              >
+                <Plus size={12} />
+                Ingreso
+              </button>
+              <button
+                onClick={() => openModal && openModal("egreso-caja")}
+                className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
+              >
+                <Plus size={12} />
+                Egreso
+              </button>
+              <button
+                onClick={() => setMostrarConfirmCierre(true)}
+                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
+              >
+                <CreditCard size={12} />
+                Cerrar Caja
+              </button>
+            </>
+          )}
+          {!esHoy && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
+              <Calendar size={12} className="text-amber-600" />
+              <span className="text-xs font-medium text-amber-700">
+                {new Date(fechaSeleccionada + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

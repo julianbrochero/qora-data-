@@ -227,6 +227,43 @@ export const useFacturacion = () => {
     }
   }
 
+  // Cargar movimientos de una fecha específica (selector de fecha en ControlCaja)
+  const cargarMovimientosPorFecha = async (fechaStr) => {
+    try {
+      if (!user) return { movimientos: [], caja: { ingresos: 0, egresos: 0, saldo: 0 } }
+
+      const fechaSiguiente = new Date(fechaStr)
+      fechaSiguiente.setDate(fechaSiguiente.getDate() + 1)
+      const fechaFin = fechaSiguiente.toISOString().split('T')[0]
+
+      const { data: movimientos, error } = await supabase
+        .from('movimientos_caja')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('fecha', fechaStr)
+        .lt('fecha', fechaFin)
+        .order('fecha', { ascending: false })
+
+      if (error) {
+        console.error('Error cargando movimientos por fecha:', error)
+        return { movimientos: [], caja: { ingresos: 0, egresos: 0, saldo: 0 } }
+      }
+
+      const lista = movimientos || []
+      let ingresos = 0
+      let egresos = 0
+      lista.forEach(m => {
+        if (m.tipo === 'ingreso') ingresos += parseFloat(m.monto) || 0
+        else if (m.tipo === 'egreso') egresos += parseFloat(m.monto) || 0
+      })
+
+      return { movimientos: lista, caja: { ingresos, egresos, saldo: ingresos - egresos } }
+    } catch (err) {
+      console.error('Error cargarMovimientosPorFecha:', err)
+      return { movimientos: [], caja: { ingresos: 0, egresos: 0, saldo: 0 } }
+    }
+  }
+
   // ========== FUNCIONES NUEVAS PARA PEDIDOS SIMPLES ==========
 
   // 1. Helper para generar número de factura
@@ -1740,6 +1777,7 @@ export const useFacturacion = () => {
     cambiarTipoOperacion,
     cargarDatos,
     recargarTodosLosDatos,
+    cargarMovimientosPorFecha,
     openModal,
     closeModal
   }

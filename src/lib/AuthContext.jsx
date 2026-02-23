@@ -49,13 +49,15 @@ export const AuthProvider = ({ children }) => {
   const loginWithGoogle = async () => {
     setLoading(true);
 
-    // Detectar si estamos en GitHub Pages (subfolder) o local
+    // Detectar si estamos en GitHub Pages (subfolder) o local/Vercel
     const base = import.meta.env.BASE_URL || '/'
+    // Limpiar posibles dobles slashes, excepto el de https://
+    const redirectUrl = `${window.location.origin}${base}auth/callback`.replace(/([^:]\/)\/+/g, "$1");
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}${base}auth/callback`
+        redirectTo: redirectUrl
       }
     });
 

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from 'react'
-import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search } from 'lucide-react'
+import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const Reportes = ({
   facturas = [],
@@ -12,6 +12,8 @@ const Reportes = ({
   setSearchTerm
 }) => {
   const [periodo, setPeriodo] = useState("mes") // dia, semana, mes, anio, todos
+  const anioActualReal = new Date().getFullYear()
+  const [anioSeleccionado, setAnioSeleccionado] = useState(anioActualReal)
 
   const facturasSafe = Array.isArray(facturas) ? facturas : []
   const clientesSafe = Array.isArray(clientes) ? clientes : []
@@ -144,6 +146,30 @@ const Reportes = ({
     return Object.values(mapa).sort((a, b) => b.cantidad - a.cantidad).slice(0, 10)
   }, [facturasFiltradas])
 
+  // 5. Resumen mensual del año seleccionado (navegable)
+  const resumenMensual = useMemo(() => {
+    const meses = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ]
+    return meses.map((nombre, idx) => {
+      const facturasDelMes = facturasSafe.filter(f => {
+        if (f.estado === 'anulada') return false
+        const d = new Date(f.fecha + 'T00:00:00')
+        return d.getFullYear() === anioSeleccionado && d.getMonth() === idx
+      })
+      const pedidosDelMes = Array.isArray(pedidos) ? pedidos.filter(p => {
+        const d = new Date((p.created_at || p.fecha || '').split('T')[0] + 'T00:00:00')
+        return d.getFullYear() === anioSeleccionado && d.getMonth() === idx
+      }) : []
+      const totalFacturado = facturasDelMes.reduce((s, f) => s + (parseFloat(f.total) || 0), 0)
+      const totalCobrado = facturasDelMes.reduce((s, f) => s + (parseFloat(f.montopagado) || 0), 0)
+      const cantFacturas = facturasDelMes.length
+      const cantPedidos = pedidosDelMes.length
+      return { nombre, idx, totalFacturado, totalCobrado, cantFacturas, cantPedidos }
+    })
+  }, [facturasSafe, pedidos, anioSeleccionado])
+
   const formatearMonto = (monto) => {
     const numero = Number.parseFloat(monto) || 0
     return numero.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -151,7 +177,6 @@ const Reportes = ({
 
   const formatearMontoCorto = (monto) => {
     const numero = Number.parseFloat(monto) || 0
-    // Lógica para acortar si es muy grande, o solo quitar decimales para que entre
     return numero.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   }
 
@@ -279,8 +304,8 @@ const Reportes = ({
               <div key={index} className="px-3 py-2.5 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <div className="bg-purple-50 p-1.5 rounded-full border border-purple-100">
-                      <Users size={12} className="text-purple-600" />
+                    <div className="bg-gray-100 p-1.5 rounded-full border border-gray-200">
+                      <Users size={12} className="text-gray-500" />
                     </div>
                     <div>
                       <span className="text-xs font-medium text-gray-900 block leading-tight">{cliente.nombre}</span>
@@ -301,49 +326,132 @@ const Reportes = ({
         </div>
       </div>
 
-      {/* TABLA DE TOP PRODUCTOS */}
+      {/* ── RESUMEN MENSUAL CON SELECTOR DE AÑO ────────────────── */}
       <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-        <div className="px-3 py-2 border-b border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-900">Productos Más Vendidos</h3>
-          <p className="text-[10px] text-gray-500">Ranking por cantidad de unidades vendidas ({periodo})</p>
+        <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-xs font-semibold text-gray-900">Resumen mensual</h3>
+            <p className="text-[10px] text-gray-500">Ventas facturadas, cobradas y pedidos mes a mes</p>
+          </div>
+          {/* Selector de año con flechas */}
+          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+            <button
+              onClick={() => setAnioSeleccionado(a => a - 1)}
+              className="p-0.5 rounded hover:bg-gray-200 text-gray-500 transition-colors"
+              title="Año anterior"
+            >
+              <ChevronLeft size={13} />
+            </button>
+            <span className="text-xs font-bold text-gray-800 min-w-[36px] text-center">
+              {anioSeleccionado}
+            </span>
+            <button
+              onClick={() => setAnioSeleccionado(a => a + 1)}
+              disabled={anioSeleccionado >= anioActualReal}
+              className="p-0.5 rounded hover:bg-gray-200 text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Año siguiente"
+            >
+              <ChevronRight size={13} />
+            </button>
+            {anioSeleccionado !== anioActualReal && (
+              <button
+                onClick={() => setAnioSeleccionado(anioActualReal)}
+                className="ml-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Hoy
+              </button>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">Posición</th>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">Producto</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Cantidad Vendida</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Ingreso Generado</th>
+                <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">Mes</th>
+                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Facturas</th>
+                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Pedidos</th>
+                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Total Facturado</th>
+                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Total Cobrado</th>
+                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Saldo Pendiente</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {topProductos.length > 0 ? topProductos.map((producto, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-3 py-2 text-xs font-bold text-gray-400 w-12 text-center">#{idx + 1}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-50 p-1 rounded border border-blue-100">
-                        <Package size={10} className="text-blue-600" />
+              {resumenMensual.map((mes) => {
+                const mesActual = new Date().getMonth()
+                const esMesActual = mes.idx === mesActual
+                const pendiente = mes.totalFacturado - mes.totalCobrado
+                const sinActividad = mes.cantFacturas === 0 && mes.cantPedidos === 0
+                return (
+                  <tr
+                    key={mes.idx}
+                    className={`transition-colors ${esMesActual ? 'bg-blue-50 hover:bg-blue-100' :
+                      sinActividad ? 'opacity-40' :
+                        'hover:bg-gray-50'
+                      }`}
+                  >
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        {esMesActual && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+                        <span className={`text-xs font-semibold ${esMesActual ? 'text-blue-700' : 'text-gray-700'}`}>
+                          {mes.nombre}
+                        </span>
+                        {esMesActual && <span className="text-[9px] text-blue-500 font-medium">(actual)</span>}
                       </div>
-                      <span className="text-xs font-medium text-gray-900">{producto.nombre}</span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="text-xs font-bold text-gray-900">{producto.cantidad}</div>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="text-xs font-bold text-green-600">${formatearMonto(producto.total)}</div>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan="4" className="px-3 py-6 text-center text-xs text-gray-500">
-                    No se vendieron productos en este período.
-                  </td>
-                </tr>
-              )}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <span className={`text-xs font-medium ${mes.cantFacturas > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
+                        {mes.cantFacturas}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <span className={`text-xs font-medium ${mes.cantPedidos > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
+                        {mes.cantPedidos}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <span className={`text-xs font-bold ${mes.totalFacturado > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
+                        {mes.totalFacturado > 0 ? `$${formatearMontoCorto(mes.totalFacturado)}` : '—'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <span className={`text-xs font-bold ${mes.totalCobrado > 0 ? 'text-green-600' : 'text-gray-300'}`}>
+                        {mes.totalCobrado > 0 ? `$${formatearMontoCorto(mes.totalCobrado)}` : '—'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {pendiente > 0 ? (
+                        <span className="text-xs font-bold text-red-500">${formatearMontoCorto(pendiente)}</span>
+                      ) : mes.totalFacturado > 0 ? (
+                        <span className="text-xs font-medium text-green-600">✓ Saldado</span>
+                      ) : (
+                        <span className="text-xs text-gray-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
+            {/* TOTALES DEL AÑO */}
+            <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+              <tr>
+                <td className="px-3 py-2 text-xs font-bold text-gray-900">TOTAL {anioSeleccionado}</td>
+                <td className="px-3 py-2 text-right text-xs font-bold text-gray-900">
+                  {resumenMensual.reduce((s, m) => s + m.cantFacturas, 0)}
+                </td>
+                <td className="px-3 py-2 text-right text-xs font-bold text-gray-900">
+                  {resumenMensual.reduce((s, m) => s + m.cantPedidos, 0)}
+                </td>
+                <td className="px-3 py-2 text-right text-xs font-bold text-gray-900">
+                  ${formatearMontoCorto(resumenMensual.reduce((s, m) => s + m.totalFacturado, 0))}
+                </td>
+                <td className="px-3 py-2 text-right text-xs font-bold text-green-600">
+                  ${formatearMontoCorto(resumenMensual.reduce((s, m) => s + m.totalCobrado, 0))}
+                </td>
+                <td className="px-3 py-2 text-right text-xs font-bold text-red-500">
+                  ${formatearMontoCorto(resumenMensual.reduce((s, m) => s + Math.max(0, m.totalFacturado - m.totalCobrado), 0))}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>

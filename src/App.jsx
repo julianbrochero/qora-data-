@@ -103,7 +103,8 @@ const SistemaFacturacion = () => {
     registrarCobro, // ✅ FUNCIÓN UNIFICADA
     eliminarFactura, // ✅ NUEVA
     crearFacturaDirecta, // ✅ NUEVA - para Factura Directa
-    eliminarMovimientoCaja // ✅ NUEVA - para borrar movimientos de caja
+    eliminarMovimientoCaja, // ✅ NUEVA - para borrar movimientos de caja
+    cargarMovimientosPorFecha // ✅ NUEVA - selector de fecha en caja
   } = useFacturacion();
 
   // ✅ FUNCIÓN CORREGIDA: openModal
@@ -287,6 +288,7 @@ const SistemaFacturacion = () => {
           cierresCaja={cierresCaja}
           cerrarCaja={cerrarCaja}
           eliminarMovimientoCaja={eliminarMovimientoCaja}
+          cargarMovimientosPorFecha={cargarMovimientosPorFecha}
           recargarDatos={recargarTodosLosDatos}
         />
       ),
