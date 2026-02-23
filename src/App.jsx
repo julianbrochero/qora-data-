@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { useFacturacion } from './hooks/useFacturacion';
 import { useAuth } from './lib/AuthContext';
 import Sidebar from './components/layout/Sidebar';
@@ -41,6 +42,7 @@ const SistemaFacturacion = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalType, setModalType] = useState(null);
   const [modalData, setModalData] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const {
     // Estados existentes
@@ -340,10 +342,27 @@ const SistemaFacturacion = () => {
         setActiveModule={setActiveModule}
         user={user}
         onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 ml-52 overflow-auto">
-        <div className="p-8">
+      {/* Contenido principal */}
+      <div className="flex-1 md:ml-52 overflow-auto min-w-0">
+        {/* Topbar mobile: solo visible en pantallas chicas */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 md:hidden"
+          style={{ backgroundColor: 'var(--bg-surface)' }}
+        >
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+            aria-label="Abrir menú"
+          >
+            <Menu size={20} />
+          </button>
+          <span className="text-sm font-bold text-gray-900 tracking-widest">QORA DATA</span>
+        </div>
+
+        <div className="p-4 md:p-8">
           {renderActiveModule()}
         </div>
       </div>
