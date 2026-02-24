@@ -359,7 +359,7 @@ const SistemaFacturacion = () => {
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-bold text-gray-900 tracking-widest">GESTICO CLICK</span>
+          <span className="text-sm font-bold text-gray-900 tracking-widest">GESTIFY</span>
         </div>
 
         <div className="p-4 md:p-8">
