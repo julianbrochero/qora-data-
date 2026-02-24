@@ -79,7 +79,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose }) => {
               <div className="w-2 h-2 bg-gray-900" />
             </div>
           </div>
-          <h1 className="text-sm font-bold text-gray-900 tracking-widest leading-none">QORA DATA</h1>
+          <h1 className="text-sm font-bold text-gray-900 tracking-widest leading-none">GESTICO CLICK</h1>
           <span className="text-[8px] text-gray-400 tracking-[0.3em] mt-1 font-medium">SOFTWARE</span>
         </div>
 
