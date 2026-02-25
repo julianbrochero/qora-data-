@@ -63,24 +63,20 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose }) => {
       >
 
         {/* HEADER */}
-        <div className="flex flex-col items-center justify-center pt-5 pb-4 border-b border-gray-100 flex-shrink-0 relative">
+        <div className="flex items-center justify-center border-b border-gray-100 flex-shrink-0 relative h-[100px] px-2 py-5">
           {/* Botón X para cerrar en mobile */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors md:hidden"
+            className="absolute top-2 right-2 p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors md:hidden z-10"
           >
             <X size={15} />
           </button>
-          {/* Logo Qora Data */}
-          <div className="relative w-9 h-9 mb-2.5">
-            <div className="absolute top-0 right-0 w-6 h-6 border border-gray-700 z-0" />
-            <div className="absolute top-1 right-1 w-6 h-6 border border-gray-700 z-10 bg-white" />
-            <div className="absolute top-2 right-2 w-6 h-6 border border-gray-700 z-20 bg-white flex items-center justify-center">
-              <div className="w-2 h-2 bg-gray-900" />
-            </div>
-          </div>
-          <h1 className="text-sm font-bold text-gray-900 tracking-widest leading-none">GESTIFY</h1>
-          <span className="text-[8px] text-gray-400 tracking-[0.3em] mt-1 font-medium">SOFTWARE</span>
+          {/* Logo del sistema */}
+          <img
+            src="/logogestify.png"
+            alt="Gestify"
+            className="h-[120px] w-auto object-contain scale-[1.5]"
+          />
         </div>
 
         {/* MENÚ */}
