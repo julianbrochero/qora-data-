@@ -1,24 +1,46 @@
 "use client"
 
-import { Search } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import { Search, Tag, DollarSign, Wallet, FileText, CheckCircle, Store, Box, Briefcase, Zap } from "lucide-react"
+
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY
+══════════════════════════════════════════════ */
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const border = 'rgba(48,54,47,.13)'
+const accentL = 'rgba(51,65,57,.08)'
+const inputBase = {
+  width: '100%', height: 36, padding: '0 12px',
+  fontSize: 12, color: ct1, background: '#fff',
+  border: `1px solid ${border}`, borderRadius: 8,
+  outline: 'none', fontFamily: "'Inter', sans-serif",
+  transition: 'border-color .15s',
+}
+
+const labelBase = {
+  fontSize: 11, fontWeight: 600, color: ct2,
+  marginBottom: 5, display: 'block', letterSpacing: '.01em',
+}
 
 const METODOS = ["Efectivo", "Transferencia", "Tarjeta", "MercadoPago"]
 
 const CATEGORIAS_INGRESO = [
-  { value: "venta", label: "Venta / Factura" },
-  { value: "cobro", label: "Cobro / Abono" },
-  { value: "ingreso_extra", label: "Ingreso extra" },
-  { value: "otro", label: "Otro" },
+  { value: "venta", label: "Venta / Factura", icon: Store },
+  { value: "cobro", label: "Cobro / Abono", icon: Wallet },
+  { value: "ingreso_extra", label: "Ingreso extra", icon: Zap },
+  { value: "otro", label: "Otro", icon: FileText },
 ]
 
 const CATEGORIAS_EGRESO = [
-  { value: "proveedor", label: "Pago a proveedor" },
-  { value: "gasto_general", label: "Gasto general" },
-  { value: "sueldo", label: "Sueldo / Retiro" },
-  { value: "impuesto", label: "Impuesto / Tasa" },
-  { value: "compra_stock", label: "Compra de stock" },
-  { value: "otro", label: "Otro" },
+  { value: "proveedor", label: "Pago a proveedor", icon: Store },
+  { value: "gasto_general", label: "Gasto general", icon: Briefcase },
+  { value: "compra_stock", label: "Compra de stock", icon: Box },
+  { value: "sueldo", label: "Sueldo / Retiro", icon: Wallet },
+  { value: "impuesto", label: "Impuesto / Tasa", icon: FileText },
+  { value: "otro", label: "Otro", icon: Zap },
 ]
 
 const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
@@ -29,6 +51,7 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
   const [descripcion, setDescripcion] = useState("")
   const [metodo, setMetodo] = useState("Efectivo")
   const [categoria, setCategoria] = useState(esIngreso ? "cobro" : "gasto_general")
+
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null)
   const [busquedaProveedor, setBusquedaProveedor] = useState("")
   const [mostrarDropdownProveedor, setMostrarDropdownProveedor] = useState(false)
@@ -38,10 +61,8 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
   const proveedorRef = useRef(null)
   const proveedoresList = Array.isArray(formData?.proveedores) ? formData.proveedores : []
 
-  // Auto-focus monto al abrir
   useEffect(() => { setTimeout(() => montoRef.current?.focus(), 80) }, [])
 
-  // Click fuera cierra dropdown proveedor
   useEffect(() => {
     const handler = (e) => {
       if (proveedorRef.current && !proveedorRef.current.contains(e.target))
@@ -51,9 +72,7 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
     return () => document.removeEventListener("mousedown", handler)
   }, [])
 
-  const proveedoresFiltrados = proveedoresList.filter(p =>
-    p.nombre?.toLowerCase().includes(busquedaProveedor.toLowerCase())
-  )
+  const proveedoresFiltrados = proveedoresList.filter(p => p.nombre?.toLowerCase().includes(busquedaProveedor.toLowerCase()))
 
   const seleccionarProveedor = (prov) => {
     setProveedorSeleccionado(prov)
@@ -62,7 +81,8 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
     if (!descripcion) setDescripcion(`Pago a ${prov.nombre}`)
   }
 
-  const handleRegistrar = async () => {
+  const handleRegistrar = async (e) => {
+    if (e) e.preventDefault()
     const montoNum = parseFloat(monto)
     if (!montoNum || montoNum <= 0) { montoRef.current?.focus(); return }
     if (cargando) return
@@ -70,9 +90,7 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
     try {
       await formActions?.registrarMovimiento?.({
         tipo: esIngreso ? "ingreso" : "egreso",
-        description: descripcion.trim()
-          || (proveedorSeleccionado ? `Pago a ${proveedorSeleccionado.nombre}` : "")
-          || (esIngreso ? "Ingreso manual" : "Egreso manual"),
+        description: descripcion.trim() || (proveedorSeleccionado ? `Pago a ${proveedorSeleccionado.nombre}` : "") || (esIngreso ? "Ingreso manual" : "Egreso manual"),
         monto: montoNum,
         metodo,
         referencia: proveedorSeleccionado ? `proveedor:${proveedorSeleccionado.id}` : categoria,
@@ -82,167 +100,127 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
     } finally { setCargando(false) }
   }
 
-  const onKey = (e) => {
-    if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") { e.preventDefault(); handleRegistrar() }
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
+      e.preventDefault()
+      nextRef?.current ? nextRef.current.focus() : handleRegistrar()
+    }
     if (e.key === "Escape") closeModal()
   }
 
-  return (
-    <div className="w-full max-w-[360px] mx-auto space-y-1" onKeyDown={onKey}>
+  const focusStyle = (e) => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
+  const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
 
-      {/* HEADER — igual que PedidoForm */}
-      <div className="pb-1 border-b border-gray-100">
-        <h3 className="text-sm font-bold text-gray-900">
-          {esIngreso ? "Nuevo ingreso" : "Nuevo egreso"}
-        </h3>
+  return (
+    <div style={{ width: '100%', maxWidth: 400, fontFamily: "'Inter', sans-serif" }} onKeyDown={handleKeyDown}>
+      {/* chip tipo */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
+        <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', background: esIngreso ? 'rgba(6,95,70,.1)' : 'rgba(153,27,27,.1)', color: esIngreso ? '#065F46' : '#991B1B', border: `1px solid ${esIngreso ? 'rgba(6,95,70,.2)' : 'rgba(153,27,27,.2)'}` }}>
+          {esIngreso ? 'Nuevo Ingreso' : 'Nuevo Egreso'}
+        </span>
       </div>
 
-      <div className="space-y-1.5">
+      <form onSubmit={handleRegistrar} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-        {/* CATEGORÍA */}
+        {/* MONTO */}
         <div>
-          <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Categoría</label>
-          <div className="flex flex-wrap gap-1">
-            {categorias.map(cat => (
-              <button
-                key={cat.value}
-                type="button"
-                onClick={() => {
-                  setCategoria(cat.value)
-                  if (cat.value !== "proveedor") { setProveedorSeleccionado(null); setBusquedaProveedor("") }
-                }}
-                className={`px-2 py-1 text-[11px] rounded-md border font-medium transition-colors ${categoria === cat.value
-                    ? "bg-white text-blue-600 border-blue-500"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                  }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+          <label style={labelBase}>Monto <span style={{ color: '#DC2626' }}>*</span></label>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: ct3, fontSize: 14, fontWeight: 600 }}>$</span>
+            <input ref={montoRef} type="number" inputMode="decimal" step="0.01" min="0" required value={monto} placeholder="0.00"
+              onChange={e => setMonto(e.target.value)}
+              onFocus={focusStyle} onBlur={blurStyle}
+              style={{ ...inputBase, paddingLeft: 26, fontSize: 15, fontWeight: 700, color: esIngreso ? '#065F46' : '#991B1B' }} />
           </div>
         </div>
 
-        {/* PROVEEDOR — solo si categoría = proveedor */}
+        {/* CATEGORÍA */}
+        <div>
+          <label style={labelBase}>Categoría</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {categorias.map(cat => {
+              const sel = categoria === cat.value
+              return (
+                <button key={cat.value} type="button" onClick={() => { setCategoria(cat.value); if (cat.value !== "proveedor") { setProveedorSeleccionado(null); setBusquedaProveedor("") } }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', borderRadius: 8, fontSize: 11, fontWeight: sel ? 700 : 600, border: `1px solid ${sel ? accent : border}`, background: sel ? accentL : '#fff', color: sel ? accent : ct3, cursor: 'pointer', transition: 'all .13s', textAlign: 'left' }}>
+                  <cat.icon size={13} strokeWidth={sel ? 2.5 : 2} style={{ color: sel ? accent : 'rgba(48,54,47,.4)' }} />
+                  {cat.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* PROVEEDOR (solo egreso) */}
         {!esIngreso && categoria === "proveedor" && (
-          <div ref={proveedorRef} className="relative z-20">
-            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Proveedor</label>
-            <div className="relative">
-              <input
-                type="text"
-                className="w-full pl-7 pr-2 py-1 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                placeholder="Buscar proveedor..."
-                value={busquedaProveedor}
+          <div ref={proveedorRef} style={{ position: 'relative', zIndex: 10 }}>
+            <label style={labelBase}>Proveedor <span style={{ color: '#DC2626' }}>*</span></label>
+            <div style={{ position: 'relative' }}>
+              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input type="text" value={busquedaProveedor} placeholder="Buscar proveedor..."
                 onChange={e => { setBusquedaProveedor(e.target.value); setMostrarDropdownProveedor(true); setProveedorSeleccionado(null) }}
-                onFocus={() => setMostrarDropdownProveedor(true)}
-              />
-              <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                onFocus={(e) => { focusStyle(e); setMostrarDropdownProveedor(true) }} onBlur={blurStyle}
+                style={{ ...inputBase, paddingLeft: 30 }} />
+
               {mostrarDropdownProveedor && proveedoresFiltrados.length > 0 && (
-                <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto">
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,.1)', maxHeight: 180, overflowY: 'auto', zIndex: 20 }}>
                   {proveedoresFiltrados.map(prov => (
-                    <button
-                      key={prov.id}
-                      type="button"
-                      onClick={() => seleccionarProveedor(prov)}
-                      className="w-full px-2 py-1.5 text-left hover:bg-gray-50 transition-colors text-[11px] border-b border-gray-100 last:border-b-0"
-                    >
-                      <div className="font-semibold text-gray-900">{prov.nombre}</div>
-                      {prov.telefono && <div className="text-[9px] text-gray-500">{prov.telefono}</div>}
+                    <button key={prov.id} type="button" onClick={() => seleccionarProveedor(prov)}
+                      style={{ width: '100%', padding: '8px 12px', textAlign: 'left', background: 'transparent', border: 'none', borderBottom: `1px solid ${border}`, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 2 }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(48,54,47,.03)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: ct1 }}>{prov.nombre}</span>
+                      {prov.telefono && <span style={{ fontSize: 10, color: ct3 }}>{prov.telefono}</span>}
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            {proveedorSeleccionado && (
-              <span className="text-[9px] text-green-600 font-medium mt-0.5 block">
-                Proveedor: {proveedorSeleccionado.nombre}
-              </span>
-            )}
           </div>
         )}
 
-        {/* DESCRIPCIÓN — placeholder igual que "Notas" en pedido */}
+        {/* DESCRIPCIÓN */}
         <div>
-          <input
-            type="text"
-            className="w-full px-2 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-            placeholder="Descripción (opcional)..."
-            value={descripcion}
-            onChange={e => setDescripcion(e.target.value)}
-          />
-        </div>
-
-        {/* MÉTODO */}
-        <div>
-          <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Método de pago</label>
-          <div className="grid grid-cols-4 gap-1">
-            {METODOS.map(m => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMetodo(m)}
-                className={`py-1 text-[10px] rounded-md border font-medium transition-colors ${metodo === m
-                    ? "bg-white text-blue-600 border-blue-500"
-                    : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                  }`}
-              >
-                {m}
-              </button>
-            ))}
+          <label style={labelBase}>Descripción <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
+          <div style={{ position: 'relative' }}>
+            <FileText size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+            <input type="text" value={descripcion} placeholder="Detalles del movimiento..."
+              onChange={e => setDescripcion(e.target.value)}
+              onFocus={focusStyle} onBlur={blurStyle}
+              style={{ ...inputBase, paddingLeft: 30 }} />
           </div>
         </div>
 
-        {/* MONTO — igual al bloque Total/Abonado del pedido */}
-        <div className="bg-gray-50 border border-gray-200 rounded-md p-1.5 space-y-1">
-          <div className="flex items-center justify-between">
-            <label className="text-[10px] font-medium text-gray-700">
-              {esIngreso ? "Monto a ingresar:" : "Monto a egresar:"}
-            </label>
-            <div className="relative w-28">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">$</span>
-              <input
-                ref={montoRef}
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                className="w-full pl-5 pr-1 py-0.5 text-[11px] border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white font-semibold"
-                placeholder="0.00"
-                value={monto}
-                onChange={e => setMonto(e.target.value)}
-              />
-            </div>
+        {/* MÉTODO (Chips) */}
+        <div>
+          <label style={labelBase}>Método de pago</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {METODOS.map(m => {
+              const sel = metodo === m
+              return (
+                <button key={m} type="button" onClick={() => setMetodo(m)}
+                  style={{ padding: '6px 12px', borderRadius: 20, fontSize: 11, fontWeight: 600, border: `1px solid ${sel ? accent : border}`, background: sel ? accent : '#fff', color: sel ? '#fff' : ct2, cursor: 'pointer', transition: 'all .13s' }}>
+                  {m}
+                </button>
+              )
+            })}
           </div>
-          {monto && parseFloat(monto) > 0 && (
-            <div className="flex items-center justify-between pt-0.5 border-t border-gray-200">
-              <span className="text-[10px] font-medium text-gray-600">Total:</span>
-              <span className={`text-sm font-bold ${esIngreso ? "text-green-600" : "text-red-500"}`}>
-                {esIngreso ? "+" : "-"}${parseFloat(monto).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* BOTONES — idénticos a PedidoForm */}
-      <div className="flex gap-2 pt-1">
-        <button
-          type="button"
-          onClick={closeModal}
-          disabled={cargando}
-          className="flex-1 bg-white text-gray-700 px-2.5 py-1.5 text-[11px] rounded-md hover:bg-gray-50 transition-colors border border-gray-200 font-medium"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={handleRegistrar}
-          disabled={cargando || !monto || parseFloat(monto) <= 0}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 text-[11px] rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {cargando ? "Registrando..." : esIngreso ? "Registrar ingreso" : "Registrar egreso"}
-        </button>
-      </div>
-
+        {/* BOTONES */}
+        <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+          <button type="button" onClick={closeModal} disabled={cargando}
+            style={{ flex: 1, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            Cancelar
+          </button>
+          <button type="submit" disabled={cargando || !monto || parseFloat(monto) <= 0 || (!esIngreso && categoria === "proveedor" && !proveedorSeleccionado)}
+            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: '1px solid #DCED31', cursor: (cargando || !monto || parseFloat(monto) <= 0) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .13s', opacity: (cargando || !monto || parseFloat(monto) <= 0) ? .5 : 1 }}
+            onMouseEnter={e => { if (!cargando && monto && parseFloat(monto) > 0) e.currentTarget.style.opacity = '.9' }} onMouseLeave={e => { if (!cargando && monto && parseFloat(monto) > 0) e.currentTarget.style.opacity = '1' }}>
+            {cargando ? 'Registrando...' : <><CheckCircle size={13} strokeWidth={2.5} /> {esIngreso ? 'Registrar ingreso' : 'Registrar egreso'}</>}
+            <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

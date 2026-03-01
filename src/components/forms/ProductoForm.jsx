@@ -1,306 +1,227 @@
-'use client';
+'use client'
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
+import React, { useEffect, useRef } from 'react'
+import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle } from 'lucide-react'
+
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY - consistente con Pedidos / Clientes
+══════════════════════════════════════════════ */
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const border = 'rgba(48,54,47,.13)'
+
+const inputBase = {
+  width: '100%', height: 36, padding: '0 12px',
+  fontSize: 12, color: ct1, background: '#fff',
+  border: `1px solid ${border}`, borderRadius: 8,
+  outline: 'none', fontFamily: "'Inter', sans-serif",
+  transition: 'border-color .15s',
+}
+
+const labelBase = {
+  fontSize: 11, fontWeight: 600, color: ct2,
+  marginBottom: 5, display: 'block', letterSpacing: '.01em',
+}
 
 const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal }) => {
-  const {
-    nuevoProducto, setNuevoProducto,
-    productoRapido, setProductoRapido
-  } = formData;
+  const { nuevoProducto, setNuevoProducto, productoRapido, setProductoRapido } = formData
+  const { agregarProducto, editarProducto, agregarProductoRapido } = formActions
 
-  const { agregarProducto, editarProducto, agregarProductoRapido } = formActions;
+  const isEdit = type === 'editar-producto'
+  const isRapido = type === 'producto-rapido'
 
-  const isEdit = type === 'editar-producto';
-  const isRapido = type === 'producto-rapido';
+  const nombreRef = useRef(null)
+  const precioRef = useRef(null)
+  const stockRef = useRef(null)
+  const codigoRef = useRef(null)
+  const categoriaRef = useRef(null)
 
-  const nombreRef = useRef(null);
-  const precioRef = useRef(null);
-  const stockRef = useRef(null);
-  const codigoRef = useRef(null);
-  const categoriaRef = useRef(null);
+  const data = isRapido ? productoRapido : nuevoProducto
 
   const handleChange = (campo, valor) => {
-    if (isRapido) {
-      setProductoRapido({ ...productoRapido, [campo]: valor });
-    } else {
-      setNuevoProducto({ ...nuevoProducto, [campo]: valor });
-    }
-  };
-
-  const data = isRapido ? productoRapido : nuevoProducto;
+    if (isRapido) setProductoRapido({ ...productoRapido, [campo]: valor })
+    else setNuevoProducto({ ...nuevoProducto, [campo]: valor })
+  }
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
+    if (e) e.preventDefault()
+    if (!data.nombre?.trim()) { alert('El nombre del producto es requerido'); nombreRef.current?.focus(); return }
+    if ((parseFloat(data.precio) || 0) <= 0) { alert('El precio debe ser mayor a 0'); precioRef.current?.focus(); return }
+    if (!isRapido && data.controlaStock && (parseInt(data.stock) || 0) < 0) { alert('El stock no puede ser negativo'); stockRef.current?.focus(); return }
 
-    // Validaciones básicas
-    if (!data.nombre || !data.nombre.trim()) {
-      alert('El nombre del producto es requerido');
-      nombreRef.current?.focus();
-      return;
-    }
+    let result
+    if (isRapido) result = await agregarProductoRapido()
+    else if (isEdit) result = await editarProducto(selectedItem?.id, data)
+    else result = await agregarProducto()
 
-    const precio = parseFloat(data.precio) || 0;
-    if (precio <= 0) {
-      alert('El precio debe ser mayor a 0');
-      precioRef.current?.focus();
-      return;
+    if (result?.success) {
+      const cb = formData.selectedItem?.onSuccess || formData.onSuccess
+      if (cb) cb(result.producto || result.data || result)
+      else closeModal()
     }
+  }
 
-    // Validar stock si controla stock
-    if (!isRapido && data.controlaStock) {
-      const stock = parseInt(data.stock) || 0;
-      if (stock < 0) {
-        alert('El stock no puede ser negativo');
-        stockRef.current?.focus();
-        return;
-      }
-    }
-
-    let result;
-    if (isRapido) {
-      result = await agregarProductoRapido();
-    } else if (isEdit) {
-      result = await editarProducto(selectedItem?.id, data);
-    } else {
-      result = await agregarProducto();
-    }
-
-    if (result && result.success) {
-      const onSuccess = formData.selectedItem?.onSuccess || formData.onSuccess;
-      if (onSuccess) {
-        onSuccess(result.producto || result.data || result);
-      } else {
-        closeModal();
-      }
-    }
-  };
-
-  const handleKeyDown = (e, nextFieldRef) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (nextFieldRef && nextFieldRef.current) {
-        nextFieldRef.current.focus();
-      } else {
-        handleSubmit();
-      }
-    }
-  };
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === 'Enter') { e.preventDefault(); nextRef?.current ? nextRef.current.focus() : handleSubmit() }
+  }
 
   useEffect(() => {
-    if (!isRapido && !data.controlaStock && data.stock !== 0) {
-      handleChange('stock', 0);
-    }
-  }, [data.controlaStock, isRapido]);
+    if (!isRapido && !data.controlaStock && data.stock !== 0) handleChange('stock', 0)
+  }, [data.controlaStock, isRapido])
 
   useEffect(() => {
-    if (!isEdit) {
-      const timer = setTimeout(() => {
-        nombreRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isEdit]);
+    if (!isEdit) { const t = setTimeout(() => nombreRef.current?.focus(), 100); return () => clearTimeout(t) }
+  }, [isEdit])
+
+  const fmtPrecio = (parseFloat(data.precio) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const focusStyle = (e) => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
+  const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-2.5">
-        {/* INFORMACIÓN BÁSICA */}
-        <div className="space-y-2">
-          {/* Nombre del producto - Campo principal */}
-          <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-              Nombre del producto <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Package className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-              <input
-                ref={nombreRef}
-                type="text"
-                required
-                className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                placeholder="Ej: Campera de cuero"
-                value={data.nombre || ""}
-                onChange={(e) => handleChange("nombre", e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, precioRef)}
-              />
-            </div>
+    <div style={{ width: '100%', maxWidth: 420, fontFamily: "'Inter', sans-serif" }}>
+      {/* Chips de tipo */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
+        {[
+          { k: isRapido ? 'Producto rápido' : isEdit ? 'Editar producto' : 'Nuevo producto', active: true },
+        ].map((c, i) => (
+          <span key={i} style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', background: c.active ? 'rgba(51,65,57,.1)' : 'transparent', color: accent, border: `1px solid rgba(51,65,57,.2)` }}>
+            {c.k}
+          </span>
+        ))}
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Nombre */}
+        <div>
+          <label style={labelBase}>Nombre del producto <span style={{ color: '#DC2626' }}>*</span></label>
+          <div style={{ position: 'relative' }}>
+            <Package size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+            <input ref={nombreRef} type="text" required value={data.nombre || ''} onChange={e => handleChange('nombre', e.target.value)} onKeyDown={e => handleKeyDown(e, precioRef)}
+              onFocus={focusStyle} onBlur={blurStyle} placeholder="Ej: Campera de cuero"
+              style={{ ...inputBase, paddingLeft: 30 }} />
           </div>
-
-          {/* Código y Categoría */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Código</label>
-              <div className="relative">
-                <Hash className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                <input
-                  ref={codigoRef}
-                  type="text"
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                  placeholder="AUTO"
-                  value={data.codigo || ""}
-                  onChange={(e) => handleChange("codigo", e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, categoriaRef)}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Categoría</label>
-              <div className="relative">
-                <Tag className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                <select
-                  ref={categoriaRef}
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white appearance-none"
-                  value={data.categoria || ""}
-                  onChange={(e) => handleChange("categoria", e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, precioRef)}
-                >
-                  <option value="">Seleccionar</option>
-                  <option>General</option>
-                  <option>Categoría 1</option>
-                  <option>Categoría 2</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Precio y Stock */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                Precio <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <DollarSign className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                <input
-                  ref={precioRef}
-                  type="number"
-                  required
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                  placeholder="0.00"
-                  value={data.precio || ""}
-                  onChange={(e) => handleChange("precio", e.target.value === "" ? "" : Number.parseFloat(e.target.value) || 0)}
-                  onKeyDown={(e) => handleKeyDown(e, null)}
-                  step="0.01"
-                  min="0.01"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                Stock inicial
-              </label>
-              <div className="relative">
-                <Box className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                <input
-                  ref={stockRef}
-                  type="number"
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                  placeholder="0"
-                  value={data.stock ?? 0}
-                  onChange={(e) => handleChange("stock", e.target.value === "" ? "" : Number.parseInt(e.target.value) || 0)}
-                  min="0"
-                  disabled={!isRapido && !data.controlaStock}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Control de Inventario - Solo para producto normal */}
-          {!isRapido && (
-            <div className="border border-gray-200 rounded-md p-2 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {data.controlaStock ? (
-                    <ToggleRight className="w-5 h-5 text-blue-600" />
-                  ) : (
-                    <ToggleLeft className="w-5 h-5 text-gray-400" />
-                  )}
-                  <div>
-                    <label
-                      htmlFor="controlaStock"
-                      className="text-[11px] font-medium text-gray-700 cursor-pointer block"
-                    >
-                      Control de inventario
-                    </label>
-                    <p className="text-[9px] text-gray-500">
-                      {data.controlaStock ? 'El stock se descontará en cada venta' : 'Stock ilimitado, no se descontará'}
-                    </p>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  id="controlaStock"
-                  checked={data.controlaStock === true}
-                  onChange={(e) => handleChange("controlaStock", e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Descripción - Solo para producto normal */}
-          {!isRapido && (
-            <div>
-              <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                Descripción (opcional)
-              </label>
-              <div className="relative">
-                <FileText className="w-3 h-3 text-gray-400 absolute left-2 top-2" />
-                <textarea
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white resize-none"
-                  rows="2"
-                  placeholder="Información adicional del producto..."
-                  value={data.descripcion || ""}
-                  onChange={(e) => handleChange("descripcion", e.target.value)}
-                />
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Código + Categoría */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <label style={labelBase}>Código</label>
+            <div style={{ position: 'relative' }}>
+              <Hash size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input ref={codigoRef} type="text" value={data.codigo || ''} onChange={e => handleChange('codigo', e.target.value)} onKeyDown={e => handleKeyDown(e, categoriaRef)}
+                onFocus={focusStyle} onBlur={blurStyle} placeholder="AUTO"
+                style={{ ...inputBase, paddingLeft: 30 }} />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelBase}>Categoría</label>
+            <div style={{ position: 'relative' }}>
+              <Tag size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3, zIndex: 1 }} />
+              <select ref={categoriaRef} value={data.categoria || ''} onChange={e => handleChange('categoria', e.target.value)} onKeyDown={e => handleKeyDown(e, precioRef)}
+                onFocus={focusStyle} onBlur={blurStyle}
+                style={{ ...inputBase, paddingLeft: 30, cursor: 'pointer', appearance: 'none' }}>
+                <option value="">Seleccionar</option>
+                <option>General</option>
+                <option>Categoría 1</option>
+                <option>Categoría 2</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Precio + Stock */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <label style={labelBase}>Precio <span style={{ color: '#DC2626' }}>*</span></label>
+            <div style={{ position: 'relative' }}>
+              <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input ref={precioRef} type="number" required value={data.precio || ''} onChange={e => handleChange('precio', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+                onKeyDown={e => handleKeyDown(e, isRapido ? null : stockRef)}
+                onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0.01"
+                style={{ ...inputBase, paddingLeft: 30 }} />
+            </div>
+          </div>
+          <div>
+            <label style={labelBase}>Stock inicial</label>
+            <div style={{ position: 'relative' }}>
+              <Box size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input ref={stockRef} type="number" value={data.stock ?? 0} onChange={e => handleChange('stock', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
+                disabled={!isRapido && !data.controlaStock}
+                onFocus={focusStyle} onBlur={blurStyle} placeholder="0" min="0"
+                style={{ ...inputBase, paddingLeft: 30, background: (!isRapido && !data.controlaStock) ? 'rgba(0,0,0,.03)' : '#fff', color: (!isRapido && !data.controlaStock) ? ct3 : ct1, cursor: (!isRapido && !data.controlaStock) ? 'not-allowed' : 'text' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Toggle control de inventario */}
+        {!isRapido && (
+          <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(48,54,47,.04)', border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+            onClick={() => handleChange('controlaStock', !data.controlaStock)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {data.controlaStock
+                ? <ToggleRight size={20} style={{ color: accent }} />
+                : <ToggleLeft size={20} style={{ color: ct3 }} />}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: ct1 }}>Control de inventario</div>
+                <div style={{ fontSize: 10, color: ct3, marginTop: 1 }}>
+                  {data.controlaStock ? 'Stock se descontará en cada venta.' : 'Stock ilimitado, no se descontará.'}
+                </div>
+              </div>
+            </div>
+            <input type="checkbox" checked={data.controlaStock === true} onChange={e => handleChange('controlaStock', e.target.checked)} onClick={e => e.stopPropagation()}
+              style={{ width: 14, height: 14, accentColor: accent, cursor: 'pointer' }} />
+          </div>
+        )}
+
+        {/* Descripción */}
+        {!isRapido && (
+          <div>
+            <label style={labelBase}>Descripción <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
+            <div style={{ position: 'relative' }}>
+              <FileText size={13} style={{ position: 'absolute', left: 10, top: 10, color: ct3 }} />
+              <textarea value={data.descripcion || ''} onChange={e => handleChange('descripcion', e.target.value)} rows={2} placeholder="Información adicional del producto..."
+                onFocus={focusStyle} onBlur={blurStyle}
+                style={{ ...inputBase, height: 'auto', paddingLeft: 30, paddingTop: 8, paddingBottom: 8, resize: 'none' }} />
+            </div>
+          </div>
+        )}
 
         {/* Resumen visual */}
         {!isRapido && (
-          <div className="border rounded-md p-2 bg-blue-50 border-blue-200">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium text-gray-600">Precio de venta:</span>
-              <span className="text-sm font-bold text-blue-700">
-                ${(parseFloat(data.precio) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+          <div style={{ borderRadius: 10, padding: '10px 14px', background: 'rgba(51,65,57,.05)', border: `1px solid rgba(51,65,57,.12)` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Precio de venta</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: accent, letterSpacing: '-.03em' }}>${fmtPrecio}</span>
             </div>
             {data.controlaStock && (
-              <div className="flex items-center justify-between mt-1 pt-1 border-t border-blue-200">
-                <span className="text-[10px] text-gray-600">Stock disponible:</span>
-                <span className="text-[11px] font-semibold text-gray-900">
-                  {parseInt(data.stock) || 0} unidades
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: `1px solid rgba(51,65,57,.12)` }}>
+                <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Stock disponible</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>{parseInt(data.stock) || 0} u.</span>
               </div>
             )}
           </div>
         )}
 
         {/* Botones */}
-        <div className="flex gap-2 pt-1">
-          <button
-            type="button"
-            onClick={closeModal}
-            className="flex-1 bg-transparent text-gray-700 px-2.5 py-1.5 text-[11px] rounded-md hover:bg-gray-50 transition-colors border border-gray-200 font-medium"
-          >
+        <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+          <button type="button" onClick={closeModal} style={{ flex: 1, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', transition: 'all .13s', fontFamily: "'Inter', sans-serif" }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             Cancelar
           </button>
-          <button
-            type="submit"
-            className="flex-1 px-2.5 py-1.5 text-[11px] rounded-md transition-colors font-medium text-white bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-1.5"
-          >
-            {isRapido ? "Agregar rápido" : isEdit ? "Guardar cambios" : "Crear producto"}
-            <kbd className="text-[8px] bg-blue-700 px-1 py-0.5 rounded">↵</kbd>
+          <button type="submit" style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: '1px solid #DCED31', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+            {isRapido ? '⚡ Agregar rápido' : isEdit ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</> : <><Package size={13} strokeWidth={2.5} /> Crear producto</>}
+            {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
           </button>
         </div>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default ProductoForm;
+export default ProductoForm

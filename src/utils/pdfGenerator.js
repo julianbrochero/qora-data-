@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export const generarPDFCotizacion = (cotizacion) => {
   try {
@@ -72,7 +72,7 @@ export const generarPDFCotizacion = (cotizacion) => {
     }));
 
     // Agregar tabla al PDF
-    doc.autoTable({
+    autoTable(doc, {
       startY: 70,
       columns: tableColumn,
       body: tableRows,

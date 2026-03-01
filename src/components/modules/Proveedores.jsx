@@ -1,7 +1,36 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, ShoppingCart, Edit, Trash2, FileText, Mail, Phone, Building, MoreVertical, ChevronLeft, ChevronRight, DollarSign } from 'lucide-react'
+import { Plus, Search, DollarSign, Building, Edit, Trash2, FileText, Mail, Phone, ChevronLeft, ChevronRight, PackageCheck, AlertCircle } from 'lucide-react'
+
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY
+══════════════════════════════════════════════ */
+const bg = '#F5F5F5'
+const surface = '#FAFAFA'
+const surface2 = '#FFFFFF'
+const border = 'rgba(48,54,47,.13)'
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const accentL = 'rgba(51,65,57,.08)'
+const cardShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)'
+
+const inputStyle = {
+  background: 'transparent',
+  border: 'none', outline: 'none',
+  fontSize: 12, fontFamily: "'Inter', sans-serif",
+  color: ct1, width: '100%',
+}
+const pillSelect = {
+  height: 32, padding: '0 24px 0 12px', fontSize: 11, fontWeight: 600,
+  color: ct2, background: surface2, border: `1px solid ${border}`,
+  borderRadius: 8, outline: 'none', cursor: 'pointer', appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+  fontFamily: "'Inter', sans-serif", transition: 'border-color .15s'
+}
 
 const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openModal, eliminarProveedor }) => {
   const [paginaActual, setPaginaActual] = useState(1)
@@ -14,262 +43,207 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
     (proveedor.cuit || "").includes(searchTerm)
   ).sort((a, b) => a.nombre.localeCompare(b.nombre))
 
-  // Paginación
   const totalPaginas = Math.ceil(filtrarProveedores.length / itemsPorPagina)
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
   const indiceFin = indiceInicio + itemsPorPagina
   const proveedoresPaginados = filtrarProveedores.slice(indiceInicio, indiceFin)
 
-  // Reset página al cambiar búsqueda o items por página
-  useEffect(() => {
-    setPaginaActual(1)
-  }, [searchTerm, itemsPorPagina])
+  useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
   const resumenProveedores = {
     totalProveedores: proveedoresSeguros.length,
-    proveedoresActivos: proveedoresSeguros.filter(p => p.estado === "activo").length,
+    proveedoresActivos: proveedoresSeguros.filter(p => !p.estado || p.estado === "activo").length,
     deudaTotal: proveedoresSeguros.reduce((sum, p) => sum + (Number.parseFloat(p.deuda) || 0), 0),
-    proximosPagos: proveedoresSeguros.filter(p => (p.proximoPago || 0) > 0).length,
+    proximosPagos: proveedoresSeguros.filter(p => (Number.parseFloat(p.deuda) || 0) > 0).length,
   }
 
-  const formatearMonto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
+  const fCorto = (monto) => (Number.parseFloat(monto) || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const fMonto = (monto) => (Number.parseFloat(monto) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const kpis = [
+    { label: 'Total Proveedores', val: resumenProveedores.totalProveedores, icon: Building, color: '#334139' },
+    { label: 'Activos', val: resumenProveedores.proveedoresActivos, icon: PackageCheck, color: '#065F46' },
+    { label: 'Deuda Total', val: `$${fCorto(resumenProveedores.deudaTotal)}`, icon: DollarSign, color: '#991B1B' },
+    { label: 'Con Saldo Pendiente', val: resumenProveedores.proximosPagos, icon: AlertCircle, color: '#92400E' },
+  ]
 
   return (
-    <div className="space-y-3">
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+
+      {/* ══ HEADER ══ */}
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Proveedores</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Gestión de proveedores</p>
+          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión / Compras</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Proveedores</h2>
         </div>
 
-        {/* BOTÓN NUEVO PROVEEDOR */}
-        <button
-          onClick={() => openModal && openModal("nuevo-proveedor")}
-          className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-        >
-          <Plus size={12} />
-          Nuevo Proveedor
-        </button>
-      </div>
-
-      {/* CARDS DE RESUMEN - ACTUALIZADAS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Total Proveedores</h3>
-            <Building className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProveedores.totalProveedores}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Proveedores registrados en el sistema.</p>
-          </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => openModal && openModal("nuevo-proveedor")} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 32, borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .13s', boxShadow: '0 2px 8px rgba(220,237,49,.2)' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = ''}>
+            <Plus size={14} strokeWidth={2.5} /> Nuevo Proveedor
+          </button>
         </div>
+      </header>
 
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Proveedores Activos</h3>
-            <Building className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProveedores.proveedoresActivos}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">{resumenProveedores.totalProveedores > 0 ? Math.round((resumenProveedores.proveedoresActivos / resumenProveedores.totalProveedores) * 100) : 0}% con actividad</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Deuda Total</h3>
-            <DollarSign className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMonto(resumenProveedores.deudaTotal)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Deuda pendiente de pago</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Próximos Pagos</h3>
-            <ShoppingCart className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProveedores.proximosPagos}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Pagos que requieren atención</p>
-          </div>
+      {/* ══ TOOLBAR BUSCADOR ══ */}
+      <div style={{ padding: '18px 24px 0', display: 'flex', gap: 10 }}>
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', background: surface, border: `1px solid ${border}`, borderRadius: 8, height: 32, padding: '0 12px', boxShadow: '0 1px 3px rgba(48,54,47,.04)' }}
+          onFocusCapture={e => e.currentTarget.style.borderColor = accent} onBlurCapture={e => e.currentTarget.style.borderColor = border}>
+          <Search size={13} style={{ color: ct3, marginRight: 8, flexShrink: 0 }} />
+          <input type="text" placeholder="Buscar por nombre, CUIT o teléfono..." value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)} style={inputStyle} />
         </div>
       </div>
 
-      {/* BÚSQUEDA */}
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={12} />
-          <input
-            type="text"
-            placeholder="Buscar proveedores..."
-            className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm && setSearchTerm(e.target.value)}
-          />
-        </div>
+      {/* ══ CARDS KPI ══ */}
+      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+        {kpis.map((k, i) => (
+          <div key={i} style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
+            onMouseEnter={e => { e.currentTarget.style.transform = `translateY(-2px)`; e.currentTarget.style.boxShadow = `0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)` }} onMouseLeave={e => { e.currentTarget.style.transform = ``; e.currentTarget.style.boxShadow = cardShadow }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${k.color}15, transparent 70%)` }} />
+            <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: k.color, borderRadius: '0 2px 2px 0' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{k.label}</span>
+                <span style={{ fontSize: 18, fontWeight: 600, color: ct1, letterSpacing: '-.03em', display: 'block', lineHeight: 1.1 }}>{k.val}</span>
+              </div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <k.icon size={15} strokeWidth={2.5} style={{ color: k.color }} />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* CARD CON TABLA */}
-      <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-        {/* HEADER INFO */}
-        <div className="px-3 py-2 border-b border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-900">Proveedores</h3>
-          <p className="text-xs text-gray-500">Lista de proveedores registrados</p>
-        </div>
+      {/* ══ TABLA DE PROVEEDORES ══ */}
+      <div style={{ padding: '18px 24px 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* TABLA */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Nombre</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">CUIT</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Contacto</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Deuda</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {proveedoresPaginados.length > 0 ? (
-                proveedoresPaginados.map((proveedor) => (
-                  <tr key={proveedor.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <div className="bg-blue-50 p-1 rounded border border-blue-200">
-                          <Building size={10} className="text-blue-600" />
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: surface2, borderBottom: `1px solid ${border}` }}>
+                <tr>
+                  {['Nombre y Contacto', 'Email', 'CUIT / CUIL', 'Estado', 'Deuda', 'Acciones'].map((col, i) => (
+                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i >= 4 ? 'right' : 'left' }}>{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {proveedoresPaginados.length > 0 ? proveedoresPaginados.map(prov => {
+                  const deuda = Number.parseFloat(prov.deuda) || 0
+                  const activo = !prov.estado || prov.estado === 'activo'
+
+                  return (
+                    <tr key={prov.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: 'default' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+
+                      {/* Nombre y Contacto */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 30, height: 30, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Building size={14} strokeWidth={2.5} style={{ color: accent }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>{prov.nombre || '—'}</div>
+                            <div style={{ fontSize: 10, color: ct3, display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                              <Phone size={9} /> {prov.telefono || 'Sin teléfono'}
+                            </div>
+                          </div>
                         </div>
-                        <span className="text-xs font-medium text-gray-900 truncate max-w-[120px]">
-                          {proveedor.nombre || "N/A"}
+                      </td>
+
+                      {/* Email */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ fontSize: 12, color: ct2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Mail size={11} style={{ color: ct3 }} />
+                          {prov.email || '—'}
+                        </div>
+                      </td>
+
+                      {/* CUIT */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", fontWeight: 600, color: ct2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FileText size={11} style={{ color: ct3 }} />
+                          {prov.cuit || '—'}
+                        </div>
+                      </td>
+
+                      {/* Estado */}
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: activo ? '#F0FDF4' : '#FEF2F2', color: activo ? '#065F46' : '#991B1B', border: `1px solid ${activo ? '#6EE7B7' : '#FCA5A5'}` }}>
+                          {activo ? 'Activo' : 'Inactivo'}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-1">
-                        <FileText size={9} className="text-gray-400" />
-                        <span className="text-xs text-gray-700 font-mono">{proveedor.cuit || "—"}</span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-1">
-                        <Phone size={9} className="text-gray-400" />
-                        <span className="text-xs text-gray-700">{proveedor.telefono || "—"}</span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-1">
-                        <Mail size={9} className="text-gray-400" />
-                        <span className="text-xs text-gray-700 truncate max-w-[100px]">
-                          {proveedor.email || "—"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <span className={`text-xs font-semibold ${Number.parseFloat(proveedor.deuda) > 0 ? "text-red-600" : "text-gray-600"}`}>
-                        ${formatearMonto(proveedor.deuda)}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${(proveedor.estado || "activo") === "activo"
-                          ? "bg-green-50 text-green-700 border border-green-200"
-                          : "bg-red-50 text-red-700 border border-red-200"
-                        }`}>
-                        {proveedor.estado === "activo" ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openModal("editar-proveedor", proveedor)}
-                          className="p-0.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors border border-transparent hover:border-blue-200"
-                          title="Editar Proveedor"
-                        >
-                          <Edit size={10} />
-                        </button>
-                        <button
-                          onClick={() => eliminarProveedor && eliminarProveedor(proveedor.id)}
-                          className="p-0.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors border border-transparent hover:border-red-200"
-                          title="Eliminar Proveedor"
-                        >
-                          <Trash2 size={10} />
-                        </button>
+                      </td>
+
+                      {/* Deuda */}
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: deuda > 0 ? '#991B1B' : ct1 }}>
+                          ${fMonto(deuda)}
+                        </div>
+                      </td>
+
+                      {/* Acciones */}
+                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button onClick={() => openModal && openModal("editar-proveedor", prov)} style={{ padding: '0 10px', height: 28, borderRadius: 8, background: surface2, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: ct2, fontSize: 11, fontWeight: 600, transition: 'all .13s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'} onMouseLeave={e => e.currentTarget.style.background = surface2} title="Editar">
+                            <Edit size={12} strokeWidth={2.5} />
+                          </button>
+                          <button onClick={() => eliminarProveedor && eliminarProveedor(prov.id)} style={{ padding: '0 10px', height: 28, borderRadius: 8, background: surface2, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#DC2626', fontSize: 11, fontWeight: 600, transition: 'all .13s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FCA5A5' }} onMouseLeave={e => { e.currentTarget.style.background = surface2; e.currentTarget.style.borderColor = border }} title="Eliminar">
+                            <Trash2 size={12} strokeWidth={2.5} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                }) : (
+                  <tr>
+                    <td colSpan={6}>
+                      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                          <Building size={20} style={{ color: ct3 }} />
+                        </div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: ct1, marginBottom: 4 }}>Ningún proveedor encontrado</p>
+                        <p style={{ fontSize: 12, color: ct3 }}>{searchTerm ? 'Revisá los parámetros de búsqueda.' : 'Aún no cargaste ningún proveedor.'}</p>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="px-3 py-6 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
-                        <Building size={16} className="text-gray-400" />
-                      </div>
-                      <p className="text-xs font-semibold text-gray-900 mb-0.5">No se encontraron proveedores</p>
-                      <p className="text-xs text-gray-500">
-                        {searchTerm
-                          ? "Intenta con otros términos"
-                          : "Crea tu primer proveedor"}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        {/* FOOTER CON PAGINACIÓN */}
-        <div className="px-3 py-2 border-t border-gray-200 bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">Mostrando {Math.min(filtrarProveedores.length, itemsPorPagina)} de {filtrarProveedores.length} proveedores</span>
-              <select
-                value={itemsPorPagina}
-                onChange={(e) => setItemsPorPagina(Number(e.target.value))}
-                className="px-1.5 py-0.5 text-xs border border-gray-300 rounded bg-white"
-              >
-                <option value="5">5 por página</option>
-                <option value="10">10 por página</option>
-                <option value="25">25 por página</option>
-                <option value="50">50 por página</option>
-                <option value="100">100 por página</option>
+          {/* PAGINACIÓN */}
+          <div style={{ padding: '10px 16px', borderTop: `1px solid ${border}`, background: surface2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: ct3 }}>
+                Mostrando {Math.min(filtrarProveedores.length, proveedoresPaginados.length)} de {filtrarProveedores.length}
+              </span>
+              <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ ...pillSelect, padding: '4px 24px 4px 8px', height: 26, fontSize: 11 }}>
+                <option value="5">5 / pág</option>
+                <option value="10">10 / pág</option>
+                <option value="25">25 / pág</option>
+                <option value="50">50 / pág</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                disabled={paginaActual === 1}
-                className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ←
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1} style={{ width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: paginaActual === 1 ? 'default' : 'pointer', border: `1px solid ${border}`, background: surface2, color: paginaActual === 1 ? 'rgba(0,0,0,.2)' : ct2, transition: 'all .13s' }}>
+                <ChevronLeft size={13} strokeWidth={2.5} />
               </button>
-              <span className="px-2 py-0.5 text-xs font-medium text-gray-700">
+              <span style={{ fontSize: 11, fontWeight: 600, color: ct2, padding: '0 6px', letterSpacing: '-0.01em' }}>
                 {paginaActual} / {totalPaginas || 1}
               </span>
-              <button
-                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                disabled={paginaActual === totalPaginas || totalPaginas === 0}
-                className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                →
+              <button onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas || totalPaginas === 0} style={{ width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: (paginaActual === totalPaginas || totalPaginas === 0) ? 'default' : 'pointer', border: `1px solid ${border}`, background: surface2, color: (paginaActual === totalPaginas || totalPaginas === 0) ? 'rgba(0,0,0,.2)' : ct2, transition: 'all .13s' }}>
+                <ChevronRight size={13} strokeWidth={2.5} />
               </button>
             </div>
           </div>
+
         </div>
       </div>
+
     </div>
   )
 }

@@ -4,7 +4,7 @@ import React from "react"
 import { useAuth } from "../../lib/AuthContext"
 import { useTheme } from "../../lib/ThemeContext"
 import {
-  Home,
+  LayoutDashboard,
   FileText,
   Users,
   Package,
@@ -14,166 +14,242 @@ import {
   Settings,
   LogOut,
   ClipboardList,
-  ChevronRight,
-  X,
+  ChevronLeft,
 } from "lucide-react"
 
-const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose }) => {
+const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const { user, logout } = useAuth()
-  const { darkMode } = useTheme()
-
-  const menuItems = [
-    { id: "dashboard", icon: Home, label: "Dashboard" },
-    { id: "pedidos", icon: ClipboardList, label: "Pedidos" },
-    { id: "facturacion", icon: FileText, label: "Facturación" },
-    { id: "clientes", icon: Users, label: "Clientes" },
-    { id: "productos", icon: Package, label: "Productos" },
-    { id: "caja", icon: DollarSign, label: "Control de Caja" },
-    { id: "reportes", icon: BarChart3, label: "Reportes" },
-    { id: "proveedores", icon: ShoppingCart, label: "Proveedores" },
-  ]
 
   const handleNavClick = (id) => {
     setActiveModule(id)
-    if (onClose) onClose() // Cierra el drawer en mobile al tocar un item
+    if (onClose) onClose()
   }
+
+  const sections = [
+    {
+      title: "Principal",
+      items: [
+        { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { id: "pedidos", icon: ClipboardList, label: "Pedidos", badge: "3" },
+        { id: "facturacion", icon: FileText, label: "Facturación" },
+        { id: "clientes", icon: Users, label: "Clientes" },
+      ]
+    },
+    {
+      title: "Gestión",
+      items: [
+        { id: "productos", icon: Package, label: "Productos" },
+        { id: "caja", icon: DollarSign, label: "Caja" },
+        { id: "proveedores", icon: ShoppingCart, label: "Proveedores" },
+        { id: "reportes", icon: BarChart3, label: "Reportes" },
+      ]
+    },
+    {
+      title: "Sistema",
+      items: [
+        { id: "configuracion", icon: Settings, label: "Configuración" },
+      ]
+    }
+  ]
+
+  const SB_BG = '#282A28'
+  const SB_BG3 = '#1f211f'
+  const LINE = 'rgba(139,137,130,0.2)'
+  const T1 = '#ffffff'
+  const T2 = 'rgba(139,137,130,0.7)'
+  const T3 = 'rgba(139,137,130,0.55)'
+  const T4 = 'rgba(139,137,130,0.3)'
 
   return (
     <>
-      {/* Overlay oscuro en mobile cuando el sidebar está abierto */}
+      {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 z-40 md:hidden"
+          style={{ background: 'rgba(30,35,32,0.55)', backdropFilter: 'blur(2px)' }}
           onClick={onClose}
         />
       )}
 
       <div
-        className={`
-          w-52 border-r flex flex-col z-50
-          fixed left-0 top-0 bottom-0
-          transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0
-        `}
-        style={{
-          backgroundColor: darkMode ? '#161616' : '#ffffff',
-          borderColor: darkMode ? '#2e2e2e' : '#e5e7eb'
-        }}
-      >
+        className={`fixed left-0 top-0 bottom-0 flex flex-col z-50 overflow-hidden
+          transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+          ${isCollapsed ? 'w-[64px]' : 'w-[220px]'}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+        style={{ background: SB_BG, borderRight: `1px solid ${LINE}` }}>
 
-        {/* HEADER */}
-        <div className="flex items-center justify-center border-b border-gray-100 flex-shrink-0 relative h-[100px] px-2 py-5">
-          {/* Botón X para cerrar en mobile */}
-          <button
-            onClick={onClose}
-            className="absolute top-2 right-2 p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors md:hidden z-10"
-          >
-            <X size={15} />
-          </button>
-          {/* Logo del sistema */}
+        {/* Logo */}
+        <div className="flex items-center overflow-hidden flex-shrink-0 relative"
+          style={{ height: 90, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
+
           <img
-            src="/logogestify.png"
+            src="/logogestify3.png"
             alt="Gestify"
-            className="h-[120px] w-auto object-contain scale-[1.5]"
+            className="transition-all duration-200 object-contain"
+            style={{
+              height: 80,
+              opacity: isCollapsed ? 0 : 1,
+              transform: isCollapsed ? 'scale(0.8)' : 'scale(1.7)',
+              width: isCollapsed ? 0 : 'auto',
+            }}
           />
+
+          {isCollapsed && (
+            <div className="flex items-center justify-center font-black flex-shrink-0 w-8 h-8 rounded-lg absolute inset-auto"
+              style={{ background: SB_BG3, fontSize: 15, color: T1, border: `1px solid rgba(139,137,130,0.2)` }}>
+              G
+            </div>
+          )}
         </div>
 
-        {/* MENÚ */}
-        <nav className="flex-1 px-2.5 py-3 overflow-y-auto overflow-x-hidden flex flex-col gap-0.5">
-          {menuItems.map((item) => {
-            const isActive = activeModule === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                style={isActive
-                  ? darkMode
-                    ? { background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)', color: '#fff' }
-                    : { background: '#111111', color: '#fff' }
-                  : {}}
-                className={`
-                w-full flex items-center gap-2.5 py-2 px-3 rounded-lg
-                transition-all duration-150 outline-none border-0
-                focus:outline-none focus:ring-0 appearance-none
-                group relative
-                ${isActive
-                    ? "text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }
-              `}
-                type="button"
-              >
-                <div
-                  style={!isActive && darkMode
-                    ? { border: '1px solid rgba(249,115,22,0.45)', borderRadius: '6px', padding: '3px', color: '#fb923c' }
-                    : { padding: '3px' }
-                  }
-                >
-                  <item.icon
-                    size={13}
-                    className={`flex-shrink-0 transition-colors ${isActive ? "text-white" : darkMode ? "" : "text-gray-400 group-hover:text-gray-600"}`}
-                  />
-                </div>
-                <span className="text-[11.5px] font-medium tracking-tight flex-1 text-left">
-                  {item.label}
-                </span>
-                {isActive && (
-                  <ChevronRight size={10} className="text-white/60 flex-shrink-0" />
-                )}
-              </button>
-            )
-          })}
-        </nav>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden pb-4"
+          style={{ padding: '12px 8px', scrollbarWidth: 'none' }}>
 
-        {/* FOOTER */}
-        <div className="flex-shrink-0 border-t border-gray-100">
-          {/* Configuración */}
-          <div className="px-2.5 pt-2.5 pb-1">
-            <button
-              onClick={() => handleNavClick("configuracion")}
-              style={activeModule === "configuracion"
-                ? darkMode
-                  ? { background: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)', color: '#fff' }
-                  : { background: '#111111', color: '#fff' }
-                : {}}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors outline-none border-0 focus:outline-none focus:ring-0 appearance-none group ${activeModule === "configuracion"
-                ? "text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                }`}
-              type="button"
-            >
-              <Settings size={14} className={`flex-shrink-0 ${activeModule === "configuracion" ? "text-white" : "text-gray-400 group-hover:text-gray-500"
-                }`} />
-              <span className="text-[11.5px] font-medium tracking-tight flex-1 text-left">Configuración</span>
-            </button>
-          </div>
-
-          {/* Usuario */}
-          <div className="px-2.5 pb-3">
-            <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-200">
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center bg-[#2b2b2b] flex-shrink-0">
-                  <span className="text-white font-semibold text-[11px]">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[9px] text-gray-400 font-medium uppercase tracking-wide">Usuario</div>
-                  <div className="text-[10.5px] text-gray-800 font-medium truncate">{user?.email}</div>
-                </div>
+          {sections.map((sec, idx) => (
+            <div key={idx} style={{ marginBottom: 18 }}>
+              {/* Section label */}
+              <div className="transition-all duration-200 overflow-hidden whitespace-nowrap"
+                style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
+                  color: T4, padding: '0 10px', marginBottom: 4,
+                  opacity: isCollapsed ? 0 : 1,
+                  height: isCollapsed ? 0 : 'auto',
+                }}>
+                {sec.title}
               </div>
 
-              <button
-                onClick={logout}
-                className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors text-[10.5px] font-medium border border-red-100 hover:border-red-200 outline-none focus:outline-none focus:ring-0 appearance-none"
-                type="button"
-              >
-                <LogOut size={11} />
-                <span>Cerrar Sesión</span>
-              </button>
+              {/* Nav items */}
+              <div className="flex flex-col" style={{ gap: 1 }}>
+                {sec.items.map((item) => {
+                  const isActive = activeModule === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      title={isCollapsed ? item.label : undefined}
+                      onClick={() => handleNavClick(item.id)}
+                      className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 relative focus:outline-none focus:ring-0"
+                      style={{
+                        gap: 9, padding: '8px 10px',
+                        background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
+                        color: isActive ? T1 : T2,
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: 13, fontWeight: isActive ? 600 : 500,
+                        justifyContent: isCollapsed ? 'center' : 'flex-start',
+                        textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden',
+                      }}
+                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = T1 } }}
+                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 } }}>
+
+                      {/* Active indicator */}
+                      {isActive && (
+                        <div className="absolute left-0 rounded-r"
+                          style={{ top: '20%', bottom: '20%', width: 2.5, background: '#DCED31' }} />
+                      )}
+
+                      {/* Icon */}
+                      <span className="flex items-center justify-center flex-shrink-0" style={{ width: 15, height: 15 }}>
+                        <item.icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                      </span>
+
+                      {/* Label */}
+                      <span className="flex-1 transition-all duration-150 overflow-hidden"
+                        style={{ opacity: isCollapsed ? 0 : 1, width: isCollapsed ? 0 : 'auto' }}>
+                        {item.label}
+                      </span>
+
+                      {/* Badge */}
+                      {item.badge && !isCollapsed && (
+                        <span className="flex items-center justify-center rounded-full font-bold flex-shrink-0"
+                          style={{
+                            fontSize: 9, minWidth: 16, height: 16, padding: '0 4px',
+                            background: 'rgba(255,255,255,0.15)', color: T1,
+                          }}>
+                          {item.badge}
+                        </span>
+                      )}
+                      {/* Collapsed badge dot */}
+                      {item.badge && isCollapsed && (
+                        <div className="absolute rounded-full"
+                          style={{ top: 7, right: 7, width: 5, height: 5, background: 'rgba(255,255,255,0.5)' }} />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+          ))}
+        </nav>
+
+        {/* Footer */}
+        <div className="flex-shrink-0 flex flex-col" style={{ borderTop: `1px solid ${LINE}`, padding: '10px 8px', gap: 0 }}>
+
+          {/* User info */}
+          <div className="flex items-center overflow-hidden rounded-lg"
+            style={{ gap: 9, padding: '8px 10px', marginBottom: 3 }}>
+            <div className="rounded-full flex items-center justify-center font-bold flex-shrink-0 overflow-hidden"
+              style={{ width: 27, height: 27, background: SB_BG3, border: '1.5px solid rgba(139,137,130,0.25)', fontSize: 11, color: T1 }}>
+              {user?.user_metadata?.avatar_url
+                ? <img src={user.user_metadata.avatar_url} alt="Perfil" className="w-full h-full object-cover" />
+                : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
+            </div>
+            {!isCollapsed && (
+              <div className="overflow-hidden" style={{ transition: 'opacity .18s' }}>
+                <div className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  style={{ fontSize: 11.5, fontWeight: 600, color: T1 }}>
+                  {user?.user_metadata?.full_name || 'Administrador'}
+                </div>
+                <div className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  style={{ fontSize: 9.5, color: T3 }}>
+                  {user?.email || 'admin@gestify.com'}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Collapse button */}
+          <button
+            title={isCollapsed ? "Expandir" : "Colapsar"}
+            onClick={() => {
+              if (window.innerWidth < 768) { if (onClose) onClose() }
+              else { if (onToggleCollapse) onToggleCollapse() }
+            }}
+            className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-0"
+            style={{
+              gap: 9, padding: '7px 10px',
+              background: 'transparent', color: T2,
+              fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              overflow: 'hidden', whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = T1 }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 }}>
+            <span className="flex items-center flex-shrink-0 transition-transform duration-300"
+              style={{ width: 14, height: 14, transform: isCollapsed ? 'rotate(180deg)' : 'none' }}>
+              <ChevronLeft size={14} strokeWidth={2.5} />
+            </span>
+            {!isCollapsed && <span>Colapsar</span>}
+          </button>
+
+          {/* Logout button */}
+          <button
+            onClick={logout}
+            title={isCollapsed ? "Cerrar sesión" : undefined}
+            className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-0"
+            style={{
+              gap: 9, padding: '7px 10px',
+              background: 'transparent', color: T2,
+              fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              overflow: 'hidden', whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,137,130,0.15)'; e.currentTarget.style.color = 'rgba(255,180,170,0.85)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 }}>
+            <span className="flex items-center flex-shrink-0" style={{ width: 14, height: 14 }}>
+              <LogOut size={14} strokeWidth={2} style={{ transform: 'scaleX(-1)' }} />
+            </span>
+            {!isCollapsed && <span>Cerrar sesión</span>}
+          </button>
         </div>
       </div>
     </>

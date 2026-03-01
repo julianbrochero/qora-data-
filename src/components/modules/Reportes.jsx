@@ -3,155 +3,107 @@
 import React, { useState, useMemo } from 'react'
 import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 
-const Reportes = ({
-  facturas = [],
-  pedidos = [],
-  clientes = [],
-  productos = [],
-  searchTerm = "",
-  setSearchTerm
-}) => {
-  const [periodo, setPeriodo] = useState("mes") // dia, semana, mes, anio, todos
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY
+══════════════════════════════════════════════ */
+const bg = '#F5F5F5'
+const surface = '#FAFAFA'
+const surface2 = '#FFFFFF'
+const border = 'rgba(48,54,47,.13)'
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const accentL = 'rgba(51,65,57,.08)'
+const cardShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)'
+
+const inputStyle = {
+  background: 'transparent',
+  border: 'none', outline: 'none',
+  fontSize: 12, fontFamily: "'Inter', sans-serif",
+  color: ct1, width: '100%',
+}
+const pillSelect = {
+  height: 32, padding: '0 24px 0 12px', fontSize: 11, fontWeight: 600,
+  color: ct2, background: surface2, border: `1px solid ${border}`,
+  borderRadius: 8, outline: 'none', cursor: 'pointer', appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+  backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center',
+  fontFamily: "'Inter', sans-serif", transition: 'border-color .15s'
+}
+
+const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], searchTerm = "", setSearchTerm }) => {
+  const [periodo, setPeriodo] = useState("mes")
   const anioActualReal = new Date().getFullYear()
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActualReal)
 
   const facturasSafe = Array.isArray(facturas) ? facturas : []
-  const clientesSafe = Array.isArray(clientes) ? clientes : []
-
-  // Helpers de fechas
   const hoy = new Date()
   const fechaFiltro = new Date()
 
-  if (periodo === "dia") {
-    fechaFiltro.setHours(0, 0, 0, 0)
-  } else if (periodo === "semana") {
-    fechaFiltro.setDate(hoy.getDate() - 7)
-    fechaFiltro.setHours(0, 0, 0, 0)
-  } else if (periodo === "mes") {
-    fechaFiltro.setDate(1)
-    fechaFiltro.setHours(0, 0, 0, 0)
-  } else if (periodo === "anio") {
-    fechaFiltro.setMonth(0, 1)
-    fechaFiltro.setHours(0, 0, 0, 0)
-  } else {
-    fechaFiltro.setFullYear(2000) // "todos"
-  }
+  if (periodo === "dia") { fechaFiltro.setHours(0, 0, 0, 0) }
+  else if (periodo === "semana") { fechaFiltro.setDate(hoy.getDate() - 7); fechaFiltro.setHours(0, 0, 0, 0) }
+  else if (periodo === "mes") { fechaFiltro.setDate(1); fechaFiltro.setHours(0, 0, 0, 0) }
+  else if (periodo === "anio") { fechaFiltro.setMonth(0, 1); fechaFiltro.setHours(0, 0, 0, 0) }
+  else { fechaFiltro.setFullYear(2000) }
 
-  // Filtrar facturas por periodo y termino de busqueda
   const facturasFiltradas = facturasSafe.filter(f => {
     const d = new Date(f.fecha + 'T00:00:00')
     const coincideFecha = d >= fechaFiltro
-
     const searchSafe = (searchTerm || "").toLowerCase()
-    const coincideBusqueda =
-      String(f.numero || "").toLowerCase().includes(searchSafe) ||
-      String(f.cliente || f.cliente_nombre || "").toLowerCase().includes(searchSafe)
-
+    const coincideBusqueda = String(f.numero || "").toLowerCase().includes(searchSafe) || String(f.cliente || f.cliente_nombre || "").toLowerCase().includes(searchSafe)
     return coincideFecha && coincideBusqueda
   })
 
-  // 1. Calcular métricas principales
+  // Métricas
   const estadisticas = useMemo(() => {
-    let ventasTotal = 0
-    let cobradoTotal = 0
-    let clientesActivos = new Set()
-    let productosCount = 0
-
+    let ventasTotal = 0, cobradoTotal = 0, clientesActivos = new Set(), productosCount = 0
     facturasFiltradas.forEach(f => {
-      // Solo sumamos ingresos generados, podríamos excluir anuladas si tuvieran ese estado formal.
       if (f.estado !== 'anulada') {
-        ventasTotal += (Number.parseFloat(f.total) || 0)
-        cobradoTotal += (Number.parseFloat(f.montopagado) || 0)
-
+        ventasTotal += (parseFloat(f.total) || 0)
+        cobradoTotal += (parseFloat(f.montopagado) || 0)
         let nomCli = f.cliente_nombre || f.cliente
         if (nomCli) clientesActivos.add(nomCli)
-
-        // Parsear items para contar productos y armar tops
         let itemsArr = []
-        try {
-          itemsArr = typeof f.items === 'string' ? JSON.parse(f.items) : (f.items || [])
-        } catch (e) { }
-
-        itemsArr.forEach(i => {
-          productosCount += (Number.parseFloat(i.cantidad) || 0)
-        })
+        try { itemsArr = typeof f.items === 'string' ? JSON.parse(f.items) : (f.items || []) } catch (e) { }
+        itemsArr.forEach(i => { productosCount += (parseFloat(i.cantidad) || 0) })
       }
     })
-
-    return {
-      ventasTotales: ventasTotal,
-      cobradoTotal: cobradoTotal,
-      clientesActivos: clientesActivos.size,
-      productosVendidos: productosCount
-    }
+    return { ventasTotales: ventasTotal, cobradoTotal: cobradoTotal, clientesActivos: clientesActivos.size, productosVendidos: productosCount }
   }, [facturasFiltradas])
 
-  // 2. Gráfico de últimos 7 días (independiente del filtro actual)
+  // Gráfico semanal
   const chartSieteDias = useMemo(() => {
-    const dias = []
-    const ventasPorDia = [0, 0, 0, 0, 0, 0, 0]
-    const nombresDias = []
-
+    const dias = [], ventasPorDia = [0, 0, 0, 0, 0, 0, 0], nombresDias = []
     for (let i = 6; i >= 0; i--) {
-      const d = new Date()
-      d.setDate(hoy.getDate() - i)
-      const iso = d.toISOString().split('T')[0]
-      dias.push(iso)
+      const d = new Date(); d.setDate(hoy.getDate() - i)
+      dias.push(d.toISOString().split('T')[0])
       nombresDias.push(d.toLocaleDateString('es-ES', { weekday: 'short' }))
     }
-
     facturasSafe.forEach(f => {
       const index = dias.indexOf(f.fecha)
-      if (index !== -1 && f.estado !== 'anulada') {
-        ventasPorDia[index] += (Number.parseFloat(f.total) || 0)
-      }
+      if (index !== -1 && f.estado !== 'anulada') ventasPorDia[index] += (parseFloat(f.total) || 0)
     })
-
-    const maxDia = Math.max(...ventasPorDia, 1) // evitar division por 0
+    const maxDia = Math.max(...ventasPorDia, 1)
     const porcentajes = ventasPorDia.map(v => (v / maxDia) * 100)
-
-    return { nombresDias, ventasPorDia, porcentajes }
+    return { nombresDias, ventasPorDia, porcentajes, total: ventasPorDia.reduce((a, b) => a + b, 0) }
   }, [facturasSafe])
 
-  // 3. Top Clientes
+  // Top Clientes
   const topClientes = useMemo(() => {
     const mapa = {}
     facturasFiltradas.forEach(f => {
       if (f.estado === 'anulada') return
       const nom = f.cliente_nombre || f.cliente || 'Consumidor Final'
       if (!mapa[nom]) mapa[nom] = { nombre: nom, compras: 0, total: 0 }
-      mapa[nom].compras += 1
-      mapa[nom].total += (Number.parseFloat(f.total) || 0)
+      mapa[nom].compras += 1; mapa[nom].total += (parseFloat(f.total) || 0)
     })
     return Object.values(mapa).sort((a, b) => b.total - a.total).slice(0, 5)
   }, [facturasFiltradas])
 
-  // 4. Top Productos
-  const topProductos = useMemo(() => {
-    const mapa = {}
-    facturasFiltradas.forEach(f => {
-      if (f.estado === 'anulada') return
-      let itemsArr = []
-      try {
-        itemsArr = typeof f.items === 'string' ? JSON.parse(f.items) : (f.items || [])
-      } catch (e) { }
-
-      itemsArr.forEach(item => {
-        const nom = item.nombre || item.descripcion || 'Producto'
-        if (!mapa[nom]) mapa[nom] = { nombre: nom, cantidad: 0, total: 0 }
-        mapa[nom].cantidad += (Number.parseFloat(item.cantidad) || 0)
-        mapa[nom].total += (Number.parseFloat(item.precio) * Number.parseFloat(item.cantidad) || 0)
-      })
-    })
-    return Object.values(mapa).sort((a, b) => b.cantidad - a.cantidad).slice(0, 10)
-  }, [facturasFiltradas])
-
-  // 5. Resumen mensual del año seleccionado (navegable)
+  // Resumen mensual
   const resumenMensual = useMemo(() => {
-    const meses = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-    ]
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     return meses.map((nombre, idx) => {
       const facturasDelMes = facturasSafe.filter(f => {
         if (f.estado === 'anulada') return false
@@ -162,59 +114,52 @@ const Reportes = ({
         const d = new Date((p.created_at || p.fecha || '').split('T')[0] + 'T00:00:00')
         return d.getFullYear() === anioSeleccionado && d.getMonth() === idx
       }) : []
-      const totalFacturado = facturasDelMes.reduce((s, f) => s + (parseFloat(f.total) || 0), 0)
-      const totalCobrado = facturasDelMes.reduce((s, f) => s + (parseFloat(f.montopagado) || 0), 0)
-      const cantFacturas = facturasDelMes.length
-      const cantPedidos = pedidosDelMes.length
-      return { nombre, idx, totalFacturado, totalCobrado, cantFacturas, cantPedidos }
+      return {
+        nombre, idx,
+        totalFacturado: facturasDelMes.reduce((s, f) => s + (parseFloat(f.total) || 0), 0),
+        totalCobrado: facturasDelMes.reduce((s, f) => s + (parseFloat(f.montopagado) || 0), 0),
+        cantFacturas: facturasDelMes.length,
+        cantPedidos: pedidosDelMes.length
+      }
     })
   }, [facturasSafe, pedidos, anioSeleccionado])
 
-  const formatearMonto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
+  const fCorto = (m) => (parseFloat(m) || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const fMonto = (m) => (parseFloat(m) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-  const formatearMontoCorto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-  }
+  const kpis = [
+    { label: 'Total Facturado', val: `$${fCorto(estadisticas.ventasTotales)}`, icon: DollarSign, color: '#1E40AF' },
+    { label: 'Total Cobrado', val: `$${fCorto(estadisticas.cobradoTotal)}`, icon: TrendingUp, color: '#065F46' },
+    { label: 'Clientes Atendidos', val: estadisticas.clientesActivos, icon: Users, color: '#6D28D9' },
+    { label: 'Unidades Vendidas', val: estadisticas.productosVendidos, icon: Package, color: '#92400E' },
+  ]
 
   return (
-    <div className="space-y-3 pb-8">
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+
+      {/* ══ HEADER ══ */}
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Reportes y Estadísticas</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Análisis de datos y métricas del negocio</p>
+          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Análisis</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Reportes Estadísticos</h2>
         </div>
 
-        {/* BOTONES SUPERIORES */}
-        <div className="flex gap-1.5">
-          <button className="bg-white text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs font-medium border border-gray-300 shadow-sm" onClick={() => window.print()}>
-            <Download size={12} />
-            Exportar (Imprimir)
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: 32, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.15)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.08)'}>
+            <Download size={13} strokeWidth={2.5} /> Exportar
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* BÚSQUEDA Y FILTROS */}
-      <div className="flex gap-2 print:hidden">
-        <div className="flex-1 relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={12} />
-          <input
-            type="text"
-            placeholder="Filtrar por número de factura o cliente..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
-          />
+      {/* ══ TOOLBAR BUSCADOR/FILTROS ══ */}
+      <div style={{ padding: '18px 24px 0', display: 'flex', gap: 10 }}>
+        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', background: surface, border: `1px solid ${border}`, borderRadius: 8, height: 32, padding: '0 12px', boxShadow: '0 1px 3px rgba(48,54,47,.04)' }}
+          onFocusCapture={e => e.currentTarget.style.borderColor = accent} onBlurCapture={e => e.currentTarget.style.borderColor = border}>
+          <Search size={13} style={{ color: ct3, marginRight: 8, flexShrink: 0 }} />
+          <input type="text" placeholder="Filtrar estadísticas por cliente o nro de factura..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={inputStyle} />
         </div>
-        <select
-          className="px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white text-xs font-medium text-gray-700"
-          value={periodo}
-          onChange={(e) => setPeriodo(e.target.value)}
-        >
+        <select value={periodo} onChange={e => setPeriodo(e.target.value)} style={pillSelect} onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border}>
           <option value="dia">Día Actual (Hoy)</option>
           <option value="semana">Últimos 7 Días</option>
           <option value="mes">Este Mes</option>
@@ -223,238 +168,159 @@ const Reportes = ({
         </select>
       </div>
 
-      {/* CARDS DE RESUMEN */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Total Facturado</h3>
-            <DollarSign className="text-blue-500" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMontoCorto(estadisticas.ventasTotales)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Valor total en facturas emitidas</p>
-          </div>
-        </div>
+      {/* ══ CARDS KPI ══ */}
+      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+        {kpis.map((k, i) => (
+          <div key={i} style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
+            onMouseEnter={e => { e.currentTarget.style.transform = `translateY(-2px)`; e.currentTarget.style.boxShadow = `0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)` }} onMouseLeave={e => { e.currentTarget.style.transform = ``; e.currentTarget.style.boxShadow = cardShadow }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${k.color}15, transparent 70%)` }} />
+            <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: k.color, borderRadius: '0 2px 2px 0' }} />
 
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Total Cobrado</h3>
-            <TrendingUp className="text-green-500" size={13} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{k.label}</span>
+                <span style={{ fontSize: 18, fontWeight: 600, color: ct1, letterSpacing: '-.03em', display: 'block', lineHeight: 1.1 }}>{k.val}</span>
+              </div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <k.icon size={15} strokeWidth={2.5} style={{ color: k.color }} />
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMontoCorto(estadisticas.cobradoTotal)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Ingresos reales (sin deuda)</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Clientes Atendidos</h3>
-            <Users className="text-purple-500" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{estadisticas.clientesActivos}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Clientes que compraron</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Unidades Vendidas</h3>
-            <Package className="text-orange-500" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{estadisticas.productosVendidos}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Suma de productos despachados</p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* GRÁFICO Y TOP CLIENTES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* GRÁFICO DE VENTAS (Muestra siempre últimos 7 días con datos) */}
-        <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-          <div className="px-3 py-2 border-b border-gray-200">
-            <h3 className="text-xs font-semibold text-gray-900">Histórico: Últimos 7 Días</h3>
-            <p className="text-[10px] text-gray-500">Tendencia de facturación diaria asegurada</p>
-          </div>
-          <div className="p-3">
-            <div className="h-48 flex items-end justify-around gap-1">
-              {chartSieteDias.porcentajes.map((porc, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center group relative cursor-pointer">
-                  <div className="absolute -top-6 bg-gray-800 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                    ${formatearMontoCorto(chartSieteDias.ventasPorDia[i])}
-                  </div>
-                  <div className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-all duration-300" style={{ height: `${porc}%`, minHeight: chartSieteDias.ventasPorDia[i] > 0 ? '4px' : '0' }}></div>
-                  <p className="text-[10px] text-gray-600 mt-2 capitalize font-medium">{chartSieteDias.nombresDias[i]}</p>
-                </div>
-              ))}
+      <div style={{ padding: '18px 24px', display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 14 }}>
+
+        {/* GRÁFICO 7 DIAS */}
+        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '16px 20px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: ct1 }}>Últimos 7 Días</h3>
+              <p style={{ fontSize: 11, color: ct3 }}>Evolución de ventas facturadas</p>
             </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, color: '#1E40AF', letterSpacing: '-.04em' }}>${fCorto(chartSieteDias.total)}</span>
+            </div>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', gap: 4, height: 160, paddingBottom: 6 }}>
+            {chartSieteDias.porcentajes.map((porc, i) => (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: ct2, marginBottom: 4 }}>${fCorto(chartSieteDias.ventasPorDia[i])}</div>
+                <div style={{ width: '100%', maxWidth: 40, background: 'linear-gradient(180deg, #3B82F6 0%, #2563EB 100%)', borderRadius: '4px 4px 0 0', minHeight: chartSieteDias.ventasPorDia[i] > 0 ? 4 : 0, height: `${porc}%`, transition: 'height .3s ease' }} />
+                <div style={{ fontSize: 10, color: ct3, marginTop: 6, fontWeight: 600, textTransform: 'capitalize' }}>{chartSieteDias.nombresDias[i]}</div>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* TOP CLIENTES */}
-        <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden h-full flex flex-col">
-          <div className="px-3 py-2 border-b border-gray-200 shrink-0">
-            <h3 className="text-xs font-semibold text-gray-900">Mejores Clientes</h3>
-            <p className="text-[10px] text-gray-500">Top 5 por volumen de compras ({periodo})</p>
+        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: ct1 }}>Top 5 Clientes</h3>
+              <p style={{ fontSize: 11, color: ct3 }}>Mejores por volumen comprado</p>
+            </div>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(109,40,217,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={12} strokeWidth={2.5} style={{ color: '#6D28D9' }} />
+            </div>
           </div>
-          <div className="divide-y divide-gray-100 overflow-y-auto flex-1">
-            {topClientes.length > 0 ? topClientes.map((cliente, index) => (
-              <div key={index} className="px-3 py-2.5 hover:bg-gray-50 transition-colors">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-gray-100 p-1.5 rounded-full border border-gray-200">
-                      <Users size={12} className="text-gray-500" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-medium text-gray-900 block leading-tight">{cliente.nombre}</span>
-                      <span className="text-[9px] text-gray-500">{cliente.compras} {cliente.compras === 1 ? 'compra' : 'compras'}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-gray-900">${formatearMonto(cliente.total)}</p>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {topClientes.length > 0 ? topClientes.map((c, i) => (
+              <div key={i} style={{ padding: '12px 20px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background .13s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: accent }}>{i + 1}</div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: ct1 }}>{c.nombre}</div>
+                    <div style={{ fontSize: 10, color: ct3 }}>{c.compras} {c.compras === 1 ? 'compra' : 'compras'}</div>
                   </div>
                 </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: ct2 }}>${fCorto(c.total)}</div>
               </div>
             )) : (
-              <div className="flex items-center justify-center p-6 text-xs text-gray-500 h-full">
-                No hay ventas para los clientes en este período.
-              </div>
+              <div style={{ padding: 40, textAlign: 'center', color: ct3, fontSize: 12, fontWeight: 600 }}>No hay ventas en este período.</div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── RESUMEN MENSUAL CON SELECTOR DE AÑO ────────────────── */}
-      <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-        <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            <h3 className="text-xs font-semibold text-gray-900">Resumen mensual</h3>
-            <p className="text-[10px] text-gray-500">Ventas facturadas, cobradas y pedidos mes a mes</p>
-          </div>
-          {/* Selector de año con flechas */}
-          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-            <button
-              onClick={() => setAnioSeleccionado(a => a - 1)}
-              className="p-0.5 rounded hover:bg-gray-200 text-gray-500 transition-colors"
-              title="Año anterior"
-            >
-              <ChevronLeft size={13} />
-            </button>
-            <span className="text-xs font-bold text-gray-800 min-w-[36px] text-center">
-              {anioSeleccionado}
-            </span>
-            <button
-              onClick={() => setAnioSeleccionado(a => a + 1)}
-              disabled={anioSeleccionado >= anioActualReal}
-              className="p-0.5 rounded hover:bg-gray-200 text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Año siguiente"
-            >
-              <ChevronRight size={13} />
-            </button>
-            {anioSeleccionado !== anioActualReal && (
-              <button
-                onClick={() => setAnioSeleccionado(anioActualReal)}
-                className="ml-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Hoy
+      {/* ══ RESUMEN MENSUAL AÑO ══ */}
+      <div style={{ padding: '0 24px 40px' }}>
+        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
+
+          <div style={{ padding: '16px 20px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: surface2 }}>
+            <div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: ct1 }}>Resumen Anual {anioSeleccionado}</h3>
+              <p style={{ fontSize: 11, color: ct3 }}>Evolución mes a mes</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: accentL, borderRadius: 8, padding: '4px 8px' }}>
+              <button onClick={() => setAnioSeleccionado(a => a - 1)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: accent, display: 'flex', alignItems: 'center', padding: 2 }}>
+                <ChevronLeft size={14} strokeWidth={2.5} />
               </button>
-            )}
+              <span style={{ fontSize: 12, fontWeight: 700, color: accent, width: 40, textAlign: 'center' }}>{anioSeleccionado}</span>
+              <button onClick={() => setAnioSeleccionado(a => a + 1)} disabled={anioSeleccionado >= anioActualReal} style={{ background: 'transparent', border: 'none', cursor: anioSeleccionado >= anioActualReal ? 'default' : 'pointer', color: anioSeleccionado >= anioActualReal ? 'rgba(51,65,57,.3)' : accent, display: 'flex', alignItems: 'center', padding: 2 }}>
+                <ChevronRight size={14} strokeWidth={2.5} />
+              </button>
+              {anioSeleccionado !== anioActualReal && (
+                <button onClick={() => setAnioSeleccionado(anioActualReal)} style={{ marginLeft: 6, padding: '2px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: '#DCED31', border: 'none', color: '#1e2320', cursor: 'pointer' }}>Hoy</button>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-3 py-2 text-left text-[10px] font-semibold text-gray-600 uppercase">Mes</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Facturas</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Pedidos</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Total Facturado</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Total Cobrado</th>
-                <th className="px-3 py-2 text-right text-[10px] font-semibold text-gray-600 uppercase">Saldo Pendiente</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {resumenMensual.map((mes) => {
-                const mesActual = new Date().getMonth()
-                const esMesActual = mes.idx === mesActual
-                const pendiente = mes.totalFacturado - mes.totalCobrado
-                const sinActividad = mes.cantFacturas === 0 && mes.cantPedidos === 0
-                return (
-                  <tr
-                    key={mes.idx}
-                    className={`transition-colors ${esMesActual ? 'bg-blue-50 hover:bg-blue-100' :
-                      sinActividad ? 'opacity-40' :
-                        'hover:bg-gray-50'
-                      }`}
-                  >
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        {esMesActual && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
-                        <span className={`text-xs font-semibold ${esMesActual ? 'text-blue-700' : 'text-gray-700'}`}>
-                          {mes.nombre}
-                        </span>
-                        {esMesActual && <span className="text-[9px] text-blue-500 font-medium">(actual)</span>}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className={`text-xs font-medium ${mes.cantFacturas > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
-                        {mes.cantFacturas}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className={`text-xs font-medium ${mes.cantPedidos > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
-                        {mes.cantPedidos}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className={`text-xs font-bold ${mes.totalFacturado > 0 ? 'text-gray-900' : 'text-gray-300'}`}>
-                        {mes.totalFacturado > 0 ? `$${formatearMontoCorto(mes.totalFacturado)}` : '—'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className={`text-xs font-bold ${mes.totalCobrado > 0 ? 'text-green-600' : 'text-gray-300'}`}>
-                        {mes.totalCobrado > 0 ? `$${formatearMontoCorto(mes.totalCobrado)}` : '—'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {pendiente > 0 ? (
-                        <span className="text-xs font-bold text-red-500">${formatearMontoCorto(pendiente)}</span>
-                      ) : mes.totalFacturado > 0 ? (
-                        <span className="text-xs font-medium text-green-600">✓ Saldado</span>
-                      ) : (
-                        <span className="text-xs text-gray-300">—</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-            {/* TOTALES DEL AÑO */}
-            <tfoot className="bg-gray-50 border-t-2 border-gray-300">
-              <tr>
-                <td className="px-3 py-2 text-xs font-bold text-gray-900">TOTAL {anioSeleccionado}</td>
-                <td className="px-3 py-2 text-right text-xs font-bold text-gray-900">
-                  {resumenMensual.reduce((s, m) => s + m.cantFacturas, 0)}
-                </td>
-                <td className="px-3 py-2 text-right text-xs font-bold text-gray-900">
-                  {resumenMensual.reduce((s, m) => s + m.cantPedidos, 0)}
-                </td>
-                <td className="px-3 py-2 text-right text-xs font-bold text-gray-900">
-                  ${formatearMontoCorto(resumenMensual.reduce((s, m) => s + m.totalFacturado, 0))}
-                </td>
-                <td className="px-3 py-2 text-right text-xs font-bold text-green-600">
-                  ${formatearMontoCorto(resumenMensual.reduce((s, m) => s + m.totalCobrado, 0))}
-                </td>
-                <td className="px-3 py-2 text-right text-xs font-bold text-red-500">
-                  ${formatearMontoCorto(resumenMensual.reduce((s, m) => s + Math.max(0, m.totalFacturado - m.totalCobrado), 0))}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ background: surface2, borderBottom: `1px solid ${border}` }}>
+                <tr>
+                  {['Mes', 'Facturas', 'Pedidos', 'Facturado', 'Cobrado', 'Pendiente'].map((h, i) => (
+                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i === 0 ? 'left' : 'right' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {resumenMensual.map(m => {
+                  const esMes = m.idx === new Date().getMonth() && anioSeleccionado === anioActualReal
+                  const pend = m.totalFacturado - m.totalCobrado
+                  const vacio = m.cantFacturas === 0 && m.cantPedidos === 0
+
+                  return (
+                    <tr key={m.idx} style={{ borderBottom: `1px solid ${border}`, background: esMes ? 'rgba(59,130,246,.04)' : vacio ? 'transparent' : surface, opacity: vacio ? .5 : 1, transition: 'background .13s', cursor: 'default' }}
+                      onMouseEnter={e => e.currentTarget.style.background = esMes ? 'rgba(59,130,246,.08)' : 'rgba(51,65,57,.02)'}
+                      onMouseLeave={e => e.currentTarget.style.background = esMes ? 'rgba(59,130,246,.04)' : vacio ? 'transparent' : surface}>
+
+                      <td style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {esMes && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#3B82F6' }} />}
+                          <span style={{ fontSize: 12, fontWeight: 600, color: esMes ? '#1D4ED8' : ct2 }}>{m.nombre}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 600, color: ct1 }}>{m.cantFacturas || '—'}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 600, color: ct1 }}>{m.cantPedidos || '—'}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: ct1 }}>{m.totalFacturado > 0 ? `$${fCorto(m.totalFacturado)}` : '—'}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#065F46' }}>{m.totalCobrado > 0 ? `$${fCorto(m.totalCobrado)}` : '—'}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12 }}>
+                        {pend > 0 ? <span style={{ fontWeight: 700, color: '#991B1B' }}>${fCorto(pend)}</span>
+                          : m.totalFacturado > 0 ? <span style={{ fontWeight: 600, color: '#065F46' }}>✓ Saldado</span>
+                            : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              <tfoot style={{ background: surface2, borderTop: `2px solid ${border}` }}>
+                <tr>
+                  <td style={{ padding: '14px 16px', fontSize: 11, fontWeight: 800, color: ct1, textTransform: 'uppercase' }}>Total Año</td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 12, fontWeight: 800, color: ct1 }}>{resumenMensual.reduce((s, m) => s + m.cantFacturas, 0)}</td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 12, fontWeight: 800, color: ct1 }}>{resumenMensual.reduce((s, m) => s + m.cantPedidos, 0)}</td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: ct1 }}>${fCorto(resumenMensual.reduce((s, m) => s + m.totalFacturado, 0))}</td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: '#065F46' }}>${fCorto(resumenMensual.reduce((s, m) => s + m.totalCobrado, 0))}</td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: '#991B1B' }}>${fCorto(resumenMensual.reduce((s, m) => s + Math.max(0, m.totalFacturado - m.totalCobrado), 0))}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
+
     </div>
   )
 }

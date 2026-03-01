@@ -1,11 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, X, Trash2, ChevronLeft, ChevronRight as ChevronR } from 'lucide-react'
+import React, { useState, useCallback, useEffect } from 'react'
+import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY
+   #F5F5F5  fondo app        #FAFAFA  surface
+   #282A28  header           #334139  acento verde
+   #DCED31  lima primary     #8B8982  ct3 suave
+══════════════════════════════════════════════ */
+const bg = '#F5F5F5'
+const surface = '#FAFAFA'
+const border = 'rgba(48,54,47,.13)'
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const accentL = 'rgba(51,65,57,.08)'
+const cardShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)'
+
+const inputBase = { height: 32, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif" }
+const pillSel = { ...inputBase, cursor: 'pointer', appearance: 'none', paddingRight: 24, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }
 
 const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openModal, cerrarCaja, eliminarMovimientoCaja, cargarMovimientosPorFecha, recargarDatos }) => {
   const hoyStr = new Date().toISOString().split('T')[0]
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyStr)
-  const [movimientosVista, setMovimientosVista] = useState(null)   // null = usa prop del día actual
-  const [cajaVista, setCajaVista] = useState(null)                 // null = usa prop del día actual
+  const [movimientosVista, setMovimientosVista] = useState(null)
+  const [cajaVista, setCajaVista] = useState(null)
   const [cargandoFecha, setCargandoFecha] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filtroTipo, setFiltroTipo] = useState("todos")
@@ -19,665 +38,467 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
   const [borrando, setBorrando] = useState(false)
 
   const esHoy = fechaSeleccionada === hoyStr
-
-  // Fuente de datos: si es hoy usa las props en tiempo real, si es otro día usa lo cargado
   const movimientosActivos = movimientosVista !== null ? movimientosVista : movimientosCaja
   const cajaActiva = cajaVista !== null ? cajaVista : caja
 
-  // Cargar cuando cambia la fecha (solo para días que no son hoy)
+  // Atajo de teclado: Ctrl para abrir Egreso (solo si es hoy y no hay confirmaciones activas ni modals superpuestos)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Si está en un input/textarea, ignorar
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      if (e.key === 'Control' && esHoy && !mostrarConfirmCierre) {
+        e.preventDefault();
+        if (openModal) openModal("egreso-caja");
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [esHoy, mostrarConfirmCierre, openModal]);
+
   const cambiarFecha = useCallback(async (nuevaFecha) => {
-    setFechaSeleccionada(nuevaFecha)
-    setPaginaActual(1)
-    setSearchTerm("")
-    setFiltroTipo("todos")
-    if (nuevaFecha === hoyStr) {
-      // Volver a datos en vivo
-      setMovimientosVista(null)
-      setCajaVista(null)
-    } else {
+    setFechaSeleccionada(nuevaFecha); setPaginaActual(1); setSearchTerm(""); setFiltroTipo("todos")
+    if (nuevaFecha === hoyStr) { setMovimientosVista(null); setCajaVista(null) }
+    else {
       setCargandoFecha(true)
-      const resultado = await cargarMovimientosPorFecha(nuevaFecha)
-      setMovimientosVista(resultado.movimientos)
-      setCajaVista(resultado.caja)
-      setCargandoFecha(false)
+      const r = await cargarMovimientosPorFecha(nuevaFecha)
+      setMovimientosVista(r.movimientos); setCajaVista(r.caja); setCargandoFecha(false)
     }
   }, [cargarMovimientosPorFecha, hoyStr])
 
-  const irDiaAnterior = () => {
-    const d = new Date(fechaSeleccionada)
-    d.setDate(d.getDate() - 1)
-    cambiarFecha(d.toISOString().split('T')[0])
-  }
+  const irAtras = () => { const d = new Date(fechaSeleccionada); d.setDate(d.getDate() - 1); cambiarFecha(d.toISOString().split('T')[0]) }
+  const irAdelante = () => { const d = new Date(fechaSeleccionada); d.setDate(d.getDate() + 1); const n = d.toISOString().split('T')[0]; if (n <= hoyStr) cambiarFecha(n) }
 
-  const irDiaSiguiente = () => {
-    const d = new Date(fechaSeleccionada)
-    d.setDate(d.getDate() + 1)
-    const nueva = d.toISOString().split('T')[0]
-    if (nueva <= hoyStr) cambiarFecha(nueva)
-  }
-
-  const cajaSegura = {
-    ingresos: Number.parseFloat(cajaActiva.ingresos) || 0,
-    egresos: Number.parseFloat(cajaActiva.egresos) || 0,
-    saldo: Number.parseFloat(cajaActiva.saldo) || 0
-  }
-
+  const cajaSegura = { ingresos: parseFloat(cajaActiva.ingresos) || 0, egresos: parseFloat(cajaActiva.egresos) || 0, saldo: parseFloat(cajaActiva.saldo) || 0 }
   const movimientosSeguros = Array.isArray(movimientosActivos) ? movimientosActivos : []
   const cierresSeguros = Array.isArray(cierresCaja) ? cierresCaja : []
 
-  // Filtrar movimientos
-  const etiquetaCategoria = {
-    venta: "Venta",
-    cobro: "Cobro",
-    ingreso_extra: "Ingreso extra",
-    proveedor: "Proveedor",
-    gasto_general: "Gasto general",
-    sueldo: "Sueldo/Retiro",
-    impuesto: "Impuesto",
-    compra_stock: "Compra stock",
-    otro: "Otro",
-  }
+  const etiquetaCategoria = { venta: 'Venta', cobro: 'Cobro', ingreso_extra: 'Ingreso extra', proveedor: 'Proveedor', gasto_general: 'Gasto general', sueldo: 'Sueldo/Retiro', impuesto: 'Impuesto', compra_stock: 'Compra stock', otro: 'Otro' }
 
-  // Categorías presentes en los movimientos actuales
-  const categoriasPresentes = [...new Set(
-    movimientosSeguros
-      .map(m => m.referencia)
-      .filter(r => r && !r.startsWith('producto-') && !r.startsWith('pedido:'))
-  )]
+  const categoriasPresentes = [...new Set(movimientosSeguros.map(m => m.referencia).filter(r => r && !r.startsWith('producto-') && !r.startsWith('pedido:')))]
 
-  const filtrarMovimientos = movimientosSeguros.filter((movimiento) => {
-    const coincideBusqueda =
-      (movimiento.description || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
-      (movimiento.metodo || "").toLowerCase().includes((searchTerm || "").toLowerCase())
+  const filtrados = movimientosSeguros.filter(m => {
+    const q = (searchTerm || "").toLowerCase()
+    const matchB = (m.description || "").toLowerCase().includes(q) || (m.metodo || "").toLowerCase().includes(q)
+    const matchT = filtroTipo === "todos" || m.tipo === filtroTipo
+    const matchC = filtroCategoria === "todas" || m.referencia === filtroCategoria
+    return matchB && matchT && matchC
+  }).sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0))
 
-    const coincideTipo =
-      filtroTipo === "todos" ||
-      movimiento.tipo === filtroTipo
-
-    const coincideCategoria =
-      filtroCategoria === "todas" ||
-      movimiento.referencia === filtroCategoria
-
-    return coincideBusqueda && coincideTipo && coincideCategoria
-  }).sort((a, b) => {
-    const fechaA = new Date(a.fecha || 0)
-    const fechaB = new Date(b.fecha || 0)
-    return fechaB - fechaA
-  })
-
-  // Paginación
-  const totalPaginas = Math.ceil(filtrarMovimientos.length / itemsPorPagina)
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina)
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
-  const indiceFin = indiceInicio + itemsPorPagina
-  const movimientosPaginados = filtrarMovimientos.slice(indiceInicio, indiceFin)
+  const paginados = filtrados.slice(indiceInicio, indiceInicio + itemsPorPagina)
 
-  const formatearMonto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
+  const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-  const resumenCaja = {
-    ingresosHoy: movimientosSeguros
-      .filter(m => m.tipo === "ingreso")
-      .reduce((sum, m) => sum + (Number.parseFloat(m.monto) || 0), 0),
-
-    egresosHoy: movimientosSeguros
-      .filter(m => m.tipo === "egreso")
-      .reduce((sum, m) => sum + (Number.parseFloat(m.monto) || 0), 0),
-
-    movimientosHoy: movimientosSeguros.length,
-
-    ultimoCierre: cierresSeguros.length > 0
-      ? new Date(cierresSeguros[0].fecha || cierresSeguros[0].fecha_cierre).toLocaleDateString()
-      : "Sin cierres"
+  const resumen = {
+    ingresos: movimientosSeguros.filter(m => m.tipo === "ingreso").reduce((s, m) => s + (parseFloat(m.monto) || 0), 0),
+    egresos: movimientosSeguros.filter(m => m.tipo === "egreso").reduce((s, m) => s + (parseFloat(m.monto) || 0), 0),
+    total: movimientosSeguros.length,
+    ultimoCierre: cierresSeguros.length > 0 ? new Date(cierresSeguros[0].fecha || cierresSeguros[0].fecha_cierre).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : "Sin cierres"
   }
 
   const handleCerrarCaja = async () => {
-    if (!cerrarCaja) return
-    setCerrando(true)
+    if (!cerrarCaja) return; setCerrando(true)
     try {
-      const resultado = await cerrarCaja(observacionesCierre)
-      if (resultado?.success) {
-        setMostrarConfirmCierre(false)
-        setObservacionesCierre("")
-        if (recargarDatos) recargarDatos()
-      } else {
-        alert("Error al cerrar caja: " + (resultado?.mensaje || "Error desconocido"))
-      }
-    } finally {
-      setCerrando(false)
-    }
+      const r = await cerrarCaja(observacionesCierre)
+      if (r?.success) { setMostrarConfirmCierre(false); setObservacionesCierre(""); if (recargarDatos) recargarDatos() }
+      else alert("Error al cerrar caja: " + (r?.mensaje || "Error desconocido"))
+    } finally { setCerrando(false) }
   }
 
+  const focusInput = e => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
+  const blurInput = e => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
+
   return (
-    <div className="space-y-3">
-      {/* HEADER */}
-      <div className="flex justify-between items-start flex-wrap gap-2">
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+
+      {/* ══ HEADER ══ */}
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Control de Caja</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Gestión de ingresos y egresos</p>
+          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Control de Caja</h2>
         </div>
 
-        {/* SELECTOR DE FECHA */}
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5 shadow-sm">
-          <Calendar size={13} className="text-gray-400 flex-shrink-0" />
-          <button
-            onClick={irDiaAnterior}
-            className="p-0.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
-            title="Día anterior"
-          >
-            <ChevronLeft size={14} />
+        {/* SELECTOR FECHA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '5px 10px' }}>
+          <Calendar size={12} style={{ color: 'rgba(255,255,255,.5)', flexShrink: 0 }} />
+          <button onClick={irAtras} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'transparent', border: 'none', color: 'rgba(255,255,255,.5)', cursor: 'pointer' }}>
+            <ChevronLeft size={13} />
           </button>
-          <input
-            type="date"
-            value={fechaSeleccionada}
-            max={hoyStr}
-            onChange={e => cambiarFecha(e.target.value)}
-            className="text-xs font-medium text-gray-700 border-0 bg-transparent outline-none cursor-pointer"
-          />
-          <button
-            onClick={irDiaSiguiente}
-            disabled={fechaSeleccionada >= hoyStr}
-            className="p-0.5 rounded hover:bg-gray-100 text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Día siguiente"
-          >
-            <ChevronR size={14} />
+          <input type="date" value={fechaSeleccionada} max={hoyStr} onChange={e => cambiarFecha(e.target.value)}
+            style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.85)', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }} />
+          <button onClick={irAdelante} disabled={fechaSeleccionada >= hoyStr} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'transparent', border: 'none', color: fechaSeleccionada >= hoyStr ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.5)', cursor: fechaSeleccionada >= hoyStr ? 'default' : 'pointer' }}>
+            <ChevronRight size={13} />
           </button>
-          {!esHoy && (
-            <button
-              onClick={() => cambiarFecha(hoyStr)}
-              className="ml-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              Hoy
-            </button>
-          )}
-          {cargandoFecha && (
-            <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin ml-1" />
-          )}
+          {!esHoy && <button onClick={() => cambiarFecha(hoyStr)} style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: '#DCED31', color: '#282A28', border: 'none', cursor: 'pointer' }}>Hoy</button>}
+          {cargandoFecha && <div style={{ width: 12, height: 12, border: '2px solid #DCED31', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />}
         </div>
 
-        {/* BOTONES SUPERIORES — solo visibles si es hoy */}
-        <div className="flex gap-1.5">
-          {esHoy && (
+        {/* BOTONES ACCIÓN */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {esHoy ? (
             <>
-              <button
-                onClick={() => openModal && openModal("ingreso-caja")}
-                className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-              >
-                <Plus size={12} />
-                Ingreso
+              <button onClick={() => openModal && openModal("ingreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', background: 'transparent', color: '#4ADE80', cursor: 'pointer', transition: 'all .13s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(74,222,128,.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <TrendingUp size={12} strokeWidth={2.5} /> Ingreso
               </button>
-              <button
-                onClick={() => openModal && openModal("egreso-caja")}
-                className="bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-              >
-                <Plus size={12} />
-                Egreso
+              <button onClick={() => openModal && openModal("egreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #F87171', background: 'transparent', color: '#F87171', cursor: 'pointer', transition: 'all .13s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} title="Atajo: Ctrl">
+                <TrendingDown size={12} strokeWidth={2.5} /> Egreso
+                <kbd style={{ fontSize: 9, fontWeight: 700, padding: '1px 4px', background: 'rgba(248,113,113,.15)', borderRadius: 4, marginLeft: 2 }}>Ctrl</kbd>
               </button>
-              <button
-                onClick={() => setMostrarConfirmCierre(true)}
-                className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-              >
-                <CreditCard size={12} />
-                Cerrar Caja
+              <button onClick={() => setMostrarConfirmCierre(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', background: '#DCED31', color: '#282A28' }}>
+                <CreditCard size={12} strokeWidth={2.5} /> Cerrar Caja
               </button>
             </>
-          )}
-          {!esHoy && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
-              <Calendar size={12} className="text-amber-600" />
-              <span className="text-xs font-medium text-amber-700">
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, background: 'rgba(234,179,8,.15)', border: '1px solid rgba(234,179,8,.3)' }}>
+              <Calendar size={11} style={{ color: '#EAB308' }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#EAB308' }}>
                 {new Date(fechaSeleccionada + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
               </span>
             </div>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* ── PANEL DE CONFIRMACIÓN DE CIERRE ─────────────────────────── */}
+      {/* ══ PANEL CIERRE ══ */}
       {mostrarConfirmCierre && (
-        <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 space-y-3">
-          {/* Encabezado */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-blue-100 p-1.5 rounded-lg">
-                <CreditCard size={14} className="text-blue-600" />
+        <div style={{ margin: '14px 24px 0', background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+          <div style={{ background: '#282A28', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(220,237,49,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={14} style={{ color: '#DCED31' }} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-blue-900">Confirmar cierre de caja</h3>
-                <p className="text-[10px] text-blue-600">{new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Confirmar cierre de caja</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.5)' }}>{new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
               </div>
             </div>
-            <button
-              onClick={() => { setMostrarConfirmCierre(false); setObservacionesCierre("") }}
-              className="text-blue-400 hover:text-blue-700 p-1 rounded hover:bg-blue-100"
-            >
-              <X size={14} />
+            <button onClick={() => { setMostrarConfirmCierre(false); setObservacionesCierre("") }} style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,.5)' }}>
+              <X size={13} />
             </button>
           </div>
 
-          {/* Resumen financiero */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white border border-green-200 rounded-lg p-2.5 text-center">
-              <p className="text-[10px] text-gray-500 mb-0.5">Ingresos</p>
-              <p className="text-base font-bold text-green-600">+${formatearMonto(resumenCaja.ingresosHoy)}</p>
+          <div style={{ padding: 18 }}>
+            {/* mini cards resumen cierre */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
+              {[
+                { label: 'Ingresos', val: `+$${fMonto(resumen.ingresos)}`, clr: '#065F46', bg: '#F0FDF4', bd: '#6EE7B7' },
+                { label: 'Egresos', val: `-$${fMonto(resumen.egresos)}`, clr: '#991B1B', bg: '#FEF2F2', bd: '#FCA5A5' },
+                { label: 'Saldo final', val: `$${fMonto(cajaSegura.saldo)}`, clr: cajaSegura.saldo >= 0 ? '#1E40AF' : '#92400E', bg: cajaSegura.saldo >= 0 ? '#EFF6FF' : '#FEF3C7', bd: cajaSegura.saldo >= 0 ? '#93C5FD' : '#FDE68A' },
+              ].map((c, i) => (
+                <div key={i} style={{ padding: '10px 14px', borderRadius: 10, background: c.bg, border: `1px solid ${c.bd}`, textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: ct3, marginBottom: 4, fontWeight: 600 }}>{c.label}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: c.clr, letterSpacing: '-.03em' }}>{c.val}</div>
+                </div>
+              ))}
             </div>
-            <div className="bg-white border border-red-200 rounded-lg p-2.5 text-center">
-              <p className="text-[10px] text-gray-500 mb-0.5">Egresos</p>
-              <p className="text-base font-bold text-red-600">-${formatearMonto(resumenCaja.egresosHoy)}</p>
-            </div>
-            <div className={`bg-white border rounded-lg p-2.5 text-center ${cajaSegura.saldo >= 0 ? 'border-blue-200' : 'border-orange-200'
-              }`}>
-              <p className="text-[10px] text-gray-500 mb-0.5">Saldo final</p>
-              <p className={`text-base font-bold ${cajaSegura.saldo >= 0 ? 'text-blue-700' : 'text-orange-600'
-                }`}>${formatearMonto(cajaSegura.saldo)}</p>
-            </div>
-          </div>
 
-          {/* Detalle de movimientos */}
-          <div className="bg-white border border-blue-200 rounded-lg p-2.5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-gray-700">Movimientos del día</span>
-              <span className="text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full">
-                {resumenCaja.movimientosHoy} total
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              <div className="text-[10px] text-gray-600 flex justify-between">
-                <span>Ingresos:</span>
-                <span className="font-semibold text-green-600">
-                  {movimientosSeguros.filter(m => m.tipo === 'ingreso').length} mov.
-                </span>
+            {/* desglose */}
+            <div style={{ background: 'rgba(48,54,47,.04)', borderRadius: 10, padding: '10px 14px', marginBottom: 14, border: `1px solid ${border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: ct2 }}>Movimientos del día</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: ct1 }}>{resumen.total} total</span>
               </div>
-              <div className="text-[10px] text-gray-600 flex justify-between">
-                <span>Egresos:</span>
-                <span className="font-semibold text-red-600">
-                  {movimientosSeguros.filter(m => m.tipo === 'egreso').length} mov.
-                </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+                <div style={{ fontSize: 11, color: ct3, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Ingresos</span><span style={{ fontWeight: 600, color: '#065F46' }}>{movimientosSeguros.filter(m => m.tipo === 'ingreso').length} mov.</span>
+                </div>
+                <div style={{ fontSize: 11, color: ct3, display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Egresos</span><span style={{ fontWeight: 600, color: '#991B1B' }}>{movimientosSeguros.filter(m => m.tipo === 'egreso').length} mov.</span>
+                </div>
               </div>
-            </div>
-            {/* Desglose por categoría */}
-            {categoriasPresentes.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-gray-100 space-y-0.5">
-                {categoriasPresentes.map(cat => {
-                  const movsCat = movimientosSeguros.filter(m => m.referencia === cat)
-                  const totalCat = movsCat.reduce((s, m) => s + (parseFloat(m.monto) || 0), 0)
-                  const esIngreso = movsCat[0]?.tipo === 'ingreso'
-                  return (
-                    <div key={cat} className="flex justify-between text-[10px] text-gray-600">
+              {categoriasPresentes.length > 0 && (
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${border}`, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {categoriasPresentes.map(cat => {
+                    const movsCat = movimientosSeguros.filter(m => m.referencia === cat)
+                    const totalCat = movsCat.reduce((s, m) => s + (parseFloat(m.monto) || 0), 0)
+                    const esIngreso = movsCat[0]?.tipo === 'ingreso'
+                    return <div key={cat} style={{ fontSize: 11, color: ct3, display: 'flex', justifyContent: 'space-between' }}>
                       <span>{etiquetaCategoria[cat] || cat}</span>
-                      <span className={`font-semibold ${esIngreso ? 'text-green-600' : 'text-red-600'}`}>
-                        {esIngreso ? '+' : '-'}${formatearMonto(totalCat)}
-                      </span>
+                      <span style={{ fontWeight: 600, color: esIngreso ? '#065F46' : '#991B1B' }}>{esIngreso ? '+' : '-'}${fMonto(totalCat)}</span>
                     </div>
-                  )
-                })}
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* advertencia saldo negativo */}
+            {cajaSegura.saldo < 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, background: '#FEF3C7', border: '1px solid #FDE68A', marginBottom: 14 }}>
+                <AlertTriangle size={12} style={{ color: '#92400E', flexShrink: 0 }} />
+                <p style={{ fontSize: 11, color: '#92400E' }}>El saldo es negativo. Verificá los egresos antes de cerrar.</p>
               </div>
             )}
-          </div>
 
-          {/* Observaciones */}
-          <div>
-            <label className="block text-[11px] font-semibold text-blue-800 mb-1">Observaciones (opcional)</label>
-            <textarea
-              className="w-full px-2.5 py-1.5 text-xs border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white resize-none"
-              rows={2}
-              placeholder="Ej: Todo en orden, falta de cambio, diferencia de caja..."
-              value={observacionesCierre}
-              onChange={e => setObservacionesCierre(e.target.value)}
-            />
-          </div>
-
-          {/* Advertencia si hay saldo negativo */}
-          {cajaSegura.saldo < 0 && (
-            <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
-              <AlertTriangle size={12} className="text-orange-500 flex-shrink-0" />
-              <p className="text-[10px] text-orange-700">El saldo final es negativo. Verificá los egresos antes de cerrar.</p>
+            {/* observaciones */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 11, fontWeight: 600, color: ct2, display: 'block', marginBottom: 5 }}>Observaciones (opcional)</label>
+              <textarea value={observacionesCierre} onChange={e => setObservacionesCierre(e.target.value)} rows={2} placeholder="Ej: Todo en orden, falta de cambio..."
+                onFocus={focusInput} onBlur={blurInput}
+                style={{ width: '100%', padding: '8px 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', resize: 'none', fontFamily: "'Inter', sans-serif" }} />
             </div>
-          )}
 
-          {/* Botones */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setMostrarConfirmCierre(false); setObservacionesCierre("") }}
-              disabled={cerrando}
-              className="flex-1 bg-white text-gray-700 px-3 py-2 text-xs rounded-lg border border-gray-200 hover:bg-gray-50 font-medium disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleCerrarCaja}
-              disabled={cerrando}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-xs rounded-lg font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 transition-colors"
-            >
-              <CheckCircle size={12} />
-              {cerrando ? "Cerrando..." : "Confirmar cierre"}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => { setMostrarConfirmCierre(false); setObservacionesCierre("") }} disabled={cerrando}
+                style={{ flex: 1, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer' }}>
+                Cancelar
+              </button>
+              <button onClick={handleCerrarCaja} disabled={cerrando}
+                style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: cerrando ? .6 : 1 }}>
+                <CheckCircle size={13} strokeWidth={2.5} /> {cerrando ? "Cerrando..." : "Confirmar cierre"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* CARDS DE RESUMEN - ACTUALIZADAS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Ingresos Hoy</h3>
-            <TrendingUp className="text-gray-400" size={13} />
+      {/* ══ CARDS RESUMEN ══ */}
+      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(185px,1fr))', gap: 12 }}>
+        {[
+          { label: 'Ingresos del día', val: `$${fMonto(resumen.ingresos)}`, icon: TrendingUp, clr: '#065F46', sub: `${movimientosSeguros.filter(m => m.tipo === 'ingreso').length} movimientos` },
+          { label: 'Egresos del día', val: `$${fMonto(resumen.egresos)}`, icon: TrendingDown, clr: '#991B1B', sub: `${movimientosSeguros.filter(m => m.tipo === 'egreso').length} movimientos` },
+          { label: 'Saldo actual', val: `$${fMonto(cajaSegura.saldo)}`, icon: DollarSign, clr: cajaSegura.saldo >= 0 ? '#1E40AF' : '#92400E', sub: 'Balance de caja en tiempo real' },
+          { label: 'Último cierre', val: resumen.ultimoCierre, icon: Calendar, clr: '#6B7280', sub: 'Fecha del cierre anterior' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = cardShadow }}>
+            {/* glow radial */}
+            <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${s.clr}15, transparent 70%)` }} />
+            {/* barra lateral */}
+            <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: s.clr, borderRadius: '0 2px 2px 0' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{s.label}</span>
+                <span style={{ fontSize: 18, fontWeight: 600, color: ct1, letterSpacing: '-.03em', display: 'block', lineHeight: 1.1 }}>{s.val}</span>
+              </div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${s.clr}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <s.icon size={15} strokeWidth={2.5} style={{ color: s.clr }} />
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMonto(resumenCaja.ingresosHoy)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Entradas de dinero del día.</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Egresos Hoy</h3>
-            <TrendingDown className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMonto(resumenCaja.egresosHoy)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Salidas de dinero del día.</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Saldo Actual</h3>
-            <DollarSign className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMonto(cajaSegura.saldo)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Total disponible en caja.</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Último Cierre</h3>
-            <Calendar className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenCaja.ultimoCierre}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Fecha del último cierre realizado.</p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* BÚSQUEDA, FILTRO TIPO Y FILTRO CATEGORÍA */}
-      <div className="space-y-1.5">
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={12} />
-            <input
-              type="text"
-              placeholder="Buscar movimientos..."
-              className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      {/* ══ TABLA MOVIMIENTOS ══ */}
+      <div style={{ padding: '18px 24px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+          {/* toolbar */}
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, background: surface, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* search */}
+            <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 300 }}>
+              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input type="text" placeholder="Buscar movimientos..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                style={{ ...inputBase, width: '100%', paddingLeft: 30 }}
+                onFocus={focusInput} onBlur={blurInput} />
+            </div>
+
+            <select value={filtroTipo} onChange={e => { setFiltroTipo(e.target.value); setPaginaActual(1) }} style={pillSel}>
+              <option value="todos">Todos los tipos</option>
+              <option value="ingreso">Ingresos</option>
+              <option value="egreso">Egresos</option>
+            </select>
+
+            {/* chips categoría */}
+            {categoriasPresentes.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: ct3, fontWeight: 600 }}>Cat:</span>
+                {['todas', ...categoriasPresentes].map(cat => (
+                  <button key={cat} onClick={() => { setFiltroCategoria(cat); setPaginaActual(1) }}
+                    style={{ padding: '2px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, border: `1px solid ${filtroCategoria === cat ? accent : border}`, background: filtroCategoria === cat ? accent : '#fff', color: filtroCategoria === cat ? '#fff' : ct3, cursor: 'pointer', transition: 'all .12s' }}>
+                    {cat === 'todas' ? 'Todas' : etiquetaCategoria[cat] || cat}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <span style={{ fontSize: 11, color: ct3, fontWeight: 500, marginLeft: 'auto' }}>{filtrados.length} movimientos</span>
           </div>
-          <select
-            className="px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white text-xs font-medium text-gray-700"
-            value={filtroTipo}
-            onChange={(e) => { setFiltroTipo(e.target.value); setPaginaActual(1) }}
-          >
-            <option value="todos">Todos los tipos</option>
-            <option value="ingreso">Ingresos</option>
-            <option value="egreso">Egresos</option>
-          </select>
-        </div>
 
-        {/* Chips de categoría */}
-        {categoriasPresentes.length > 0 && (
-          <div className="flex flex-wrap gap-1 items-center">
-            <span className="text-[10px] text-gray-500 font-medium mr-0.5">Categoría:</span>
-            <button
-              onClick={() => { setFiltroCategoria("todas"); setPaginaActual(1) }}
-              className={`px-2 py-0.5 text-[10px] rounded-full border font-medium transition-colors ${filtroCategoria === "todas"
-                ? "bg-gray-800 text-white border-gray-800"
-                : "bg-white text-gray-600 border-gray-300 hover:border-gray-500"
-                }`}
-            >
-              Todas
-            </button>
-            {categoriasPresentes.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => { setFiltroCategoria(cat); setPaginaActual(1) }}
-                className={`px-2 py-0.5 text-[10px] rounded-full border font-medium transition-colors ${filtroCategoria === cat
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-gray-500"
-                  }`}
-              >
-                {etiquetaCategoria[cat] || cat}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          {/* tabla */}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
+                <tr>
+                  {['TIPO', 'DESCRIPCIÓN', 'FECHA', 'MÉTODO', 'MONTO', ''].map((col, i) => (
+                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i === 4 ? 'right' : 'left', whiteSpace: 'nowrap' }}>{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginados.length > 0 ? paginados.map(mov => {
+                  const esIngreso = mov.tipo === 'ingreso'
+                  return (
+                    <tr key={mov.id} className="group" style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
 
-      {/* CARD CON TABLA DE MOVIMIENTOS */}
-      <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-        {/* HEADER INFO */}
-        <div className="px-3 py-2 border-b border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-900">Movimientos del Día</h3>
-          <p className="text-xs text-gray-500">Lista de ingresos y egresos</p>
-        </div>
-
-        {/* TABLA */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Tipo</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Descripción</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Método</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Monto</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {movimientosPaginados.length > 0 ? (
-                movimientosPaginados.map((movimiento) => (
-                  <tr key={movimiento.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-2 py-1.5">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${movimiento.tipo === "ingreso"
-                        ? "bg-green-50 text-green-700 border border-green-200"
-                        : "bg-red-50 text-red-700 border border-red-200"
-                        }`}>
-                        <span className="text-xs">{movimiento.tipo === "ingreso" ? "↑" : "↓"}</span>
-                        <span className="text-xs ml-1">{movimiento.tipo === "ingreso" ? "Ingreso" : "Egreso"}</span>
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5 text-xs text-gray-900">{movimiento.description || movimiento.descripcion || "N/A"}</td>
-                    <td className="px-2 py-1.5 text-xs text-gray-600">
-                      <div className="flex items-center gap-1 flex-wrap">
-                        <Calendar size={9} className="text-gray-400" />
-                        <span className="text-xs">
-                          {movimiento.fecha
-                            ? new Date(movimiento.fecha).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
-                            : "N/A"}
-                        </span>
-                        {movimiento.referencia && !movimiento.referencia.startsWith('producto-') && (() => {
-                          const ref = movimiento.referencia
-                          if (ref.startsWith('pedido:')) return <span className="text-[9px] bg-gray-100 border border-gray-200 rounded px-1 py-0.5 text-gray-600">Venta</span>
-                          const label = etiquetaCategoria[ref]
-                          if (!label) return null
-                          return <span className="text-[9px] bg-gray-100 border border-gray-200 rounded px-1 py-0.5 text-gray-600">{label}</span>
-                        })()}
-                      </div>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <span className="text-xs font-medium text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
-                        {movimiento.metodo || "N/A"}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className={`text-xs font-semibold ${movimiento.tipo === "ingreso" ? "text-green-600" : "text-red-600"
-                        }`}>
-                        {movimiento.tipo === "ingreso" ? "+" : "-"}${formatearMonto(movimiento.monto)}
-                      </div>
-                    </td>
-                    {/* BOTÓN ELIMINAR */}
-                    <td className="px-2 py-1.5 text-right">
-                      {confirmandoBorrar === movimiento.id ? (
-                        <div className="flex items-center gap-1 justify-end">
-                          <span className="text-[10px] text-gray-500">¿Eliminar?</span>
-                          <button
-                            onClick={async () => {
-                              setBorrando(true)
-                              await eliminarMovimientoCaja?.(movimiento.id)
-                              setConfirmandoBorrar(null)
-                              setBorrando(false)
-                            }}
-                            disabled={borrando}
-                            className="text-[10px] bg-red-500 hover:bg-red-600 text-white px-1.5 py-0.5 rounded font-medium disabled:opacity-50"
-                          >
-                            {borrando ? '...' : 'Sí'}
-                          </button>
-                          <button
-                            onClick={() => setConfirmandoBorrar(null)}
-                            className="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-medium"
-                          >
-                            No
-                          </button>
+                      {/* tipo */}
+                      <td style={{ padding: '11px 16px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, background: esIngreso ? '#F0FDF4' : '#FEF2F2', color: esIngreso ? '#065F46' : '#991B1B', border: `1px solid ${esIngreso ? '#6EE7B7' : '#FCA5A5'}` }}>
+                          {esIngreso ? <TrendingUp size={10} strokeWidth={2.5} /> : <TrendingDown size={10} strokeWidth={2.5} />}
+                          {esIngreso ? 'Ingreso' : 'Egreso'}
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmandoBorrar(movimiento.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-                          title="Eliminar movimiento"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
+                      </td>
+
+                      {/* descripción */}
+                      <td style={{ padding: '11px 16px', verticalAlign: 'middle', fontSize: 12, fontWeight: 500, color: ct1, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {mov.description || mov.descripcion || 'Sin descripción'}
+                      </td>
+
+                      {/* fecha */}
+                      <td style={{ padding: '11px 16px', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 11, fontFamily: "'DM Mono', monospace", color: ct2 }}>
+                            {mov.fecha ? new Date(mov.fecha).toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '—'}
+                          </span>
+                          {mov.referencia && !mov.referencia.startsWith('producto-') && (() => {
+                            const ref = mov.referencia
+                            const label = ref.startsWith('pedido:') ? 'Venta' : etiquetaCategoria[ref]
+                            if (!label) return null
+                            return <span style={{ padding: '2px 6px', borderRadius: 5, fontSize: 9, fontWeight: 600, background: 'rgba(48,54,47,.06)', color: ct3, border: `1px solid ${border}` }}>{label}</span>
+                          })()}
+                        </div>
+                      </td>
+
+                      {/* método */}
+                      <td style={{ padding: '11px 16px', verticalAlign: 'middle' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600, background: 'rgba(48,54,47,.05)', color: ct2, border: `1px solid ${border}` }}>
+                          {mov.metodo || 'N/A'}
+                        </span>
+                      </td>
+
+                      {/* monto */}
+                      <td style={{ padding: '11px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: esIngreso ? '#065F46' : '#991B1B' }}>
+                          {esIngreso ? '+' : '-'}${fMonto(mov.monto)}
+                        </span>
+                      </td>
+
+                      {/* eliminar */}
+                      <td style={{ padding: '11px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        {confirmandoBorrar === mov.id ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'flex-end' }}>
+                            <span style={{ fontSize: 10, color: ct3 }}>¿Eliminar?</span>
+                            <button onClick={async () => { setBorrando(true); await eliminarMovimientoCaja?.(mov.id); setConfirmandoBorrar(null); setBorrando(false) }}
+                              disabled={borrando} style={{ padding: '3px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: '#DC2626', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                              {borrando ? '...' : 'Sí'}
+                            </button>
+                            <button onClick={() => setConfirmandoBorrar(null)} style={{ padding: '3px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: surface, color: ct2, border: `1px solid ${border}`, cursor: 'pointer' }}>No</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmandoBorrar(mov.id)} style={{ width: 28, height: 28, borderRadius: 8, background: surface, border: `1px solid transparent`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s', opacity: 0 }} className="group-hover-show"
+                            onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FCA5A5'; e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.opacity = '1' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = surface; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = ct3 }}
+                            title="Eliminar">
+                            <Trash2 size={13} strokeWidth={2.5} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                }) : (
+                  <tr>
+                    <td colSpan={6}>
+                      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                          <DollarSign size={20} style={{ color: ct3 }} />
+                        </div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: ct1, marginBottom: 4 }}>Sin movimientos</p>
+                        <p style={{ fontSize: 12, color: ct3 }}>{searchTerm ? 'Revisá los parámetros de búsqueda.' : 'No hay movimientos registrados para este día.'}</p>
+                      </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="px-3 py-6 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
-                        <DollarSign size={16} className="text-gray-400" />
-                      </div>
-                      <p className="text-xs font-semibold text-gray-900 mb-0.5">No hay movimientos</p>
-                      <p className="text-xs text-gray-500">
-                        {searchTerm
-                          ? "Intenta con otros términos"
-                          : "Registra tu primer movimiento"}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        {/* FOOTER CON PAGINACIÓN */}
-        <div className="px-3 py-2 border-t border-gray-200 bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">Mostrando {Math.min(filtrarMovimientos.length, itemsPorPagina)} de {filtrarMovimientos.length} movimientos</span>
-              <select
-                value={itemsPorPagina}
-                onChange={(e) => setItemsPorPagina(Number(e.target.value))}
-                className="px-1.5 py-0.5 text-xs border border-gray-300 rounded bg-white"
-              >
-                <option value="5">5 por página</option>
-                <option value="10">10 por página</option>
-                <option value="25">25 por página</option>
-                <option value="50">50 por página</option>
-                <option value="100">100 por página</option>
+          {/* paginación */}
+          <div style={{ padding: '12px 16px', background: surface, borderTop: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ height: 28, padding: '0 22px 0 8px', fontSize: 11, fontWeight: 600, color: ct2, background: '#fff', border: `1px solid ${border}`, borderRadius: 6, outline: 'none', cursor: 'pointer', ...pillSel }}>
+                <option value="10">10 / pág</option>
+                <option value="25">25 / pág</option>
+                <option value="50">50 / pág</option>
               </select>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                disabled={paginaActual === 1}
-                className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ←
-              </button>
-              <span className="px-2 py-0.5 text-xs font-medium text-gray-700">
-                {paginaActual} / {totalPaginas || 1}
+              <span style={{ fontSize: 11, color: ct3, fontWeight: 500 }}>
+                {paginados.length > 0 ? `${indiceInicio + 1} - ${indiceInicio + paginados.length}` : '0'} de {filtrados.length}
               </span>
-              <button
-                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                disabled={paginaActual === totalPaginas || totalPaginas === 0}
-                className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                →
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1} style={{ width: 28, height: 28, borderRadius: 6, background: paginaActual === 1 ? 'transparent' : '#fff', border: `1px solid ${paginaActual === 1 ? 'transparent' : border}`, cursor: paginaActual === 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: paginaActual === 1 ? 'rgba(0,0,0,.2)' : ct2 }}>
+                <ChevronLeft size={14} />
+              </button>
+              <span style={{ fontSize: 11, fontWeight: 600, color: ct2, minWidth: 38, textAlign: 'center' }}>{paginaActual} / {totalPaginas || 1}</span>
+              <button onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual >= totalPaginas} style={{ width: 28, height: 28, borderRadius: 6, background: paginaActual >= totalPaginas ? 'transparent' : '#fff', border: `1px solid ${paginaActual >= totalPaginas ? 'transparent' : border}`, cursor: paginaActual >= totalPaginas ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: paginaActual >= totalPaginas ? 'rgba(0,0,0,.2)' : ct2 }}>
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* SECCIÓN DE HISTORIAL DE CIERRES */}
-      <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-        {/* HEADER INFO */}
-        <div className="px-3 py-2 border-b border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-900">Historial de Cierres</h3>
-          <p className="text-xs text-gray-500">Últimos cierres de caja registrados</p>
-        </div>
+      {/* ══ HISTORIAL DE CIERRES ══ */}
+      <div style={{ padding: '0 24px 24px' }}>
+        <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, background: surface }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>Historial de Cierres</span>
+            <span style={{ fontSize: 11, color: ct3, marginLeft: 8 }}>Últimos {Math.min(cierresSeguros.length, 5)} cierres registrados</span>
+          </div>
 
-        {/* LISTA DE CIERRES */}
-        <div className="divide-y divide-gray-100">
-          {cierresSeguros.slice(0, 5).map((cierre) => (
-            <div key={cierre.id} className="px-3 py-2 hover:bg-gray-50 transition-colors">
-              <div className="flex justify-between items-center mb-1">
-                <div className="flex items-center gap-2">
-                  <div className="bg-blue-50 p-1 rounded border border-blue-200">
-                    <Calendar size={10} className="text-blue-600" />
+          {cierresSeguros.length > 0 ? cierresSeguros.slice(0, 5).map(c => (
+            <div key={c.id} style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, transition: 'background .13s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Calendar size={12} strokeWidth={2.5} style={{ color: accent }} />
                   </div>
-                  <span className="text-xs font-medium text-gray-900">
-                    {cierre.fecha || cierre.fecha_cierre || "Fecha desconocida"}
-                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: ct1 }}>{c.fecha || c.fecha_cierre || 'Fecha desconocida'}</span>
                 </div>
-                <button
-                  onClick={() => openModal && openModal('detalle-cierre', cierre)}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Ver Detalles
+                <button onClick={() => openModal && openModal('detalle-cierre', c)} style={{ fontSize: 11, fontWeight: 700, color: accent, background: 'transparent', border: `1px solid rgba(51,65,57,.2)`, borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>
+                  Ver detalles
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div>
-                  <p className="text-gray-500 text-[10px]">Ingresos</p>
-                  <p className="font-semibold text-green-600">+${formatearMonto(cierre.ingresos)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-[10px]">Egresos</p>
-                  <p className="font-semibold text-red-600">-${formatearMonto(cierre.egresos)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-[10px]">Saldo Final</p>
-                  <p className="font-semibold text-blue-600">${formatearMonto(cierre.saldo_final || cierre.saldo)}</p>
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                {[
+                  { label: 'Ingresos', val: `+$${fMonto(c.ingresos)}`, clr: '#065F46' },
+                  { label: 'Egresos', val: `-$${fMonto(c.egresos)}`, clr: '#991B1B' },
+                  { label: 'Saldo final', val: `$${fMonto(c.saldo_final || c.saldo)}`, clr: '#1E40AF' },
+                ].map((d, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: 10, color: ct3, marginBottom: 2 }}>{d.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: d.clr }}>{d.val}</div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-
-          {cierresSeguros.length === 0 && (
-            <div className="px-3 py-6 text-center">
-              <div className="flex flex-col items-center">
-                <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
-                  <CreditCard size={16} className="text-gray-400" />
-                </div>
-                <p className="text-xs font-semibold text-gray-900 mb-0.5">No hay cierres registrados</p>
-                <p className="text-xs text-gray-500">Realiza tu primer cierre de caja</p>
+          )) : (
+            <div style={{ padding: '50px 20px', textAlign: 'center' }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <CreditCard size={18} style={{ color: ct3 }} />
               </div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: ct1, marginBottom: 4 }}>Sin cierres registrados</p>
+              <p style={{ fontSize: 11, color: ct3 }}>Realizá tu primer cierre de caja para ver el historial.</p>
             </div>
           )}
         </div>
       </div>
+
+      <style>{`
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:4px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.22)}
+        @keyframes kpiIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        tr:hover .group-hover-show{opacity:1!important}
+      `}</style>
     </div>
   )
 }

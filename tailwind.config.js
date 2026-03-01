@@ -6,7 +6,11 @@ module.exports = {
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}"
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Yapari', 'Outfit', 'sans-serif'],
+      },
+    },
   },
   darkMode: "class",
   plugins: [require("@heroui/react").heroui()],

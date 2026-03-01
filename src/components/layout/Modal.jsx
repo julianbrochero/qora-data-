@@ -2,7 +2,6 @@
 "use client"
 
 import React from 'react';
-import { X } from 'lucide-react';
 import ClienteForm from '../forms/ClienteForm';
 import ProductoForm from '../forms/ProductoForm';
 import MovimientoCajaForm from '../forms/MovimientoCajaForm';
@@ -13,6 +12,7 @@ import PedidoForm from '../forms/pedido-form';
 import PedidoDetail from '../forms/PedidoDetail'; // ✅ NUEVO
 import VentaForm from '../forms/VentaForm';
 import FacturaDirectaForm from '../forms/FacturaDirectaForm';
+import PresupuestoForm from '../forms/PresupuestoForm';
 
 const Modal = ({
   isOpen,
@@ -40,7 +40,6 @@ const Modal = ({
 
       // ✅ AÑADE ESTOS CASOS PARA VENTAS
       case 'nueva-venta':
-      case 'editar-pedido':
         return (
           <VentaForm
             type={modalType}
@@ -68,6 +67,7 @@ const Modal = ({
         );
 
       case 'nuevo-pedido':
+      case 'editar-pedido':
         return (
           <PedidoForm
             type={modalType}
@@ -145,6 +145,16 @@ const Modal = ({
           />
         );
 
+      case 'nuevo-presupuesto':
+        return (
+          <PresupuestoForm
+            clientes={formData.clientes || []}
+            productos={formData.productos || []}
+            formActions={formActions}
+            closeModal={onClose}
+          />
+        );
+
       default:
         return (
           <div className="text-center p-8">
@@ -189,6 +199,9 @@ const Modal = ({
       case 'editar-proveedor':
         return 'max-w-lg';
 
+      case 'nuevo-presupuesto':
+        return 'max-w-lg';
+
       case 'detalle-cierre':
         return 'max-w-4xl';
 
@@ -200,17 +213,7 @@ const Modal = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full max-h-[95vh] overflow-y-auto`}>
-        <div className="p-3 md:p-4">
-          {/* Botón de cerrar */}
-          <div className="flex justify-end mb-1">
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
+        <div className="p-4">
           {/* Contenido del modal */}
           {renderModalContent()}
         </div>

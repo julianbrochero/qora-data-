@@ -1,11 +1,25 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Plus, Search, Calendar, Package, CheckCircle, Clock, XCircle, Truck, Edit, Eye, FileText, DollarSign, User, ChevronLeft, ChevronRight, List, CalendarDays, CheckSquare, Trash2 } from 'lucide-react'
+import {
+  Plus, Search, Package, CheckCircle, Clock, XCircle,
+  Truck, Edit, Eye, FileText, DollarSign, ChevronLeft,
+  ChevronRight, List, CalendarDays, Calendar, CheckSquare,
+  Trash2, ChevronDown, AlertCircle, X
+} from 'lucide-react'
+import { useTheme } from '../../lib/ThemeContext'
+
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY
+   #E0E1DD  fondo app
+   #373F47  surface (sidebar/topbar)
+   #334139  acento verde musgo
+   #30362F  texto oscuro (ct1)
+   #8B8982  piedra / texto suave (ct3)
+══════════════════════════════════════════════ */
 
 const Pedidos = ({
   pedidos = [],
-  productos = [],
   clientes = [],
   searchTerm = "",
   setSearchTerm,
@@ -15,1058 +29,627 @@ const Pedidos = ({
   facturarPedido,
   recargarDatos
 }) => {
+  const { darkMode } = useTheme()
+  const D = darkMode // alias corto
+
   const [filtroEstado, setFiltroEstado] = useState("todos")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [filtroFacturacion, setFiltroFacturacion] = useState("todos")
-  const [vistaActiva, setVistaActiva] = useState("lista") // "lista" | "semana" | "mes"
+  const [vistaActiva, setVistaActiva] = useState("lista")
   const [fechaActual, setFechaActual] = useState(new Date())
   const [modoSeleccion, setModoSeleccion] = useState(false)
   const [pedidosSeleccionados, setPedidosSeleccionados] = useState([])
   const [eliminandoMasivo, setEliminandoMasivo] = useState(false)
+  const [dialogo, setDialogo] = useState({ open: false, type: 'alert', title: '', message: '', onConfirm: null, isDestructive: false })
+
+  /* ── diálogos ── */
+  const customAlert = (title, message) => setDialogo({ open: true, type: 'alert', title, message, onConfirm: null, isDestructive: false })
+  const customConfirm = (title, message, onConfirm, isDestructive = false) => setDialogo({ open: true, type: 'confirm', title, message, onConfirm, isDestructive })
+  const cerrarDialogo = () => setDialogo(p => ({ ...p, open: false }))
 
   const pedidosSeguros = Array.isArray(pedidos) ? pedidos : []
 
-  // Filtrar pedidos
-  const filtrarPedidos = pedidosSeguros.filter((pedido) => {
-    const searchTermSafe = String(searchTerm || "").toLowerCase()
-    const coincideBusqueda =
-      String(pedido.codigo || "").toLowerCase().includes(searchTermSafe) ||
-      String(pedido.cliente_nombre || "").toLowerCase().includes(searchTermSafe)
-
-    const coincideEstadoOperativo =
-      filtroEstado === "todos" || pedido.estado === filtroEstado
-
-    const coincideFacturacion =
-      filtroFacturacion === "todos" ||
-      (filtroFacturacion === "facturados" && pedido.factura_id) ||
-      (filtroFacturacion === "no-facturados" && !pedido.factura_id)
-
-    return coincideBusqueda && coincideEstadoOperativo && coincideFacturacion
+  /* ── filtros ── */
+  const filtrarPedidos = pedidosSeguros.filter(p => {
+    const q = String(searchTerm || "").toLowerCase()
+    const busq = String(p.codigo || "").toLowerCase().includes(q) || String(p.cliente_nombre || "").toLowerCase().includes(q)
+    const estado = filtroEstado === "todos" || p.estado === filtroEstado
+    const fact = filtroFacturacion === "todos" || (filtroFacturacion === "facturados" && p.factura_id) || (filtroFacturacion === "no-facturados" && !p.factura_id)
+    return busq && estado && fact
   }).sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido))
 
-  // Paginación
   const totalPaginas = Math.ceil(filtrarPedidos.length / itemsPorPagina)
-  const indiceInicio = (paginaActual - 1) * itemsPorPagina
-  const indiceFin = indiceInicio + itemsPorPagina
-  const pedidosPaginados = filtrarPedidos.slice(indiceInicio, indiceFin)
+  const pedidosPaginados = filtrarPedidos.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina)
 
-  // Configuración de estados operativos
-  const estadosOperativosConfig = {
-    pendiente: {
-      label: "Pendiente",
-      color: "bg-yellow-50 text-yellow-700 border border-yellow-200",
-      dotColor: "bg-yellow-500",
-      icon: Clock,
-      desc: "Pendiente de preparación"
-    },
-    preparando: {
-      label: "Preparando",
-      color: "bg-blue-50 text-blue-700 border border-blue-200",
-      dotColor: "bg-blue-500",
-      icon: Package,
-      desc: "En preparación"
-    },
-    enviado: {
-      label: "Enviado",
-      color: "bg-purple-50 text-purple-700 border border-purple-200",
-      dotColor: "bg-purple-500",
-      icon: Truck,
-      desc: "Enviado al cliente"
-    },
-    entregado: {
-      label: "Entregado",
-      color: "bg-green-50 text-green-700 border border-green-200",
-      dotColor: "bg-green-500",
-      icon: CheckCircle,
-      desc: "Entregado al cliente"
-    },
-    cancelado: {
-      label: "Cancelado",
-      color: "bg-red-50 text-red-700 border border-red-200",
-      dotColor: "bg-red-500",
-      icon: XCircle,
-      desc: "Pedido cancelado"
-    }
-  }
+  useEffect(() => { setPaginaActual(1) }, [filtroEstado, filtroFacturacion, searchTerm, itemsPorPagina])
 
-  // Configuración de estados de pago (basado en saldo)
-  const getEstadoPago = (pedido) => {
-    const total = Number.parseFloat(pedido.total) || 0
-    const montoAbonado = Number.parseFloat(pedido.monto_abonado) || 0
-    const saldoPendiente = Number.parseFloat(pedido.saldo_pendiente) !== undefined
-      ? Number.parseFloat(pedido.saldo_pendiente)
-      : total - montoAbonado
-
-    if (saldoPendiente <= 0.01) { // Tolerancia para decimales
-      return {
-        label: "Pagado",
-        color: "bg-green-50 text-green-700 border border-green-200",
-        icon: CheckCircle,
-        badge: "green"
-      }
-    } else if (montoAbonado > 0) {
-      return {
-        label: "Pago Parcial",
-        color: "bg-yellow-50 text-yellow-700 border border-yellow-200",
-        icon: DollarSign,
-        badge: "yellow"
-      }
-    } else {
-      return {
-        label: "Sin Pago",
-        color: "bg-gray-100 text-gray-700 border border-gray-300",
-        icon: Clock,
-        badge: "gray"
-      }
-    }
-  }
-
-  // Reset página al cambiar filtros
+  /* ── atajo de teclado (solo Ctrl) ── */
   useEffect(() => {
-    setPaginaActual(1)
-  }, [filtroEstado, filtroFacturacion, searchTerm, itemsPorPagina])
+    let ctrlPressed = false
+    let otherKeyPressed = false
 
-  // Resumen de pedidos
-  const resumenPedidos = {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Control') {
+        ctrlPressed = true
+      } else if (ctrlPressed) {
+        otherKeyPressed = true
+      }
+    }
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'Control') {
+        if (!otherKeyPressed && openModal) {
+          // Si estamos escribiendo en un input, es mejor no abrirlo para evitar abrir sin querer, 
+          // pero el usuario pidió que con Ctrl se abra.
+          // Para evitar aperturas molestas, revisamos si el foco está en un input/textarea:
+          const active = document.activeElement
+          const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+          if (!isInput) {
+            openModal('nuevo-pedido')
+          }
+        }
+        ctrlPressed = false
+        otherKeyPressed = false
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [openModal])
+
+  /* -- estados operativos (colores solidos, bien visibles) -- */
+  const estadosCfg = {
+    pendiente: { label: 'Pendiente', Icon: Clock, bg: 'rgba(139,137,130,.12)', color: '#5a5753', border: 'rgba(139,137,130,.30)' },
+    preparando: { label: 'Preparando', Icon: Package, bg: 'rgba(55,63,71,.10)', color: '#373F47', border: 'rgba(55,63,71,.28)' },
+    enviado: { label: 'Enviado', Icon: Truck, bg: 'rgba(96,107,108,.12)', color: '#3d4d4f', border: 'rgba(96,107,108,.30)' },
+    entregado: { label: 'Entregado', Icon: CheckCircle, bg: 'rgba(48,54,47,.10)', color: '#30362F', border: 'rgba(48,54,47,.28)' },
+    cancelado: { label: 'Cancelado', Icon: XCircle, bg: 'rgba(139,137,130,.08)', color: '#8B8982', border: 'rgba(139,137,130,.20)' },
+  }
+
+  /* -- estado de pago (solido y visible) -- */
+  const getEstadoPago = (p) => {
+    const total = parseFloat(p.total) || 0
+    const abonado = parseFloat(p.monto_abonado) || 0
+    const saldo = p.saldo_pendiente !== undefined ? parseFloat(p.saldo_pendiente) : total - abonado
+    if (saldo <= 0.01) return { label: 'Pagado', Icon: CheckCircle, bg: 'rgba(48,54,47,.10)', color: '#30362F', border: 'rgba(48,54,47,.25)' }
+    if (abonado > 0) return { label: 'Pago parcial', Icon: DollarSign, bg: 'rgba(96,107,108,.12)', color: '#3d4d4f', border: 'rgba(96,107,108,.28)' }
+    return { label: 'Sin pago', Icon: Clock, bg: 'rgba(139,137,130,.10)', color: '#6b6864', border: 'rgba(139,137,130,.25)' }
+  }
+
+  /* ── resumen ── */
+  const resumen = {
     total: pedidosSeguros.length,
     pendientes: pedidosSeguros.filter(p => p.estado === 'pendiente').length,
     enProceso: pedidosSeguros.filter(p => p.estado === 'preparando').length,
     entregados: pedidosSeguros.filter(p => p.estado === 'entregado').length,
-    conSaldo: pedidosSeguros.filter(p => {
-      const saldo = Number.parseFloat(p.saldo_pendiente) || Number.parseFloat(p.total)
-      return saldo > 0
-    }).length,
-    totalDeuda: pedidosSeguros.reduce((sum, p) => {
-      const saldo = Number.parseFloat(p.saldo_pendiente) || Number.parseFloat(p.total)
-      return sum + (saldo > 0 ? saldo : 0)
-    }, 0)
+    conSaldo: pedidosSeguros.filter(p => (parseFloat(p.saldo_pendiente) || parseFloat(p.total) || 0) > 0).length,
+    totalDeuda: pedidosSeguros.reduce((s, p) => { const v = parseFloat(p.saldo_pendiente) || parseFloat(p.total) || 0; return s + (v > 0 ? v : 0) }, 0)
   }
 
-  // Funciones de utilidad
-  const formatearFecha = (fecha) => {
-    if (!fecha) return "Sin fecha"
-    try {
-      return new Date(fecha).toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-      })
-    } catch {
-      return "Fecha inválida"
-    }
-  }
+  /* ── formato ── */
+  const fFecha = (f) => { try { return new Date(f).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }) } catch { return "—" } }
+  const fMonto = (m) => (parseFloat(m) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const fCorto = (m) => (parseFloat(m) || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
-  const formatearMonto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
+  /* ── handlers ── */
+  const sePuedeEditar = (p) => !p.factura_id && p.estado !== 'cancelado'
+  const sePuedeFacturar = (p) => !p.factura_id
 
-  const formatearMontoCorto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-  }
+  const handleFacturar = (id) => facturarPedido && customConfirm('Facturar Pedido', '¿Facturar este pedido? Se creará una factura separada.', async () => { const r = await facturarPedido(id); if (r?.success && recargarDatos) recargarDatos() })
+  const handleEstado = async (id, est) => { if (actualizarEstadoPedido) { const r = await actualizarEstadoPedido(id, est); if (r?.success && recargarDatos) recargarDatos() } }
+  const handleEliminar = (id) => eliminarPedido && customConfirm('Eliminar Pedido', '¿Estás seguro de eliminar este pedido?', async () => { const r = await eliminarPedido(id); if (r?.success && recargarDatos) recargarDatos() }, true)
 
-  // Determinar si se puede editar/facturar un pedido
-  const sePuedeEditar = (pedido) => !pedido.factura_id && pedido.estado !== 'cancelado'
-  const sePuedeFacturar = (pedido) => !pedido.factura_id
+  const toggleModoSeleccion = () => { setModoSeleccion(p => !p); setPedidosSeleccionados([]) }
+  const toggleSeleccion = (id) => setPedidosSeleccionados(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
+  const toggleTodos = () => { const ids = pedidosPaginados.map(p => p.id); const all = ids.every(id => pedidosSeleccionados.includes(id)); setPedidosSeleccionados(p => all ? p.filter(id => !ids.includes(id)) : [...new Set([...p, ...ids])]) }
 
-  // Handlers
-  const handleFacturarPedido = async (pedidoId) => {
-    if (facturarPedido) {
-      const confirmar = window.confirm('¿Facturar este pedido? Se creará una factura separada.')
-      if (confirmar) {
-        const resultado = await facturarPedido(pedidoId)
-        if (resultado && resultado.success && recargarDatos) {
-          recargarDatos()
-        }
-      }
-    }
-  }
-
-  const handleCambiarEstado = async (pedidoId, nuevoEstado) => {
-    if (actualizarEstadoPedido) {
-      const resultado = await actualizarEstadoPedido(pedidoId, nuevoEstado)
-      if (resultado && resultado.success && recargarDatos) {
-        recargarDatos()
-      }
-    }
-  }
-
-  const handleEliminar = async (pedidoId) => {
-    if (eliminarPedido) {
-      const confirmar = window.confirm('¿Estás seguro de eliminar este pedido?')
-      if (confirmar) {
-        const resultado = await eliminarPedido(pedidoId)
-        if (resultado && resultado.success && recargarDatos) {
-          recargarDatos()
-        }
-      }
-    }
-  }
-
-  // Handlers de selección múltiple
-  const toggleModoSeleccion = () => {
-    setModoSeleccion(prev => !prev)
-    setPedidosSeleccionados([])
-  }
-
-  const toggleSeleccionPedido = (pedidoId) => {
-    setPedidosSeleccionados(prev =>
-      prev.includes(pedidoId)
-        ? prev.filter(id => id !== pedidoId)
-        : [...prev, pedidoId]
-    )
-  }
-
-  const toggleSeleccionarTodos = () => {
-    const idsPaginados = pedidosPaginados.map(p => p.id)
-    const todosSeleccionados = idsPaginados.every(id => pedidosSeleccionados.includes(id))
-    if (todosSeleccionados) {
-      setPedidosSeleccionados(prev => prev.filter(id => !idsPaginados.includes(id)))
-    } else {
-      setPedidosSeleccionados(prev => [...new Set([...prev, ...idsPaginados])])
-    }
-  }
-
-  const handleEliminarSeleccionados = async () => {
+  const handleEliminarMasivo = () => {
     if (!eliminarPedido || pedidosSeleccionados.length === 0) return
-    const confirmar = window.confirm(
-      `¿Estás seguro de eliminar ${pedidosSeleccionados.length} pedido(s) seleccionado(s)? Esta acción no se puede deshacer.`
-    )
-    if (!confirmar) return
-    setEliminandoMasivo(true)
-    try {
-      for (const id of pedidosSeleccionados) {
-        await eliminarPedido(id)
-      }
-      setPedidosSeleccionados([])
-      setModoSeleccion(false)
-      if (recargarDatos) recargarDatos()
-    } finally {
-      setEliminandoMasivo(false)
-    }
+    customConfirm('Eliminar múltiples', `¿Eliminar ${pedidosSeleccionados.length} pedido(s)? Esta acción no se puede deshacer.`, async () => {
+      setEliminandoMasivo(true)
+      try { for (const id of pedidosSeleccionados) await eliminarPedido(id); setPedidosSeleccionados([]); setModoSeleccion(false); if (recargarDatos) recargarDatos() }
+      finally { setEliminandoMasivo(false) }
+    }, true)
   }
 
-  // ============ FUNCIONES DE CALENDARIO ============
-  const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-  const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+  /* ── tokens de color base (light system) ── */
+  const bg = '#F5F5F5'
+  const surface = '#FAFAFA'
+  const surface2 = '#f2f2f2'
+  const border = 'rgba(48,54,47,.13)'
+  const ct1 = '#1e2320'
+  const ct2 = '#30362F'
+  const ct3 = '#8B8982'
+  const accent = '#334139'
+  const accentL = 'rgba(51,65,57,.08)'
 
-  const getInicioSemana = (fecha) => {
-    const d = new Date(fecha)
-    const day = d.getDay()
-    const diff = d.getDate() - day
-    return new Date(d.setDate(diff))
-  }
-
-  const getFinSemana = (fecha) => {
-    const inicio = getInicioSemana(fecha)
-    return new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + 6)
-  }
-
-  const getDiasDelMes = (fecha) => {
-    const year = fecha.getFullYear()
-    const month = fecha.getMonth()
-    const primerDia = new Date(year, month, 1)
-    const ultimoDia = new Date(year, month + 1, 0)
-    const dias = []
-
-    const primerDiaSemana = primerDia.getDay()
-    for (let i = primerDiaSemana - 1; i >= 0; i--) {
-      const d = new Date(year, month, -i)
-      dias.push({ fecha: d, esDelMes: false })
-    }
-
-    for (let i = 1; i <= ultimoDia.getDate(); i++) {
-      dias.push({ fecha: new Date(year, month, i), esDelMes: true })
-    }
-
-    const diasRestantes = 42 - dias.length
-    for (let i = 1; i <= diasRestantes; i++) {
-      dias.push({ fecha: new Date(year, month + 1, i), esDelMes: false })
-    }
-
-    return dias
-  }
-
-  const getDiasSemana = (fecha) => {
-    const inicio = getInicioSemana(fecha)
-    const dias = []
-    for (let i = 0; i < 7; i++) {
-      dias.push(new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate() + i))
-    }
-    return dias
-  }
-
-  const getPedidosPorFecha = (fecha) => {
-    const fechaStr = fecha.toISOString().split('T')[0]
-    return pedidosSeguros.filter(p => {
-      const fechaEntrega = p.fecha_entrega_estimada?.split('T')[0]
-      return fechaEntrega === fechaStr
-    })
-  }
-
-  const navegarAnterior = () => {
-    if (vistaActiva === "semana") {
-      setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth(), fechaActual.getDate() - 7))
-    } else if (vistaActiva === "mes") {
-      setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth() - 1, 1))
-    }
-  }
-
-  const navegarSiguiente = () => {
-    if (vistaActiva === "semana") {
-      setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth(), fechaActual.getDate() + 7))
-    } else if (vistaActiva === "mes") {
-      setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 1))
-    }
-  }
-
-  const irAHoy = () => setFechaActual(new Date())
-
-  const esHoy = (fecha) => fecha.toDateString() === new Date().toDateString()
-
-  // Resumen del calendario
-  const resumenVista = useMemo(() => {
-    let diasAMostrar = []
-    if (vistaActiva === "semana") {
-      diasAMostrar = getDiasSemana(fechaActual)
-    } else if (vistaActiva === "mes") {
-      diasAMostrar = getDiasDelMes(fechaActual).filter(d => d.esDelMes).map(d => d.fecha)
-    }
-
-    let totalPedidos = 0
-    let totalMonto = 0
-    const porEstado = { pendiente: 0, preparando: 0, enviado: 0, entregado: 0, cancelado: 0 }
-
-    diasAMostrar.forEach(fecha => {
-      const pedidosDia = getPedidosPorFecha(fecha)
-      totalPedidos += pedidosDia.length
-      pedidosDia.forEach(p => {
-        totalMonto += Number.parseFloat(p.total) || 0
-        if (porEstado[p.estado] !== undefined) {
-          porEstado[p.estado]++
-        }
-      })
-    })
-
-    return { totalPedidos, totalMonto, porEstado }
-  }, [fechaActual, vistaActiva, pedidosSeguros])
-
-  const getTituloPeriodo = () => {
-    if (vistaActiva === "semana") {
-      const inicio = getInicioSemana(fechaActual)
-      const fin = getFinSemana(fechaActual)
-      const formatoCorto = (d) => `${d.getDate()} ${meses[d.getMonth()].substring(0, 3)}`
-      return `${formatoCorto(inicio)} - ${formatoCorto(fin)}, ${fin.getFullYear()}`
-    } else if (vistaActiva === "mes") {
-      return `${meses[fechaActual.getMonth()]} ${fechaActual.getFullYear()}`
-    }
-    return ""
+  /* ── clases reutilizables ── */
+  const cardCls = `rounded-xl overflow-hidden border transition-all`
+  const cardStyle = { background: surface, borderColor: border, boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }
+  const pillSelect = {
+    background: surface,
+    border: `1px solid ${border}`,
+    color: ct2,
+    borderRadius: '8px',
+    padding: '6px 11px',
+    fontSize: '11px',
+    fontWeight: 600,
+    fontFamily: 'Inter, sans-serif',
+    cursor: 'pointer',
+    outline: 'none',
+    appearance: 'none',
+    transition: 'border-color .13s',
   }
 
   return (
-    <div className="space-y-3">
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+
+      {/* ═══════════ HEADER ═══════════ */}
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Gestión de Pedidos</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Seguimiento operativo y calendario de trabajo</p>
+          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Pedidos</h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Selector de vista */}
-          <div className="flex bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setVistaActiva("lista")}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "lista"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-                }`}
-            >
-              <List size={12} />
-              <span className="hidden sm:inline">Lista</span>
-            </button>
-            <button
-              onClick={() => setVistaActiva("semana")}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "semana"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-                }`}
-            >
-              <CalendarDays size={12} />
-              <span className="hidden sm:inline">Semana</span>
-            </button>
-            <button
-              onClick={() => setVistaActiva("mes")}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-all ${vistaActiva === "mes"
-                ? "bg-white text-blue-600 shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-                }`}
-            >
-              <Calendar size={12} />
-              <span className="hidden sm:inline">Mes</span>
-            </button>
-          </div>
-
-          {/* BOTÓN SELECCIONAR */}
-          <button
-            onClick={toggleModoSeleccion}
-            className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm border ${modoSeleccion
-              ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-          >
-            <CheckSquare size={12} />
-            <span className="hidden sm:inline">{modoSeleccion ? 'Cancelar' : 'Seleccionar'}</span>
-          </button>
-
-          {/* BOTÓN NUEVO PEDIDO */}
-          <button
-            onClick={() => openModal && openModal("nuevo-pedido")}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-          >
-            <Plus size={12} />
-            <span>Nuevo Pedido</span>
-          </button>
-        </div>
-      </div>
-
-      {/* CARDS DE RESUMEN - ACTUALIZADAS */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Total</h3>
-            <Package className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenPedidos.total}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Pedidos registrados</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Pendientes</h3>
-            <Clock className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenPedidos.pendientes}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Por atender</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">En Proceso</h3>
-            <Truck className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenPedidos.enProceso}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">En preparación</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Entregados</h3>
-            <CheckCircle className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenPedidos.entregados}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Completados</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Con Saldo</h3>
-            <DollarSign className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenPedidos.conSaldo}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Por cobrar</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Deuda Total</h3>
-            <Clock className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">${formatearMontoCorto(resumenPedidos.totalDeuda)}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Saldo pendiente</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ============ VISTA LISTA ============ */}
-      {vistaActiva === "lista" && (
-        <>
-          {/* BÚSQUEDA Y FILTROS */}
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={12} />
-              <input
-                type="text"
-                placeholder="Buscar pedidos por código o cliente..."
-                className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm && setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <select
-              className="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-            >
-              <option value="todos">Todos los estados</option>
-              <option value="pendiente">Pendientes</option>
-              <option value="preparando">Preparando</option>
-              <option value="enviado">Enviados</option>
-              <option value="entregado">Entregados</option>
-              <option value="cancelado">Cancelados</option>
-            </select>
-
-            <select
-              className="px-2 py-1.5 border border-gray-300 rounded-md text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              value={filtroFacturacion}
-              onChange={(e) => setFiltroFacturacion(e.target.value)}
-            >
-              <option value="todos">Toda facturación</option>
-              <option value="facturados">Facturados</option>
-              <option value="no-facturados">Sin facturar</option>
-            </select>
-          </div>
-
-          {/* TABLA DE PEDIDOS */}
-          <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-            <div className="px-3 py-2 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-900">Lista de Pedidos</h3>
-                  <p className="text-xs text-gray-500">Pedidos registrados en el sistema</p>
-                </div>
-                <div className="text-xs text-gray-600">
-                  {filtrarPedidos.length} pedidos encontrados
-                </div>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    {modoSeleccion && (
-                      <th className="px-2 py-1 text-left w-8">
-                        <input
-                          type="checkbox"
-                          className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 cursor-pointer"
-                          checked={pedidosPaginados.length > 0 && pedidosPaginados.every(p => pedidosSeleccionados.includes(p.id))}
-                          onChange={toggleSeleccionarTodos}
-                          title="Seleccionar todos"
-                        />
-                      </th>
-                    )}
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Código</th>
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Cliente</th>
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado Operativo</th>
-                    <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Estado Pago</th>
-                    {!modoSeleccion && (
-                      <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {pedidosPaginados.length > 0 ? (
-                    pedidosPaginados.map((pedido) => {
-                      const EstadoOperativoIcon = estadosOperativosConfig[pedido.estado]?.icon || Clock
-                      const estadoPago = getEstadoPago(pedido)
-                      const EstadoPagoIcon = estadoPago.icon
-                      const puedeEditar = sePuedeEditar(pedido)
-                      const puedeFacturar = sePuedeFacturar(pedido)
-                      const cliente = clientes.find(c => c.id === pedido.cliente_id)
-                      // Fix: Check if saldo_pendiente exists (even if 0), otherwise use total
-                      const saldoPendiente = pedido.saldo_pendiente !== null && pedido.saldo_pendiente !== undefined
-                        ? Number.parseFloat(pedido.saldo_pendiente)
-                        : Number.parseFloat(pedido.total)
-
-                      return (
-                        <tr
-                          key={pedido.id}
-                          className={`hover:bg-gray-50 transition-colors group cursor-pointer ${modoSeleccion && pedidosSeleccionados.includes(pedido.id)
-                            ? 'bg-blue-50 hover:bg-blue-50'
-                            : ''
-                            }`}
-                          onClick={modoSeleccion ? () => toggleSeleccionPedido(pedido.id) : undefined}
-                        >
-                          {modoSeleccion && (
-                            <td className="px-2 py-1.5" onClick={e => e.stopPropagation()}>
-                              <input
-                                type="checkbox"
-                                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 cursor-pointer"
-                                checked={pedidosSeleccionados.includes(pedido.id)}
-                                onChange={() => toggleSeleccionPedido(pedido.id)}
-                              />
-                            </td>
-                          )}
-                          <td className="px-2 py-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <div className="bg-blue-50 p-1 rounded border border-blue-200">
-                                <Package size={10} className="text-blue-600" />
-                              </div>
-                              <div>
-                                <span className="text-xs font-medium text-gray-900 font-mono">
-                                  {pedido.codigo || "N/A"}
-                                </span>
-                                {pedido.factura_id && (
-                                  <div className="text-[9px] text-blue-600 font-medium mt-0.5">
-                                    Facturado
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-
-                          <td className="px-2 py-1.5 text-xs text-gray-900">
-                            <div className="flex items-center gap-1">
-                              <User size={9} className="text-gray-400" />
-                              {pedido.cliente_nombre || "Cliente no encontrado"}
-                            </div>
-                            {cliente?.telefono && (
-                              <div className="text-[9px] text-gray-500 ml-3.5">
-                                {cliente.telefono}
-                              </div>
-                            )}
-                            {pedido.notas && (
-                              <div className="text-[9px] text-gray-500 mt-0.5 truncate max-w-[120px]" title={pedido.notas}>
-                                {pedido.notas}
-                              </div>
-                            )}
-                          </td>
-
-                          <td className="px-2 py-1.5">
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-1 text-xs text-gray-600">
-                                <Calendar size={9} className="text-gray-400" />
-                                {formatearFecha(pedido.fecha_pedido)}
-                              </div>
-                              {pedido.fecha_entrega_estimada && (
-                                <div className="text-[9px] text-gray-500">
-                                  Entrega: {formatearFecha(pedido.fecha_entrega_estimada)}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-
-                          <td className="px-2 py-1.5">
-                            <div className="text-xs font-semibold text-gray-900">
-                              ${formatearMonto(pedido.total)}
-                            </div>
-                            {saldoPendiente > 0.01 && (
-                              <div className="text-[10px] text-blue-600 font-medium mt-0.5">
-                                Saldo: ${formatearMonto(saldoPendiente)}
-                              </div>
-                            )}
-                          </td>
-
-                          <td className="px-2 py-1.5">
-                            <div className="space-y-1">
-                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${estadosOperativosConfig[pedido.estado]?.color}`}>
-                                <EstadoOperativoIcon size={9} />
-                                {estadosOperativosConfig[pedido.estado]?.label || pedido.estado}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-2 py-1.5">
-                            <div className="space-y-1">
-                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${estadoPago.color}`}>
-                                <EstadoPagoIcon size={9} />
-                                {estadoPago.label}
-                              </span>
-                            </div>
-                          </td>
-
-                          {!modoSeleccion && (
-                            <td className="px-2 py-1.5">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => openModal && openModal("ver-pedido", pedido)}
-                                  className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 shadow-sm bg-white"
-                                  title="Ver Detalles"
-                                >
-                                  <Eye size={16} />
-                                </button>
-
-                                {puedeEditar && (
-                                  <button
-                                    onClick={() => openModal && openModal("editar-pedido", pedido)}
-                                    className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-100 shadow-sm bg-white"
-                                    title="Editar Pedido"
-                                  >
-                                    <Edit size={16} />
-                                  </button>
-                                )}
-
-                                {puedeFacturar && (
-                                  <button
-                                    onClick={() => handleFacturarPedido(pedido.id)}
-                                    className="p-1.5 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-100 shadow-sm bg-white"
-                                    title="Facturar Pedido"
-                                  >
-                                    <FileText size={16} />
-                                  </button>
-                                )}
-
-                                {pedido.factura_id && (
-                                  <button
-                                    onClick={() => openModal && openModal("ver-factura", { id: pedido.factura_id })}
-                                    className="p-1.5 text-purple-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors border border-purple-100 shadow-sm bg-white"
-                                    title="Ver Factura"
-                                  >
-                                    <DollarSign size={16} />
-                                  </button>
-                                )}
-
-                                {!pedido.factura_id && (
-                                  <button
-                                    onClick={() => handleEliminar(pedido.id)}
-                                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-100 shadow-sm bg-white"
-                                    title="Eliminar Pedido"
-                                  >
-                                    <XCircle size={16} />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          )}
-                        </tr>
-                      )
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={modoSeleccion ? 8 : 7} className="px-3 py-6 text-center">
-                        <div className="flex flex-col items-center">
-                          <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
-                            <Package size={16} className="text-gray-400" />
-                          </div>
-                          <p className="text-xs font-semibold text-gray-900 mb-0.5">No se encontraron pedidos</p>
-                          <p className="text-xs text-gray-500">
-                            {searchTerm || filtroEstado !== "todos" || filtroFacturacion !== "todos"
-                              ? "Intenta con otros términos o filtros"
-                              : "Crea tu primer pedido"}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* FOOTER CON PAGINACIÓN */}
-            <div className="px-3 py-2 border-t border-gray-200 bg-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">
-                    Mostrando {Math.min(filtrarPedidos.length, itemsPorPagina)} de {filtrarPedidos.length} pedidos
-                  </span>
-                  <select
-                    value={itemsPorPagina}
-                    onChange={(e) => setItemsPorPagina(Number(e.target.value))}
-                    className="px-1.5 py-0.5 text-xs border border-gray-300 rounded bg-white"
-                  >
-                    <option value="5">5 por página</option>
-                    <option value="10">10 por página</option>
-                    <option value="25">25 por página</option>
-                    <option value="50">50 por página</option>
-                    <option value="100">100 por página</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                    disabled={paginaActual === 1}
-                    className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft size={12} />
-                  </button>
-                  <span className="px-2 py-0.5 text-xs font-medium text-gray-700">
-                    {paginaActual} / {totalPaginas || 1}
-                  </span>
-                  <button
-                    onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                    disabled={paginaActual === totalPaginas || totalPaginas === 0}
-                    className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight size={12} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* BARRA DE ACCIONES MASIVAS */}
-          {modoSeleccion && pedidosSeleccionados.length > 0 && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-gray-700 animate-in fade-in slide-in-from-bottom-4 duration-200">
-              <div className="flex items-center gap-2">
-                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                  {pedidosSeleccionados.length}
-                </span>
-                <span className="text-sm font-medium">
-                  {pedidosSeleccionados.length === 1 ? 'pedido seleccionado' : 'pedidos seleccionados'}
-                </span>
-              </div>
-              <div className="w-px h-5 bg-gray-600" />
-              <button
-                onClick={handleEliminarSeleccionados}
-                disabled={eliminandoMasivo}
-                className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-              >
-                {eliminandoMasivo ? (
-                  <>
-                    <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Eliminando...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={13} />
-                    Eliminar seleccionados
-                  </>
-                )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {/* Vista toggle */}
+          <div style={{ display: 'flex', padding: 2, borderRadius: 9, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.05)' }}>
+            {[['lista', List, 'Lista'], ['semana', CalendarDays, 'Semana'], ['mes', Calendar, 'Mes']].map(([v, Icon, lbl]) => (
+              <button key={v} onClick={() => setVistaActiva(v)} style={{
+                display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 7,
+                fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all .13s',
+                background: vistaActiva === v ? 'rgba(255,255,255,.12)' : 'transparent',
+                color: vistaActiva === v ? '#fff' : 'rgba(255,255,255,.5)',
+              }}>
+                <Icon size={12} strokeWidth={2.5} /><span>{lbl}</span>
               </button>
-              <button
-                onClick={() => setPedidosSeleccionados([])}
-                className="text-xs text-gray-400 hover:text-white transition-colors"
-              >
-                Limpiar
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ============ VISTA SEMANA / MES ============ */}
-      {(vistaActiva === "semana" || vistaActiva === "mes") && (
-        <>
-          {/* Header del calendario */}
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={navegarAnterior}
-                  className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  onClick={navegarSiguiente}
-                  className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
-                <h4 className="text-sm font-semibold text-gray-900 ml-2">{getTituloPeriodo()}</h4>
-              </div>
-
-              <button
-                onClick={irAHoy}
-                className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-              >
-                Hoy
-              </button>
-            </div>
-          </div>
-
-          {/* Resumen del período */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-            <div className="bg-white p-2.5 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar size={12} className="text-gray-400" />
-                <span className="text-[10px] text-gray-500">Total periodo</span>
-              </div>
-              <p className="text-base font-bold text-gray-900">{resumenVista.totalPedidos}</p>
-            </div>
-            <div className="bg-white p-2.5 rounded-lg border border-gray-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Package size={12} className="text-gray-400" />
-                <span className="text-[10px] text-gray-500">Monto</span>
-              </div>
-              <p className="text-base font-bold text-gray-900">${formatearMontoCorto(resumenVista.totalMonto)}</p>
-            </div>
-            {Object.entries(resumenVista.porEstado).slice(0, 4).map(([estado, cantidad]) => (
-              <div key={estado} className="bg-white p-2.5 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`w-2 h-2 rounded-full ${estadosOperativosConfig[estado]?.dotColor || 'bg-gray-400'}`} />
-                  <span className="text-[10px] text-gray-500 capitalize">{estado}</span>
-                </div>
-                <p className="text-base font-bold text-gray-900">{cantidad}</p>
-              </div>
             ))}
           </div>
 
-          {/* Vista Semanal */}
-          {vistaActiva === "semana" && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="grid grid-cols-7 border-b border-gray-200">
-                {getDiasSemana(fechaActual).map((dia, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-2 text-center border-r last:border-r-0 border-gray-200 ${esHoy(dia) ? 'bg-blue-50' : 'bg-gray-50'
-                      }`}
-                  >
-                    <p className="text-xs font-medium text-gray-500">{diasSemana[dia.getDay()]}</p>
-                    <p className={`text-lg font-bold ${esHoy(dia) ? 'text-blue-600' : 'text-gray-900'}`}>
-                      {dia.getDate()}
-                    </p>
-                  </div>
-                ))}
+          {/* Selección */}
+          <button onClick={toggleModoSeleccion} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
+            fontSize: 11, fontWeight: 600,
+            border: modoSeleccion ? '1px solid #DCED31' : '1px solid rgba(255,255,255,.2)',
+            background: 'transparent',
+            color: modoSeleccion ? '#DCED31' : 'rgba(255,255,255,.6)',
+            cursor: 'pointer', transition: 'all .13s',
+          }}>
+            <CheckSquare size={12} strokeWidth={2} /> {modoSeleccion ? 'Cancelar' : 'Selección'}
+          </button>
+
+          {/* Presupuesto */}
+          <button onClick={() => openModal && openModal("nuevo-presupuesto")} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
+            fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,.25)', cursor: 'pointer', transition: 'all .13s',
+            background: 'transparent', color: 'rgba(255,255,255,.75)',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,.75)' }}>
+            <FileText size={12} strokeWidth={2.5} /> Presupuesto
+          </button>
+
+          {/* Nuevo */}
+          <button onClick={() => openModal && openModal("nuevo-pedido")} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
+            fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
+            background: '#DCED31', color: '#282A28',
+          }}>
+            <Plus size={12} strokeWidth={2.5} /> Nuevo Pedido
+            <span style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ═══════════ CARDS RESUMEN (4 diferenciadas) ═══════════ */}
+      <div style={{ padding: '12px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+        {[
+          {
+            label: 'Pedidos activos', val: resumen.pendientes + resumen.enProceso,
+            sub: `${resumen.pendientes} pendientes · ${resumen.enProceso} en proceso`,
+            Icon: Package, bar: '#334139', iconBg: 'rgba(51,65,57,.1)', iconC: '#334139',
+          },
+          {
+            label: 'Por cobrar', val: `$${fCorto(resumen.totalDeuda)}`,
+            sub: `${resumen.conSaldo} pedido${resumen.conSaldo !== 1 ? 's' : ''} con saldo`,
+            Icon: DollarSign, bar: '#373F47', iconBg: 'rgba(55,63,71,.1)', iconC: '#373F47',
+          },
+          {
+            label: 'Entregados', val: resumen.entregados,
+            sub: 'Completados este período',
+            Icon: CheckCircle, bar: '#606B6C', iconBg: 'rgba(96,107,108,.1)', iconC: '#606B6C',
+          },
+          {
+            label: 'Total pedidos', val: resumen.total,
+            sub: 'Registrados en el sistema',
+            Icon: AlertCircle, bar: 'rgba(139,137,130,.4)', iconBg: 'rgba(139,137,130,.08)', iconC: '#8B8982',
+          },
+        ].map(({ label, val, sub, Icon, bar, iconBg, iconC }, i) => (
+          <div key={i} className={cardCls} style={{
+            ...cardStyle,
+            background: '#E1E1E0',
+            padding: '12px 14px 10px', position: 'relative', cursor: 'default',
+            transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both`,
+            boxShadow: `0 2px 8px ${bar}28, 0 6px 20px ${bar}18`,
+          }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 4px 16px ${bar}45, 0 10px 32px ${bar}28` }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 2px 8px ${bar}28, 0 6px 20px ${bar}18` }}>
+            <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: '#6B7274', borderRadius: '12px 0 0 12px' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 8, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon size={13} strokeWidth={1.8} style={{ color: iconC }} />
               </div>
-              <div className="grid grid-cols-7 min-h-[350px]">
-                {getDiasSemana(fechaActual).map((dia, idx) => {
-                  const pedidosDia = getPedidosPorFecha(dia)
-                  return (
-                    <div
-                      key={idx}
-                      className={`p-2 border-r last:border-r-0 border-gray-200 ${esHoy(dia) ? 'bg-blue-50/30' : ''
-                        }`}
-                    >
-                      <div className="space-y-1.5">
-                        {pedidosDia.length > 0 ? (
-                          pedidosDia.map(pedido => {
-                            const EstadoIcon = estadosOperativosConfig[pedido.estado]?.icon || Clock
-                            return (
-                              <div
-                                key={pedido.id}
-                                onClick={() => openModal && openModal("ver-pedido", pedido)}
-                                className={`p-2 rounded-lg border cursor-pointer hover:shadow-md transition-shadow ${estadosOperativosConfig[pedido.estado]?.color || 'bg-gray-100 border-gray-300'}`}
-                              >
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-[10px] font-mono font-bold">{pedido.codigo}</span>
-                                  <EstadoIcon size={10} />
+            </div>
+            <p style={{ fontSize: 22, fontWeight: 700, color: ct1, lineHeight: 1, marginBottom: 4 }}>{val}</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: ct2, marginBottom: 2 }}>{label}</p>
+            <p style={{ fontSize: 10, color: ct3 }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ═══════════ VISTA LISTA ═══════════ */}
+      {vistaActiva === "lista" && (
+        <div style={{ padding: '14px 24px 32px' }}>
+          <div className={cardCls} style={cardStyle}>
+
+            {/* Filtros */}
+            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, display: 'flex', gap: 8, flexWrap: 'wrap', background: surface2 }}>
+              {/* Buscador */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 200, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
+                <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
+                <input
+                  type="text" placeholder="Buscar por código o cliente…"
+                  value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)}
+                  style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'Inter,sans-serif', color: ct1, width: '100%' }}
+                />
+              </div>
+              <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={pillSelect}>
+                <option value="todos">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="preparando">Preparando</option>
+                <option value="enviado">Enviado</option>
+                <option value="entregado">Entregado</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+              <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} style={pillSelect}>
+                <option value="todos">Toda facturación</option>
+                <option value="facturados">Facturados</option>
+                <option value="no-facturados">Sin facturar</option>
+              </select>
+            </div>
+
+            {/* Cabecera tabla */}
+            <div style={{ overflowX: 'auto' }}>
+              <div style={{ minWidth: 900 }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: modoSeleccion ? '32px 1.1fr 1.6fr .8fr .9fr 1.2fr 240px' : '1.1fr 1.6fr .8fr .9fr 1.2fr 240px',
+                  gap: 14, padding: '10px 16px', borderBottom: `1px solid ${border}`, background: surface2
+                }}>
+                  {modoSeleccion && (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <input type="checkbox" style={{ accentColor: accent, width: 14, height: 14, cursor: 'pointer' }}
+                        checked={pedidosPaginados.length > 0 && pedidosPaginados.every(p => pedidosSeleccionados.includes(p.id))}
+                        onChange={toggleTodos} />
+                    </div>
+                  )}
+                  {['Código', 'Cliente', 'Fecha', 'Total', 'Estado', 'Acciones'].map((col, i) => (
+                    <div key={i} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: i >= 2 && i <= 3 ? 'center' : i === 5 ? 'right' : 'left' }}>{col}</div>
+                  ))}
+                </div>
+
+                {/* Filas */}
+                <div>
+                  {pedidosPaginados.length > 0 ? pedidosPaginados.map((pedido) => {
+                    const cfg = estadosCfg[pedido.estado] || estadosCfg.pendiente
+                    const pago = getEstadoPago(pedido)
+                    const saldo = pedido.saldo_pendiente !== null && pedido.saldo_pendiente !== undefined ? parseFloat(pedido.saldo_pendiente) : parseFloat(pedido.total)
+                    const sel = pedidosSeleccionados.includes(pedido.id)
+                    const cliente = clientes.find(c => c.id === pedido.cliente_id)
+
+                    return (
+                      <div key={pedido.id}
+                        onClick={modoSeleccion ? () => toggleSeleccion(pedido.id) : undefined}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: modoSeleccion ? '32px 1.1fr 1.6fr .8fr .9fr 1.2fr 240px' : '1.1fr 1.6fr .8fr .9fr 1.2fr 240px',
+                          gap: 14, padding: '12px 16px', borderBottom: `1px solid ${border}`,
+                          background: sel ? accentL : 'transparent',
+                          cursor: modoSeleccion ? 'pointer' : 'default',
+                          transition: 'background .13s', alignItems: 'center', position: 'relative',
+                        }}
+                        onMouseEnter={e => { if (!sel) e.currentTarget.style.background = 'rgba(51,65,57,.02)' }}
+                        onMouseLeave={e => { if (!sel) e.currentTarget.style.background = 'transparent' }}>
+                        {/* Barra lateral de color por estado */}
+                        <div style={{
+                          position: 'absolute', left: 0, top: '18%', bottom: '18%', width: 3, background:
+                            pedido.estado === 'pendiente' ? '#334139' :
+                              pedido.estado === 'preparando' ? '#373F47' :
+                                pedido.estado === 'enviado' ? '#8B8982' :
+                                  pedido.estado === 'entregado' ? '#606B6C' : 'rgba(139,137,130,.3)', borderRadius: '0 2px 2px 0'
+                        }} />
+
+                        {/* Código */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(51,65,57,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Package size={13} strokeWidth={2} style={{ color: accent }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: ct1, letterSpacing: '-0.01em' }}>{pedido.codigo || 'N/A'}</div>
+                            {pedido.factura_id && <div style={{ fontSize: 10, fontWeight: 600, color: '#606B6C', marginTop: 1 }}>✓ Facturado</div>}
+                          </div>
+                        </div>
+
+                        {/* Cliente y Productos */}
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: ct1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{pedido.cliente_nombre || '—'}</div>
+                          {(() => {
+                            try {
+                              const stItems = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || []);
+                              if (stItems.length === 0) return cliente?.telefono ? <div style={{ fontSize: 11, color: ct3, marginTop: 1 }}>{cliente.telefono}</div> : null;
+                              const summary = stItems.map(i => `${i.cantidad}x ${i.producto}`).join(', ');
+                              return (
+                                <div style={{ fontSize: 10, color: ct3, marginTop: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={summary}>
+                                  <span style={{ color: accent, fontWeight: 700, marginRight: 4 }}>📦</span>
+                                  {summary}
                                 </div>
-                                <p className="text-[10px] font-medium truncate">{pedido.cliente_nombre}</p>
-                                <p className="text-[10px] font-bold mt-0.5">${formatearMontoCorto(pedido.total)}</p>
-                              </div>
-                            )
-                          })
-                        ) : (
-                          <div className="h-full flex items-center justify-center text-gray-300">
-                            <span className="text-[10px]">Sin pedidos</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
+                              );
+                            } catch {
+                              return cliente?.telefono ? <div style={{ fontSize: 11, color: ct3, marginTop: 1 }}>{cliente.telefono}</div> : null;
+                            }
+                          })()}
+                        </div>
 
-          {/* Vista Mensual */}
-          {vistaActiva === "mes" && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50">
-                {diasSemana.map(dia => (
-                  <div key={dia} className="p-2 text-center border-r last:border-r-0 border-gray-200">
-                    <p className="text-xs font-medium text-gray-500">{dia}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7">
-                {getDiasDelMes(fechaActual).map((diaObj, idx) => {
-                  const pedidosDia = getPedidosPorFecha(diaObj.fecha)
-                  return (
-                    <div
-                      key={idx}
-                      className={`min-h-[90px] p-1 border-r border-b last:border-r-0 border-gray-100 ${!diaObj.esDelMes ? 'bg-gray-50/50' : ''
-                        } ${esHoy(diaObj.fecha) ? 'bg-blue-50/50' : ''}`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-xs font-medium ${!diaObj.esDelMes ? 'text-gray-300' :
-                          esHoy(diaObj.fecha) ? 'text-blue-600 font-bold' : 'text-gray-700'
-                          }`}>
-                          {diaObj.fecha.getDate()}
-                        </span>
-                        {pedidosDia.length > 0 && (
-                          <span className="text-[9px] bg-gray-200 text-gray-600 px-1 rounded">
-                            {pedidosDia.length}
+                        {/* Fecha */}
+                        <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: ct2 }}>{fFecha(pedido.fecha_pedido)}</div>
+
+                        {/* Total */}
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-0.02em' }}>${fCorto(pedido.total)}</div>
+                          {saldo > 0.01 && <div style={{ fontSize: 10, fontWeight: 600, color: accent, marginTop: 1 }}>Saldo: ${fCorto(saldo)}</div>}
+                        </div>
+
+
+                        {/* Estado (operativo + pago — chips con colores solidos) */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-start', minWidth: 100 }}>
+                          <select
+                            value={pedido.estado}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e => { e.stopPropagation(); handleEstado(pedido.id, e.target.value) }}
+                            style={{
+                              appearance: 'none', WebkitAppearance: 'none',
+                              border: '1px solid ' + cfg.border, outline: 'none', cursor: 'pointer',
+                              padding: '4px 26px 4px 10px', borderRadius: 7, fontSize: 11, fontWeight: 700,
+                              fontFamily: 'Inter,sans-serif', letterSpacing: '0.01em', transition: 'box-shadow .15s',
+                              background: `${cfg.bg} url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(cfg.color)}' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 7px center`,
+                              color: cfg.color, width: 'fit-content',
+                              boxShadow: '0 1px 3px rgba(48,54,47,.06)',
+                              WebkitTapHighlightColor: 'transparent',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 2px 6px rgba(48,54,47,.14)'}
+                            onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 3px rgba(48,54,47,.06)'}>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="preparando">Preparando</option>
+                            <option value="enviado">Enviado</option>
+                            <option value="entregado">Entregado</option>
+                            <option value="cancelado">Cancelado</option>
+                          </select>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 9px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: pago.bg, color: pago.color, border: '1px solid ' + pago.border, width: 'fit-content' }}>
+                            <pago.Icon size={10} strokeWidth={2.5} />
+                            {pago.label}
                           </span>
+                        </div>
+
+                        {/* Acciones — botones con palabras bien minimalistas */}
+                        {!modoSeleccion && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
+                            <ActionBtn text="Ver" onClick={e => { e.stopPropagation(); openModal && openModal('ver-pedido', pedido) }} title="Ver detalles" D={D}>
+                              <Eye size={12} strokeWidth={2.2} />
+                            </ActionBtn>
+
+                            {sePuedeEditar(pedido) && (
+                              <ActionBtn text="Editar" onClick={e => { e.stopPropagation(); openModal && openModal('editar-pedido', pedido) }} title="Editar pedido" D={D}>
+                                <Edit size={12} strokeWidth={2.2} />
+                              </ActionBtn>
+                            )}
+
+                            {!pedido.factura_id && (
+                              <ActionBtn text="Borrar" onClick={e => { e.stopPropagation(); handleEliminar(pedido.id) }} title="Eliminar pedido" danger D={D}>
+                                <Trash2 size={12} strokeWidth={2.2} />
+                              </ActionBtn>
+                            )}
+                          </div>
                         )}
                       </div>
-                      <div className="space-y-0.5">
-                        {pedidosDia.slice(0, 3).map(pedido => (
-                          <div
-                            key={pedido.id}
-                            onClick={() => openModal && openModal("ver-pedido", pedido)}
-                            className={`px-1 py-0.5 rounded text-[9px] font-medium truncate cursor-pointer hover:opacity-80 ${estadosOperativosConfig[pedido.estado]?.color || 'bg-gray-100'}`}
-                          >
-                            {pedido.codigo}
-                          </div>
-                        ))}
-                        {pedidosDia.length > 3 && (
-                          <div className="text-[9px] text-gray-500 pl-1">
-                            +{pedidosDia.length - 3} más
-                          </div>
-                        )}
+                    )
+                  }) : (
+                    /* Empty state */
+                    <div style={{ padding: '48px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: accentL, border: `1px solid ${accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                        <Package size={18} strokeWidth={1.5} style={{ color: accent, opacity: .6 }} />
                       </div>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: ct3 }}>No se encontraron pedidos</p>
+                      <p style={{ fontSize: 11, color: ct3, opacity: .6, marginTop: 3 }}>Intentá cambiar los filtros</p>
                     </div>
-                  )
-                })}
+                  )}
+                </div>
               </div>
             </div>
-          )}
 
-          {/* Leyenda de estados */}
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <p className="text-xs font-medium text-gray-700 mb-2">Leyenda de estados</p>
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(estadosOperativosConfig).map(([estado, config]) => {
-                const Icon = config.icon
-                return (
-                  <div key={estado} className="flex items-center gap-1.5">
-                    <span className={`w-2.5 h-2.5 rounded-full ${config.dotColor}`} />
-                    <Icon size={12} className="text-gray-400" />
-                    <span className="text-xs text-gray-600">{config.label}</span>
-                  </div>
-                )
-              })}
+            {/* Paginación */}
+            <div style={{ padding: '10px 16px', borderTop: `1px solid ${border}`, background: surface2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: ct3 }}>
+                  Mostrando {Math.min(filtrarPedidos.length, pedidosPaginados.length)} de {filtrarPedidos.length}
+                </span>
+                <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ ...pillSelect, padding: '4px 8px', fontSize: 11 }}>
+                  <option value="5">5 / pág</option>
+                  <option value="10">10 / pág</option>
+                  <option value="25">25 / pág</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <PageBtn onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1} D={false} border={border} surface={surface} ct2={ct2}>
+                  <ChevronLeft size={13} strokeWidth={2.5} />
+                </PageBtn>
+                <span style={{ fontSize: 11, fontWeight: 600, color: ct2, padding: '0 6px', letterSpacing: '-0.01em' }}>
+                  {paginaActual} / {totalPaginas || 1}
+                </span>
+                <PageBtn onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas || totalPaginas === 0} D={false} border={border} surface={surface} ct2={ct2}>
+                  <ChevronRight size={13} strokeWidth={2.5} />
+                </PageBtn>
+              </div>
             </div>
-          </div>
-        </>
-      )}
 
-      {/* INFORMACIÓN ADICIONAL */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <div className="flex items-start gap-2">
-          <div className="bg-blue-100 p-1.5 rounded">
-            <Package className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-xs font-semibold text-blue-900 mb-1">Módulo de Pedidos Simplificado</h4>
-            <ul className="text-xs text-blue-800 space-y-0.5">
-              <li>• <strong>Crea pedidos sin facturas automáticas</strong></li>
-              <li>• <strong>Agrega abonos directamente</strong> en el detalle del pedido</li>
-              <li>• El saldo se actualiza en tiempo real</li>
-              <li>• <strong>Opcional</strong>: Puedes crear factura después si lo necesitas</li>
-              <li>• Stock se actualiza automáticamente al crear pedido</li>
-            </ul>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* ═══════════ VISTA CALENDARIO (placeholder) ═══════════ */}
+      {(vistaActiva === "semana" || vistaActiva === "mes") && (
+        <div style={{ padding: '14px 24px 32px' }}>
+          <div className={cardCls} style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', border: `1px solid ${accent}22` }}>
+              <Calendar size={18} strokeWidth={1.5} style={{ color: accent }} />
+            </div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: ct2, marginBottom: 4 }}>Vista de Calendario</p>
+            <p style={{ fontSize: 11, color: ct3 }}>Disponible en versión completa.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════ BARRA SELECCIÓN MASIVA ═══════════ */}
+      {modoSeleccion && pedidosSeleccionados.length > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 50,
+          padding: '10px 16px', borderRadius: 14, border: `1px solid ${border}`,
+          background: surface, boxShadow: '0 8px 32px rgba(0,0,0,.25)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: accent, animation: 'pulse 1.5s infinite' }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: ct1 }}>{pedidosSeleccionados.length} seleccionado{pedidosSeleccionados.length > 1 ? 's' : ''}</span>
+          <div style={{ width: 1, height: 16, background: border }} />
+          <button onClick={handleEliminarMasivo} disabled={eliminandoMasivo} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
+            fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer',
+            background: 'rgba(51,65,57,.15)', color: accent, transition: 'all .13s',
+          }}>
+            <Trash2 size={12} strokeWidth={2.5} />{eliminandoMasivo ? 'Eliminando…' : 'Eliminar'}
+          </button>
+          <button onClick={() => setPedidosSeleccionados([])} style={{ width: 26, height: 26, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', color: ct3, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .13s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = D ? 'rgba(255,255,255,.06)' : 'rgba(48,54,47,.06)'; e.currentTarget.style.color = ct2 }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = ct3 }}>
+            <X size={13} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
+
+      {/* ═══════════ DIÁLOGO ═══════════ */}
+      {dialogo.open && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(20,25,22,.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 360, borderRadius: 14, overflow: 'hidden', border: `1px solid ${border}`, background: surface, boxShadow: '0 16px 48px rgba(0,0,0,.35)', animation: 'kpiIn .2s ease' }}>
+            {/* header */}
+            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${border}`, background: surface2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 7, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {dialogo.isDestructive
+                    ? <Trash2 size={13} strokeWidth={2} style={{ color: accent }} />
+                    : <AlertCircle size={13} strokeWidth={2} style={{ color: accent }} />}
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>{dialogo.title}</span>
+              </div>
+              <button onClick={cerrarDialogo} style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', color: ct3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={13} strokeWidth={2.5} />
+              </button>
+            </div>
+            {/* body */}
+            <div style={{ padding: 16 }}>
+              <p style={{ fontSize: 12, lineHeight: 1.6, color: ct2, whiteSpace: 'pre-wrap' }}>{dialogo.message}</p>
+            </div>
+            {/* footer */}
+            <div style={{ padding: '10px 14px', borderTop: `1px solid ${border}`, background: surface2, display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+              {dialogo.type === 'confirm' && (
+                <button onClick={cerrarDialogo} style={{ flex: 1, padding: '7px 12px', fontSize: 11, fontWeight: 600, borderRadius: 8, border: `1px solid ${border}`, background: surface, color: ct2, cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+                  Cancelar
+                </button>
+              )}
+              <button onClick={() => { if (dialogo.type === 'confirm' && dialogo.onConfirm) dialogo.onConfirm(); cerrarDialogo() }}
+                style={{ flex: 1, padding: '7px 12px', fontSize: 11, fontWeight: 700, borderRadius: 8, border: 'none', background: accent, color: '#fff', cursor: 'pointer', fontFamily: 'Inter,sans-serif', boxShadow: `0 1px 4px ${accent}44` }}>
+                {dialogo.type === 'confirm' ? 'Confirmar' : 'Entendido'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+        @keyframes kpiIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        select option { background: ${surface}; color: ${ct1}; }
+      `}</style>
     </div>
   )
 }
 
+/* ── Sub-componentes ── */
+const ActionBtn = ({ children, text, onClick, title, D, danger, accent }) => {
+  const [hov, setHov] = useState(false)
+  const base = {
+    height: 26,
+    padding: text ? '0 10px' : '0',
+    width: text ? 'max-content' : 26,
+    borderRadius: 6,
+    border: '1px solid',
+    borderColor: hov ? (danger ? 'rgba(180,60,60,.15)' : 'rgba(48,54,47,.1)') : 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    justifyContent: 'center',
+    transition: 'all .12s',
+    background: 'transparent',
+    WebkitTapHighlightColor: 'transparent',
+    fontSize: 11,
+    fontWeight: 600
+  }
+  const color = hov
+    ? danger ? 'rgba(180,60,60,.04)' : accent ? `rgba(51,65,57,.05)` : 'rgba(48,54,47,.03)'
+    : 'transparent'
+  const textColor = hov
+    ? danger ? '#c62828' : accent ? accent : '#30362F'
+    : danger ? 'rgba(180,60,60,.8)' : 'rgba(139,137,130,.9)'
+  return (
+    <button style={{ ...base, background: color, color: textColor }}
+      onClick={onClick} title={title}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      onTouchStart={() => setHov(true)} onTouchEnd={() => setHov(false)}>
+      {children}
+      {text && <span>{text}</span>}
+    </button>
+  )
+}
+
+const PageBtn = ({ children, onClick, disabled, D, border, surface, ct2 }) => {
+  const [hov, setHov] = useState(false)
+  return (
+    <button onClick={onClick} disabled={disabled} style={{
+      width: 28, height: 28, borderRadius: 7, border: `1px solid ${border}`,
+      background: hov && !disabled ? (D ? 'rgba(255,255,255,.05)' : 'rgba(48,54,47,.04)') : surface,
+      color: ct2, cursor: disabled ? 'not-allowed' : 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .13s',
+      opacity: disabled ? .35 : 1,
+    }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      {children}
+    </button>
+  )
+}
+
 export default Pedidos
+

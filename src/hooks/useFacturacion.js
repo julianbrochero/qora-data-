@@ -1697,6 +1697,56 @@ export const useFacturacion = () => {
     }
   }
 
+  // ── GUARDAR PRESUPUESTO ──────────────────────────────────────────────────
+  const guardarPresupuesto = async (data) => {
+    try {
+      // Generar número si no tiene
+      let numero = data.numero
+      if (!numero) {
+        const { data: last } = await supabase
+          .from('presupuestos')
+          .select('numero')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+        let n = 1
+        if (last?.[0]?.numero) {
+          const m = last[0].numero.match(/\d+/)
+          if (m) n = parseInt(m[0]) + 1
+        }
+        numero = `PRES-${n.toString().padStart(5, '0')}`
+      }
+
+      const row = {
+        numero,
+        cliente: data.cliente || '',
+        fecha: data.fecha || new Date().toISOString().split('T')[0],
+        validez: data.validez || 7,
+        items: JSON.stringify(data.items || []),
+        subtotal: data.subtotalGeneral || 0,
+        iva_porcentaje: data.iva || 21,
+        incluir_iva: data.incluirIva ?? true,
+        iva_valor: data.ivaValor || 0,
+        total: data.total || 0,
+        observaciones: data.observaciones || '',
+        condiciones_pago: data.condicionesPago || '',
+        estado: 'pendiente',
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase.from('presupuestos').insert([row])
+      if (error) {
+        // Si la tabla no existe aún, no rompemos — el PDF igual se genera
+        console.warn('Tabla presupuestos no disponible (crear en Supabase):', error.message)
+      }
+      return { success: true, numero }
+    } catch (e) {
+      console.error('guardarPresupuesto:', e)
+      return { success: false, mensaje: e.message }
+    }
+  }
+
   return {
     // Estados
     clientes,
@@ -1768,6 +1818,10 @@ export const useFacturacion = () => {
     marcarPedidoPagadoTotal, // ← NUEVA: marca pedido como pagado total
     registrarCobro, // ← FUNCIÓN UNIFICADA: todas las pantallas la llaman
     eliminarFactura, // ← NUEVA: elimina factura desde Facturación
+
+    // Presupuestos
+    guardarPresupuesto,
+
     // Funciones para caja
     agregarMovimientoCaja,
     eliminarMovimientoCaja,

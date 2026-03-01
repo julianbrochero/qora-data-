@@ -1,54 +1,54 @@
-"use client"
+﻿"use client"
 
-import { Package, Search, ChevronDown, Plus, Trash2, User, Calendar } from "lucide-react"
-import { useState, useEffect, useRef } from "react"
+import { Package, Search, Plus, Trash2, UserCheck, Pencil, Check, X, ChevronDown, Calendar } from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { toast } from "react-toastify"
+
+/* ──────────────────────────────────────────────
+   PALETA (igual al módulo Pedidos)
+   bg:      #F5F5F5
+   surface: #FAFAFA
+   header:  #282A28
+   accent:  #334139
+   lime:    #DCED31
+   ct1:     #1e2320
+   ct2:     #30362F
+   ct3:     #8B8982
+   border:  rgba(48,54,47,.13)
+────────────────────────────────────────────── */
 
 const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, closeModal, openModal }) => {
-  const [busquedaCliente, setBusquedaCliente] = useState("")
-  const [busquedaProducto, setBusquedaProducto] = useState("")
-  const [mostrarDropdownCliente, setMostrarDropdownCliente] = useState(false)
-  const [mostrarDropdownProducto, setMostrarDropdownProducto] = useState(false)
+  const isEdit = type === "editar-pedido"
+
+  // ── colores ──
+  const bg = '#F5F5F5'
+  const surface = '#FAFAFA'
+  const surface2 = '#F2F2F2'
+  const border = 'rgba(48,54,47,.13)'
+  const ct1 = '#1e2320'
+  const ct2 = '#30362F'
+  const ct3 = '#8B8982'
+  const accent = '#334139'
+  const accentL = 'rgba(51,65,57,.08)'
+  const lime = '#DCED31'
+
+  // ── refs ──
   const clienteRef = useRef(null)
   const productoRef = useRef(null)
 
-  const isEdit = type === "editar-pedido"
-
+  // ── estado del formulario ──
   const [pedidoData, setPedidoData] = useState(() => {
-    // Si hay estado guardado (al volver de crear cliente/producto)
     if (pedido?.savedState) {
-      const newState = { ...pedido.savedState };
-
-      // Asegurar copia profunda de items
-      newState.items = (newState.items || []).map(i => ({ ...i }));
-
-      // Si volvemos de crear cliente
-      if (pedido.newClient) {
-        newState.clienteId = pedido.newClient.id;
-        newState.clienteNombre = pedido.newClient.nombre;
-      }
-
-      // Si volvemos de crear producto
+      const s = { ...pedido.savedState, items: (pedido.savedState.items || []).map(i => ({ ...i })) }
+      if (pedido.newClient) { s.clienteId = pedido.newClient.id; s.clienteNombre = pedido.newClient.nombre }
       if (pedido.newProduct) {
-        const prod = pedido.newProduct;
-        const exists = newState.items.find(i => i.productoId === prod.id);
-        if (exists) {
-          exists.cantidad += 1;
-          exists.subtotal = exists.precio * exists.cantidad;
-        } else {
-          newState.items.push({
-            id: Date.now(),
-            productoId: prod.id,
-            producto: prod.nombre,
-            precio: prod.precio, // Precio base
-            cantidad: 1,
-            subtotal: prod.precio,
-          });
-        }
+        const prod = pedido.newProduct
+        const exists = s.items.find(i => i.productoId === prod.id)
+        if (exists) { exists.cantidad += 1; exists.subtotal = exists.precio * exists.cantidad }
+        else s.items.push({ id: Date.now(), productoId: prod.id, producto: prod.nombre, precio: prod.precio, cantidad: 1, subtotal: prod.precio })
       }
-      return newState;
+      return s
     }
-
-    // Inicialización normal
     return {
       clienteId: pedido?.cliente_id || "",
       clienteNombre: pedido?.cliente_nombre || "",
@@ -57,365 +57,257 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
       estado: pedido?.estado || "pendiente",
       notas: pedido?.notas || "",
       items: pedido?.items || [],
-      montoPagado: pedido?.monto_abonado || "", // ✅ Inicializar
-    };
+      montoPagado: pedido?.monto_abonado || "",
+    }
   })
 
-  // Mock data si no hay datos
-  const clientesMock = clientes.length > 0 ? clientes : [
-    { id: 1, nombre: "Juan Perez", telefono: "351-1234567" },
-    { id: 2, nombre: "Maria Garcia", telefono: "351-7654321" },
-    { id: 3, nombre: "Carlos Lopez", telefono: "351-9876543" },
-  ]
+  const [busCliente, setBusCliente] = useState(pedido?.cliente_nombre || "")
+  const [dropCliente, setDropCliente] = useState(false)
+  const [busProducto, setBusProducto] = useState("")
+  const [dropProducto, setDropProducto] = useState(false)
+  const [editPrecioId, setEditPrecioId] = useState(null)
+  const [priceDraft, setPriceDraft] = useState("")
 
-  const productosMock = productos.length > 0 ? productos : [
-    { id: 1, nombre: "Campera de cuero", precio: 150000, stock: 10, codigo: "CAMP001" },
-    { id: 2, nombre: "Zapatillas deportivas", precio: 85000, stock: 15, codigo: "ZAP002" },
-    { id: 3, nombre: "Pantalon jean", precio: 45000, stock: 8, codigo: "PANT003" },
-  ]
+  const [isProcessing, setIsProcessing] = useState(false)
+  const generarBtnRef = useRef(null)
 
-  const estadosOptions = [
-    { value: "pendiente", label: "Pendiente" },
-    { value: "preparando", label: "Preparando" },
-    { value: "enviado", label: "Enviado" },
-    { value: "entregado", label: "Entregado" },
-    { value: "cancelado", label: "Cancelado" },
-  ]
-
-  // Click outside handlers
+  // cerrar dropdowns al clic afuera
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (clienteRef.current && !clienteRef.current.contains(e.target)) {
-        setMostrarDropdownCliente(false)
-      }
-      if (productoRef.current && !productoRef.current.contains(e.target)) {
-        setMostrarDropdownProducto(false)
-      }
+    const fn = e => {
+      if (clienteRef.current && !clienteRef.current.contains(e.target)) setDropCliente(false)
+      if (productoRef.current && !productoRef.current.contains(e.target)) setDropProducto(false)
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", fn)
+    return () => document.removeEventListener("mousedown", fn)
   }, [])
 
-  const clientesFiltrados = clientesMock.filter(
-    (c) =>
-      c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase()) ||
-      c.telefono?.includes(busquedaCliente)
+  const clientesFiltrados = clientes.filter(c =>
+    c.nombre?.toLowerCase().includes(busCliente.toLowerCase()) ||
+    c.telefono?.includes(busCliente)
+  )
+  const productosFiltrados = productos.filter(p =>
+    p.nombre?.toLowerCase().includes(busProducto.toLowerCase()) ||
+    p.codigo?.toLowerCase().includes(busProducto.toLowerCase())
   )
 
-  const productosFiltrados = productosMock.filter(
-    (p) =>
-      p.nombre.toLowerCase().includes(busquedaProducto.toLowerCase()) ||
-      p.codigo?.toLowerCase().includes(busquedaProducto.toLowerCase())
-  )
+  // ── helpers ──
+  const seleccionarCliente = c => {
+    setPedidoData(d => ({ ...d, clienteId: c.id, clienteNombre: c.nombre }))
+    setBusCliente(c.nombre)
+    setDropCliente(false)
+  }
 
-  const seleccionarCliente = (cliente) => {
-    setPedidoData({
-      ...pedidoData,
-      clienteId: cliente.id,
-      clienteNombre: cliente.nombre,
+  const agregarProducto = p => {
+    setPedidoData(d => {
+      const existe = d.items.find(i => i.productoId === p.id)
+      if (existe) return { ...d, items: d.items.map(i => i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1, subtotal: (i.cantidad + 1) * i.precio } : i) }
+      return { ...d, items: [...d.items, { id: Date.now(), productoId: p.id, producto: p.nombre, precio: p.precio, cantidad: 1, subtotal: p.precio }] }
     })
-    setBusquedaCliente(cliente.nombre)
-    setMostrarDropdownCliente(false)
+    setBusProducto("")
+    setDropProducto(false)
   }
 
-  const agregarProducto = (producto) => {
-    const itemExistente = pedidoData.items.find((item) => item.productoId === producto.id)
-    if (itemExistente) {
-      setPedidoData({
-        ...pedidoData,
-        items: pedidoData.items.map((item) =>
-          item.productoId === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item
-        ),
-      })
-    } else {
-      setPedidoData({
-        ...pedidoData,
-        items: [
-          ...pedidoData.items,
-          {
-            id: Date.now(),
-            productoId: producto.id,
-            producto: producto.nombre,
-            precio: producto.precio,
-            cantidad: 1,
-            subtotal: producto.precio,
-          },
-        ],
-      })
+  const actualizarCantidad = (idx, n) => {
+    if (n < 1) { setPedidoData(d => ({ ...d, items: d.items.filter((_, i) => i !== idx) })); return }
+    setPedidoData(d => { const it = [...d.items]; it[idx] = { ...it[idx], cantidad: n, subtotal: it[idx].precio * n }; return { ...d, items: it } })
+  }
+
+  const commitPrecio = id => {
+    const idx = pedidoData.items.findIndex(i => i.id === id)
+    if (idx >= 0) {
+      const precio = parseFloat(priceDraft) || 0
+      setPedidoData(d => { const it = [...d.items]; it[idx] = { ...it[idx], precio, subtotal: precio * it[idx].cantidad }; return { ...d, items: it } })
     }
-    setBusquedaProducto("")
-    setMostrarDropdownProducto(false)
+    setEditPrecioId(null); setPriceDraft("")
   }
 
-  const actualizarCantidad = (index, nuevaCantidad) => {
-    if (nuevaCantidad < 1) {
-      eliminarItem(index)
+  const calcTotal = () => pedidoData.items.reduce((s, i) => s + i.precio * i.cantidad, 0)
+
+  const fNum = n => (parseFloat(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const fMon = n => (parseFloat(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const estadosCfg = {
+    pendiente: { label: 'Pendiente', bg: '#FEF3C7', color: '#92400E', border: '#FCD34D' },
+    preparando: { label: 'Preparando', bg: '#DBEAFE', color: '#1E40AF', border: '#93C5FD' },
+    enviado: { label: 'Enviado', bg: '#E0E7FF', color: '#3730A3', border: '#A5B4FC' },
+    entregado: { label: 'Entregado', bg: '#D1FAE5', color: '#065F46', border: '#6EE7B7' },
+    cancelado: { label: 'Cancelado', bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5' },
+  }
+  const eCfg = estadosCfg[pedidoData.estado] || estadosCfg.pendiente
+
+  const handleNuevoCliente = () => openModal?.("nuevo-cliente", { onSuccess: c => openModal("nuevo-pedido", { savedState: pedidoData, newClient: c }) })
+  const handleNuevoProducto = () => openModal?.("nuevo-producto", { onSuccess: p => openModal("nuevo-pedido", { savedState: pedidoData, newProduct: p }) })
+
+  const handleGuardar = async () => {
+    setIsProcessing(true)
+    const final = { ...pedidoData, total: calcTotal() }
+    if (isEdit) {
+      if (!formActions?.actualizarPedido) { setIsProcessing(false); return }
+      try {
+        const r = await formActions.actualizarPedido(pedido.id, final)
+        if (r?.success) { toast.success(r.mensaje || 'Pedido actualizado'); formActions.recargarTodosLosDatos?.(); closeModal() }
+        else toast.error('Error: ' + (r?.mensaje || 'Desconocido'))
+      } catch (e) { toast.error('Error: ' + e.message) }
+      setIsProcessing(false)
       return
     }
-    const nuevosItems = [...pedidoData.items]
-    nuevosItems[index].cantidad = nuevaCantidad
-    nuevosItems[index].subtotal = nuevosItems[index].precio * nuevaCantidad
-    setPedidoData({ ...pedidoData, items: nuevosItems })
-  }
-
-  const actualizarPrecio = (index, nuevoPrecio) => {
-    const nuevosItems = [...pedidoData.items]
-    const precio = parseFloat(nuevoPrecio) || 0
-    nuevosItems[index].precio = precio
-    nuevosItems[index].subtotal = precio * nuevosItems[index].cantidad
-    setPedidoData({ ...pedidoData, items: nuevosItems })
-  }
-
-  const eliminarItem = (index) => {
-    setPedidoData({
-      ...pedidoData,
-      items: pedidoData.items.filter((_, i) => i !== index),
-    })
-  }
-
-  const calcularTotal = () => {
-    return pedidoData.items.reduce((acc, item) => acc + item.precio * item.cantidad, 0)
-  }
-
-  const handleNuevoCliente = () => {
-    if (openModal) {
-      openModal("nuevo-cliente", {
-        onSuccess: (cliente) => {
-          openModal("nuevo-pedido", {
-            savedState: pedidoData,
-            newClient: cliente
-          })
-        }
-      })
-    }
-  }
-
-  const handleNuevoProducto = () => {
-    if (openModal) {
-      openModal("nuevo-producto", {
-        onSuccess: (producto) => {
-          openModal("nuevo-pedido", {
-            savedState: pedidoData,
-            newProduct: producto
-          })
-        }
-      })
-    }
-  }
-
-  const handleGuardar = () => {
-    const pedidoFinal = {
-      ...pedidoData,
-      total: calcularTotal(),
-    }
-
-    // IMPORTANTE: Usar la NUEVA función que crea solo el pedido sin factura
     if (formActions?.agregarPedidoSolo) {
-      formActions.agregarPedidoSolo(pedidoFinal)
-        .then(resultado => {
-          if (resultado.success) {
-            alert(resultado.mensaje || 'Pedido creado exitosamente')
-            if (formActions.recargarTodosLosDatos) {
-              formActions.recargarTodosLosDatos()
-            }
-          } else {
-            alert('Error: ' + (resultado.mensaje || 'Error al crear pedido'))
-          }
-        })
-        .catch(error => {
-          console.error('Error creando pedido:', error)
-          alert('Error al crear pedido: ' + error.message)
-        })
-    } else if (formActions?.guardarPedido) {
-      // Fallback a la función original si no existe la nueva
-      formActions.guardarPedido(pedidoFinal)
+      formActions.agregarPedidoSolo(final)
+        .then(r => { if (r?.success) { toast.success(r.mensaje || 'Pedido creado'); formActions.recargarTodosLosDatos?.(); closeModal() } else toast.error('Error: ' + (r?.mensaje || '')) })
+        .catch(e => toast.error('Error: ' + e.message))
+        .finally(() => setIsProcessing(false))
+    } else if (formActions?.guardarVenta) {
+      formActions.guardarVenta(final, 'pedido')
+      setIsProcessing(false)
+      closeModal()
+    } else {
+      setIsProcessing(false)
+      closeModal()
     }
-
-    closeModal()
   }
 
-  const CustomSelect = ({ value, options, onChange, placeholder }) => {
-    const [isOpen, setIsOpen] = useState(false)
-    const selectRef = useRef(null)
+  const handleEnterKey = useCallback(() => {
+    if (isProcessing) return
+    if (!pedidoData.clienteId || pedidoData.items.length === 0) {
+      toast.error('Completa los campos obligatorios del pedido')
+      return
+    }
+    handleGuardar()
+  }, [pedidoData, isProcessing])
 
-    useEffect(() => {
-      const handleClickOutside = (e) => {
-        if (selectRef.current && !selectRef.current.contains(e.target)) {
-          setIsOpen(false)
-        }
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (generarBtnRef.current && !generarBtnRef.current.disabled) handleEnterKey()
       }
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => document.removeEventListener("mousedown", handleClickOutside)
-    }, [])
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [handleEnterKey])
 
-    const selectedOption = options.find((opt) => opt.value === value)
-
-    return (
-      <div ref={selectRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded-md bg-white text-left flex items-center justify-between hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-colors"
-        >
-          <span className={value ? "text-gray-900" : "text-gray-400"}>{selectedOption?.label || placeholder}</span>
-          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-        {isOpen && (
-          <div className="absolute z-20 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-32 overflow-y-auto">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value)
-                  setIsOpen(false)
-                }}
-                className={`w-full px-2 py-1.5 text-left text-[11px] hover:bg-gray-50 transition-colors ${value === option.value ? "bg-blue-50 text-blue-600" : "text-gray-700"
-                  }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )
+  // ── estilos helpers ──
+  const inp = {
+    width: '100%', height: 34, padding: '0 11px', borderRadius: 8,
+    border: `1px solid ${border}`, background: surface, outline: 'none',
+    fontSize: 12, fontWeight: 500, color: ct1, fontFamily: 'Inter,sans-serif',
+    transition: 'border-color .13s',
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (pedidoData.clienteId && pedidoData.items.length > 0) {
-          handleGuardar();
-        }
-      }}
-      className="w-full max-w-[360px] mx-auto space-y-1"
-    >
-      {/* Header */}
-      <div className="pb-1 border-b border-gray-100 flex justify-between items-center">
-        <h3 className="text-sm font-bold text-gray-900">{isEdit ? "Editar pedido" : "Nuevo pedido"}</h3>
-        {/* Description removed for compactness */}
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased', width: '100%' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, marginBottom: 14, borderBottom: `1px solid ${border}` }}>
+        <div style={{ width: 32, height: 32, borderRadius: 9, background: '#282A28', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Package size={15} strokeWidth={2} style={{ color: '#DCED31' }} />
+        </div>
+        <div>
+          <p style={{ fontSize: 9, fontWeight: 700, color: ct3, letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: 1 }}>
+            {isEdit ? 'Modificar pedido' : 'Nuevo pedido'}
+          </p>
+          <h3 style={{ fontSize: 15, fontWeight: 800, color: ct1, letterSpacing: '-.03em', lineHeight: 1, margin: 0 }}>
+            {isEdit ? 'Editar Pedido' : 'Crear Pedido'}
+          </h3>
+        </div>
       </div>
 
-      <div className="space-y-1.5">
-        {/* CLIENTE */}
-        <div ref={clienteRef} className="relative z-20">
-          <div className="relative">
-            <input
-              type="text"
-              className="w-full pl-7 pr-8 py-1 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-              placeholder="Buscar cliente..."
-              value={busquedaCliente}
-              onChange={(e) => {
-                setBusquedaCliente(e.target.value)
-                setMostrarDropdownCliente(true)
-              }}
-              onFocus={() => setMostrarDropdownCliente(true)}
-            />
-            <User className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+      <div style={{ padding: '0 2px' }}>
 
-            <button
-              onClick={handleNuevoCliente}
-              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
-              title="Nuevo Cliente"
-              type="button"
-            >
-              <Plus size={12} />
+        {/* ── CLIENTE ── */}
+        <div ref={clienteRef} style={{ position: 'relative', marginBottom: 10, zIndex: 30 }}>
+          <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Cliente</label>
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3, pointerEvents: 'none' }}>
+              <Search size={12} strokeWidth={2} />
+            </div>
+            <input
+              style={{ ...inp, paddingLeft: 30, paddingRight: 36 }}
+              placeholder="Buscar cliente..."
+              value={busCliente}
+              onChange={e => { setBusCliente(e.target.value); setDropCliente(true) }}
+              onFocus={() => setDropCliente(true)}
+            />
+            <button type="button" onClick={handleNuevoCliente}
+              style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: accent, padding: 4, display: 'flex', alignItems: 'center' }}>
+              <Plus size={14} strokeWidth={2.5} />
             </button>
-            {mostrarDropdownCliente && clientesFiltrados.length > 0 && (
-              <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto">
-                {clientesFiltrados.map((cliente) => (
-                  <button
-                    key={cliente.id}
-                    type="button"
-                    onClick={() => seleccionarCliente(cliente)}
-                    className="w-full px-2 py-1.5 text-left hover:bg-gray-50 transition-colors text-[11px] border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="font-semibold text-gray-900">{cliente.nombre}</div>
-                    <div className="text-[9px] text-gray-500">{cliente.telefono}</div>
+            {dropCliente && clientesFiltrados.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: surface, border: `1px solid ${border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.1)', zIndex: 40, maxHeight: 160, overflowY: 'auto' }}>
+                {clientesFiltrados.map(c => (
+                  <button key={c.id} type="button" onClick={() => seleccionarCliente(c)}
+                    style={{ width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', borderBottom: `1px solid ${border}`, transition: 'background .1s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = accentL}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: ct1 }}>{c.nombre}</div>
+                    {c.telefono && <div style={{ fontSize: 10, color: ct3, marginTop: 1 }}>{c.telefono}</div>}
                   </button>
                 ))}
               </div>
             )}
           </div>
           {pedidoData.clienteNombre && (
-            <span className="text-[9px] text-green-600 font-medium mt-0.5 block">
-              Cliente: {pedidoData.clienteNombre}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+              <UserCheck size={11} strokeWidth={2} style={{ color: accent }} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: accent }}>{pedidoData.clienteNombre}</span>
+            </div>
           )}
         </div>
 
-        {/* FECHAS Y ESTADO */}
-        <div className="grid grid-cols-3 gap-1.5">
+        {/* ── FECHAS Y ESTADO ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
           <div>
-            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Fecha</label>
-            <input
-              type="date"
-              className="w-full px-1.5 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-              value={pedidoData.fechaPedido}
-              onChange={(e) => setPedidoData({ ...pedidoData, fechaPedido: e.target.value })}
-            />
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Fecha</label>
+            <input type="date" style={{ ...inp, fontSize: 11 }} value={pedidoData.fechaPedido}
+              onChange={e => setPedidoData(d => ({ ...d, fechaPedido: e.target.value }))} />
           </div>
           <div>
-            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Entrega</label>
-            <input
-              type="date"
-              className="w-full px-1.5 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-              value={pedidoData.fechaEntregaEstimada}
-              onChange={(e) => setPedidoData({ ...pedidoData, fechaEntregaEstimada: e.target.value })}
-            />
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Entrega</label>
+            <input type="date" style={{ ...inp, fontSize: 11 }} value={pedidoData.fechaEntregaEstimada}
+              onChange={e => setPedidoData(d => ({ ...d, fechaEntregaEstimada: e.target.value }))} />
           </div>
           <div>
-            <label className="block text-[10px] font-medium text-gray-600 mb-0.5">Estado</label>
-            <CustomSelect
+            <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Estado</label>
+            <select
               value={pedidoData.estado}
-              options={estadosOptions}
-              onChange={(value) => setPedidoData({ ...pedidoData, estado: value })}
-              placeholder="Estado"
-            />
+              onChange={e => setPedidoData(d => ({ ...d, estado: e.target.value }))}
+              style={{ ...inp, appearance: 'none', cursor: 'pointer', background: `${eCfg.bg}`, color: eCfg.color, border: `1px solid ${eCfg.border}`, fontWeight: 700, padding: '0 8px' }}>
+              {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+            </select>
           </div>
         </div>
 
-        {/* AGREGAR PRODUCTO */}
-        {/* AGREGAR PRODUCTO */}
-        <div ref={productoRef} className="relative z-10">
-          <div className="relative">
+        {/* ── BUSCAR PRODUCTO ── */}
+        <div ref={productoRef} style={{ position: 'relative', marginBottom: 8, zIndex: 20 }}>
+          <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Productos</label>
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3, pointerEvents: 'none' }}>
+              <Package size={12} strokeWidth={2} />
+            </div>
             <input
-              type="text"
-              className="w-full pl-7 pr-8 py-1 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-              placeholder="Agregar producto..."
-              value={busquedaProducto}
-              onChange={(e) => {
-                setBusquedaProducto(e.target.value)
-                setMostrarDropdownProducto(true)
-              }}
-              onFocus={() => setMostrarDropdownProducto(true)}
+              style={{ ...inp, paddingLeft: 30, paddingRight: 36 }}
+              placeholder="Agregar producto al pedido..."
+              value={busProducto}
+              onChange={e => { setBusProducto(e.target.value); setDropProducto(true) }}
+              onFocus={() => setDropProducto(true)}
             />
-            <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-
-            <button
-              onClick={handleNuevoProducto}
-              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full text-blue-600 transition-colors"
-              title="Nuevo Producto"
-              type="button"
-            >
-              <Plus size={12} />
+            <button type="button" onClick={handleNuevoProducto}
+              style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: accent, padding: 4, display: 'flex', alignItems: 'center' }}>
+              <Plus size={14} strokeWidth={2.5} />
             </button>
-            {mostrarDropdownProducto && productosFiltrados.length > 0 && (
-              <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto">
-                {productosFiltrados.map((producto) => (
-                  <button
-                    key={producto.id}
-                    type="button"
-                    onClick={() => agregarProducto(producto)}
-                    className="w-full px-2 py-1.5 text-left hover:bg-gray-50 transition-colors text-[11px] border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-900">{producto.nombre}</span>
-                      <span className="text-blue-600 font-medium">${producto.precio?.toLocaleString()}</span>
+            {dropProducto && productosFiltrados.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: surface, border: `1px solid ${border}`, borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,.1)', zIndex: 40, maxHeight: 160, overflowY: 'auto' }}>
+                {productosFiltrados.map(p => (
+                  <button key={p.id} type="button" onClick={() => agregarProducto(p)}
+                    style={{ width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', borderBottom: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'background .1s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = accentL}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: ct1 }}>{p.nombre}</div>
+                      <div style={{ fontSize: 10, color: ct3, marginTop: 1 }}>{p.codigo} · Stock: {p.stock}</div>
                     </div>
-                    <div className="text-[9px] text-gray-500">Stock: {producto.stock} | {producto.codigo}</div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: accent }}>${fNum(p.precio)}</span>
                   </button>
                 ))}
               </div>
@@ -423,127 +315,135 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
           </div>
         </div>
 
-        {/* ITEMS DEL PEDIDO */}
-        <div>
-          <div className="border border-gray-200 rounded-md h-[110px] overflow-hidden">
-            {pedidoData.items.length > 0 ? (
-              <div className="divide-y divide-gray-100 h-full overflow-y-auto">
-                {pedidoData.items.map((item, index) => (
-                  <div key={item.id} className="px-1.5 py-1 flex items-center gap-1.5 bg-white">
-                    <div className="bg-blue-100 p-0.5 rounded">
-                      <Package className="w-2.5 h-2.5 text-blue-600" />
+        {/* ── LISTA DE ITEMS ── */}
+        <div style={{ border: `1px solid ${border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 10, background: surface }}>
+          {/* cabecera */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 70px 28px', gap: 6, padding: '6px 10px', background: surface2, borderBottom: `1px solid ${border}` }}>
+            {['Producto', 'Cant.', 'Total', ''].map((h, i) => (
+              <div key={i} style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: i === 1 || i === 2 ? 'center' : 'left' }}>{h}</div>
+            ))}
+          </div>
+
+          {/* items o vacío */}
+          <div style={{ minHeight: 64, maxHeight: 141, overflowY: 'auto' }}>
+            {pedidoData.items.length > 0 ? pedidoData.items.map((item, idx) => (
+              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 70px 28px', gap: 6, padding: '7px 10px', borderBottom: `1px solid ${border}`, alignItems: 'center' }}>
+
+                {/* nombre + precio editable */}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: ct1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.producto}</div>
+                  {editPrecioId === item.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                      <span style={{ fontSize: 10, color: ct3 }}>$</span>
+                      <input autoFocus type="number" value={priceDraft} step="0.01"
+                        onChange={e => setPriceDraft(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitPrecio(item.id) } if (e.key === 'Escape') { setEditPrecioId(null) } }}
+                        style={{ width: 70, height: 20, border: `1px solid ${border}`, borderRadius: 4, fontSize: 11, fontWeight: 600, color: ct1, padding: '0 4px', outline: 'none', background: surface2 }} />
+                      <button type="button" onClick={() => commitPrecio(item.id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: accent, padding: 0, display: 'flex' }}><Check size={11} strokeWidth={2.5} /></button>
+                      <button type="button" onClick={() => setEditPrecioId(null)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: ct3, padding: 0, display: 'flex' }}><X size={11} strokeWidth={2.5} /></button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-medium text-gray-900 truncate">{item.producto}</div>
-                      <div className="flex items-center">
-                        <span className="text-[9px] text-gray-500 mr-1">$</span>
-                        <input
-                          type="number"
-                          value={item.precio}
-                          onChange={(e) => actualizarPrecio(index, e.target.value)}
-                          className="w-16 text-[9px] border border-gray-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-500"
-                          step="0.01"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        type="button"
-                        onClick={() => actualizarCantidad(index, item.cantidad - 1)}
-                        className="w-4 h-4 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:bg-gray-50 text-[10px]"
-                      >
-                        -
-                      </button>
-                      <span className="w-5 text-center text-[10px] font-medium">{item.cantidad}</span>
-                      <button
-                        type="button"
-                        onClick={() => actualizarCantidad(index, item.cantidad + 1)}
-                        className="w-4 h-4 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:bg-gray-50 text-[10px]"
-                      >
-                        +
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                      <span style={{ fontSize: 10, color: ct3 }}>${fNum(item.precio)}</span>
+                      <button type="button" onClick={() => { setEditPrecioId(item.id); setPriceDraft(String(item.precio || "")) }}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: ct3, padding: 0, display: 'flex' }} title="Editar precio">
+                        <Pencil size={9} strokeWidth={2.5} />
                       </button>
                     </div>
-                    <div className="text-[10px] font-semibold text-gray-900 w-12 text-right">
-                      ${(item.precio * item.cantidad).toLocaleString()}
-                    </div>
-                    <button type="button" onClick={() => eliminarItem(index)} className="p-0.5 text-red-500 hover:bg-red-50 rounded">
-                      <Trash2 className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                ))}
+                  )}
+                </div>
+
+                {/* cantidad */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                  <button type="button" onClick={() => actualizarCantidad(idx, item.cantidad - 1)}
+                    style={{ width: 20, height: 20, borderRadius: 5, border: `1px solid ${border}`, background: surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: ct2, lineHeight: 1 }}>−</button>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: ct1, minWidth: 16, textAlign: 'center' }}>{item.cantidad}</span>
+                  <button type="button" onClick={() => actualizarCantidad(idx, item.cantidad + 1)}
+                    style={{ width: 20, height: 20, borderRadius: 5, border: `1px solid ${border}`, background: surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: ct2, lineHeight: 1 }}>+</button>
+                </div>
+
+                {/* subtotal */}
+                <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: ct1 }}>${fNum(item.precio * item.cantidad)}</div>
+
+                {/* eliminar */}
+                <button type="button" onClick={() => setPedidoData(d => ({ ...d, items: d.items.filter((_, i) => i !== idx) }))}
+                  style={{ width: 22, height: 22, border: 'none', background: 'transparent', cursor: 'pointer', color: 'rgba(180,60,60,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, transition: 'all .12s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(180,60,60,.08)'; e.currentTarget.style.color = '#c62828' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(180,60,60,.6)' }}>
+                  <Trash2 size={11} strokeWidth={2} />
+                </button>
               </div>
-            ) : (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-[10px] text-gray-400">No hay productos agregados</p>
+            )) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 64, gap: 4 }}>
+                <Package size={18} strokeWidth={1.5} style={{ color: border }} />
+                <span style={{ fontSize: 11, color: ct3 }}>Agrega productos para comenzar</span>
               </div>
             )}
           </div>
-        </div >
-
-        {/* NOTAS */}
-        <div>
-          <input
-            type="text"
-            className="w-full px-2 py-1 text-[10px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-            placeholder="Notas (opcional)..."
-            value={pedidoData.notas}
-            onChange={(e) => setPedidoData({ ...pedidoData, notas: e.target.value })}
-          />
         </div>
 
-        {/* TOTAL Y PAGO */}
-        {/* TOTAL Y PAGO */}
-        <div className="bg-gray-50 border border-gray-200 rounded-md p-1.5 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-gray-600">Total:</span>
-            <span className="text-sm font-bold text-gray-900">
-              ${calcularTotal().toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
+        {/* ── NOTAS ── */}
+        <input type="text" style={{ ...inp, marginBottom: 10 }}
+          placeholder="Notas u observaciones (opcional)..."
+          value={pedidoData.notas}
+          onChange={e => setPedidoData(d => ({ ...d, notas: e.target.value }))} />
 
-          <div className="flex items-center justify-between pt-1 border-t border-gray-200">
-            <label className="text-[10px] font-medium text-gray-700">Abonado / Seña:</label>
-            <div className="relative w-24">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">$</span>
-              <input
-                type="number"
-                className="w-full pl-5 pr-1 py-0.5 text-[11px] border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                placeholder="0.00"
+        {/* ── TOTAL + PAGO ── */}
+        <div style={{ background: surface2, border: `1px solid ${border}`, borderRadius: 10, padding: '12px 14px', marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3 }}>Total General</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: ct1, letterSpacing: '-.04em' }}>${fMon(calcTotal())}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${border}` }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: ct2 }}>Pago / Adelanto inicial:</span>
+            <div style={{ position: 'relative', width: 120 }}>
+              <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, fontWeight: 500, color: ct3 }}>$</span>
+              <input type="number" placeholder="0.00" step="0.01"
+                style={{ ...inp, width: 120, paddingLeft: 20, textAlign: 'right', paddingRight: 8, fontSize: 12 }}
                 value={pedidoData.montoPagado}
-                onChange={(e) => setPedidoData({ ...pedidoData, montoPagado: e.target.value })}
-              />
+                onChange={e => setPedidoData(d => ({ ...d, montoPagado: e.target.value }))} />
             </div>
           </div>
-
-          {(parseFloat(pedidoData.montoPagado) > 0) && (
-            <div className="flex items-center justify-between pt-0.5">
-              <span className="text-[10px] font-medium text-orange-600">Saldo:</span>
-              <span className="text-[11px] font-bold text-orange-600">
-                ${Math.max(0, calcularTotal() - (parseFloat(pedidoData.montoPagado) || 0)).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+          {parseFloat(pedidoData.montoPagado) > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#92400E' }}>Saldo pendiente</span>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#92400E' }}>${fMon(Math.max(0, calcTotal() - (parseFloat(pedidoData.montoPagado) || 0)))}</span>
             </div>
           )}
         </div>
+
+        {/* ── BOTONES ── */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button type="button" onClick={closeModal}
+            style={{ flex: 1, height: 38, borderRadius: 10, border: `1px solid ${border}`, background: surface, color: ct2, fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all .13s', fontFamily: 'Inter,sans-serif' }}
+            onMouseEnter={e => e.currentTarget.style.background = surface2}
+            onMouseLeave={e => e.currentTarget.style.background = surface}>
+            Cancelar
+          </button>
+          <button type="button"
+            ref={generarBtnRef}
+            onClick={() => { if (pedidoData.clienteId && pedidoData.items.length > 0) handleGuardar() }}
+            disabled={!pedidoData.clienteId || pedidoData.items.length === 0 || isProcessing}
+            style={{
+              flex: 2, height: 38, borderRadius: 10, border: '2px solid #282A28',
+              background: '#DCED31', color: '#282A28',
+              fontSize: 12, fontWeight: 800, cursor: (pedidoData.clienteId && pedidoData.items.length > 0 && !isProcessing) ? 'pointer' : 'not-allowed',
+              opacity: (pedidoData.clienteId && pedidoData.items.length > 0 && !isProcessing) ? 1 : .45,
+              transition: 'all .13s', fontFamily: 'Inter,sans-serif', letterSpacing: '.01em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+            }}>
+            {isProcessing ? "Procesando..." : (isEdit ? '✓ Guardar Cambios' : '+ Crear Pedido')}
+            {!isProcessing && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>Ctrl+↵</kbd>}
+          </button>
+        </div>
+
       </div>
 
-      {/* BOTONES */}
-      <div className="flex gap-2 pt-1">
-        <button
-          type="button"
-          onClick={closeModal}
-          className="flex-1 bg-white text-gray-700 px-2.5 py-1.5 text-[11px] rounded-md hover:bg-gray-50 transition-colors border border-gray-200 font-medium"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={!pedidoData.clienteId || pedidoData.items.length === 0}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 text-[11px] rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isEdit ? "Guardar cambios" : "Crear pedido"}
-        </button>
-      </div>
-    </form>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
+      `}</style>
+    </div>
   )
 }
 

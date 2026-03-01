@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Menu } from 'lucide-react';
 import { useFacturacion } from './hooks/useFacturacion';
 import { useAuth } from './lib/AuthContext';
@@ -16,6 +18,7 @@ import Pedidos from './components/modules/Pedidos';
 import Configuracion from './components/modules/Configuracion';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
+import SubscriptionGate from './components/subscription/SubscriptionGate';
 
 // Componente para rutas protegidas
 const PrivateRoute = ({ children }) => {
@@ -43,6 +46,7 @@ const SistemaFacturacion = () => {
   const [modalType, setModalType] = useState(null);
   const [modalData, setModalData] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const {
     // Estados existentes
@@ -106,7 +110,8 @@ const SistemaFacturacion = () => {
     eliminarFactura, // ✅ NUEVA
     crearFacturaDirecta, // ✅ NUEVA - para Factura Directa
     eliminarMovimientoCaja, // ✅ NUEVA - para borrar movimientos de caja
-    cargarMovimientosPorFecha // ✅ NUEVA - selector de fecha en caja
+    cargarMovimientosPorFecha, // ✅ NUEVA - selector de fecha en caja
+    guardarPresupuesto, // ✅ NUEVA - para crear presupuestos
   } = useFacturacion();
 
   // ✅ FUNCIÓN CORREGIDA: openModal
@@ -202,7 +207,7 @@ const SistemaFacturacion = () => {
 
       // ✅ Verificar que resultado existe antes de acceder a .success
       if (resultado && resultado.success) {
-        alert(`✅ ${tipoVenta === 'pedido' ? 'Pedido' : 'Factura'} creado exitosamente`);
+        toast.success(`${tipoVenta === 'pedido' ? 'Pedido' : 'Factura'} creado exitosamente`);
         await recargarTodosLosDatos(); // Asegúrate de esperar la recarga
         closeModalHandler();
       } else {
@@ -212,7 +217,7 @@ const SistemaFacturacion = () => {
       }
     } catch (error) {
       console.error('❌ Error guardando venta:', error);
-      alert('Error al guardar: ' + (error.message || 'Intenta nuevamente'));
+      toast.error('Error al guardar: ' + (error.message || 'Intenta nuevamente'));
     }
   };
 
@@ -226,13 +231,13 @@ const SistemaFacturacion = () => {
       const resultado = await facturarPedido(pedidoId);
 
       if (resultado.success) {
-        alert(`Pedido facturado exitosamente. Factura: ${resultado.factura?.numero || ''}`);
+        toast.success(`Pedido facturado exitosamente. Factura: ${resultado.factura?.numero || ''}`);
         recargarTodosLosDatos();
       }
       return resultado;
     } catch (error) {
       console.error('Error facturando pedido:', error);
-      alert('Error al facturar pedido: ' + error.message);
+      toast.error('Error al facturar pedido: ' + error.message);
       return { success: false, mensaje: error.message };
     }
   };
@@ -257,6 +262,8 @@ const SistemaFacturacion = () => {
           onViewAllFacturas={() => setActiveModule('facturacion')}
           onViewAllProductos={() => setActiveModule('productos')}
           onViewAllPedidos={() => setActiveModule('pedidos')}
+          onViewAllClientes={() => setActiveModule('clientes')}
+          onViewAllCaja={() => setActiveModule('caja')}
         />
       ),
       facturacion: (
@@ -336,7 +343,7 @@ const SistemaFacturacion = () => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--bg-app)' }}>
+    <div className="min-h-screen flex bg-[#E0E1DD]">
       <Sidebar
         activeModule={activeModule}
         setActiveModule={setActiveModule}
@@ -344,26 +351,16 @@ const SistemaFacturacion = () => {
         onLogout={handleLogout}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
       {/* Contenido principal */}
-      <div className="flex-1 md:ml-52 overflow-auto min-w-0">
-        {/* Topbar mobile: solo visible en pantallas chicas */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 md:hidden"
-          style={{ backgroundColor: 'var(--bg-surface)' }}
-        >
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-            aria-label="Abrir menú"
-          >
-            <Menu size={20} />
-          </button>
-          <span className="text-sm font-bold text-gray-900 tracking-widest">GESTIFY</span>
-        </div>
-
-        <div className="p-4 md:p-8">
-          {renderActiveModule()}
+      <div className={`flex-1 transition-all duration-300 ease-in-out min-w-0 ${isSidebarCollapsed ? 'md:ml-[64px]' : 'md:ml-[220px]'}`}>
+        <div className="h-full">
+          <SubscriptionGate>
+            {renderActiveModule()}
+          </SubscriptionGate>
         </div>
       </div>
 
@@ -420,6 +417,7 @@ const SistemaFacturacion = () => {
           agregarAbonoAPedido, // ✅ NUEVO
           registrarCobro, // ✅ NUEVO - para Factura Directa
           crearFacturaDirecta, // ✅ NUEVO - para Factura Directa
+          guardarPresupuesto,  // ✅ NUEVO - para Presupuestos
         }}
       />
     </div>
@@ -429,15 +427,30 @@ const SistemaFacturacion = () => {
 // Componente App principal con rutas
 const App = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/*" element={
-        <PrivateRoute>
-          <SistemaFacturacion />
-        </PrivateRoute>
-      } />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/*" element={
+          <PrivateRoute>
+            <SistemaFacturacion />
+          </PrivateRoute>
+        } />
+      </Routes>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        style={{ zIndex: 99999 }}
+      />
+    </>
   );
 };
 

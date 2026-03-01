@@ -2,253 +2,145 @@
 
 import { useState, useEffect } from "react"
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Download,
-  Upload,
-  Tag,
-  Package,
-  X
+  Plus, Search, Edit, Trash2, Tag, Package, X, ChevronLeft, ChevronRight,
+  AlertTriangle, CheckCircle, BarChart2, Archive, Download, Upload
 } from "lucide-react"
 
-// Componente Modal de Categorías - Diseño limpio
-const ModalGestionarCategorias = ({ 
-  isOpen, 
-  onClose, 
-  categorias = [], 
-  onGuardarCategoria,
-  onEliminarCategoria 
-}) => {
-  const [nombreCategoria, setNombreCategoria] = useState("")
-  const [descripcionCategoria, setDescripcionCategoria] = useState("")
-  const [editandoId, setEditandoId] = useState(null)
-  const [filtroCategoria, setFiltroCategoria] = useState("")
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY
+   #F5F5F5  fondo app
+   #FAFAFA  surface
+   #282A28  header
+   #334139  acento verde
+   #DCED31  Primary Action Lima
+   #8B8982  ct3 suave
+══════════════════════════════════════════════ */
+
+const bg = '#F5F5F5'
+const surface = '#FAFAFA'
+const border = 'rgba(48,54,47,.13)'
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const accentL = 'rgba(51,65,57,.08)'
+
+const cardStyle = { background: surface, borderColor: border, boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }
+
+/* ─── input base ─── */
+const inputStyle = { width: '100%', height: 34, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif" }
+const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4, display: 'block' }
+
+/* ══════════════════════════════════════════════
+   MODAL CATEGORÍAS
+══════════════════════════════════════════════ */
+const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onEliminar }) => {
+  const [nombre, setNombre] = useState("")
+  const [desc, setDesc] = useState("")
+  const [editId, setEditId] = useState(null)
+  const [filtro, setFiltro] = useState("")
 
   if (!isOpen) return null
 
-  const categoriasFiltradas = categorias.filter(cat =>
-    cat.nombre.toLowerCase().includes(filtroCategoria.toLowerCase()) ||
-    cat.descripcion?.toLowerCase().includes(filtroCategoria.toLowerCase())
+  const filtradas = categorias.filter(c =>
+    c.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+    c.descripcion?.toLowerCase().includes(filtro.toLowerCase())
   )
 
-  const handleGuardar = () => {
-    if (!nombreCategoria.trim()) {
-      alert("El nombre de la categoría es obligatorio")
-      return
-    }
-
-    const categoriaData = {
-      id: editandoId || `cat_${Date.now()}`,
-      nombre: nombreCategoria.trim(),
-      descripcion: descripcionCategoria.trim(),
-      fechaCreacion: new Date().toISOString(),
-      productosAsociados: editandoId 
-        ? categorias.find(c => c.id === editandoId)?.productosAsociados || 0
-        : 0
-    }
-
-    onGuardarCategoria(categoriaData, editandoId)
-    setNombreCategoria("")
-    setDescripcionCategoria("")
-    setEditandoId(null)
+  const guardar = () => {
+    if (!nombre.trim()) return
+    onGuardar({ id: editId || `cat_${Date.now()}`, nombre: nombre.trim(), descripcion: desc.trim(), productosAsociados: editId ? categorias.find(c => c.id === editId)?.productosAsociados || 0 : 0 }, editId)
+    setNombre(""); setDesc(""); setEditId(null)
   }
 
-  const handleEditar = (categoria) => {
-    setNombreCategoria(categoria.nombre)
-    setDescripcionCategoria(categoria.descripcion || "")
-    setEditandoId(categoria.id)
-  }
-
-  const handleEliminar = (id) => {
-    const categoria = categorias.find(c => c.id === id)
-    
-    if (categoria?.productosAsociados > 0) {
-      alert(`No se puede eliminar esta categoría porque tiene ${categoria.productosAsociados} productos asociados.`)
-      return
-    }
-
-    if (confirm("¿Estás seguro de que deseas eliminar esta categoría?")) {
-      onEliminarCategoria(id)
-    }
-  }
-
-  const handleCancelar = () => {
-    setNombreCategoria("")
-    setDescripcionCategoria("")
-    setEditandoId(null)
-  }
+  const iniciarEdicion = (cat) => { setNombre(cat.nombre); setDesc(cat.descripcion || ""); setEditId(cat.id) }
+  const cancelar = () => { setNombre(""); setDesc(""); setEditId(null) }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md">
-        {/* Header simple */}
-        <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(3px)' }}>
+      <div style={{ background: '#fff', width: '90%', maxWidth: 420, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,.12)', overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+        {/* header */}
+        <div style={{ background: '#282A28', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h3 className="text-base font-bold text-gray-900">Gestionar Categorías</h3>
-            <p className="text-xs text-gray-500">
-              {editandoId ? "Editando categoría" : "Agregar nueva categoría"}
-            </p>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Inventario</p>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-.02em' }}>Gestionar Categorías</h3>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded"
-          >
-            <X size={18} />
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,.08)', border: 'none', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,.6)' }}>
+            <X size={14} />
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Formulario simple */}
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nombre de la categoría *
-              </label>
-              <input
-                type="text"
-                value={nombreCategoria}
-                onChange={(e) => setNombreCategoria(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ej: Electrónica, Ropa, Hogar"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descripción (opcional)
-              </label>
-              <textarea
-                value={descripcionCategoria}
-                onChange={(e) => setDescripcionCategoria(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                placeholder="Breve descripción de la categoría..."
-                rows="2"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleGuardar}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded hover:bg-blue-700"
-              >
-                {editandoId ? "Actualizar" : "Guardar Categoría"}
-              </button>
-              {editandoId && (
-                <button
-                  onClick={handleCancelar}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
+        <div style={{ padding: 20 }}>
+          {/* formulario */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Nombre de categoría <span style={{ color: '#DC2626' }}>*</span></label>
+            <input style={inputStyle} value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Electrónica, Ropa..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Descripción (opcional)</label>
+            <textarea style={{ ...inputStyle, height: 60, resize: 'none', paddingTop: 8 }} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Breve descripción..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+            <button onClick={guardar} style={{ flex: 1, height: 34, borderRadius: 8, fontSize: 12, fontWeight: 700, background: '#DCED31', color: '#282A28', border: 'none', cursor: 'pointer' }}>
+              {editId ? 'Actualizar' : 'Guardar Categoría'}
+            </button>
+            {editId && <button onClick={cancelar} style={{ padding: '0 14px', height: 34, borderRadius: 8, fontSize: 12, fontWeight: 600, background: surface, color: ct2, border: `1px solid ${border}`, cursor: 'pointer' }}>Cancelar</button>}
           </div>
 
-          {/* Lista de categorías */}
-          <div className="border-t border-gray-200 pt-4">
-            <div className="flex justify-between items-center mb-3">
-              <h4 className="text-sm font-medium text-gray-900">
-                Categorías Existentes ({categorias.length})
-              </h4>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={14} />
-                <input
-                  type="text"
-                  value={filtroCategoria}
-                  onChange={(e) => setFiltroCategoria(e.target.value)}
-                  placeholder="Buscar categorías..."
-                  className="pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded w-40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
+          {/* buscador */}
+          <div style={{ position: 'relative', marginBottom: 10 }}>
+            <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+            <input style={{ ...inputStyle, paddingLeft: 30, height: 30 }} value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar categorías..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
+          </div>
 
-            {categoriasFiltradas.length > 0 ? (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {categoriasFiltradas.map((categoria) => {
-                  const productosCount = categoria.productosAsociados || 0
-                  return (
-                    <div
-                      key={categoria.id}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-blue-100 p-2 rounded">
-                          <Tag size={14} className="text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{categoria.nombre}</div>
-                          {categoria.descripcion && (
-                            <div className="text-xs text-gray-500 mt-0.5">{categoria.descripcion}</div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          {productosCount} productos
-                        </span>
-                        <button
-                          onClick={() => handleEditar(categoria)}
-                          className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
-                          title="Editar"
-                        >
-                          <Edit size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleEliminar(categoria.id)}
-                          className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={productosCount > 0 ? "No se puede eliminar" : "Eliminar"}
-                          disabled={productosCount > 0}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6 border border-gray-200 rounded bg-gray-50">
-                <div className="bg-gray-100 p-2 rounded-full inline-flex mb-2">
-                  <Tag size={18} className="text-gray-400" />
+          {/* lista */}
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {filtradas.length > 0 ? filtradas.map(cat => (
+              <div key={cat.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: `1px solid ${border}`, marginBottom: 6, background: '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Tag size={12} style={{ color: accent }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: ct1 }}>{cat.nombre}</div>
+                    {cat.descripcion && <div style={{ fontSize: 10, color: ct3 }}>{cat.descripcion}</div>}
+                  </div>
                 </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">
-                  {categorias.length === 0 ? "No hay categorías" : "No se encontraron resultados"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {categorias.length === 0 
-                    ? "Crea tu primera categoría" 
-                    : "Intenta con otros términos de búsqueda"}
-                </p>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, color: ct3, padding: '2px 8px', background: surface, borderRadius: 6, border: `1px solid ${border}` }}>{cat.productosAsociados || 0} prods.</span>
+                  <button onClick={() => iniciarEdicion(cat)} style={{ width: 26, height: 26, borderRadius: 6, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                    <Edit size={11} />
+                  </button>
+                  <button onClick={() => { if ((cat.productosAsociados || 0) > 0) return; onEliminar(cat.id) }} disabled={(cat.productosAsociados || 0) > 0} style={{ width: 26, height: 26, borderRadius: 6, background: (cat.productosAsociados || 0) > 0 ? 'transparent' : surface, border: `1px solid ${(cat.productosAsociados || 0) > 0 ? 'transparent' : border}`, cursor: (cat.productosAsociados || 0) > 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', opacity: (cat.productosAsociados || 0) > 0 ? 0.3 : 1 }}>
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              </div>
+            )) : (
+              <div style={{ textAlign: 'center', padding: '20px 0', color: ct3, fontSize: 12 }}>
+                {categorias.length === 0 ? 'Aún no hay categorías cargadas.' : 'Sin resultados para la búsqueda.'}
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer simple */}
-        <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          >
-            Cerrar
-          </button>
+        <div style={{ padding: '12px 20px', borderTop: `1px solid ${border}`, display: 'flex', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: surface, border: `1px solid ${border}`, cursor: 'pointer' }}>Cerrar</button>
         </div>
       </div>
     </div>
   )
 }
 
-// Componente Principal Productos
+/* ══════════════════════════════════════════════
+   MÓDULO PRINCIPAL PRODUCTOS
+══════════════════════════════════════════════ */
 const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto }) => {
   const [filtroStock, setFiltroStock] = useState("todos")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
-  
-  // Estados para el modal de categorías
-  const [modalCategoriasOpen, setModalCategoriasOpen] = useState(false)
+  const [modalCats, setModalCats] = useState(false)
+  const [dialogo, setDialogo] = useState({ open: false, title: '', message: '', onConfirm: null })
   const [categorias, setCategorias] = useState([
     { id: "cat1", nombre: "Electrónica", descripcion: "Productos electrónicos", productosAsociados: 5 },
     { id: "cat2", nombre: "Ropa", descripcion: "Prendas de vestir", productosAsociados: 3 },
@@ -257,330 +149,289 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     { id: "cat5", nombre: "Deportes", descripcion: "Artículos deportivos", productosAsociados: 6 },
   ])
 
-  const productosSeguros = Array.isArray(productos) ? productos : []
-  
-  const filtrarProductos = productosSeguros.filter((producto) => {
-    const coincideBusqueda =
-      (producto.nombre || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
-      (producto.codigo || "").toLowerCase().includes((searchTerm || "").toLowerCase())
-
-    if (filtroStock === "en-stock") {
-      return coincideBusqueda && producto.controlaStock === true && (producto.stock || 0) > 0
+  /* ── atajo de teclado (solo Ctrl) ── */
+  useEffect(() => {
+    let ctrlPressed = false
+    let otherKeyPressed = false
+    const down = (e) => { if (e.key === 'Control') ctrlPressed = true; else if (ctrlPressed) otherKeyPressed = true }
+    const up = (e) => {
+      if (e.key === 'Control') {
+        if (!otherKeyPressed && openModal) {
+          const a = document.activeElement
+          if (!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'))) openModal('nuevo-producto')
+        }
+        ctrlPressed = false; otherKeyPressed = false
+      }
     }
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
+  }, [openModal])
 
-    return coincideBusqueda
+  const productosSeguros = Array.isArray(productos) ? productos : []
+
+  const filtrados = productosSeguros.filter(p => {
+    const q = (searchTerm || "").toLowerCase()
+    const match = (p.nombre || "").toLowerCase().includes(q) || (p.codigo || "").toLowerCase().includes(q)
+    if (filtroStock === "en-stock") return match && p.controlaStock && (p.stock || 0) > 0
+    if (filtroStock === "bajo-stock") return match && p.controlaStock && (p.stock || 0) <= 10
+    return match
   })
 
-  // Paginación
-  const totalPaginas = Math.ceil(filtrarProductos.length / itemsPorPagina)
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina)
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
-  const indiceFin = indiceInicio + itemsPorPagina
-  const productosPaginados = filtrarProductos.slice(indiceInicio, indiceFin)
+  const productosPag = filtrados.slice(indiceInicio, indiceInicio + itemsPorPagina)
 
-  // Reset página al cambiar filtros o items por página
-  useEffect(() => {
-    setPaginaActual(1)
-  }, [filtroStock, searchTerm, itemsPorPagina])
+  useEffect(() => { setPaginaActual(1) }, [filtroStock, searchTerm, itemsPorPagina])
 
-  const formatearMonto = (monto) => {
-    const numero = Number.parseFloat(monto) || 0
-    return numero.toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
+  const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const resumen = {
+    total: productosSeguros.length,
+    conStock: productosSeguros.filter(p => p.controlaStock && (p.stock || 0) > 0).length,
+    bajoStock: productosSeguros.filter(p => p.controlaStock && (p.stock || 0) <= 10).length,
+    sinControl: productosSeguros.filter(p => !p.controlaStock).length,
   }
 
-  const resumenProductos = {
-    totalProductos: productosSeguros.length,
-    conStock: productosSeguros.filter((p) => p.controlaStock && (p.stock || 0) > 0).length,
-    sinControl: productosSeguros.filter((p) => !p.controlaStock).length,
-    bajoStock: productosSeguros.filter((p) => p.controlaStock && (p.stock || 0) <= 10).length,
-  }
+  const customConfirm = (title, message, onConfirm) => setDialogo({ open: true, title, message, onConfirm })
+  const cerrarDialogo = () => setDialogo(p => ({ ...p, open: false }))
 
-  // Funciones para manejar categorías
-  const handleGuardarCategoria = (categoriaData, editandoId) => {
-    if (editandoId) {
-      setCategorias(prev => 
-        prev.map(cat => cat.id === editandoId ? categoriaData : cat)
-      )
-    } else {
-      setCategorias(prev => [...prev, categoriaData])
-    }
-  }
+  const handleEliminar = (id) => customConfirm('Eliminar Producto', '¿Estás seguro? Esta acción no se puede deshacer.', async () => { eliminarProducto && eliminarProducto(id); cerrarDialogo() })
 
-  const handleEliminarCategoria = (id) => {
-    setCategorias(prev => prev.filter(cat => cat.id !== id))
+  const pillSelect = {
+    height: 32, padding: '0 10px', fontSize: 11, fontWeight: 600, color: ct2, background: '#fff',
+    border: `1px solid ${border}`, borderRadius: 8, outline: 'none', cursor: 'pointer',
+    appearance: 'none', fontFamily: "'Inter', sans-serif"
   }
 
   return (
-    <div className="space-y-3">
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
+    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+
+      {/* ══ HEADER ══ */}
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Productos</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Gestión de inventario</p>
+          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Productos</h2>
         </div>
 
-        {/* BOTONES SUPERIORES */}
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setModalCategoriasOpen(true)}
-            className="bg-white text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs font-medium border border-gray-300 shadow-sm"
-          >
-            <Tag size={12} />
-            Gestionar Categorías
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => setModalCats(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.07)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <Tag size={12} strokeWidth={2} /> Categorías
           </button>
-          <button
-            onClick={() => openModal && openModal("nuevo-producto")}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-xs font-medium shadow-sm"
-          >
-            <Plus size={12} />
-            Nuevo Producto
+
+          <button onClick={() => openModal && openModal("nuevo-producto")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s', background: '#DCED31', color: '#282A28' }}>
+            <Plus size={12} strokeWidth={2.5} /> Nuevo Producto
+            <span style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
           </button>
         </div>
+      </header>
+
+      {/* ══ CARDS RESUMEN ══ */}
+      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))', gap: 12 }}>
+        {[
+          { label: 'Total Productos', val: resumen.total, icon: Package, clr: '#373F47', sub: 'En catálogo' },
+          { label: 'Con Stock', val: resumen.conStock, icon: CheckCircle, clr: '#065F46', sub: `${resumen.total > 0 ? Math.round(resumen.conStock / resumen.total * 100) : 0}% disponibles` },
+          { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: '≤10 unidades' },
+          { label: 'Sin Control', val: resumen.sinControl, icon: Archive, clr: '#6B7280', sub: 'Stock ilimitado' },
+        ].map((s, i) => (
+          <div key={i} style={{ ...cardStyle, background: '#E1E1E0', borderRadius: 12, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = cardStyle.boxShadow }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${s.clr}15, transparent 70%)` }} />
+            <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: s.clr, borderRadius: '0 2px 2px 0' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{s.label}</span>
+                <span style={{ fontSize: 22, fontWeight: 600, color: ct1, letterSpacing: '-.04em', lineHeight: 1 }}>{s.val}</span>
+              </div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${s.clr}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <s.icon size={15} strokeWidth={2.5} style={{ color: s.clr }} />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* CARDS DE RESUMEN */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Total Productos</h3>
-            <Package className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProductos.totalProductos}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Productos en inventario registrados.</p>
-          </div>
-        </div>
+      {/* ══ TABLA ══ */}
+      <div style={{ padding: '18px 24px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ ...cardStyle, borderRadius: 12, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Con Stock</h3>
-            <Tag className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProductos.conStock}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">
-              {resumenProductos.totalProductos > 0 ? Math.round((resumenProductos.conStock / resumenProductos.totalProductos) * 100) : 0}% disponibles
-            </p>
-          </div>
-        </div>
+          {/* toolbar */}
+          <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${border}`, background: surface, flexWrap: 'wrap' }}>
+            {/* search */}
+            <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 300 }}>
+              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input type="text" placeholder="Buscar por nombre o código..." value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)}
+                style={{ ...inputStyle, paddingLeft: 30, height: 32 }}
+                onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
+            </div>
 
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Bajo Stock</h3>
-            <Tag className="text-gray-400" size={13} />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProductos.bajoStock}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Productos que requieren atención</p>
-          </div>
-        </div>
+            {/* filtro stock */}
+            <select value={filtroStock} onChange={e => setFiltroStock(e.target.value)} style={pillSelect}>
+              <option value="todos">Todos los productos</option>
+              <option value="en-stock">Con stock disponible</option>
+              <option value="bajo-stock">Bajo stock (≤10)</option>
+            </select>
 
-        <div className="bg-white p-2.5 rounded-lg border border-gray-300 shadow-xs">
-          <div className="flex items-start justify-between mb-1.5">
-            <h3 className="text-xs font-semibold text-gray-700">Sin Control</h3>
-            <Tag className="text-gray-400" size={13} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10 }}>
+                <Download size={11} /> CSV
+              </button>
+              <button style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10 }}>
+                <Upload size={11} /> CSV
+              </button>
+            </div>
+
+            <span style={{ fontSize: 11, color: ct3, fontWeight: 500, marginLeft: 'auto' }}>{filtrados.length} productos</span>
           </div>
-          <div>
-            <p className="text-lg font-bold text-gray-900 mb-0.5">{resumenProductos.sinControl}</p>
-            <p className="text-[10px] text-gray-500 leading-tight">Productos sin gestión de stock</p>
-          </div>
-        </div>
-      </div>
 
-      {/* BÚSQUEDA Y FILTROS */}
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={12} />
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            className="w-full pl-8 pr-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm && setSearchTerm(e.target.value)}
-          />
-        </div>
-        <select
-          className="px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white text-xs font-medium text-gray-700"
-          value={filtroStock}
-          onChange={(e) => setFiltroStock(e.target.value)}
-        >
-          <option value="todos">Todos los productos</option>
-          <option value="en-stock">Con stock disponible</option>
-        </select>
-        <button className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs font-medium text-gray-700 shadow-xs">
-          <Download size={12} />
-          CSV
-        </button>
-        <button className="px-2 py-1.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs font-medium text-gray-700 shadow-xs">
-          <Upload size={12} />
-          CSV
-        </button>
-      </div>
+          {/* tabla scroll */}
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
+                <tr>
+                  {['CÓDIGO', 'NOMBRE Y CATEGORÍA', 'PRECIO', 'STOCK', 'CONTROL', 'ACCIONES'].map((col, i) => (
+                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i >= 2 ? 'right' : 'left', whiteSpace: 'nowrap' }}>{col}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {productosPag.length > 0 ? productosPag.map(prod => {
+                  const precioNeto = (parseFloat(prod.precio) || 0) * 0.79
+                  const stockLow = prod.controlaStock && (prod.stock || 0) <= 10 && (prod.stock || 0) >= 0
 
-      {/* CARD CON TABLA */}
-      <div className="bg-white rounded-lg border border-gray-300 shadow-xs overflow-hidden">
-        {/* HEADER INFO */}
-        <div className="px-3 py-2 border-b border-gray-200">
-          <h3 className="text-xs font-semibold text-gray-900">Productos</h3>
-          <p className="text-xs text-gray-500">Lista de productos registrados</p>
-        </div>
-
-        {/* TABLA */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Código</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Nombre</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Categoría</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Precio</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Stock</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Controla Stock</th>
-                <th className="px-2 py-1 text-left text-xs font-semibold text-gray-600 uppercase">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {productosPaginados.length > 0 ? (
-                productosPaginados.map((producto) => {
-                  const precioNeto = (Number.parseFloat(producto.precio) || 0) * 0.79
-                  
                   return (
-                    <tr key={producto.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-2 py-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <div className="bg-blue-50 p-1 rounded border border-blue-200">
-                            <Tag size={10} className="text-blue-600" />
+                    <tr key={prod.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: 'default' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+
+                      {/* código */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: 7, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Package size={13} strokeWidth={2.5} style={{ color: accent }} />
                           </div>
-                          <span className="text-xs font-medium text-gray-900 font-mono">
-                            {producto.codigo || "N/A"}
-                          </span>
+                          <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: ct2, fontWeight: 600 }}>{prod.codigo || '—'}</span>
                         </div>
                       </td>
-                      <td className="px-2 py-1.5 text-xs text-gray-900">{producto.nombre || "N/A"}</td>
-                      <td className="px-2 py-1.5">
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                          {producto.categoria || "General"}
+
+                      {/* nombre & categoria */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle', minWidth: 200 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: ct1, marginBottom: 3 }}>{prod.nombre || '—'}</div>
+                        <span style={{ padding: '2px 7px', borderRadius: 6, fontSize: 10, fontWeight: 600, background: 'rgba(55,63,71,.07)', color: '#373F47', border: '1px solid rgba(55,63,71,.1)' }}>
+                          {prod.categoria || 'General'}
                         </span>
                       </td>
-                      <td className="px-2 py-1.5">
-                        <div className="text-xs">
-                          <div className="font-semibold text-gray-900">${formatearMonto(producto.precio)}</div>
-                          <div className="text-gray-500 text-[10px]">Neto: ${formatearMonto(precioNeto)}</div>
-                        </div>
+
+                      {/* precio */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>${fMonto(prod.precio)}</div>
+                        <div style={{ fontSize: 10, color: ct3, marginTop: 2 }}>Neto: ${fMonto(precioNeto)}</div>
                       </td>
-                      <td className="px-2 py-1.5 text-xs text-gray-900">
-                        {producto.controlaStock 
-                          ? `${producto.stock || 0} ${producto.stock === 1 ? "u" : "u"}` 
-                          : "—"}
+
+                      {/* stock */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        {prod.controlaStock ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: stockLow ? '#FEF2F2' : '#F0FDF4', color: stockLow ? '#991B1B' : '#065F46', border: `1px solid ${stockLow ? '#FCA5A5' : '#6EE7B7'}` }}>
+                            {stockLow && <AlertTriangle size={11} strokeWidth={2.5} />}
+                            {prod.stock || 0} u.
+                          </div>
+                        ) : <span style={{ color: ct3, fontSize: 12 }}>—</span>}
                       </td>
-                      <td className="px-2 py-1.5">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                          producto.controlaStock 
-                            ? "bg-green-50 text-green-700 border border-green-200" 
-                            : "bg-gray-50 text-gray-700 border border-gray-200"
-                        }`}>
-                          {producto.controlaStock ? "Sí" : "No"}
+
+                      {/* control */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 600, background: prod.controlaStock ? '#F0FDF4' : surface, color: prod.controlaStock ? '#065F46' : ct3, border: `1px solid ${prod.controlaStock ? '#6EE7B7' : border}` }}>
+                          {prod.controlaStock ? 'Sí' : 'No'}
                         </span>
                       </td>
-                      <td className="px-2 py-1.5">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => {
-                              openModal("editar-producto", producto)
-                            }}
-                            className="p-0.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors border border-transparent hover:border-blue-200"
-                            title="Editar Producto"
-                          >
-                            <Edit size={10} />
+
+                      {/* acciones */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                          <button onClick={() => openModal && openModal("editar-producto", prod)} style={{ padding: '0 10px', height: 28, borderRadius: 8, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: ct2, fontSize: 11, fontWeight: 600, transition: 'all .13s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'} onMouseLeave={e => e.currentTarget.style.background = surface} title="Editar">
+                            <Edit size={12} strokeWidth={2.5} /> Editar
                           </button>
-                          <button
-                            onClick={() => {
-                              eliminarProducto(producto.id)
-                            }}
-                            className="p-0.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors border border-transparent hover:border-red-200"
-                            title="Eliminar Producto"
-                          >
-                            <Trash2 size={10} />
+                          <button onClick={() => handleEliminar(prod.id)} style={{ padding: '0 10px', height: 28, borderRadius: 8, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: '#DC2626', fontSize: 11, fontWeight: 600, transition: 'all .13s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FCA5A5' }} onMouseLeave={e => { e.currentTarget.style.background = surface; e.currentTarget.style.borderColor = border }} title="Eliminar">
+                            <Trash2 size={12} strokeWidth={2.5} /> Eliminar
                           </button>
                         </div>
                       </td>
                     </tr>
                   )
-                })
-              ) : (
-                <tr>
-                  <td colSpan="7" className="px-3 py-6 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="bg-gray-100 p-2 rounded-full mb-1.5 border border-gray-200">
-                        <Package size={16} className="text-gray-400" />
+                }) : (
+                  <tr>
+                    <td colSpan={6}>
+                      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                          <Package size={20} style={{ color: ct3 }} />
+                        </div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: ct1, marginBottom: 4 }}>Ningún producto encontrado</p>
+                        <p style={{ fontSize: 12, color: ct3 }}>{searchTerm ? 'Revisá los parámetros de búsqueda.' : 'Aún no cargaste ningún producto.'}</p>
                       </div>
-                      <p className="text-xs font-semibold text-gray-900 mb-0.5">No se encontraron productos</p>
-                      <p className="text-xs text-gray-500">
-                        {searchTerm
-                          ? "Intenta con otros términos"
-                          : "Crea tu primer producto"}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        {/* FOOTER CON PAGINACIÓN */}
-        <div className="px-3 py-2 border-t border-gray-200 bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">
-                Mostrando {Math.min(filtrarProductos.length, indiceFin) - indiceInicio} de {filtrarProductos.length} productos
-              </span>
-              <select
-                value={itemsPorPagina}
-                onChange={(e) => setItemsPorPagina(Number(e.target.value))}
-                className="px-1.5 py-0.5 text-xs border border-gray-300 rounded bg-white"
-              >
-                <option value="5">5 por página</option>
-                <option value="10">10 por página</option>
-                <option value="25">25 por página</option>
-                <option value="50">50 por página</option>
-                <option value="100">100 por página</option>
+          {/* footer paginación */}
+          <div style={{ padding: '12px 16px', background: surface, borderTop: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ height: 28, padding: '0 22px 0 8px', fontSize: 11, fontWeight: 600, color: ct2, background: '#fff', border: `1px solid ${border}`, borderRadius: 6, outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 5px center' }}>
+                <option value="10">10 / pág</option>
+                <option value="25">25 / pág</option>
+                <option value="50">50 / pág</option>
               </select>
-            </div>
-            
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
-                disabled={paginaActual === 1}
-                className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ←
-              </button>
-              <span className="px-2 py-0.5 text-xs font-medium text-gray-700">
-                {paginaActual} / {totalPaginas || 1}
+              <span style={{ fontSize: 11, color: ct3, fontWeight: 500 }}>
+                {productosPag.length > 0 ? `${indiceInicio + 1} - ${indiceInicio + productosPag.length}` : '0'} de {filtrados.length}
               </span>
-              <button 
-                onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
-                disabled={paginaActual === totalPaginas || totalPaginas === 0}
-                className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                →
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1} style={{ width: 28, height: 28, borderRadius: 6, background: paginaActual === 1 ? 'transparent' : '#fff', border: `1px solid ${paginaActual === 1 ? 'transparent' : border}`, cursor: paginaActual === 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: paginaActual === 1 ? 'rgba(0,0,0,.2)' : ct2 }}>
+                <ChevronLeft size={14} />
+              </button>
+              <span style={{ fontSize: 11, fontWeight: 600, color: ct2, minWidth: 38, textAlign: 'center' }}>{paginaActual} / {totalPaginas || 1}</span>
+              <button onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual >= totalPaginas} style={{ width: 28, height: 28, borderRadius: 6, background: paginaActual >= totalPaginas ? 'transparent' : '#fff', border: `1px solid ${paginaActual >= totalPaginas ? 'transparent' : border}`, cursor: paginaActual >= totalPaginas ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: paginaActual >= totalPaginas ? 'rgba(0,0,0,.2)' : ct2 }}>
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* MODAL DE CATEGORÍAS - Diseño simple */}
-      <ModalGestionarCategorias
-        isOpen={modalCategoriasOpen}
-        onClose={() => setModalCategoriasOpen(false)}
+      {/* MODAL CATEGORÍAS */}
+      <ModalCategorias
+        isOpen={modalCats} onClose={() => setModalCats(false)}
         categorias={categorias}
-        onGuardarCategoria={handleGuardarCategoria}
-        onEliminarCategoria={handleEliminarCategoria}
+        onGuardar={(data, id) => id ? setCategorias(p => p.map(c => c.id === id ? data : c)) : setCategorias(p => [...p, data])}
+        onEliminar={id => setCategorias(p => p.filter(c => c.id !== id))}
       />
+
+      {/* DIALOGO CONFIRMACIÓN */}
+      {dialogo.open && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(2px)' }}>
+          <div style={{ background: '#fff', width: '90%', maxWidth: 340, borderRadius: 16, padding: 24, boxShadow: '0 10px 40px rgba(0,0,0,.12)', fontFamily: "'Inter', sans-serif" }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: ct1, marginBottom: 8 }}>{dialogo.title}</h3>
+            <p style={{ fontSize: 13, color: ct3, lineHeight: 1.5, marginBottom: 20 }}>{dialogo.message}</p>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={cerrarDialogo} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: surface, border: `1px solid ${border}`, cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={() => { dialogo.onConfirm && dialogo.onConfirm() }} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#fff', background: '#DC2626', border: 'none', cursor: 'pointer' }}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:4px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.22)}
+        @keyframes kpiIn { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+      `}</style>
     </div>
   )
 }

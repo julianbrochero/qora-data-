@@ -6,16 +6,19 @@ import './index.css'
 import { HeroUIProvider } from "@heroui/react";
 import { AuthProvider } from './lib/AuthContext';
 import { ThemeProvider } from './lib/ThemeContext';
+import { SubscriptionProvider } from './lib/SubscriptionContext';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <ThemeProvider>
-          <HeroUIProvider>
-            <App />
-          </HeroUIProvider>
-        </ThemeProvider>
+        <SubscriptionProvider>
+          <ThemeProvider>
+            <HeroUIProvider>
+              <App />
+            </HeroUIProvider>
+          </ThemeProvider>
+        </SubscriptionProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

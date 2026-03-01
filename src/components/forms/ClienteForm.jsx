@@ -1,279 +1,212 @@
-'use client';
+'use client'
 
-import React, { useEffect, useRef } from 'react';
-import { User, Phone, Mail, FileText, MapPin, Building2, CreditCard } from 'lucide-react';
+import React, { useEffect, useRef } from 'react'
+import { User, Phone, Mail, FileText, MapPin, Building2, CreditCard, CheckCircle } from 'lucide-react'
+
+/* ══════════════════════════════════════════════
+   PALETA GESTIFY — consistente con Pedidos / Productos
+══════════════════════════════════════════════ */
+const ct1 = '#1e2320'
+const ct2 = '#30362F'
+const ct3 = '#8B8982'
+const accent = '#334139'
+const border = 'rgba(48,54,47,.13)'
+
+const inputBase = {
+  width: '100%', height: 36, padding: '0 12px',
+  fontSize: 12, color: ct1, background: '#fff',
+  border: `1px solid ${border}`, borderRadius: 8,
+  outline: 'none', fontFamily: "'Inter', sans-serif",
+  transition: 'border-color .15s',
+}
+
+const labelBase = {
+  fontSize: 11, fontWeight: 600, color: ct2,
+  marginBottom: 5, display: 'block', letterSpacing: '.01em',
+}
 
 const ClienteForm = ({ type, formData, formActions, closeModal }) => {
-  const {
-    nuevoCliente, setNuevoCliente,
-    clienteRapido, setClienteRapido
-  } = formData;
+  const { nuevoCliente, setNuevoCliente, clienteRapido, setClienteRapido } = formData
+  const { agregarCliente, editarCliente, agregarClienteRapido } = formActions
 
-  const {
-    agregarCliente,
-    editarCliente,
-    agregarClienteRapido
-  } = formActions;
+  const nombreRef = useRef(null)
+  const telefonoRef = useRef(null)
+  const emailRef = useRef(null)
+  const cuitRef = useRef(null)
+  const direccionRef = useRef(null)
+  const condicionIVARef = useRef(null)
 
-  // Refs para los campos
-  const nombreRef = useRef(null);
-  const telefonoRef = useRef(null);
-  const emailRef = useRef(null);
-  const cuitRef = useRef(null);
-  const direccionRef = useRef(null);
-  const condicionIVARef = useRef(null);
+  const isRapido = type === 'cliente-rapido'
+  const isEdit = type === 'editar-cliente'
+  const data = isRapido ? clienteRapido : nuevoCliente
+  const setData = isRapido ? setClienteRapido : setNuevoCliente
 
-  // Determinar si es formulario rápido o normal
-  const isRapido = type === 'cliente-rapido';
-  const isEdit = type === 'editar-cliente';
-  const clienteData = isRapido ? clienteRapido : nuevoCliente;
-  const setClienteData = isRapido ? setClienteRapido : setNuevoCliente;
+  const handleChange = (field, value) => setData(prev => ({ ...prev, [field]: value }))
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
+    if (e) e.preventDefault()
+    if (!data.nombre?.trim()) { alert('Por favor, ingrese el nombre del cliente'); nombreRef.current?.focus(); return }
+    const tel = data.telefono?.trim() || ''
+    if (!tel || tel.length < 8) { alert('Por favor, ingrese un número de teléfono válido (mínimo 8 dígitos)'); telefonoRef.current?.focus(); return }
 
-    // Validar nombre
-    if (!clienteData.nombre || !clienteData.nombre.trim()) {
-      alert('Por favor, ingrese el nombre del cliente');
-      nombreRef.current?.focus();
-      return;
+    let result
+    if (isRapido) result = await agregarClienteRapido()
+    else if (type === 'nuevo-cliente') result = await agregarCliente()
+    else if (isEdit) result = await editarCliente(data.id, data)
+
+    if (result?.success) {
+      const cb = formData.selectedItem?.onSuccess || formData.onSuccess
+      if (cb) cb(result.cliente || result.data || result)
+      else closeModal()
     }
+  }
 
-    // Validar teléfono
-    const telefono = clienteData.telefono?.trim() || '';
-    if (!telefono || telefono.length < 8) {
-      alert('Por favor, ingrese un número de teléfono válido (mínimo 8 dígitos)');
-      telefonoRef.current?.focus();
-      return;
-    }
+  const handleKeyDown = (e, nextRef) => {
+    if (e.key === 'Enter') { e.preventDefault(); nextRef?.current ? nextRef.current.focus() : handleSubmit() }
+  }
 
-    let result;
-    if (isRapido) {
-      result = await agregarClienteRapido();
-    } else if (type === 'nuevo-cliente') {
-      result = await agregarCliente();
-    } else if (type === 'editar-cliente') {
-      result = await editarCliente(clienteData.id, clienteData);
-    }
-
-    if (result && result.success) {
-      const onSuccess = formData.selectedItem?.onSuccess || formData.onSuccess;
-      if (onSuccess) {
-        onSuccess(result.cliente || result.data || result);
-      } else {
-        closeModal();
-      }
-    }
-  };
-
-  const handleChange = (field, value) => {
-    setClienteData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  // Función para manejar navegación con Enter
-  const handleKeyDown = (e, nextFieldRef) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (nextFieldRef && nextFieldRef.current) {
-        nextFieldRef.current.focus();
-      } else {
-        handleSubmit();
-      }
-    }
-  };
-
-  // Focus automático al abrir el modal
   useEffect(() => {
-    if (!isEdit) {
-      const timer = setTimeout(() => {
-        nombreRef.current?.focus();
-      }, 100);
+    if (!isEdit) { const t = setTimeout(() => nombreRef.current?.focus(), 100); return () => clearTimeout(t) }
+  }, [isEdit])
 
-      return () => clearTimeout(timer);
-    }
-  }, [isEdit]);
+  const focusStyle = (e) => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
+  const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-2.5">
-        {/* INFORMACIÓN BÁSICA */}
-        <div className="space-y-2">
-          {/* Nombre del cliente - Campo principal */}
-          <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-              Nombre completo <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <User className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-              <input
-                ref={nombreRef}
-                type="text"
-                required
-                className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                placeholder="Ej: Juan Pérez"
-                value={clienteData.nombre || ""}
-                onChange={(e) => handleChange("nombre", e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, telefonoRef)}
-              />
-            </div>
+    <div style={{ width: '100%', maxWidth: 420, fontFamily: "'Inter', sans-serif" }}>
+      {/* chip tipo */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
+        <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', background: 'rgba(51,65,57,.1)', color: accent, border: '1px solid rgba(51,65,57,.2)' }}>
+          {isRapido ? 'Cliente rápido' : isEdit ? 'Editar cliente' : 'Nuevo cliente'}
+        </span>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Nombre */}
+        <div>
+          <label style={labelBase}>Nombre completo <span style={{ color: '#DC2626' }}>*</span></label>
+          <div style={{ position: 'relative' }}>
+            <User size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+            <input ref={nombreRef} type="text" required value={data.nombre || ''} placeholder="Ej: Juan Pérez"
+              onChange={e => handleChange('nombre', e.target.value)} onKeyDown={e => handleKeyDown(e, telefonoRef)}
+              onFocus={focusStyle} onBlur={blurStyle}
+              style={{ ...inputBase, paddingLeft: 30 }} />
           </div>
-
-          {/* Teléfono */}
-          <div>
-            <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-              Teléfono <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Phone className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-              <input
-                ref={telefonoRef}
-                type="tel"
-                required
-                className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                placeholder="351-1234567"
-                value={clienteData.telefono || ""}
-                onChange={(e) => handleChange("telefono", e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, null)}
-                minLength="8"
-                maxLength="15"
-              />
-            </div>
-          </div>
-
-          {/* Campos opcionales - Solo para cliente normal */}
-          {!isRapido && (
-            <>
-              {/* Email y CUIT */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                    <input
-                      ref={emailRef}
-                      type="email"
-                      className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                      placeholder="cliente@email.com"
-                      value={clienteData.email || ""}
-                      onChange={(e) => handleChange("email", e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, cuitRef)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                    CUIT/CUIL
-                  </label>
-                  <div className="relative">
-                    <FileText className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                    <input
-                      ref={cuitRef}
-                      type="text"
-                      className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                      placeholder="20-12345678-9"
-                      value={clienteData.cuit || ""}
-                      onChange={(e) => handleChange("cuit", e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, direccionRef)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Dirección */}
-              <div>
-                <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                  Dirección
-                </label>
-                <div className="relative">
-                  <MapPin className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                  <input
-                    ref={direccionRef}
-                    type="text"
-                    className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
-                    placeholder="Av. Colón 123, Córdoba"
-                    value={clienteData.direccion || ""}
-                    onChange={(e) => handleChange("direccion", e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, condicionIVARef)}
-                  />
-                </div>
-              </div>
-
-              {/* Condición IVA */}
-              <div>
-                <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
-                  Condición IVA
-                </label>
-                <div className="relative">
-                  <Building2 className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
-                  <select
-                    ref={condicionIVARef}
-                    className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white appearance-none"
-                    value={clienteData.condicionIVA || "Consumidor Final"}
-                    onChange={(e) => handleChange("condicionIVA", e.target.value)}
-                  >
-                    <option>Consumidor Final</option>
-                    <option>Responsable Inscripto</option>
-                    <option>Monotributo</option>
-                    <option>Exento</option>
-                  </select>
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
-        {/* Resumen visual */}
-        <div className="border rounded-md p-2 bg-green-50 border-green-200">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-green-600" />
-            <div className="flex-1">
-              <div className="text-[11px] font-semibold text-gray-900">
-                {clienteData.nombre || 'Nuevo cliente'}
+        {/* Teléfono */}
+        <div>
+          <label style={labelBase}>Teléfono <span style={{ color: '#DC2626' }}>*</span></label>
+          <div style={{ position: 'relative' }}>
+            <Phone size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+            <input ref={telefonoRef} type="tel" required value={data.telefono || ''} placeholder="351-1234567"
+              onChange={e => handleChange('telefono', e.target.value)} onKeyDown={e => handleKeyDown(e, isRapido ? null : emailRef)}
+              onFocus={focusStyle} onBlur={blurStyle} minLength="8" maxLength="15"
+              style={{ ...inputBase, paddingLeft: 30 }} />
+          </div>
+        </div>
+
+        {/* Campos extra — no rápido */}
+        {!isRapido && (<>
+
+          {/* Email + CUIT */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={labelBase}>Email <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+                <input ref={emailRef} type="email" value={data.email || ''} placeholder="cliente@email.com"
+                  onChange={e => handleChange('email', e.target.value)} onKeyDown={e => handleKeyDown(e, cuitRef)}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                  style={{ ...inputBase, paddingLeft: 30 }} />
               </div>
-              <div className="text-[10px] text-gray-600">
-                {clienteData.telefono || 'Sin teléfono'}
-                {!isRapido && clienteData.email && ` • ${clienteData.email}`}
+            </div>
+            <div>
+              <label style={labelBase}>CUIT/CUIL <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
+              <div style={{ position: 'relative' }}>
+                <FileText size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+                <input ref={cuitRef} type="text" value={data.cuit || ''} placeholder="20-12345678-9"
+                  onChange={e => handleChange('cuit', e.target.value)} onKeyDown={e => handleKeyDown(e, direccionRef)}
+                  onFocus={focusStyle} onBlur={blurStyle}
+                  style={{ ...inputBase, paddingLeft: 30 }} />
               </div>
             </div>
           </div>
-          {!isRapido && clienteData.condicionIVA && (
-            <div className="mt-1.5 pt-1.5 border-t border-green-200">
-              <div className="flex items-center gap-1.5">
-                <CreditCard className="w-3 h-3 text-gray-500" />
-                <span className="text-[10px] text-gray-600">
-                  {clienteData.condicionIVA}
-                </span>
+
+          {/* Dirección */}
+          <div>
+            <label style={labelBase}>Dirección <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
+            <div style={{ position: 'relative' }}>
+              <MapPin size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input ref={direccionRef} type="text" value={data.direccion || ''} placeholder="Av. Colón 123, Córdoba"
+                onChange={e => handleChange('direccion', e.target.value)} onKeyDown={e => handleKeyDown(e, condicionIVARef)}
+                onFocus={focusStyle} onBlur={blurStyle}
+                style={{ ...inputBase, paddingLeft: 30 }} />
+            </div>
+          </div>
+
+          {/* Condición IVA */}
+          <div>
+            <label style={labelBase}>Condición IVA</label>
+            <div style={{ position: 'relative' }}>
+              <Building2 size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3, zIndex: 1 }} />
+              <select ref={condicionIVARef} value={data.condicionIVA || 'Consumidor Final'}
+                onChange={e => handleChange('condicionIVA', e.target.value)}
+                onFocus={focusStyle} onBlur={blurStyle}
+                style={{ ...inputBase, paddingLeft: 30, cursor: 'pointer', appearance: 'none' }}>
+                <option>Consumidor Final</option>
+                <option>Responsable Inscripto</option>
+                <option>Monotributo</option>
+                <option>Exento</option>
+              </select>
+            </div>
+          </div>
+        </>)}
+
+        {/* Resumen visual */}
+        <div style={{ borderRadius: 10, padding: '10px 14px', background: 'rgba(51,65,57,.05)', border: '1px solid rgba(51,65,57,.12)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(51,65,57,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <User size={15} strokeWidth={2.5} style={{ color: accent }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: ct1 }}>{data.nombre || 'Nuevo cliente'}</div>
+              <div style={{ fontSize: 10, color: ct3, marginTop: 1 }}>
+                {data.telefono || 'Sin teléfono'}
+                {!isRapido && data.email && ` · ${data.email}`}
               </div>
             </div>
-          )}
+            {!isRapido && data.condicionIVA && (
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 6, background: 'rgba(51,65,57,.07)', border: '1px solid rgba(51,65,57,.12)' }}>
+                <CreditCard size={10} strokeWidth={2.5} style={{ color: ct3 }} />
+                <span style={{ fontSize: 10, fontWeight: 600, color: ct2 }}>{data.condicionIVA}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Botones */}
-        <div className="flex gap-2 pt-1">
-          <button
-            type="button"
-            onClick={closeModal}
-            className="flex-1 bg-transparent text-gray-700 px-2.5 py-1.5 text-[11px] rounded-md hover:bg-gray-50 transition-colors border border-gray-200 font-medium"
-          >
+        <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+          <button type="button" onClick={closeModal}
+            style={{ flex: 1, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.04)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             Cancelar
           </button>
-          <button
-            type="submit"
-            className="flex-1 px-2.5 py-1.5 text-[11px] rounded-md transition-colors font-medium text-white bg-green-600 hover:bg-green-700 flex items-center justify-center gap-1.5"
-          >
-            {isRapido ? "Agregar rápido" : isEdit ? "Guardar cambios" : "Crear cliente"}
-            <kbd className="text-[8px] bg-green-700 px-1 py-0.5 rounded">↵</kbd>
+          <button type="submit"
+            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: '1px solid #DCED31', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '.9'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+            {isRapido ? '⚡ Agregar rápido' : isEdit
+              ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</>
+              : <><User size={13} strokeWidth={2.5} /> Crear cliente</>}
+            {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
           </button>
         </div>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default ClienteForm;
+export default ClienteForm
