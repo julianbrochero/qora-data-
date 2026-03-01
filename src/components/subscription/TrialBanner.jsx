@@ -1,7 +1,7 @@
 /**
  * Gestify — TrialBanner
- * Banner que muestra los días restantes del trial.
- * Aparece en la parte superior del sistema durante el período de prueba.
+ * Banner durante el período de prueba.
+ * NO se muestra si la suscripción ya está activa.
  */
 
 import React, { useState } from 'react'
@@ -10,10 +10,11 @@ import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 
 const TrialBanner = ({ daysRemaining }) => {
     const [dismissed, setDismissed] = useState(false)
-    const { createSubscription } = useSubscriptionContext()
+    const { createSubscription, status } = useSubscriptionContext()
     const [loading, setLoading] = useState(false)
 
-    if (dismissed) return null
+    // No mostrar si ya pagó o si fue cerrado
+    if (dismissed || status === 'active') return null
 
     const isUrgent = daysRemaining <= 2
     const bgColor = isUrgent ? '#FEF3C7' : 'rgba(51,65,57,.06)'
@@ -22,6 +23,7 @@ const TrialBanner = ({ daysRemaining }) => {
     const accentColor = isUrgent ? '#92400E' : '#334139'
 
     const handleSubscribe = async () => {
+        if (loading) return
         setLoading(true)
         try {
             await createSubscription()
@@ -58,7 +60,7 @@ const TrialBanner = ({ daysRemaining }) => {
                 style={{
                     display: 'flex', alignItems: 'center', gap: 5,
                     padding: '4px 12px', borderRadius: 6,
-                    border: 'none', cursor: 'pointer',
+                    border: 'none', cursor: loading ? 'wait' : 'pointer',
                     fontSize: 11, fontWeight: 700,
                     background: '#DCED31', color: '#282A28',
                     transition: 'opacity .13s',
@@ -66,7 +68,7 @@ const TrialBanner = ({ daysRemaining }) => {
                 }}
             >
                 <Zap size={11} strokeWidth={2.5} />
-                {loading ? 'Cargando...' : 'Suscribirme ahora'}
+                {loading ? 'Cargando...' : 'Suscribirme'}
             </button>
             <button
                 onClick={() => setDismissed(true)}
