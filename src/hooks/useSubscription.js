@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+console.log('🔗 API URL:', API_URL)
 
 export const useSubscription = () => {
     const [subscription, setSubscription] = useState(null)
@@ -24,6 +25,8 @@ export const useSubscription = () => {
         const token = await getToken()
         if (!token) throw new Error('No autenticado')
 
+        console.log(`📡 Fetch: ${options.method || 'GET'} ${API_URL}${endpoint}`)
+
         const res = await fetch(`${API_URL}${endpoint}`, {
             ...options,
             headers: {
@@ -34,9 +37,11 @@ export const useSubscription = () => {
         })
 
         const data = await res.json()
+        console.log(`📨 Response ${res.status}:`, data)
 
         if (!res.ok) {
-            throw new Error(data.detail?.message || data.detail || 'Error del servidor')
+            const errMsg = typeof data.detail === 'string' ? data.detail : data.detail?.message || JSON.stringify(data.detail) || 'Error del servidor'
+            throw new Error(errMsg)
         }
 
         return data
@@ -175,13 +180,24 @@ export const useSubscription = () => {
     const createSubscription = async () => {
         try {
             setLoading(true)
+            console.log('🚀 Creando suscripción...')
             const data = await authFetch('/api/subscriptions/create', {
                 method: 'POST',
             })
 
+            console.log('✅ Respuesta createSubscription:', data)
+
             // Si recibimos init_point, redirigir a checkout de MP
             if (data.init_point) {
+                console.log('🔀 Redirigiendo a MP checkout:', data.init_point)
                 window.location.href = data.init_point
+                return data
+            }
+
+            // Si no hay init_point pero fue exitoso (trial sin MP)
+            if (data.success) {
+                console.log('✅ Trial creado sin checkout MP')
+                await checkStatus()
                 return data
             }
 
@@ -189,6 +205,7 @@ export const useSubscription = () => {
             await checkStatus()
             return data
         } catch (err) {
+            console.error('❌ Error createSubscription:', err)
             setError(err.message)
             throw err
         } finally {
