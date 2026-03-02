@@ -1,20 +1,21 @@
 /**
  * Gestify — PaymentModal
- * Modal premium que muestra los datos de pago (alias/CBU) y luego permite
- * enviar el comprobante por WhatsApp.
+ * Modal premium de 3 pasos:
+ *   1. Datos de transferencia (alias/CBU)
+ *   2. Enviar comprobante por WhatsApp (opcional pero recomendado)
+ *   3. Confirmación de pago realizado
  */
 
 import React, { useState } from 'react'
-import { X, Copy, CheckCircle, MessageCircle, CreditCard, ChevronRight } from 'lucide-react'
+import { X, Copy, CheckCircle, MessageCircle, CreditCard, ChevronRight, Clock, PartyPopper } from 'lucide-react'
 
 // ─── CONFIGURA ESTOS DATOS ────────────────────────────────────────────────────
 const PAYMENT_INFO = {
-    alias: 'gestify.pagos',          // ← Cambiá por tu alias real
-    cbu: '0000003100037000000001', // ← Cambiá por tu CBU/CVU real
-    titular: 'Julian Brochero',      // ← Tu nombre
-    banco: 'Mercado Pago / Banco',   // ← Tu banco / billetera
+    alias: 'gestify.pagos',
+    cbu: '0000003100037000000001',
+    titular: 'Julian Brochero',
+    banco: 'Mercado Pago / Banco',
     monto: '$14.999',
-    moneda: 'ARS',
 }
 const WHATSAPP_NUMBER = '5493534087718'
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,13 +23,12 @@ const WHATSAPP_NUMBER = '5493534087718'
 const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
     const [copiedAlias, setCopiedAlias] = useState(false)
     const [copiedCbu, setCopiedCbu] = useState(false)
-    const [step, setStep] = useState(1) // 1: datos de pago, 2: enviar comprobante
+    const [step, setStep] = useState(1)
 
     if (!isOpen) return null
 
     const copy = (text, which) => {
         navigator.clipboard.writeText(text).catch(() => {
-            // fallback
             const el = document.createElement('textarea')
             el.value = text
             document.body.appendChild(el)
@@ -43,19 +43,29 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
     const handleWhatsApp = () => {
         const text = `Hola Gestify! 👋\n\nVengo a enviar el comprobante de mi pago mensual.\n📧 Email: ${userEmail}\n💰 Monto: ${PAYMENT_INFO.monto}\n\n[Adjuntá la foto del comprobante acá]`
         window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank')
+    }
+
+    const handleClose = () => {
+        setStep(1)
         onClose()
     }
+
+    const steps = [
+        { n: 1, label: 'Transferir' },
+        { n: 2, label: 'Comprobante' },
+        { n: 3, label: 'Confirmar' },
+    ]
 
     return (
         <>
             {/* Overlay */}
             <div
-                onClick={onClose}
+                onClick={handleClose}
                 style={{
                     position: 'fixed', inset: 0, zIndex: 9998,
                     background: 'rgba(0,0,0,.45)',
                     backdropFilter: 'blur(3px)',
-                    animation: 'fadeIn .15s ease',
+                    animation: 'pmFadeIn .15s ease',
                 }}
             />
 
@@ -66,19 +76,19 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                 padding: 20, pointerEvents: 'none',
             }}>
                 <div style={{
-                    width: '100%', maxWidth: 400,
+                    width: '100%', maxWidth: 420,
                     background: '#fff',
                     borderRadius: 20,
                     boxShadow: '0 24px 80px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.08)',
                     overflow: 'hidden',
                     pointerEvents: 'auto',
-                    animation: 'slideUp .2s ease',
+                    animation: 'pmSlideUp .2s ease',
                     fontFamily: "'Inter', -apple-system, sans-serif",
                 }}>
 
                     {/* Header */}
                     <div style={{
-                        background: '#282A28', padding: '18px 22px',
+                        background: '#282A28', padding: '16px 22px',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -93,41 +103,37 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                                 <p style={{ fontSize: 10, color: 'rgba(255,255,255,.5)', margin: 0 }}>{PAYMENT_INFO.monto}/mes</p>
                             </div>
                         </div>
-                        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.5)', padding: 4, display: 'flex' }}>
+                        <button onClick={handleClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.5)', padding: 4, display: 'flex' }}>
                             <X size={16} />
                         </button>
                     </div>
 
                     {/* Steps indicator */}
                     <div style={{ display: 'flex', borderBottom: '1px solid #F0F0EE' }}>
-                        {[
-                            { n: 1, label: 'Transferir' },
-                            { n: 2, label: 'Enviar comprobante' },
-                        ].map(s => (
+                        {steps.map(s => (
                             <div key={s.n} style={{
                                 flex: 1, padding: '10px 0', textAlign: 'center',
                                 borderBottom: step === s.n ? '2px solid #334139' : '2px solid transparent',
-                                cursor: 'pointer',
-                            }} onClick={() => setStep(s.n)}>
+                            }}>
                                 <span style={{
-                                    fontSize: 11, fontWeight: 700,
-                                    color: step === s.n ? '#334139' : '#9CA3AF',
+                                    fontSize: 10, fontWeight: 700,
+                                    color: step === s.n ? '#334139' : step > s.n ? '#22c55e' : '#D1D5DB',
                                     letterSpacing: '.01em'
                                 }}>
-                                    {s.n}. {s.label}
+                                    {step > s.n ? '✓ ' : `${s.n}. `}{s.label}
                                 </span>
                             </div>
                         ))}
                     </div>
 
-                    {/* Step 1: Datos de pago */}
+                    {/* ═══ PASO 1: Datos de pago ═══ */}
                     {step === 1 && (
                         <div style={{ padding: '20px 22px' }}>
                             <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 16, lineHeight: 1.5 }}>
                                 Realizá una transferencia bancaria con los siguientes datos:
                             </p>
 
-                            {/* Monto destacado */}
+                            {/* Monto */}
                             <div style={{
                                 background: 'rgba(51,65,57,.05)', borderRadius: 12,
                                 padding: '12px 16px', marginBottom: 14,
@@ -140,24 +146,9 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                                 </span>
                             </div>
 
-                            {/* Alias */}
-                            <DataRow
-                                label="ALIAS"
-                                value={PAYMENT_INFO.alias}
-                                copied={copiedAlias}
-                                onCopy={() => copy(PAYMENT_INFO.alias, 'alias')}
-                            />
+                            <DataRow label="ALIAS" value={PAYMENT_INFO.alias} copied={copiedAlias} onCopy={() => copy(PAYMENT_INFO.alias, 'alias')} />
+                            <DataRow label="CBU / CVU" value={PAYMENT_INFO.cbu} copied={copiedCbu} onCopy={() => copy(PAYMENT_INFO.cbu, 'cbu')} mono />
 
-                            {/* CBU */}
-                            <DataRow
-                                label="CBU / CVU"
-                                value={PAYMENT_INFO.cbu}
-                                copied={copiedCbu}
-                                onCopy={() => copy(PAYMENT_INFO.cbu, 'cbu')}
-                                mono
-                            />
-
-                            {/* Titular */}
                             <div style={{ marginBottom: 20 }}>
                                 <p style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>TITULAR</p>
                                 <p style={{ fontSize: 13, fontWeight: 600, color: '#1e2320', margin: 0 }}>{PAYMENT_INFO.titular}</p>
@@ -176,29 +167,28 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                                 onMouseEnter={e => e.currentTarget.style.background = '#283330'}
                                 onMouseLeave={e => e.currentTarget.style.background = '#334139'}
                             >
-                                Ya transferí, enviar comprobante <ChevronRight size={15} />
+                                Ya transferí <ChevronRight size={15} />
                             </button>
                         </div>
                     )}
 
-                    {/* Step 2: WhatsApp */}
+                    {/* ═══ PASO 2: Comprobante (opcional) ═══ */}
                     {step === 2 && (
                         <div style={{ padding: '20px 22px' }}>
-                            <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 20, lineHeight: 1.5 }}>
-                                Envianos la foto del comprobante de transferencia por WhatsApp y te activamos el plan en minutos ⚡
+                            <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 6, lineHeight: 1.5 }}>
+                                Envianos el comprobante para que tu activación sea más rápida.
                             </p>
 
+                            {/* Recomendado badge */}
                             <div style={{
-                                background: '#F0FDF4', borderRadius: 12, padding: '14px 16px',
-                                border: '1px solid #BBF7D0', marginBottom: 20,
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                background: '#FEF3C7', border: '1px solid #FCD34D',
+                                borderRadius: 6, padding: '4px 10px', marginBottom: 16,
                             }}>
-                                {[
-                                    '✅ Verificamos tu transferencia',
-                                    '✅ Activamos tu cuenta en minutos',
-                                    '✅ Recibís confirmación por WhatsApp',
-                                ].map((t, i) => (
-                                    <p key={i} style={{ fontSize: 12, color: '#166534', margin: i < 2 ? '0 0 6px' : 0, fontWeight: 500 }}>{t}</p>
-                                ))}
+                                <Clock size={12} color="#92400E" />
+                                <span style={{ fontSize: 10, fontWeight: 700, color: '#92400E' }}>
+                                    RECOMENDADO — Acelera tu activación
+                                </span>
                             </div>
 
                             <button
@@ -209,6 +199,7 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                                     fontSize: 14, fontWeight: 800, cursor: 'pointer',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                                     transition: 'filter .13s',
+                                    marginBottom: 10,
                                 }}
                                 onMouseEnter={e => e.currentTarget.style.filter = 'brightness(.9)'}
                                 onMouseLeave={e => e.currentTarget.style.filter = 'none'}
@@ -217,12 +208,77 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                                 Enviar comprobante por WhatsApp
                             </button>
 
-                            <button onClick={() => setStep(1)} style={{
-                                width: '100%', marginTop: 8, padding: '8px 0',
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                fontSize: 11, color: '#9CA3AF', fontFamily: "'Inter', sans-serif"
+                            <p style={{ fontSize: 10, color: '#9CA3AF', textAlign: 'center', marginBottom: 16 }}>
+                                (Opcional) Si no lo enviás ahora, verificaremos tu pago en las próximas horas.
+                            </p>
+
+                            <div style={{ borderTop: '1px solid #F0F0EE', paddingTop: 14 }}>
+                                <button
+                                    onClick={() => setStep(3)}
+                                    style={{
+                                        width: '100%', height: 40, borderRadius: 10,
+                                        background: 'transparent', color: '#334139',
+                                        border: '1.5px solid #D1D5DB',
+                                        fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                        transition: 'border-color .13s, background .13s',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#334139'; e.currentTarget.style.background = 'rgba(51,65,57,.04)' }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.background = 'transparent' }}
+                                >
+                                    Ya realicé el pago <ChevronRight size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══ PASO 3: Confirmación ═══ */}
+                    {step === 3 && (
+                        <div style={{ padding: '28px 22px', textAlign: 'center' }}>
+                            <div style={{
+                                width: 56, height: 56, borderRadius: '50%',
+                                background: '#F0FDF4', border: '2px solid #BBF7D0',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                margin: '0 auto 16px',
                             }}>
-                                ← Volver a los datos de pago
+                                <CheckCircle size={28} color="#22c55e" />
+                            </div>
+
+                            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e2320', marginBottom: 8, letterSpacing: '-.02em' }}>
+                                ¡Gracias por tu pago!
+                            </h2>
+                            <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 20, maxWidth: 300, margin: '0 auto 20px' }}>
+                                Estamos verificando tu transferencia. Tu plan se activará en minutos. Si enviaste el comprobante, será aún más rápido ⚡
+                            </p>
+
+                            <div style={{
+                                background: '#F8F8F7', borderRadius: 12, padding: '14px 16px',
+                                border: '1px solid #E8E8E6', marginBottom: 20, textAlign: 'left',
+                            }}>
+                                {[
+                                    { icon: '📧', text: `Email registrado: ${userEmail}` },
+                                    { icon: '💰', text: `Monto: ${PAYMENT_INFO.monto}` },
+                                    { icon: '⏱️', text: 'Activación: dentro de las próximas horas' },
+                                ].map((item, i) => (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 8 : 0 }}>
+                                        <span style={{ fontSize: 14 }}>{item.icon}</span>
+                                        <span style={{ fontSize: 11, color: '#4B5563', fontWeight: 500 }}>{item.text}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleClose}
+                                style={{
+                                    width: '100%', height: 42, borderRadius: 10,
+                                    background: '#334139', color: '#fff', border: 'none',
+                                    fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                                    transition: 'background .13s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = '#283330'}
+                                onMouseLeave={e => e.currentTarget.style.background = '#334139'}
+                            >
+                                Entendido, volver al sistema
                             </button>
                         </div>
                     )}
@@ -231,15 +287,14 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
             </div>
 
             <style>{`
-                @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-                @keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: none; opacity: 1 } }
+                @keyframes pmFadeIn  { from { opacity: 0 } to { opacity: 1 } }
+                @keyframes pmSlideUp { from { transform: translateY(20px); opacity: 0 } to { transform: none; opacity: 1 } }
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
             `}</style>
         </>
     )
 }
 
-// Sub-componente fila de dato copiable
 const DataRow = ({ label, value, copied, onCopy, mono }) => (
     <div style={{ marginBottom: 14 }}>
         <p style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>{label}</p>
