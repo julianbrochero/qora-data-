@@ -37,24 +37,37 @@ export const useSubscription = () => {
                 return fallbackReturn(user)
             }
 
-            // Auto-crear si la bd no tiene el trigger aún y le falta el row
+            // Si no existe fila (trigger no la creó), crear con trial_until = NULL
+            // para que muestre el modal de bienvenida
             if (!data) {
-                const trialUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
                 const { data: newData, error: insertError } = await supabase
                     .from('subscriptions')
                     .insert({
                         user_id: user.id,
                         trial_start_date: new Date().toISOString(),
-                        trial_until: trialUntil,
+                        trial_until: null,
                         plan_price: 14999.00
                     })
                     .select('trial_until, paid_until, plan_price')
                     .single()
 
                 if (insertError) {
-                    return fallbackReturn(user)
+                    console.warn('Error creando suscripción, intentando leer de nuevo:', insertError)
+                    // Tal vez el trigger ya la creó pero no la podemos leer aún
+                    const { data: retryData } = await supabase
+                        .from('subscriptions')
+                        .select('trial_until, paid_until, plan_price')
+                        .eq('user_id', user.id)
+                        .maybeSingle()
+
+                    if (retryData) {
+                        data = retryData
+                    } else {
+                        return fallbackReturn(user)
+                    }
+                } else {
+                    data = newData
                 }
-                data = newData
             }
 
             return evaluateDates(data, user.email, user.id)
