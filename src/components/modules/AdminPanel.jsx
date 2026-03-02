@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 // ─── ¡CAMBIA ESTO POR TU EMAIL DE ADMINISTRADOR! ──────────────────────────────
-const ADMIN_EMAIL = 'julianbrochero29@gmail.com'
+const ADMIN_EMAIL = 'brocherojulian72@gmail.com'
 // ─────────────────────────────────────────────────────────────────────────────
 
 const GRACE_DAYS = 7
@@ -226,7 +226,7 @@ const AdminPanel = () => {
     const [lastRefresh, setLastRefresh] = useState(null)
 
     // Bloqueo si no es admin
-    if (authUser?.email !== ADMIN_EMAIL) {
+    if (authUser?.email !== 'brocherojulian72@gmail.com') {
         return (
             <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
                 <div style={{ textAlign: 'center' }}>
