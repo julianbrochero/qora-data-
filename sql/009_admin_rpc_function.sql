@@ -1,10 +1,14 @@
 -- =============================================
--- GESTIFY — Función RPC para Admin Panel
+-- GESTIFY — Función RPC para Admin Panel (v2)
 -- =============================================
 -- Ejecutar en el SQL Editor de Supabase
--- Esta función devuelve las suscripciones con el email del usuario.
--- Solo puede ser llamada por el admin.
+-- Trae suscripciones + email de auth.users (compatible con Google OAuth)
+-- ⚠️ EJECUTAR COMPLETO EN SQL EDITOR
 
+-- Borrar función anterior si existe
+DROP FUNCTION IF EXISTS public.get_admin_subscriptions();
+
+-- Crear función que trae emails (busca en email Y en metadata de Google)
 CREATE OR REPLACE FUNCTION public.get_admin_subscriptions()
 RETURNS TABLE (
     id uuid,
@@ -22,7 +26,12 @@ AS $$
     SELECT
         s.id,
         s.user_id,
-        u.email::text,
+        COALESCE(
+            u.email,
+            u.raw_user_meta_data->>'email',
+            u.raw_app_meta_data->>'email',
+            'sin-email'
+        )::text AS email,
         s.trial_until,
         s.paid_until,
         s.plan_name,
@@ -33,6 +42,6 @@ AS $$
     ORDER BY s.created_at DESC;
 $$;
 
--- Revocar acceso público y dar solo a usuarios autenticados
+-- Permisos
 REVOKE ALL ON FUNCTION public.get_admin_subscriptions() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_admin_subscriptions() TO authenticated;
