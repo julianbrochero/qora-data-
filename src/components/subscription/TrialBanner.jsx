@@ -11,7 +11,7 @@ import PaymentModal from './PaymentModal'
 const TrialBanner = ({ daysRemaining }) => {
     const [dismissed, setDismissed] = useState(false)
     const [modalOpen, setModalOpen] = useState(false)
-    const { status, email } = useSubscriptionContext()
+    const { status, email, userId, checkStatus } = useSubscriptionContext()
 
     if (dismissed || status === 'active') return null
 
@@ -63,6 +63,8 @@ const TrialBanner = ({ daysRemaining }) => {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 userEmail={email}
+                userId={userId}
+                onProActivated={() => checkStatus()}
             />
         </>
     )

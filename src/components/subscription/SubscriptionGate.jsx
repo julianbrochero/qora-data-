@@ -140,6 +140,8 @@ const SubscriptionGate = ({ children }) => {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 userEmail={email}
+                userId={userId}
+                onProActivated={() => checkStatus()}
             />
         </div>
     )

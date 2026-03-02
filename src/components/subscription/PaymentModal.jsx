@@ -7,6 +7,7 @@
  */
 
 import React, { useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
 import { X, Copy, CheckCircle, MessageCircle, CreditCard, ChevronRight, Clock, PartyPopper } from 'lucide-react'
 
 // ─── CONFIGURA ESTOS DATOS ────────────────────────────────────────────────────
@@ -20,10 +21,11 @@ const PAYMENT_INFO = {
 const WHATSAPP_NUMBER = '5493534087718'
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
+const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProActivated = null }) => {
     const [copiedAlias, setCopiedAlias] = useState(false)
     const [copiedCbu, setCopiedCbu] = useState(false)
     const [step, setStep] = useState(1)
+    const [activating, setActivating] = useState(false)
 
     if (!isOpen) return null
 
@@ -45,8 +47,35 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
         window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank')
     }
 
+    // Activar PRO cuando el usuario confirma el pago
+    const activatePro = async () => {
+        if (!userId || activating) return
+        setActivating(true)
+        try {
+            const paidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            await supabase
+                .from('subscriptions')
+                .update({
+                    paid_until: paidUntil,
+                    pro_since: new Date().toISOString(),
+                    trial_until: new Date().toISOString(), // Terminar trial
+                })
+                .eq('user_id', userId)
+        } catch (e) {
+            console.error('Error activando PRO:', e)
+        }
+        setActivating(false)
+    }
+
+    // Cuando pasa al paso 3, activar PRO automáticamente
+    const goToStep3 = async () => {
+        setStep(3)
+        await activatePro()
+    }
+
     const handleClose = () => {
         setStep(1)
+        if (onProActivated) onProActivated()
         onClose()
     }
 
@@ -214,7 +243,7 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
 
                             <div style={{ borderTop: '1px solid #F0F0EE', paddingTop: 14 }}>
                                 <button
-                                    onClick={() => setStep(3)}
+                                    onClick={goToStep3}
                                     style={{
                                         width: '100%', height: 40, borderRadius: 10,
                                         background: 'transparent', color: '#334139',
