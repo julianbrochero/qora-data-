@@ -374,6 +374,14 @@ const Pedidos = ({
                                   pedido.estado === 'entregado' ? '#606B6C' : 'rgba(139,137,130,.3)', borderRadius: '0 2px 2px 0'
                         }} />
 
+                        {/* Checkbox Selección */}
+                        {modoSeleccion && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <input type="checkbox" style={{ accentColor: accent, width: 14, height: 14, cursor: 'pointer' }}
+                              checked={sel} readOnly />
+                          </div>
+                        )}
+
                         {/* Código */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(51,65,57,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -446,7 +454,9 @@ const Pedidos = ({
                         </div>
 
                         {/* Acciones — botones con palabras bien minimalistas */}
-                        {!modoSeleccion && (
+                        {modoSeleccion ? (
+                          <div />
+                        ) : (
                           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
                             <ActionBtn text="Ver" onClick={e => { e.stopPropagation(); openModal && openModal('ver-pedido', pedido) }} title="Ver detalles" D={D}>
                               <Eye size={12} strokeWidth={2.2} />
