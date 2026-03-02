@@ -15,6 +15,7 @@ import {
   LogOut,
   ClipboardList,
   ChevronLeft,
+  Shield,
 } from "lucide-react"
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
@@ -48,6 +49,10 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
       title: "Sistema",
       items: [
         { id: "configuracion", icon: Settings, label: "Configuración" },
+        ...(user?.email === 'julianbrochero29@gmail.com'
+          ? [{ id: "admin", icon: Shield, label: "Admin", badge: '★' }]
+          : []
+        ),
       ]
     }
   ]

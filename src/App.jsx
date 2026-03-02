@@ -20,6 +20,7 @@ import Configuracion from './components/modules/Configuracion';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
 import SubscriptionGate from './components/subscription/SubscriptionGate';
+import AdminPanel from './components/modules/AdminPanel';
 
 // Componente para rutas protegidas
 const PrivateRoute = ({ children }) => {
@@ -340,6 +341,7 @@ const SistemaFacturacion = () => {
         />
       ),
       configuracion: <Configuracion {...commonProps} />,
+      admin: <AdminPanel />,
     }[activeModule] || (
         <Dashboard
           {...commonProps}
