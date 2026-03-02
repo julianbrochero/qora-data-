@@ -57,7 +57,7 @@ export const useSubscription = () => {
                 data = newData
             }
 
-            return evaluateDates(data, user.email)
+            return evaluateDates(data, user.email, user.id)
 
         } catch (err) {
             console.error('Error general en useSubscription:', err)
@@ -87,12 +87,12 @@ export const useSubscription = () => {
     }
     /**
      * Motor de Evaluación de Fechas
-     * Prioridad: paid_until (PRO) > trial_until > grace > suspended
+     * Prioridad: new_user > paid_until (PRO) > trial_until > grace > suspended
      */
-    const evaluateDates = (data, email) => {
+    const evaluateDates = (data, email, userId) => {
         const now = new Date()
 
-        const trialUntilDt = data.trial_until ? new Date(data.trial_until) : new Date(0)
+        const trialUntilDt = data.trial_until ? new Date(data.trial_until) : null
         const paidUntilDt = data.paid_until ? new Date(data.paid_until) : null
 
         let estado = 'suspended'
@@ -101,8 +101,27 @@ export const useSubscription = () => {
         let isPro = false
         let trialDaysLeft = 0
 
-        // Calcular días restantes de trial (útil para mostrar info extra)
-        if (now <= trialUntilDt) {
+        // 0. ¿Usuario nuevo? (no inició trial ni pagó)
+        if (!trialUntilDt && !paidUntilDt) {
+            const result = {
+                hasAccess: false,
+                isTrial: false,
+                isPro: false,
+                isNewUser: true,
+                trialDaysLeft: 0,
+                status: 'new_user',
+                daysRemaining: 0,
+                message: 'Bienvenido — iniciá tu prueba gratuita.',
+                email: email,
+                userId: userId,
+                subscription: data
+            }
+            setSubscription(result)
+            return result
+        }
+
+        // Calcular días restantes de trial
+        if (trialUntilDt && now <= trialUntilDt) {
             trialDaysLeft = Math.ceil((trialUntilDt - now) / (1000 * 60 * 60 * 24))
         }
 
@@ -111,11 +130,7 @@ export const useSubscription = () => {
             estado = 'active'
             isPro = true
             daysLeft = Math.ceil((paidUntilDt - now) / (1000 * 60 * 60 * 24))
-            if (trialDaysLeft > 0) {
-                title = `Gestify PRO activo · ${trialDaysLeft} días de prueba restantes.`
-            } else {
-                title = `Gestify PRO activo. Renueva en ${daysLeft} días.`
-            }
+            title = `Gestify PRO activo. Renueva en ${daysLeft} días.`
         }
         // 2. ¿Está en prueba? (solo si no pagó)
         else if (now <= trialUntilDt) {
@@ -182,6 +197,8 @@ export const useSubscription = () => {
         hasAccess: subscription?.hasAccess || false,
         isTrial: subscription?.isTrial || false,
         isPro: subscription?.isPro || false,
+        isNewUser: subscription?.isNewUser || false,
+        userId: subscription?.userId || null,
         trialDaysLeft: subscription?.trialDaysLeft || 0,
         daysRemaining: subscription?.daysRemaining || 0,
         message: subscription?.message || '',

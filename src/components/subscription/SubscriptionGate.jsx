@@ -1,20 +1,22 @@
 /**
  * Gestify — SubscriptionGate
- * Controla el acceso al sistema y muestra banners según el estado.
- * - Trial: banner oscuro con días restantes + botón suscribirme
- * - Active (PRO): banner verde "Gestify PRO"
- * - Grace: banner amarillo/rojo con aviso de pago
- * - Suspended: banner rojo bloqueante
+ * Controla el acceso al sistema y muestra banners/modales según el estado.
+ * - new_user: Modal de bienvenida para iniciar trial
+ * - trial: Banner con días restantes
+ * - active (PRO): Banner verde PRO
+ * - grace: Banner amarillo
+ * - suspended: Banner rojo
  */
 
 import React, { useState } from 'react'
 import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 import TrialBanner from './TrialBanner'
 import PaymentModal from './PaymentModal'
-import { AlertTriangle, AlertCircle, Zap, Crown } from 'lucide-react'
+import WelcomeTrialModal from './WelcomeTrialModal'
+import { AlertTriangle, AlertCircle, Crown } from 'lucide-react'
 
 const SubscriptionGate = ({ children }) => {
-    const { status, loading, daysRemaining, email, isPro, trialDaysLeft } = useSubscriptionContext()
+    const { status, loading, daysRemaining, email, isPro, userId, checkStatus } = useSubscriptionContext()
     const [modalOpen, setModalOpen] = useState(false)
 
     if (loading) {
@@ -34,6 +36,16 @@ const SubscriptionGate = ({ children }) => {
                     <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
                 </div>
             </div>
+        )
+    }
+
+    // Usuario nuevo — mostrar modal de bienvenida
+    if (status === 'new_user') {
+        return (
+            <WelcomeTrialModal
+                userId={userId}
+                onTrialStarted={() => checkStatus()}
+            />
         )
     }
 
@@ -61,11 +73,6 @@ const SubscriptionGate = ({ children }) => {
                         </div>
                         <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,.7)' }}>
                             Gestify PRO activo
-                            {trialDaysLeft > 0 && (
-                                <span style={{ color: 'rgba(255,255,255,.45)', marginLeft: 6 }}>
-                                    · {trialDaysLeft} días de prueba restantes
-                                </span>
-                            )}
                         </span>
                     </div>
                 </div>

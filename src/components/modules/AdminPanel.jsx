@@ -87,12 +87,13 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
             const newPaidUntil = new Date(base)
             newPaidUntil.setMonth(newPaidUntil.getMonth() + months)
 
-            // Activar PRO: poner paid_until Y terminar trial inmediatamente
+            // Activar PRO: poner paid_until, pro_since, y terminar trial
             const { error: upErr } = await supabase
                 .from('subscriptions')
                 .update({
                     paid_until: newPaidUntil.toISOString(),
-                    trial_until: new Date().toISOString(), // Terminar trial al instante
+                    pro_since: user.pro_since || new Date().toISOString(), // Solo setear si es la primera vez
+                    trial_until: new Date().toISOString(),
                 })
                 .eq('user_id', user.user_id)
 
@@ -388,7 +389,7 @@ const AdminPanel = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #F0F0EE' }}>
-                                {['Email', 'Estado', 'Trial hasta', 'Plan PRO hasta', 'Acción'].map(h => (
+                                {['Email', 'Estado', 'PRO desde', 'Plan hasta', 'Acción'].map(h => (
                                     <th key={h} style={{
                                         padding: '10px 16px', textAlign: 'left',
                                         fontSize: 10, fontWeight: 700, color: '#9CA3AF',
@@ -423,27 +424,52 @@ const AdminPanel = () => {
                                             <StatusBadge status={status} />
                                         </td>
                                         <td style={{ padding: '12px 16px', fontSize: 12, color: '#4B5563', whiteSpace: 'nowrap' }}>
-                                            {fmtDate(row.trial_until)}
+                                            {fmtDate(row.pro_since)}
                                         </td>
                                         <td style={{ padding: '12px 16px', fontSize: 12, color: '#4B5563', whiteSpace: 'nowrap' }}>
                                             {fmtDate(row.paid_until)}
                                         </td>
                                         <td style={{ padding: '12px 16px' }}>
-                                            <button
-                                                onClick={() => setSelected(row)}
-                                                style={{
-                                                    padding: '5px 10px', borderRadius: 6,
-                                                    background: status === 'active' ? '#F0FDF4' : '#334139',
-                                                    color: status === 'active' ? '#15803D' : '#fff',
-                                                    border: status === 'active' ? '1px solid #BBF7D0' : 'none',
-                                                    fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                                                    display: 'flex', alignItems: 'center', gap: 4,
-                                                    whiteSpace: 'nowrap',
-                                                }}
-                                            >
-                                                <Zap size={11} />
-                                                {status === 'active' ? 'Extender' : 'Activar'}
-                                            </button>
+                                            <div style={{ display: 'flex', gap: 6 }}>
+                                                <button
+                                                    onClick={() => setSelected(row)}
+                                                    style={{
+                                                        padding: '5px 10px', borderRadius: 6,
+                                                        background: status === 'active' ? '#F0FDF4' : '#334139',
+                                                        color: status === 'active' ? '#15803D' : '#fff',
+                                                        border: status === 'active' ? '1px solid #BBF7D0' : 'none',
+                                                        fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: 4,
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
+                                                    <Zap size={11} />
+                                                    {status === 'active' ? 'Extender' : 'Activar'}
+                                                </button>
+                                                {status === 'active' && (
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!confirm(`¿Desactivar PRO de ${row.email}?`)) return
+                                                            await supabase
+                                                                .from('subscriptions')
+                                                                .update({ paid_until: null, pro_since: null })
+                                                                .eq('user_id', row.user_id)
+                                                            fetchData()
+                                                        }}
+                                                        style={{
+                                                            padding: '5px 10px', borderRadius: 6,
+                                                            background: '#FEF2F2', color: '#DC2626',
+                                                            border: '1px solid #FECACA',
+                                                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', gap: 4,
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
+                                                        <AlertCircle size={11} />
+                                                        Desactivar
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 )
@@ -454,19 +480,21 @@ const AdminPanel = () => {
             </div>
 
             {/* Modal de activación */}
-            {selected && (
-                <ActivateModal
-                    user={selected}
-                    onClose={() => setSelected(null)}
-                    onSuccess={onActivated}
-                />
-            )}
+            {
+                selected && (
+                    <ActivateModal
+                        user={selected}
+                        onClose={() => setSelected(null)}
+                        onSuccess={onActivated}
+                    />
+                )
+            }
 
             <style>{`
                 @keyframes spin { to { transform: rotate(360deg) } }
                 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
             `}</style>
-        </div>
+        </div >
     )
 }
 
