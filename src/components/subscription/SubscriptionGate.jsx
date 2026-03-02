@@ -1,15 +1,18 @@
 /**
  * Gestify — SubscriptionGate
  * Controla el acceso al sistema y muestra banners según el estado.
+ * Grace period y suspended muestran modal de pago, no bloquean el acceso.
  */
 
-import React from 'react'
+import React, { useState } from 'react'
 import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 import TrialBanner from './TrialBanner'
+import PaymentModal from './PaymentModal'
 import { AlertTriangle, AlertCircle } from 'lucide-react'
 
 const SubscriptionGate = ({ children }) => {
     const { status, loading, daysRemaining, email } = useSubscriptionContext()
+    const [modalOpen, setModalOpen] = useState(false)
 
     if (loading) {
         return (
@@ -31,11 +34,6 @@ const SubscriptionGate = ({ children }) => {
         )
     }
 
-    const handleWhatsAppPayment = () => {
-        const text = `Hola Gestify, pagué mi plan.\nEmail: ${email}`
-        window.open(`https://wa.me/5493534087718codeURIComponent(text)}`, '_blank') // PONE ACA TU NUMERO DE WHATSAPP REAL
-    }
-
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
             {/* Banner Trial */}
@@ -44,26 +42,26 @@ const SubscriptionGate = ({ children }) => {
             {/* Banner Grace Period */}
             {status === 'grace' && (
                 <div style={{
-                    background: '#FEE2E2', borderBottom: '1px solid #FCA5A5',
-                    padding: '12px 20px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', gap: 16, flexWrap: 'wrap',
+                    background: '#FEF3C7', borderBottom: '1px solid #FCD34D',
+                    padding: '10px 20px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 14, flexWrap: 'wrap',
                     zIndex: 50, position: 'relative'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#991B1B' }}>
-                        <AlertTriangle size={18} />
-                        <span style={{ fontSize: 13, fontWeight: 600 }}>
-                            Tu plan venció. Tenés {daysRemaining} días para enviar el pago y evitar la suspensión.
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#92400E' }}>
+                        <AlertTriangle size={16} />
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>
+                            Tu plan venció. Tenés {daysRemaining} días antes de que se suspenda tu acceso.
                         </span>
                     </div>
                     <button
-                        onClick={handleWhatsAppPayment}
+                        onClick={() => setModalOpen(true)}
                         style={{
-                            background: '#25D366', color: 'white', border: 'none',
-                            padding: '6px 14px', borderRadius: 6, fontSize: 12,
-                            fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                            background: '#D97706', color: 'white', border: 'none',
+                            padding: '5px 14px', borderRadius: 6, fontSize: 11,
+                            fontWeight: 700, cursor: 'pointer',
                         }}
                     >
-                        Pagar por WhatsApp
+                        Ver datos de pago
                     </button>
                 </div>
             )}
@@ -72,25 +70,25 @@ const SubscriptionGate = ({ children }) => {
             {status === 'suspended' && (
                 <div style={{
                     background: '#450a0a', borderBottom: '1px solid #7f1d1d',
-                    padding: '12px 20px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', gap: 16, flexWrap: 'wrap',
+                    padding: '10px 20px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 14, flexWrap: 'wrap',
                     zIndex: 50, position: 'relative'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fca5a5' }}>
-                        <AlertCircle size={18} />
-                        <span style={{ fontSize: 13, fontWeight: 600 }}>
-                            Cuenta suspendida por falta de pago. Tu acceso de escritura está bloqueado.
+                        <AlertCircle size={16} />
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>
+                            Cuenta suspendida — solo lectura. Las acciones de escritura están bloqueadas.
                         </span>
                     </div>
                     <button
-                        onClick={handleWhatsAppPayment}
+                        onClick={() => setModalOpen(true)}
                         style={{
                             background: '#25D366', color: 'white', border: 'none',
-                            padding: '6px 14px', borderRadius: 6, fontSize: 12,
-                            fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+                            padding: '5px 14px', borderRadius: 6, fontSize: 11,
+                            fontWeight: 700, cursor: 'pointer',
                         }}
                     >
-                        Regularizar Deuda por WhatsApp
+                        Regularizar suscripción
                     </button>
                 </div>
             )}
@@ -98,6 +96,13 @@ const SubscriptionGate = ({ children }) => {
             <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
                 {children}
             </div>
+
+            {/* Modal de pago unificado */}
+            <PaymentModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                userEmail={email}
+            />
         </div>
     )
 }
