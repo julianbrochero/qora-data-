@@ -85,56 +85,70 @@ export const useSubscription = () => {
         setSubscription(fall)
         return fall
     }
-
     /**
      * Motor de Evaluación de Fechas
+     * Prioridad: paid_until (PRO) > trial_until > grace > suspended
      */
     const evaluateDates = (data, email) => {
         const now = new Date()
 
-        // Parsear fechas
         const trialUntilDt = data.trial_until ? new Date(data.trial_until) : new Date(0)
         const paidUntilDt = data.paid_until ? new Date(data.paid_until) : null
 
         let estado = 'suspended'
         let title = ''
         let daysLeft = 0
+        let isPro = false
+        let trialDaysLeft = 0
 
-        // 1. ¿Está en prueba?
+        // Calcular días restantes de trial (útil para mostrar info extra)
         if (now <= trialUntilDt) {
+            trialDaysLeft = Math.ceil((trialUntilDt - now) / (1000 * 60 * 60 * 24))
+        }
+
+        // 1. ¿Pago vigente? (PRIORIDAD — si pagó, es PRO sin importar el trial)
+        if (paidUntilDt && now <= paidUntilDt) {
+            estado = 'active'
+            isPro = true
+            daysLeft = Math.ceil((paidUntilDt - now) / (1000 * 60 * 60 * 24))
+            if (trialDaysLeft > 0) {
+                title = `Gestify PRO activo · ${trialDaysLeft} días de prueba restantes.`
+            } else {
+                title = `Gestify PRO activo. Renueva en ${daysLeft} días.`
+            }
+        }
+        // 2. ¿Está en prueba? (solo si no pagó)
+        else if (now <= trialUntilDt) {
             estado = 'trial'
-            daysLeft = Math.ceil((trialUntilDt - now) / (1000 * 60 * 60 * 24))
+            daysLeft = trialDaysLeft
             title = `Prueba gratuita: ${daysLeft} días restantes.`
         }
-        // 2. ¿Pago vigente?
-        else if (paidUntilDt && now <= paidUntilDt) {
-            estado = 'active'
-            daysLeft = Math.ceil((paidUntilDt - now) / (1000 * 60 * 60 * 24))
-            title = `Suscripción activa. Renueva en ${daysLeft} días.`
-        }
-        // 3. ¿Grace period? (Tolerancia de 7 días luego de vencer el pago)
+        // 3. ¿Grace period tras vencer el pago?
         else if (paidUntilDt && now <= new Date(paidUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)) {
             estado = 'grace'
+            isPro = true // Fue PRO, está en gracia
             const limit = new Date(paidUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)
             daysLeft = Math.ceil((limit - now) / (1000 * 60 * 60 * 24))
-            title = `Tu plan venció. Tenés ${daysLeft} días de tolerancia para pagar.`
+            title = `Tu plan PRO venció. Tenés ${daysLeft} días de tolerancia para pagar.`
         }
-        // * ¿Grace period tras terminar la prueba? (Asumimos 7 días extra si venció el trial sin pagar)
+        // 4. ¿Grace period tras terminar la prueba sin pagar?
         else if (!paidUntilDt && now <= new Date(trialUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)) {
             estado = 'grace'
             const limit = new Date(trialUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)
             daysLeft = Math.ceil((limit - now) / (1000 * 60 * 60 * 24))
-            title = `Tu prueba venció. Tenés ${daysLeft} días para validar tu suscripción.`
+            title = `Tu prueba venció. Tenés ${daysLeft} días para activar tu suscripción.`
         }
-        // 4. Suspendido
+        // 5. Suspendido
         else {
             estado = 'suspended'
             title = 'Suscripción expirada o suspendida.'
         }
 
         const result = {
-            hasAccess: estado !== 'suspended', // Suspended se bloquea, Grace y el resto NO.
+            hasAccess: estado !== 'suspended',
             isTrial: estado === 'trial',
+            isPro: isPro,
+            trialDaysLeft: trialDaysLeft,
             status: estado,
             daysRemaining: daysLeft,
             message: title,
@@ -167,6 +181,8 @@ export const useSubscription = () => {
         status: subscription?.status || 'loading',
         hasAccess: subscription?.hasAccess || false,
         isTrial: subscription?.isTrial || false,
+        isPro: subscription?.isPro || false,
+        trialDaysLeft: subscription?.trialDaysLeft || 0,
         daysRemaining: subscription?.daysRemaining || 0,
         message: subscription?.message || '',
         email: subscription?.email || '',

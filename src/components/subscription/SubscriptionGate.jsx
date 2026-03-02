@@ -1,17 +1,20 @@
 /**
  * Gestify — SubscriptionGate
  * Controla el acceso al sistema y muestra banners según el estado.
- * Grace period y suspended muestran modal de pago, no bloquean el acceso.
+ * - Trial: banner oscuro con días restantes + botón suscribirme
+ * - Active (PRO): banner verde "Gestify PRO"
+ * - Grace: banner amarillo/rojo con aviso de pago
+ * - Suspended: banner rojo bloqueante
  */
 
 import React, { useState } from 'react'
 import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 import TrialBanner from './TrialBanner'
 import PaymentModal from './PaymentModal'
-import { AlertTriangle, AlertCircle } from 'lucide-react'
+import { AlertTriangle, AlertCircle, Zap, Crown } from 'lucide-react'
 
 const SubscriptionGate = ({ children }) => {
-    const { status, loading, daysRemaining, email } = useSubscriptionContext()
+    const { status, loading, daysRemaining, email, isPro, trialDaysLeft } = useSubscriptionContext()
     const [modalOpen, setModalOpen] = useState(false)
 
     if (loading) {
@@ -36,8 +39,37 @@ const SubscriptionGate = ({ children }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-            {/* Banner Trial */}
-            {status === 'trial' && <TrialBanner daysRemaining={daysRemaining} />}
+            {/* Banner Trial (solo si NO es PRO) */}
+            {status === 'trial' && !isPro && <TrialBanner daysRemaining={daysRemaining} />}
+
+            {/* Banner PRO activo */}
+            {status === 'active' && isPro && (
+                <div style={{
+                    background: 'linear-gradient(90deg, #282A28 0%, #334139 100%)',
+                    borderBottom: '1px solid rgba(220,237,49,.2)',
+                    padding: '6px 20px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 10,
+                    zIndex: 50, position: 'relative'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            background: '#DCED31', padding: '2px 8px', borderRadius: 4,
+                        }}>
+                            <Crown size={10} color="#282A28" />
+                            <span style={{ fontSize: 10, fontWeight: 900, color: '#282A28', letterSpacing: '.04em' }}>PRO</span>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,.7)' }}>
+                            Gestify PRO activo
+                            {trialDaysLeft > 0 && (
+                                <span style={{ color: 'rgba(255,255,255,.45)', marginLeft: 6 }}>
+                                    · {trialDaysLeft} días de prueba restantes
+                                </span>
+                            )}
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {/* Banner Grace Period */}
             {status === 'grace' && (
@@ -50,7 +82,7 @@ const SubscriptionGate = ({ children }) => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#92400E' }}>
                         <AlertTriangle size={16} />
                         <span style={{ fontSize: 12, fontWeight: 600 }}>
-                            Tu plan venció. Tenés {daysRemaining} días antes de que se suspenda tu acceso.
+                            {isPro ? 'Tu plan PRO venció' : 'Tu prueba venció'}. Tenés {daysRemaining} días antes de la suspensión.
                         </span>
                     </div>
                     <button
@@ -97,7 +129,6 @@ const SubscriptionGate = ({ children }) => {
                 {children}
             </div>
 
-            {/* Modal de pago unificado */}
             <PaymentModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
