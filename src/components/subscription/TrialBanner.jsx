@@ -53,15 +53,15 @@ const TrialBanner = ({ daysRemaining }) => {
                     cursor: loading ? 'wait' : 'pointer',
                     fontSize: 11,
                     fontWeight: 700,
-                    background: '#E53935',
+                    background: '#6366F1', // Púrpura/Índigo (estilo Stripe/Vercel)
                     color: '#fff',
                     opacity: loading ? .6 : 1,
-                    transition: 'opacity .13s',
+                    transition: 'background .13s',
                     fontFamily: "'Inter', sans-serif",
                     letterSpacing: '.01em',
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#C62828'}
-                onMouseLeave={e => e.currentTarget.style.background = '#E53935'}
+                onMouseEnter={e => e.currentTarget.style.background = '#4F46E5'}
+                onMouseLeave={e => e.currentTarget.style.background = '#6366F1'}
             >
                 {loading ? 'Cargando...' : 'Suscribirme'}
             </button>
