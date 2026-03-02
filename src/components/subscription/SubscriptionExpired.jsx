@@ -186,7 +186,7 @@ const SubscriptionExpired = ({ status = 'expired' }) => {
                     </button>
 
                     <p style={{ fontSize: 10, color: ct3, textAlign: 'center', marginBottom: 6 }}>
-                        Aceptamos tarjeta de crédito y débito vía Ualá Bis
+                        Aceptamos tarjeta de crédito y débito vía Mercado Pago
                     </p>
                 </div>
 
