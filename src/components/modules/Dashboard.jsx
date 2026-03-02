@@ -296,10 +296,10 @@ const StockAlertPanel = ({ productos, onViewAll }) => {
 ───────────────────────────────────────────────────────────────────────────── */
 const QuickStatsBar = ({ facturas, pedidos, onViewAllFacturas, onViewAllPedidos }) => {
   const stats = [
-    { label: 'Fact. pagadas',       value: facturas.filter(f => f.estado === 'pagada').length,                                                Icon: CheckCircle2, onClick: onViewAllFacturas },
-    { label: 'Fact. pendientes',    value: facturas.filter(f => f.estado === 'pendiente' || f.estado === 'parcial').length,                    Icon: Clock,        onClick: onViewAllFacturas },
-    { label: 'Pedidos en curso',    value: pedidos.filter(p => p.estado === 'preparando' || p.estado === 'enviado').length,                    Icon: ShoppingCart,  onClick: onViewAllPedidos  },
-    { label: 'Pedidos completados', value: pedidos.filter(p => p.estado === 'entregado'  || p.estado === 'completado').length,                 Icon: Package,       onClick: onViewAllPedidos  },
+    { label: 'Fact. pagadas', value: facturas.filter(f => f.estado === 'pagada').length, Icon: CheckCircle2, onClick: onViewAllFacturas },
+    { label: 'Fact. pendientes', value: facturas.filter(f => f.estado === 'pendiente' || f.estado === 'parcial').length, Icon: Clock, onClick: onViewAllFacturas },
+    { label: 'Pedidos en curso', value: pedidos.filter(p => p.estado === 'preparando' || p.estado === 'enviado').length, Icon: ShoppingCart, onClick: onViewAllPedidos },
+    { label: 'Pedidos completados', value: pedidos.filter(p => p.estado === 'entregado' || p.estado === 'completado').length, Icon: Package, onClick: onViewAllPedidos },
   ]
   return (
     <div className="flex flex-wrap gap-2">
@@ -544,15 +544,6 @@ const Dashboard = ({
           ))}
 
           <div className="w-px h-4 mx-1 hidden md:block" style={{ background: 'rgba(255,255,255,.12)' }} />
-
-          <button className="w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors"
-            style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.6)' }}>
-            <Moon size={13} strokeWidth={2} />
-          </button>
-          <button className="w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors"
-            style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.6)' }}>
-            <Bell size={13} strokeWidth={2} />
-          </button>
           <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-bold text-white cursor-pointer overflow-hidden border flex-shrink-0"
             style={{ background: '#606B6C', borderColor: 'rgba(255,255,255,.2)' }}>
             {user?.user_metadata?.avatar_url
