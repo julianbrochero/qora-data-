@@ -190,11 +190,11 @@ export const useSubscription = () => {
     const createSubscription = async () => {
         try {
             setLoading(true)
-            const data = await authFetch('/api/subscriptions/create-payment', {
+            const data = await authFetch('/api/subscriptions/create-subscription', {
                 method: 'POST',
             })
 
-            // Si recibimos init_point, redirigir a checkout de Ualá Bis
+            // Si recibimos init_point, redirigir a checkout de Mobbex
             if (data.init_point) {
                 window.location.href = data.init_point
                 return data
