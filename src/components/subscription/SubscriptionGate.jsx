@@ -33,7 +33,7 @@ const SubscriptionGate = ({ children }) => {
 
     const handleWhatsAppPayment = () => {
         const text = `Hola Gestify, pagué mi plan.\nEmail: ${email}`
-        window.open(`https://wa.me/5491100000000?text=${encodeURIComponent(text)}`, '_blank') // PONE ACA TU NUMERO DE WHATSAPP REAL
+        window.open(`https://wa.me/5493534087718codeURIComponent(text)}`, '_blank') // PONE ACA TU NUMERO DE WHATSAPP REAL
     }
 
     return (

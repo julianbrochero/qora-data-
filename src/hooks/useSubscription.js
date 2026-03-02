@@ -68,6 +68,10 @@ export const useSubscription = () => {
         }
     }, [])
 
+    useEffect(() => {
+        checkStatus()
+    }, [checkStatus])
+
     const fallbackReturn = (user) => {
         const fall = {
             hasAccess: true,
