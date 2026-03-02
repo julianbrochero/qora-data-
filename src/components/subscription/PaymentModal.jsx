@@ -235,42 +235,62 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '' }) => {
                     {/* ═══ PASO 3: Confirmación ═══ */}
                     {step === 3 && (
                         <div style={{ padding: '28px 22px', textAlign: 'center' }}>
+                            {/* Logo + badge PRO */}
                             <div style={{
-                                width: 56, height: 56, borderRadius: '50%',
-                                background: '#F0FDF4', border: '2px solid #BBF7D0',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                margin: '0 auto 16px',
+                                gap: 8, marginBottom: 16,
                             }}>
-                                <CheckCircle size={28} color="#22c55e" />
+                                <div style={{
+                                    width: 48, height: 48, borderRadius: 12,
+                                    background: '#282A28', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,.15)',
+                                }}>
+                                    <img src="/logogestify3.png" alt="Gestify" style={{ height: 22 }} />
+                                </div>
+                                <div style={{
+                                    padding: '4px 10px', borderRadius: 6,
+                                    background: '#DCED31', border: '1.5px solid #282A28',
+                                }}>
+                                    <span style={{ fontSize: 12, fontWeight: 900, color: '#282A28', letterSpacing: '.04em' }}>PRO</span>
+                                </div>
                             </div>
 
-                            <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e2320', marginBottom: 8, letterSpacing: '-.02em' }}>
-                                ¡Gracias por tu pago!
+                            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1e2320', marginBottom: 4, letterSpacing: '-.02em' }}>
+                                ¡Bienvenido a Gestify <span style={{ color: '#334139' }}>PRO</span>!
                             </h2>
-                            <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 20, maxWidth: 300, margin: '0 auto 20px' }}>
-                                Estamos verificando tu transferencia. Tu plan se activará en minutos. Si enviaste el comprobante, será aún más rápido ⚡
+                            <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 18, maxWidth: 320, margin: '0 auto 18px' }}>
+                                Tu pago está siendo procesado. En cuanto lo verifiquemos, tu plan se activará automáticamente.
                             </p>
 
+                            {/* Resumen */}
                             <div style={{
-                                background: '#F8F8F7', borderRadius: 12, padding: '14px 16px',
-                                border: '1px solid #E8E8E6', marginBottom: 20, textAlign: 'left',
+                                background: '#F0FDF4', borderRadius: 12, padding: '14px 16px',
+                                border: '1px solid #BBF7D0', marginBottom: 14, textAlign: 'left',
                             }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                    <CheckCircle size={16} color="#22c55e" />
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Pago registrado correctamente</span>
+                                </div>
                                 {[
-                                    { icon: '📧', text: `Email registrado: ${userEmail}` },
-                                    { icon: '💰', text: `Monto: ${PAYMENT_INFO.monto}` },
-                                    { icon: '⏱️', text: 'Activación: dentro de las próximas horas' },
+                                    { icon: '📧', text: `${userEmail}` },
+                                    { icon: '💰', text: `Plan Gestify PRO · ${PAYMENT_INFO.monto}/mes` },
+                                    { icon: '⚡', text: 'Activación: en minutos (con comprobante) o dentro de 24hs' },
                                 ].map((item, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 8 : 0 }}>
-                                        <span style={{ fontSize: 14 }}>{item.icon}</span>
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 6 : 0 }}>
+                                        <span style={{ fontSize: 13, width: 20, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
                                         <span style={{ fontSize: 11, color: '#4B5563', fontWeight: 500 }}>{item.text}</span>
                                     </div>
                                 ))}
                             </div>
 
+                            <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16 }}>
+                                Si enviaste el comprobante por WhatsApp, tu activación será aún más rápida ⚡
+                            </p>
+
                             <button
                                 onClick={handleClose}
                                 style={{
-                                    width: '100%', height: 42, borderRadius: 10,
+                                    width: '100%', height: 44, borderRadius: 10,
                                     background: '#334139', color: '#fff', border: 'none',
                                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
                                     transition: 'background .13s',
