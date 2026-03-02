@@ -1,29 +1,24 @@
 /**
  * Gestify — TrialBanner
  * Banner minimalista durante el período de prueba.
+ * Informa cuántos días quedan y cómo activar cuando venza.
  */
 
 import React, { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, MessageCircle } from 'lucide-react'
 import { useSubscriptionContext } from '../../lib/SubscriptionContext'
+
+const WHATSAPP_NUMBER = '5493534087718'
 
 const TrialBanner = ({ daysRemaining }) => {
     const [dismissed, setDismissed] = useState(false)
-    const { createSubscription, status } = useSubscriptionContext()
-    const [loading, setLoading] = useState(false)
+    const { status, email } = useSubscriptionContext()
 
     if (dismissed || status === 'active') return null
 
-    const handleSubscribe = async () => {
-        if (loading) return
-        setLoading(true)
-        try {
-            await createSubscription()
-        } catch (err) {
-            console.error('Error:', err)
-        } finally {
-            setLoading(false)
-        }
+    const handleWhatsApp = () => {
+        const text = `Hola Gestify! 👋\n\nQuiero activar mi suscripción mensual.\n📧 Email: ${email}\n\nAdjunto comprobante de pago.`
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank')
     }
 
     return (
@@ -44,26 +39,28 @@ const TrialBanner = ({ daysRemaining }) => {
             </span>
 
             <button
-                onClick={handleSubscribe}
-                disabled={loading}
+                onClick={handleWhatsApp}
                 style={{
-                    padding: '3px 12px',
+                    padding: '3px 10px',
                     borderRadius: 5,
                     border: 'none',
-                    cursor: loading ? 'wait' : 'pointer',
+                    cursor: 'pointer',
                     fontSize: 11,
                     fontWeight: 700,
-                    background: '#E53935', // Rojo brillante
+                    background: '#25D366',
                     color: '#fff',
-                    opacity: loading ? .6 : 1,
-                    transition: 'background .13s',
+                    transition: 'filter .13s',
                     fontFamily: "'Inter', sans-serif",
                     letterSpacing: '.01em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#C62828'}
-                onMouseLeave={e => e.currentTarget.style.background = '#E53935'}
+                onMouseEnter={e => e.currentTarget.style.filter = 'brightness(.88)'}
+                onMouseLeave={e => e.currentTarget.style.filter = 'none'}
             >
-                {loading ? 'Cargando...' : 'Suscribirme'}
+                <MessageCircle size={11} />
+                Activar plan
             </button>
 
             <button
