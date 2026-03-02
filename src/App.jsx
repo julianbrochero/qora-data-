@@ -5,6 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Menu } from 'lucide-react';
 import { useFacturacion } from './hooks/useFacturacion';
 import { useAuth } from './lib/AuthContext';
+import { useSubscriptionContext } from './lib/SubscriptionContext';
 import Sidebar from './components/layout/Sidebar';
 import Modal from './components/layout/Modal';
 import Dashboard from './components/modules/Dashboard';
@@ -41,6 +42,7 @@ const PrivateRoute = ({ children }) => {
 // Componente principal de la aplicación (una vez autenticado)
 const SistemaFacturacion = () => {
   const { user, logout } = useAuth();
+  const { status: subscriptionStatus } = useSubscriptionContext();
   const [activeModule, setActiveModule] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [modalType, setModalType] = useState(null);
@@ -116,6 +118,13 @@ const SistemaFacturacion = () => {
 
   // ✅ FUNCIÓN CORREGIDA: openModal
   const openModalHandler = (type, data = {}) => {
+    // Bloquear acciones de escritura si está suspendido, permitiendo solo lectura (ver)
+    const isViewer = type.includes('detalle') || type.includes('ver');
+    if (subscriptionStatus === 'suspended' && !isViewer && type !== 'ver-plan') {
+      toast.error('💳 Tu cuenta está suspendida por falta de pago. No podés crear ni editar registros hasta regularizar tu suscripción.');
+      return;
+    }
+
     console.log('🟢 Abriendo modal:', type, data);
 
     setModalType(type);
