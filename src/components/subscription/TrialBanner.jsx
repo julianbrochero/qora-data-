@@ -1,11 +1,10 @@
 /**
  * Gestify — TrialBanner
- * Banner durante el período de prueba.
- * NO se muestra si la suscripción ya está activa.
+ * Banner minimalista durante el período de prueba.
  */
 
 import React, { useState } from 'react'
-import { Clock, X, Zap } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 
 const TrialBanner = ({ daysRemaining }) => {
@@ -13,14 +12,7 @@ const TrialBanner = ({ daysRemaining }) => {
     const { createSubscription, status } = useSubscriptionContext()
     const [loading, setLoading] = useState(false)
 
-    // No mostrar si ya pagó o si fue cerrado
     if (dismissed || status === 'active') return null
-
-    const isUrgent = daysRemaining <= 2
-    const bgColor = isUrgent ? '#FEF3C7' : 'rgba(51,65,57,.06)'
-    const borderColor = isUrgent ? '#FCD34D' : 'rgba(51,65,57,.12)'
-    const textColor = isUrgent ? '#92400E' : '#30362F'
-    const accentColor = isUrgent ? '#92400E' : '#334139'
 
     const handleSubscribe = async () => {
         if (loading) return
@@ -36,50 +28,57 @@ const TrialBanner = ({ daysRemaining }) => {
 
     return (
         <div style={{
-            background: bgColor,
-            borderBottom: `1px solid ${borderColor}`,
-            padding: '8px 20px',
+            background: '#282A28',
+            borderBottom: '1px solid rgba(255,255,255,.08)',
+            padding: '7px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 12,
+            gap: 10,
             fontFamily: "'Inter', sans-serif",
             position: 'relative',
             zIndex: 50,
         }}>
-            <Clock size={14} style={{ color: accentColor, flexShrink: 0 }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: textColor }}>
-                {isUrgent
-                    ? `⚠️ Tu prueba gratuita termina ${daysRemaining === 0 ? 'hoy' : `en ${daysRemaining} día${daysRemaining > 1 ? 's' : ''}`}. ¡Suscribite para no perder tus datos!`
-                    : `Prueba gratuita · ${daysRemaining} día${daysRemaining > 1 ? 's' : ''} restante${daysRemaining > 1 ? 's' : ''}`
-                }
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,.75)', letterSpacing: '.01em' }}>
+                Prueba gratuita · <strong style={{ color: '#fff', fontWeight: 700 }}>{daysRemaining} día{daysRemaining !== 1 ? 's' : ''}</strong> restante{daysRemaining !== 1 ? 's' : ''}
             </span>
+
             <button
                 onClick={handleSubscribe}
                 disabled={loading}
                 style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    padding: '4px 12px', borderRadius: 6,
-                    border: 'none', cursor: loading ? 'wait' : 'pointer',
-                    fontSize: 11, fontWeight: 700,
-                    background: '#DCED31', color: '#282A28',
-                    transition: 'opacity .13s',
+                    padding: '3px 12px',
+                    borderRadius: 5,
+                    border: 'none',
+                    cursor: loading ? 'wait' : 'pointer',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: '#E53935',
+                    color: '#fff',
                     opacity: loading ? .6 : 1,
+                    transition: 'opacity .13s',
+                    fontFamily: "'Inter', sans-serif",
+                    letterSpacing: '.01em',
                 }}
+                onMouseEnter={e => e.currentTarget.style.background = '#C62828'}
+                onMouseLeave={e => e.currentTarget.style.background = '#E53935'}
             >
-                <Zap size={11} strokeWidth={2.5} />
                 {loading ? 'Cargando...' : 'Suscribirme'}
             </button>
+
             <button
                 onClick={() => setDismissed(true)}
                 style={{
-                    position: 'absolute', right: 12,
+                    position: 'absolute', right: 10,
                     background: 'none', border: 'none', cursor: 'pointer',
-                    color: textColor, opacity: .5, padding: 4,
-                    display: 'flex',
+                    color: 'rgba(255,255,255,.4)', padding: 4,
+                    display: 'flex', alignItems: 'center',
+                    transition: 'color .13s',
                 }}
+                onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,.8)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,.4)'}
             >
-                <X size={14} />
+                <X size={13} />
             </button>
         </div>
     )
