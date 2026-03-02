@@ -2,7 +2,9 @@
 
 import React, { useState } from "react"
 import { useTheme } from "../../lib/ThemeContext"
-import { Moon, Sun, Palette, Bell, Shield, User, ChevronRight, Save, LayoutTemplate, Smartphone, Mail, AlertTriangle } from "lucide-react"
+import { useSubscriptionContext } from "../../lib/SubscriptionContext"
+import { Moon, Sun, Palette, Shield, User, ChevronRight, Save, LayoutTemplate, Smartphone, Zap, Clock, AlertTriangle, CreditCard, LogOut } from "lucide-react"
+import { useAuth } from "../../hooks/useAuth"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -51,12 +53,56 @@ const ConfigRow = ({ label, description, children, noBorder }) => (
 
 const Configuracion = () => {
     const { darkMode, toggleDarkMode } = useTheme()
+    const { status, daysRemaining, isTrial, createSubscription, cancelSubscription, getCheckoutUrl } = useSubscriptionContext()
+    const { user, signOut } = useAuth()
+    const [loadingSub, setLoadingSub] = useState(false)
     const [guardando, setGuardando] = useState(false)
 
     const handleGuardar = () => {
         setGuardando(true)
         setTimeout(() => setGuardando(false), 800)
     }
+
+    const handleSubscribe = async () => {
+        if (loadingSub) return
+        setLoadingSub(true)
+        try {
+            await createSubscription()
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoadingSub(false)
+        }
+    }
+
+    const handleAbonar = async () => {
+        if (loadingSub) return
+        setLoadingSub(true)
+        try {
+            const url = await getCheckoutUrl()
+            if (url) window.location.href = url
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoadingSub(false)
+        }
+    }
+
+    const handleCancel = async () => {
+        if (!window.confirm("¿Seguro que querés cancelar tu suscripción? Perderás acceso al finalizar tu período actual.")) return
+        setLoadingSub(true)
+        try {
+            await cancelSubscription()
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setLoadingSub(false)
+        }
+    }
+
+    const planActivo = status === 'active'
+    const planTrial = status === 'trial'
+    const planVencido = status === 'expired'
 
     return (
         <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
@@ -67,109 +113,115 @@ const Configuracion = () => {
                     <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Sistema</p>
                     <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Configuración</h2>
                 </div>
-
-                <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={handleGuardar} disabled={guardando} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 32, borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 11, fontWeight: 700, border: 'none', cursor: guardando ? 'default' : 'pointer', transition: 'all .13s', boxShadow: '0 2px 8px rgba(220,237,49,.2)', opacity: guardando ? .7 : 1 }}
-                        onMouseEnter={e => { if (!guardando) e.currentTarget.style.transform = 'translateY(-1px)' }} onMouseLeave={e => { if (!guardando) e.currentTarget.style.transform = '' }}>
-                        <Save size={14} strokeWidth={2.5} /> {guardando ? 'Guardando...' : 'Guardar Cambios'}
-                    </button>
-                </div>
             </header>
 
             <div style={{ padding: '24px', maxWidth: 860, margin: '0 auto', width: '100%' }}>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
 
-                    {/* COLUMNA IZQUIERDA */}
+                    {/* COLUMNA IZQUIERDA: PLAN Y SUSCRIPCION */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                        {/* MI PLAN */}
+                        <div style={{ background: surface, borderRadius: 14, border: planActivo ? `1px solid #DCED31` : `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
+                            {planActivo && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: '#DCED31' }} />}
+
+                            <SectionTitle icon={CreditCard} title="Mi Suscripción" desc="Detalles de tu plan actual y facturación" />
+
+                            <div style={{ background: surface2, borderRadius: 10, border: `1px solid ${border}`, padding: '16px', marginBottom: 16 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <div style={{
+                                            width: 8, height: 8, borderRadius: '50%',
+                                            background: planActivo ? '#DCED31' : planTrial ? '#FCD34D' : '#E53935',
+                                            boxShadow: `0 0 0 2px ${planActivo ? 'rgba(220,237,49,.3)' : planTrial ? 'rgba(252,211,77,.3)' : 'rgba(229,57,53,.3)'}`
+                                        }} />
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>
+                                            {planActivo ? 'Plan Pro Activo' : planTrial ? 'Prueba Gratuita' : 'Suscripción Vencida'}
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'rgba(48,54,47,.05)', padding: '2px 8px', borderRadius: 4 }}>
+                                        $20.000 / mes
+                                    </span>
+                                </div>
+
+                                <p style={{ fontSize: 12, color: ct2, lineHeight: 1.5 }}>
+                                    {planActivo && `Tu suscripción está al día. Próximo cobro en ${daysRemaining} días.`}
+                                    {planTrial && `Estás en período de prueba gratuito. Te quedan ${daysRemaining} días antes de que se pause tu cuenta.`}
+                                    {planVencido && `Tu plan ha expirado. Aboná para reactivar tu cuenta y seguir operando sin límites.`}
+                                </p>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: 10 }}>
+                                {!planActivo && (
+                                    <button onClick={handleSubscribe} disabled={loadingSub} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', transition: 'all .13s', opacity: loadingSub ? .7 : 1 }}>
+                                        <Zap size={14} strokeWidth={2.5} /> {loadingSub ? 'Cargando...' : 'Suscribirme Ahora'}
+                                    </button>
+                                )}
+
+                                {planActivo && (
+                                    <>
+                                        <button onClick={handleAbonar} disabled={loadingSub} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: surface2, border: `1px solid ${border}`, color: ct2, fontSize: 12, fontWeight: 600, cursor: loadingSub ? 'default' : 'pointer', transition: 'all .13s' }}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(48,54,47,.03)'} onMouseLeave={e => e.currentTarget.style.background = surface2}>
+                                            Adelantar Pago
+                                        </button>
+                                        <button onClick={handleCancel} disabled={loadingSub} style={{ padding: '10px 14px', borderRadius: 8, background: 'transparent', border: `1px solid rgba(229,57,53,.2)`, color: '#E53935', fontSize: 12, fontWeight: 600, cursor: loadingSub ? 'default' : 'pointer', transition: 'all .13s' }}
+                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                            Cancelar
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                        </div>
+
+                        {/* CUENTA */}
+                        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
+                            <SectionTitle icon={User} title="Mi Cuenta" desc="Información de tu perfil" />
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                                <div style={{ width: 48, height: 48, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: accent, border: `1px solid rgba(51,65,57,.15)` }}>
+                                    {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 14, fontWeight: 700, color: ct1 }}>{user?.user_metadata?.full_name || 'Administrador'}</p>
+                                    <p style={{ fontSize: 12, color: ct3 }}>{user?.email}</p>
+                                </div>
+                            </div>
+
+                            <button onClick={signOut} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: surface2, border: `1px solid ${border}`, color: '#E53935', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all .13s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,.05)'} onMouseLeave={e => e.currentTarget.style.background = surface2}>
+                                <LogOut size={14} /> Cerrar Sesión
+                            </button>
+                        </div>
+
+                    </div>
+
+                    {/* COLUMNA DERECHA: APARIENCIA Y EXTRAS */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
                         {/* APARIENCIA */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
-                            <SectionTitle icon={Palette} title="Apariencia y Tema" desc="Personalizá cómo se ve la aplicación" />
+                            <SectionTitle icon={Palette} title="Apariencia" desc="Personalizá cómo se ve la aplicación" />
 
-                            <ConfigRow label="Modo Oscuro" description="Cambia el tema de la interfaz al modo oscuro. Ideal para ambientes de poca luz o para uso nocturno prolongado." noBorder>
+                            <ConfigRow label="Modo Oscuro" description="Cambia el tema de la interfaz al modo oscuro. Ideal para ambientes de poca luz." noBorder>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px', borderRadius: 30, background: surface2, border: `1px solid ${border}` }}>
                                     {darkMode ? <Moon size={14} style={{ color: accent }} /> : <Sun size={14} style={{ color: ct3 }} />}
                                     <ToggleSwitch enabled={darkMode} onChange={toggleDarkMode} />
                                 </div>
                             </ConfigRow>
-
-                            <div style={{ marginTop: 14, padding: '16px', borderRadius: 10, border: `1px dashed rgba(51,65,57,.2)`, background: 'rgba(51,65,57,.02)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: darkMode ? '#3B82F6' : '#DCED31', boxShadow: `0 0 0 2px ${darkMode ? 'rgba(59,130,246,.2)' : 'rgba(220,237,49,.3)'}` }} />
-                                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: ct2 }}>
-                                        {darkMode ? "Preview Oscuro" : "Preview Claro"}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'flex', gap: 10 }}>
-                                    {[1, 2].map(i => (
-                                        <div key={i} style={{ flex: 1, padding: 10, borderRadius: 8, background: darkMode ? '#282A28' : surface2, border: `1px solid ${border}`, boxShadow: '0 2px 8px rgba(0,0,0,.04)' }}>
-                                            <div style={{ height: 4, width: '40%', borderRadius: 2, background: darkMode ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.1)', marginBottom: 10 }} />
-                                            <div style={{ height: 6, width: '80%', borderRadius: 3, background: darkMode ? 'rgba(255,255,255,.4)' : 'rgba(0,0,0,.8)' }} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
                         </div>
 
                         {/* PREFERENCIAS DEL SISTEMA */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
-                            <SectionTitle icon={LayoutTemplate} title="Opciones de Interfaz" desc="Ajustes de comportamiento del panel" />
+                            <SectionTitle icon={LayoutTemplate} title="Preferencias" desc="Ajustes de comportamiento del panel" />
 
-                            <ConfigRow label="Vista Compacta" description="Reduce los márgenes y espaciados para mostrar más información en pantalla.">
-                                <ToggleSwitch enabled={true} onChange={() => { }} />
-                            </ConfigRow>
-                            <ConfigRow label="Animaciones" description="Habilitar transiciones suaves y efectos visuales al navegar por el sistema.">
-                                <ToggleSwitch enabled={true} onChange={() => { }} />
-                            </ConfigRow>
-                            <ConfigRow label="Abrir modales con atajos" description="Permite usar atajos de teclado como Ctrl para acciones rápidas." noBorder>
-                                <ToggleSwitch enabled={true} onChange={() => { }} />
-                            </ConfigRow>
-                        </div>
-
-                    </div>
-
-                    {/* COLUMNA DERECHA */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-                        {/* NOTIFICACIONES */}
-                        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
-                            <SectionTitle icon={Bell} title="Notificaciones" desc="Gestioná qué alertas querés recibir y cuándo" />
-
-                            <ConfigRow label="Stock Bajo" description="Alertar cuando un producto caiga por debajo de su punto de reposición.">
-                                <ToggleSwitch enabled={true} onChange={() => { }} />
-                            </ConfigRow>
-                            <ConfigRow label="Facturas Vencidas" description="Recibir un aviso periódico sobre saldos pendientes de pago por parte de clientes.">
-                                <ToggleSwitch enabled={true} onChange={() => { }} />
-                            </ConfigRow>
-                            <ConfigRow label="Cierre de Caja" description="Recordatorio diario para asentar el cierre al finalizar el turno operativo." noBorder>
+                            <ConfigRow label="Vista Compacta" description="Reduce los márgenes (Próximamente)">
                                 <ToggleSwitch enabled={false} onChange={() => { }} />
                             </ConfigRow>
-                        </div>
-
-                        {/* SEGURIDAD & CUENTA */}
-                        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
-                            <SectionTitle icon={Shield} title="Seguridad y Acceso" desc="Administrá tu perfil y protección" />
-
-                            {[
-                                { label: "Datos del Perfil", desc: "Nombre, email y avatar", icon: User },
-                                { label: "Cambiar Contraseña", desc: "Verificá tu clave de acceso al sistema", icon: Shield },
-                                { label: "Dispositivos Activos", desc: "Cerrar sesión en otros equipos", icon: Smartphone },
-                            ].map((item, i) => (
-                                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderRadius: 8, border: `1px solid ${border}`, background: surface2, marginBottom: i === 2 ? 0 : 8, cursor: 'pointer', transition: 'all .1s' }}
-                                    onMouseEnter={e => e.currentTarget.style.border = `1px solid ${accent}`} onMouseLeave={e => e.currentTarget.style.border = `1px solid ${border}`}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(51,65,57,.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <item.icon size={14} style={{ color: ct2 }} />
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: 13, fontWeight: 600, color: ct1 }}>{item.label}</p>
-                                            <p style={{ fontSize: 11, color: ct3, marginTop: 1 }}>{item.desc}</p>
-                                        </div>
-                                    </div>
-                                    <ChevronRight size={14} style={{ color: ct3 }} />
-                                </div>
-                            ))}
+                            <ConfigRow label="Animaciones Reales" description="Transiciones suaves en el sistema" noBorder>
+                                <ToggleSwitch enabled={true} onChange={() => { }} />
+                            </ConfigRow>
                         </div>
 
                     </div>
@@ -182,7 +234,7 @@ const Configuracion = () => {
                     </div>
                     <div>
                         <p style={{ fontSize: 11, fontWeight: 600, color: ct3, letterSpacing: '.02em' }}>FacturaPRO by Qora Data</p>
-                        <p style={{ fontSize: 10, color: 'rgba(139,137,130,.7)' }}>v2.0.0 (Premium Build)</p>
+                        <p style={{ fontSize: 10, color: 'rgba(139,137,130,.7)' }}>v2.0.1 (SaaS Build)</p>
                     </div>
                 </div>
 
