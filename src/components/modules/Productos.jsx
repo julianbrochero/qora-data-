@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import {
   Plus, Search, Edit, Trash2, Tag, Package, X, ChevronLeft, ChevronRight,
   AlertTriangle, CheckCircle, BarChart2, Archive, Download, Upload
-} from "lucide-react"
+, Menu} from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -34,7 +34,7 @@ const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4,
 /* ══════════════════════════════════════════════
    MODAL CATEGORÍAS
 ══════════════════════════════════════════════ */
-const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onEliminar }) => {
+const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onEliminar , onOpenMobileSidebar}) => {
   const [nombre, setNombre] = useState("")
   const [desc, setDesc] = useState("")
   const [editId, setEditId] = useState(null)
@@ -208,9 +208,14 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
       {/* ══ HEADER ══ */}
       <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+            <Menu size={16} strokeWidth={2} />
+          </button>
+          <div>
           <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
           <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Productos</h2>
+        </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

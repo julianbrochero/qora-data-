@@ -247,7 +247,8 @@ const SistemaFacturacion = () => {
     const commonProps = {
       searchTerm,
       setSearchTerm,
-      openModal: openModalHandler
+      openModal: openModalHandler,
+      onOpenMobileSidebar: () => setSidebarOpen(true)
     };
 
     return {
@@ -329,7 +330,7 @@ const SistemaFacturacion = () => {
           recargarDatos={recargarTodosLosDatos}
         />
       ),
-      configuracion: <Configuracion />,
+      configuracion: <Configuracion {...commonProps} />,
     }[activeModule] || (
         <Dashboard
           {...commonProps}

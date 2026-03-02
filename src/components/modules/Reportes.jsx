@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from 'react'
-import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search, ChevronLeft, ChevronRight , Menu} from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -32,7 +32,7 @@ const pillSelect = {
   fontFamily: "'Inter', sans-serif", transition: 'border-color .15s'
 }
 
-const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], searchTerm = "", setSearchTerm }) => {
+const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], searchTerm = "", setSearchTerm , onOpenMobileSidebar}) => {
   const [periodo, setPeriodo] = useState("mes")
   const anioActualReal = new Date().getFullYear()
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActualReal)
@@ -139,9 +139,14 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
 
       {/* ══ HEADER ══ */}
       <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+            <Menu size={16} strokeWidth={2} />
+          </button>
+          <div>
           <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Análisis</p>
           <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Reportes Estadísticos</h2>
+        </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
