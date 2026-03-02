@@ -246,17 +246,22 @@ const AdminPanel = () => {
     const fetchData = useCallback(async () => {
         setLoading(true)
         try {
-            // Traer todos los usuarios de auth.users via RPC o via join
-            const { data: subs, error } = await supabase
-                .from('subscriptions')
-                .select('*')
-                .order('created_at', { ascending: false })
+            // Intentar usar la función RPC que trae emails
+            const { data: rpcData, error: rpcError } = await supabase
+                .rpc('get_admin_subscriptions')
 
-            if (error) throw error
-
-            // Intentar enriquecer con emails de auth si está disponible
-            // (Supabase normalmente no permite leer auth.users desde el cliente — usamos lo que hay)
-            setRows(subs || [])
+            if (!rpcError && rpcData) {
+                setRows(rpcData)
+            } else {
+                // Fallback: leer tabla directa (sin emails)
+                console.warn('RPC no disponible, usando fallback:', rpcError?.message)
+                const { data: subs, error } = await supabase
+                    .from('subscriptions')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                if (error) throw error
+                setRows(subs || [])
+            }
             setLastRefresh(new Date())
         } catch (e) {
             console.error('Admin panel error:', e)
@@ -274,7 +279,9 @@ const AdminPanel = () => {
 
     // Filtrado
     const filtered = rows.filter(r => {
-        const matchSearch = !search || (r.user_id || '').toLowerCase().includes(search.toLowerCase())
+        const matchSearch = !search ||
+            (r.email || '').toLowerCase().includes(search.toLowerCase()) ||
+            (r.user_id || '').toLowerCase().includes(search.toLowerCase())
         const status = getStatus(r)
         const matchFilter = filterStatus === 'all' || status === filterStatus
         return matchSearch && matchFilter
@@ -355,7 +362,7 @@ const AdminPanel = () => {
                 <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Buscar por ID de usuario..."
+                    placeholder="Buscar por email o ID..."
                     style={{
                         width: '100%', height: 38, paddingLeft: 36, paddingRight: 12,
                         borderRadius: 9, border: '1.5px solid #E5E7EB', fontSize: 12,
@@ -381,7 +388,7 @@ const AdminPanel = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid #F0F0EE' }}>
-                                {['Usuario (ID)', 'Estado', 'Trial hasta', 'Plan hasta', 'Acción'].map(h => (
+                                {['Email', 'Estado', 'Trial hasta', 'Plan PRO hasta', 'Acción'].map(h => (
                                     <th key={h} style={{
                                         padding: '10px 16px', textAlign: 'left',
                                         fontSize: 10, fontWeight: 700, color: '#9CA3AF',
@@ -403,13 +410,14 @@ const AdminPanel = () => {
                                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                     >
                                         <td style={{ padding: '12px 16px' }}>
-                                            <span style={{
-                                                fontSize: 10, fontFamily: 'monospace',
-                                                color: '#4B5563', background: '#F3F4F6',
-                                                padding: '2px 6px', borderRadius: 4,
-                                            }}>
-                                                {row.user_id ? row.user_id.slice(0, 8) + '...' : '—'}
-                                            </span>
+                                            <div>
+                                                <p style={{ fontSize: 12, fontWeight: 600, color: '#1e2320', margin: 0 }}>
+                                                    {row.email || 'Sin email'}
+                                                </p>
+                                                <p style={{ fontSize: 9, fontFamily: 'monospace', color: '#9CA3AF', margin: '2px 0 0' }}>
+                                                    {row.user_id ? row.user_id.slice(0, 12) + '...' : '—'}
+                                                </p>
+                                            </div>
                                         </td>
                                         <td style={{ padding: '12px 16px' }}>
                                             <StatusBadge status={status} />
