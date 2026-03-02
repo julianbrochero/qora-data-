@@ -26,8 +26,9 @@ const getStatus = (row) => {
     const trialUntil = row.trial_until ? new Date(row.trial_until) : new Date(0)
     const paidUntil = row.paid_until ? new Date(row.paid_until) : null
 
-    if (now <= trialUntil) return 'trial'
+    // PRO tiene prioridad sobre trial
     if (paidUntil && now <= paidUntil) return 'active'
+    if (now <= trialUntil) return 'trial'
     if (paidUntil && now <= new Date(paidUntil.getTime() + GRACE_DAYS * 86400000)) return 'grace'
     if (!paidUntil && now <= new Date(trialUntil.getTime() + GRACE_DAYS * 86400000)) return 'grace'
     return 'suspended'
@@ -35,7 +36,7 @@ const getStatus = (row) => {
 
 const STATUS_CONFIG = {
     trial: { label: 'Trial', color: '#1D4ED8', bg: '#EFF6FF', icon: Clock },
-    active: { label: 'Activo', color: '#15803D', bg: '#F0FDF4', icon: CheckCircle },
+    active: { label: 'PRO', color: '#15803D', bg: '#F0FDF4', icon: CheckCircle },
     grace: { label: 'Gracia', color: '#B45309', bg: '#FEF3C7', icon: AlertTriangle },
     suspended: { label: 'Suspendido', color: '#B91C1C', bg: '#FEF2F2', icon: AlertCircle },
     sin_datos: { label: 'Sin datos', color: '#6B7280', bg: '#F9FAFB', icon: User },
@@ -86,9 +87,13 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
             const newPaidUntil = new Date(base)
             newPaidUntil.setMonth(newPaidUntil.getMonth() + months)
 
+            // Activar PRO: poner paid_until Y terminar trial inmediatamente
             const { error: upErr } = await supabase
                 .from('subscriptions')
-                .update({ paid_until: newPaidUntil.toISOString() })
+                .update({
+                    paid_until: newPaidUntil.toISOString(),
+                    trial_until: new Date().toISOString(), // Terminar trial al instante
+                })
                 .eq('user_id', user.user_id)
 
             if (upErr) throw upErr
