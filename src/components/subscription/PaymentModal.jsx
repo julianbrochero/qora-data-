@@ -11,10 +11,10 @@ import { X, Copy, CheckCircle, MessageCircle, CreditCard, ChevronRight, Clock, P
 
 // ─── CONFIGURA ESTOS DATOS ────────────────────────────────────────────────────
 const PAYMENT_INFO = {
-    alias: 'gestify.pagos',
-    cbu: '0000003100037000000001',
+    alias: 'gestifypagos',
+    cbu: '1430001713032977570013',
     titular: 'Julian Brochero',
-    banco: 'Mercado Pago / Banco',
+    banco: 'Brubank',
     monto: '$14.999',
 }
 const WHATSAPP_NUMBER = '5493534087718'
