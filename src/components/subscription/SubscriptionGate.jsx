@@ -69,6 +69,7 @@ const SuspendedBlockingModal = ({ email }) => {
                 background: '#fff', borderRadius: 24,
                 boxShadow: '0 32px 100px rgba(0,0,0,.35)',
                 overflow: 'hidden',
+                maxHeight: '90vh', overflowY: 'auto',
                 animation: 'sbmSlideUp .3s ease',
             }}>
                 {/* Header rojo bloqueante */}
@@ -116,12 +117,12 @@ const SuspendedBlockingModal = ({ email }) => {
                 </div>
 
                 {/* Contenido */}
-                <div style={{ padding: '22px 28px 28px' }}>
+                <div style={{ padding: 'clamp(16px, 4vw, 22px) clamp(16px, 5vw, 28px) clamp(20px, 5vw, 28px)' }}>
 
                     {/* Alerta principal */}
                     <div style={{
                         background: '#FEF2F2', borderRadius: 12,
-                        padding: '14px 16px', marginBottom: 18,
+                        padding: '12px 14px', marginBottom: 18,
                         border: '1px solid #FECACA',
                         display: 'flex', alignItems: 'flex-start', gap: 10,
                     }}>
@@ -131,8 +132,8 @@ const SuspendedBlockingModal = ({ email }) => {
                                 Para reactivar tu cuenta:
                             </p>
                             <p style={{ fontSize: 11, color: '#B91C1C', margin: 0, lineHeight: 1.5 }}>
-                                Realizá la transferencia con los datos de abajo y enviá el comprobante.
-                                Tu cuenta se activará manualmente una vez verificado el pago.
+                                Realizá la transferencia y enviá el comprobante.
+                                La activación manual puede demorar.
                             </p>
                         </div>
                     </div>
@@ -210,19 +211,19 @@ const SuspendedBlockingModal = ({ email }) => {
                     <button
                         onClick={handleWhatsApp}
                         style={{
-                            width: '100%', height: 48, borderRadius: 12,
+                            width: '100%', minHeight: 48, borderRadius: 12,
                             background: '#25D366', color: '#fff', border: 'none',
-                            fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                            fontSize: 13, fontWeight: 800, cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                             transition: 'filter .13s',
-                            marginBottom: 10,
+                            marginBottom: 10, padding: '10px', flexWrap: 'wrap',
                             boxShadow: '0 4px 12px rgba(37,211,102,.25)',
                         }}
                         onMouseEnter={e => e.currentTarget.style.filter = 'brightness(.9)'}
                         onMouseLeave={e => e.currentTarget.style.filter = 'none'}
                     >
                         <MessageCircle size={18} />
-                        Enviar comprobante por WhatsApp
+                        Enviar comprobante
                     </button>
 
                     {/* Botón Email */}
@@ -324,7 +325,7 @@ const SubscriptionGate = ({ children }) => {
                     width: '100%', maxWidth: 440,
                     background: '#fff', borderRadius: 24,
                     boxShadow: '0 32px 100px rgba(0,0,0,.3)',
-                    overflow: 'hidden',
+                    overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto',
                     animation: 'sbmSlideUp .3s ease',
                 }}>
                     {/* Header */}
@@ -366,7 +367,7 @@ const SubscriptionGate = ({ children }) => {
                     </div>
 
                     {/* Contenido */}
-                    <div style={{ padding: '22px 28px 28px' }}>
+                    <div style={{ padding: 'clamp(16px, 4vw, 22px) clamp(16px, 5vw, 28px) clamp(20px, 5vw, 28px)' }}>
                         <div style={{
                             background: '#FEF3C7', borderRadius: 12,
                             padding: '14px 16px', marginBottom: 18,
@@ -379,7 +380,7 @@ const SubscriptionGate = ({ children }) => {
                                     Activá tu Plan PRO para seguir usando Gestify
                                 </p>
                                 <p style={{ fontSize: 11, color: '#B45309', margin: 0, lineHeight: 1.5 }}>
-                                    Realizá la transferencia y tu cuenta se activará automáticamente, o enviá el comprobante para una activación más rápida.
+                                    Realizá la transferencia para activación automática, o enviá comprobante si querés agilizarlo.
                                 </p>
                             </div>
                         </div>
@@ -387,11 +388,11 @@ const SubscriptionGate = ({ children }) => {
                         <button
                             onClick={() => setModalOpen(true)}
                             style={{
-                                width: '100%', height: 48, borderRadius: 12,
+                                width: '100%', minHeight: 48, borderRadius: 12,
                                 background: '#334139', color: '#DCED31', border: 'none',
-                                fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                                fontSize: 13, fontWeight: 800, cursor: 'pointer', padding: '10px',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                                transition: 'all .15s',
+                                transition: 'all .15s', flexWrap: 'wrap',
                                 boxShadow: '0 4px 12px rgba(51,65,57,.2)',
                             }}
                             onMouseEnter={e => e.currentTarget.style.background = '#283330'}
