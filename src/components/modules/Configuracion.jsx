@@ -51,7 +51,7 @@ const ConfigRow = ({ label, description, children, noBorder }) => (
     </div>
 )
 
-const Configuracion = () => {
+const Configuracion = ({ onOpenMobileSidebar }) => {
     const { darkMode, toggleDarkMode } = useTheme()
     const { status, daysRemaining, isTrial, isPro, email, createSubscription, cancelSubscription, getCheckoutUrl } = useSubscriptionContext()
     const { user, signOut } = useAuth()
