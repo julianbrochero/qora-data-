@@ -426,7 +426,7 @@ const AnalyticsChart = ({ facturas }) => {
 const Dashboard = ({
   clientes = [], productos = [], facturas = [], pedidos = [],
   caja = {}, onViewAllFacturas, onViewAllProductos,
-  onViewAllPedidos, onViewAllClientes, onViewAllCaja, openModal, onOpenMobileSidebar,
+  onViewAllPedidos, onViewAllClientes, onViewAllCaja, onViewReportes, openModal, onOpenMobileSidebar,
 }) => {
   const { user } = useAuth()
   const { isPro } = useSubscriptionContext()
@@ -529,7 +529,7 @@ const Dashboard = ({
             { label: <div className="flex items-center gap-1"><span>Nuevo Pedido</span><span style={{ padding: '1.5px 4px', background: 'rgba(0,0,0,.15)', borderRadius: 3, fontSize: 8.5, fontFamily: "'DM Mono', monospace", marginLeft: 1 }}>Ctrl</span></div>, stringLabel: 'Nuevo Pedido', icon: <Plus size={10} strokeWidth={2.5} />, fn: () => openModal && openModal('nuevo-pedido'), primary: true, cls: 'hidden md:flex' },
             { label: 'Cliente', stringLabel: 'Cliente', icon: <UserPlus size={10} strokeWidth={2} />, fn: () => openModal && openModal('nuevo-cliente'), cls: 'hidden lg:flex' },
             { label: 'Producto', stringLabel: 'Producto', icon: <PackagePlus size={10} strokeWidth={2} />, fn: () => openModal && openModal('nuevo-producto'), cls: 'hidden lg:flex' },
-            { label: 'Reportes', stringLabel: 'Reportes', icon: <BarChart3 size={10} strokeWidth={2} />, fn: () => { }, cls: 'hidden lg:flex' },
+            { label: 'Reportes', stringLabel: 'Reportes', icon: <BarChart3 size={10} strokeWidth={2} />, fn: () => { onViewReportes && onViewReportes() }, cls: 'hidden lg:flex' },
           ].map(({ label, stringLabel, icon, fn, primary, cls }) => (
             <button key={stringLabel} onClick={fn}
               className={`${cls} items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all`}
@@ -571,7 +571,7 @@ const Dashboard = ({
           { label: 'Nuevo Pedido', fn: () => openModal && openModal('nuevo-pedido'), primary: true },
           { label: 'Cliente', fn: () => openModal && openModal('nuevo-cliente') },
           { label: 'Producto', fn: () => openModal && openModal('nuevo-producto') },
-          { label: 'Reportes', fn: () => { } },
+          { label: 'Reportes', fn: () => { onViewReportes && onViewReportes() } },
         ].map(({ label, fn, primary }) => (
           <button key={label} onClick={fn}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap flex-shrink-0"

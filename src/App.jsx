@@ -276,6 +276,7 @@ const SistemaFacturacion = () => {
           onViewAllPedidos={() => setActiveModule('pedidos')}
           onViewAllClientes={() => setActiveModule('clientes')}
           onViewAllCaja={() => setActiveModule('caja')}
+          onViewReportes={() => setActiveModule('reportes')}
         />
       ),
       facturacion: (
