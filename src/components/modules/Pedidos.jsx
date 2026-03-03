@@ -526,18 +526,183 @@ const Pedidos = ({
         </div>
       )}
 
-      {/* ═══════════ VISTA CALENDARIO (placeholder) ═══════════ */}
-      {(vistaActiva === "semana" || vistaActiva === "mes") && (
-        <div style={{ padding: '14px 24px 32px' }}>
-          <div className={cardCls} style={{ ...cardStyle, padding: 48, textAlign: 'center' }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', border: `1px solid ${accent}22` }}>
-              <Calendar size={18} strokeWidth={1.5} style={{ color: accent }} />
+      {/* ═══════════ VISTA CALENDARIO ═══════════ */}
+      {(vistaActiva === "semana" || vistaActiva === "mes") && (() => {
+        const year = fechaActual.getFullYear()
+        const month = fechaActual.getMonth()
+
+        // Pedidos que tienen fecha_entrega_estimada
+        const pedidosConFecha = pedidosSeguros.filter(p => p.fecha_entrega_estimada)
+
+        // Agrupar pedidos por fecha de entrega (key = "YYYY-MM-DD")
+        const porFecha = {}
+        pedidosConFecha.forEach(p => {
+          const key = p.fecha_entrega_estimada?.slice(0, 10)
+          if (key) { if (!porFecha[key]) porFecha[key] = []; porFecha[key].push(p) }
+        })
+
+        const estadoColor = { pendiente: '#8B8982', preparando: '#373F47', enviado: '#606B6C', entregado: '#334139', cancelado: '#b0aca8' }
+
+        if (vistaActiva === 'mes') {
+          // Primer día del mes y cantidad de días
+          const primero = new Date(year, month, 1)
+          const diasEnMes = new Date(year, month + 1, 0).getDate()
+          const inicioSemana = primero.getDay() // 0=dom
+
+          const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+          const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+          // Celdas: espacios vacíos + días del mes
+          const celdas = []
+          for (let i = 0; i < inicioSemana; i++) celdas.push(null)
+          for (let d = 1; d <= diasEnMes; d++) celdas.push(d)
+
+          const hoy = new Date(); const esHoy = (d) => d && hoy.getFullYear() === year && hoy.getMonth() === month && hoy.getDate() === d
+
+          return (
+            <div style={{ padding: '14px 24px 32px' }}>
+              <div className={cardCls} style={cardStyle}>
+                {/* Nav */}
+                <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: surface2 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Calendar size={15} strokeWidth={2} style={{ color: accent }} />
+                    <span style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-.02em' }}>
+                      {meses[month]} {year}
+                    </span>
+                    <span style={{ fontSize: 11, color: ct3, marginLeft: 4 }}>
+                      · {pedidosConFecha.filter(p => { const d = new Date(p.fecha_entrega_estimada); return d.getFullYear() === year && d.getMonth() === month }).length} entregas este mes
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={() => setFechaActual(new Date(year, month - 1, 1))} style={{ width: 28, height: 28, border: `1px solid ${border}`, background: surface, borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                      <ChevronLeft size={13} strokeWidth={2.5} />
+                    </button>
+                    <button onClick={() => setFechaActual(new Date())} style={{ height: 28, padding: '0 10px', border: `1px solid ${border}`, background: surface, borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 600, color: ct2 }}>
+                      Hoy
+                    </button>
+                    <button onClick={() => setFechaActual(new Date(year, month + 1, 1))} style={{ width: 28, height: 28, border: `1px solid ${border}`, background: surface, borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                      <ChevronRight size={13} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cabecera días */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: `1px solid ${border}`, background: surface2 }}>
+                  {dias.map(d => (
+                    <div key={d} style={{ padding: '6px 0', textAlign: 'center', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em' }}>{d}</div>
+                  ))}
+                </div>
+
+                {/* Grid de días */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                  {celdas.map((dia, i) => {
+                    const key = dia ? `${year}-${String(month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}` : null
+                    const pedidosDia = key ? (porFecha[key] || []) : []
+                    const hoyDia = esHoy(dia)
+                    return (
+                      <div key={i} style={{
+                        minHeight: 90, padding: '6px 7px', borderRight: `1px solid ${border}`, borderBottom: `1px solid ${border}`,
+                        background: !dia ? 'rgba(48,54,47,.015)' : hoyDia ? 'rgba(51,65,57,.04)' : 'transparent',
+                        transition: 'background .13s',
+                      }}>
+                        {dia && (
+                          <>
+                            <div style={{ fontSize: 11, fontWeight: hoyDia ? 800 : 500, color: hoyDia ? accent : ct3, marginBottom: 4, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: hoyDia ? 'rgba(51,65,57,.12)' : 'transparent' }}>
+                              {dia}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              {pedidosDia.slice(0, 3).map((p, j) => (
+                                <button key={j} onClick={() => openModal && openModal('ver-pedido', p)}
+                                  style={{ textAlign: 'left', width: '100%', padding: '2px 6px', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 600, color: '#fff', background: estadoColor[p.estado] || '#8B8982', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'opacity .1s' }}
+                                  onMouseEnter={e => e.currentTarget.style.opacity = '.8'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                                  title={`${p.cliente_nombre} · ${p.codigo}`}>
+                                  {p.cliente_nombre || p.codigo}
+                                </button>
+                              ))}
+                              {pedidosDia.length > 3 && (
+                                <span style={{ fontSize: 9, color: ct3, fontWeight: 600, paddingLeft: 4 }}>+{pedidosDia.length - 3} más</span>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: ct2, marginBottom: 4 }}>Vista de Calendario</p>
-            <p style={{ fontSize: 11, color: ct3 }}>Disponible en versión completa.</p>
+          )
+        }
+
+        // ── VISTA SEMANA ──
+        const inicioSem = new Date(fechaActual)
+        const diaSem = inicioSem.getDay()
+        inicioSem.setDate(inicioSem.getDate() - diaSem)
+        const diasSemana = Array.from({ length: 7 }, (_, i) => { const d = new Date(inicioSem); d.setDate(inicioSem.getDate() + i); return d })
+        const diasLabel = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+        const meses2 = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        const hoy2 = new Date()
+        const esHoy2 = (d) => d.getFullYear() === hoy2.getFullYear() && d.getMonth() === hoy2.getMonth() && d.getDate() === hoy2.getDate()
+
+        return (
+          <div style={{ padding: '14px 24px 32px' }}>
+            <div className={cardCls} style={cardStyle}>
+              {/* Nav semana */}
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: surface2 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <CalendarDays size={15} strokeWidth={2} style={{ color: accent }} />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-.02em' }}>
+                    {diasSemana[0].getDate()} {meses2[diasSemana[0].getMonth()]} — {diasSemana[6].getDate()} {meses2[diasSemana[6].getMonth()]} {diasSemana[6].getFullYear()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={() => { const d = new Date(fechaActual); d.setDate(d.getDate() - 7); setFechaActual(d) }} style={{ width: 28, height: 28, border: `1px solid ${border}`, background: surface, borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                    <ChevronLeft size={13} strokeWidth={2.5} />
+                  </button>
+                  <button onClick={() => setFechaActual(new Date())} style={{ height: 28, padding: '0 10px', border: `1px solid ${border}`, background: surface, borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 600, color: ct2 }}>
+                    Hoy
+                  </button>
+                  <button onClick={() => { const d = new Date(fechaActual); d.setDate(d.getDate() + 7); setFechaActual(d) }} style={{ width: 28, height: 28, border: `1px solid ${border}`, background: surface, borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                    <ChevronRight size={13} strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Columnas de días */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                {diasSemana.map((dia, i) => {
+                  const key = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`
+                  const pedidosDia = porFecha[key] || []
+                  const hoy = esHoy2(dia)
+                  return (
+                    <div key={i} style={{ borderRight: i < 6 ? `1px solid ${border}` : 'none', minHeight: 200 }}>
+                      {/* Cabecera día */}
+                      <div style={{ padding: '8px 10px', borderBottom: `1px solid ${border}`, background: hoy ? 'rgba(51,65,57,.06)' : surface2, textAlign: 'center' }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em' }}>{diasLabel[i]}</div>
+                        <div style={{ fontSize: 18, fontWeight: hoy ? 800 : 500, color: hoy ? accent : ct1, marginTop: 2 }}>{dia.getDate()}</div>
+                      </div>
+                      {/* Pedidos */}
+                      <div style={{ padding: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {pedidosDia.map((p, j) => (
+                          <button key={j} onClick={() => openModal && openModal('ver-pedido', p)}
+                            style={{ textAlign: 'left', width: '100%', padding: '5px 8px', borderRadius: 6, border: 'none', cursor: 'pointer', background: estadoColor[p.estado] || '#8B8982', transition: 'opacity .1s' }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '.8'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.cliente_nombre || '—'}</div>
+                            <div style={{ fontSize: 9, color: 'rgba(255,255,255,.75)', marginTop: 1 }}>{p.codigo} · ${(parseFloat(p.total) || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 })}</div>
+                          </button>
+                        ))}
+                        {pedidosDia.length === 0 && (
+                          <div style={{ fontSize: 10, color: ct3, textAlign: 'center', paddingTop: 12, opacity: .5 }}>—</div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ═══════════ BARRA SELECCIÓN MASIVA ═══════════ */}
       {modoSeleccion && pedidosSeleccionados.length > 0 && (
