@@ -447,85 +447,67 @@ export const useFacturacion = () => {
     }
   }
 
-  // 3. Crear Pedido (Crea Pedido + Venta automáticamente)
+  // 3. Crear Pedido (Crea Pedido + Venta automáticamente) — OPTIMIZADO
   const agregarPedidoSolo = async (pedidoData) => {
     try {
-      console.log('📦 Creando Pedido + Venta:', pedidoData)
-
       // Validaciones
       if (!pedidoData.clienteNombre) throw new Error('Nombre de cliente requerido')
       if (!pedidoData.items?.length) throw new Error('Productos requeridos')
 
-      // Generar Código Pedido
-      const { data: ultimoPedido } = await supabase.from('pedidos').select('codigo').order('created_at', { ascending: false }).limit(1)
+      const total = pedidoData.items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)
+      const montoPagadoInicial = parseFloat(pedidoData.montoPagado) || 0
+      const saldoNuevoPedido = total - montoPagadoInicial
+      const hoy = new Date().toISOString().split('T')[0]
+
+      // ── PARALELO: generar codigo de pedido y numero de factura al mismo tiempo
+      const [ultimoPedidoRes, ultimaFacturaRes] = await Promise.all([
+        supabase.from('pedidos').select('codigo').order('created_at', { ascending: false }).limit(1),
+        supabase.from('facturas').select('numero').eq('tipo', 'Factura A').order('created_at', { ascending: false }).limit(1)
+      ])
+
       let num = 1
-      if (ultimoPedido?.[0]?.codigo) {
-        const m = ultimoPedido[0].codigo.match(/\d+/)
+      if (ultimoPedidoRes.data?.[0]?.codigo) {
+        const m = ultimoPedidoRes.data[0].codigo.match(/\d+/)
         if (m) num = parseInt(m[0]) + 1
       }
       const codigoPedido = `PED-${num.toString().padStart(3, '0')}`
 
-      // Calcular Total
-      const total = pedidoData.items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0)
+      let ultimoNumero = 0
+      if (ultimaFacturaRes.data?.[0]?.numero) {
+        const matches = ultimaFacturaRes.data[0].numero.match(/\d+/g)
+        if (matches) ultimoNumero = parseInt(matches[matches.length - 1]) || 0
+      }
+      const numeroFactura = `FA-${(ultimoNumero + 1).toString().padStart(8, '0')}`
 
-      // Generar Código Factura (Venta)
-      const numeroFactura = await generarNumeroFactura()
-
-      // Calcular fecha de entrega por defecto (7 días) si no se especifica
-      let fechaEntrega = pedidoData.fechaEntregaEstimada;
+      let fechaEntrega = pedidoData.fechaEntregaEstimada
       if (!fechaEntrega || String(fechaEntrega).trim() === '') {
-        const d = new Date();
-        d.setDate(d.getDate() + 7);
-        fechaEntrega = d.toISOString().split('T')[0];
+        const d = new Date(); d.setDate(d.getDate() + 7)
+        fechaEntrega = d.toISOString().split('T')[0]
       }
 
-      // A. Insertar Pedido
-      const pedidoDB = {
-        codigo: codigoPedido,
-        cliente_id: pedidoData.clienteId,
-        cliente_nombre: pedidoData.clienteNombre,
-        fecha_pedido: pedidoData.fechaPedido || new Date().toISOString().split('T')[0],
-        fecha_entrega_estimada: fechaEntrega,
-        items: JSON.stringify(pedidoData.items),
-        total: total,
-        productos_count: pedidoData.items.length,
-        notas: pedidoData.notas,
+      // ── OPTIMISTIC UI: actualizar pantalla inmediatamente, sin esperar Supabase
+      const tempId = `temp-${Date.now()}`
+      const tempVentaId = `temp-v-${Date.now()}`
+      const pedidoOptimista = {
+        id: tempId, codigo: codigoPedido,
+        cliente_id: pedidoData.clienteId, cliente_nombre: pedidoData.clienteNombre,
+        fecha_pedido: pedidoData.fechaPedido || hoy, fecha_entrega_estimada: fechaEntrega,
+        items: JSON.stringify(pedidoData.items), total,
+        productos_count: pedidoData.items.length, notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
-        monto_abonado: 0,
-        saldo_pendiente: total,
-        user_id: user.id,
-        created_at: new Date().toISOString()
+        monto_abonado: montoPagadoInicial, saldo_pendiente: saldoNuevoPedido,
+        user_id: user.id, created_at: new Date().toISOString()
       }
-      const { data: pedidoRes, error: pErr } = await supabase.from('pedidos').insert([pedidoDB]).select()
-      if (pErr) throw pErr
-      const nuevoPedido = pedidoRes[0]
-
-      // B. Insertar Venta (Factura) — vinculada al pedido por FK pedido_id
-      const ventaDB = {
-        tipo: 'Factura A',
-        numero: numeroFactura,
-        fecha: new Date().toISOString().split('T')[0],
-        cliente: pedidoData.clienteNombre,
-        pedido_id: nuevoPedido.id,
-        metodopago: 'Efectivo',
-        items: JSON.stringify(pedidoData.items),
-        total: total,
-        montopagado: 0,
-        saldopendiente: total,
-        estado: 'pendiente',
-        user_id: user.id
+      const estadoVentaOpt = saldoNuevoPedido <= 0 ? 'pagada' : montoPagadoInicial > 0 ? 'parcial' : 'pendiente'
+      const ventaOptimista = {
+        id: tempVentaId, tipo: 'Factura A', numero: numeroFactura,
+        fecha: hoy, cliente: pedidoData.clienteNombre,
+        items: JSON.stringify(pedidoData.items), total,
+        montopagado: montoPagadoInicial, saldopendiente: saldoNuevoPedido,
+        estado: estadoVentaOpt, user_id: user.id
       }
-      const { data: ventaRes, error: vErr } = await supabase.from('facturas').insert([ventaDB]).select()
-      if (vErr) throw vErr
-      const nuevaVenta = ventaRes[0]
-
-      // Actualizar estados locales
-      setPedidos(prev => [nuevoPedido, ...prev])
-      setFacturas(prev => [nuevaVenta, ...prev])
-
-      // Actualizar deuda del cliente en estado local (suma el saldo del nuevo pedido)
-      const montoPagadoInicial = parseFloat(pedidoData.montoPagado) || 0
-      const saldoNuevoPedido = total - montoPagadoInicial
+      setPedidos(prev => [pedidoOptimista, ...prev])
+      setFacturas(prev => [ventaOptimista, ...prev])
       if (pedidoData.clienteId && saldoNuevoPedido > 0) {
         setClientes(prev => prev.map(c =>
           c.id === pedidoData.clienteId
@@ -534,20 +516,52 @@ export const useFacturacion = () => {
         ))
       }
 
-      // C. Registrar Cobro Inicial — usa la función unificada registrarCobro()
-      if (pedidoData.montoPagado && parseFloat(pedidoData.montoPagado) > 0) {
-        await registrarCobro(nuevaVenta.id, pedidoData.montoPagado, `Seña Pedido ${codigoPedido}`)
+      // ── PERSISTIR en Supabase (pedido primero, factura necesita su ID)
+      const pedidoDB = {
+        codigo: codigoPedido, cliente_id: pedidoData.clienteId,
+        cliente_nombre: pedidoData.clienteNombre,
+        fecha_pedido: pedidoData.fechaPedido || hoy,
+        fecha_entrega_estimada: fechaEntrega,
+        items: JSON.stringify(pedidoData.items), total,
+        productos_count: pedidoData.items.length, notas: pedidoData.notas,
+        estado: pedidoData.estado || 'pendiente',
+        monto_abonado: 0, saldo_pendiente: total,
+        user_id: user.id, created_at: new Date().toISOString()
       }
+      const { data: pedidoRes, error: pErr } = await supabase.from('pedidos').insert([pedidoDB]).select()
+      if (pErr) throw pErr
+      const nuevoPedido = pedidoRes[0]
 
-      // Actualizar stock
-      for (const item of pedidoData.items) {
-        if (item.controlaStock !== false && item.productoId) {
-          const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
-          if (prod) {
-            await supabase.from('productos').update({ stock: prod.stock - item.cantidad }).eq('id', item.productoId)
-          }
-        }
+      const ventaDB = {
+        tipo: 'Factura A', numero: numeroFactura, fecha: hoy,
+        cliente: pedidoData.clienteNombre, pedido_id: nuevoPedido.id,
+        metodopago: 'Efectivo', items: JSON.stringify(pedidoData.items),
+        total, montopagado: 0, saldopendiente: total,
+        estado: 'pendiente', user_id: user.id
       }
+      const { data: ventaRes, error: vErr } = await supabase.from('facturas').insert([ventaDB]).select()
+      if (vErr) throw vErr
+      const nuevaVenta = ventaRes[0]
+
+      // Reemplazar registros optimistas con los reales (IDs de Supabase)
+      setPedidos(prev => prev.map(p => p.id === tempId ? nuevoPedido : p))
+      setFacturas(prev => prev.map(f => f.id === tempVentaId ? nuevaVenta : f))
+
+        // ── BACKGROUND: cobro y stock sin bloquear el return
+        ; (async () => {
+          if (montoPagadoInicial > 0) {
+            await registrarCobro(nuevaVenta.id, montoPagadoInicial, `Seña Pedido ${codigoPedido}`)
+          }
+          // Actualizar todos los stocks en paralelo
+          await Promise.all(
+            pedidoData.items
+              .filter(item => item.controlaStock !== false && item.productoId)
+              .map(async item => {
+                const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
+                if (prod) await supabase.from('productos').update({ stock: prod.stock - item.cantidad }).eq('id', item.productoId)
+              })
+          )
+        })().catch(e => console.warn('Background task error:', e))
 
       return { success: true, pedido: nuevoPedido, mensaje: 'Pedido y Venta creados' }
 
