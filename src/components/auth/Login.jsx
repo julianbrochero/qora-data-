@@ -147,10 +147,9 @@ export default function Login() {
           className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 duration-700 select-none"
         />
 
-        {/* Marca de agua / Nombre en la esquina superior derecha */}
-        <div className="absolute top-12 right-12 z-20 flex items-center gap-3 bg-white/60 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-sm border border-white/40">
-          <img src="/logologin4.png" alt="Gestify Icon" className="w-8 h-8 object-contain drop-shadow-sm" />
-          <span className="text-[22px] font-black text-[#1e2320] tracking-tight">Gestify</span>
+        {/* Marca de agua esquina superior derecha */}
+        <div className="absolute top-10 right-10 z-20">
+          <img src="/esquinader.png" alt="Gestify" className="h-[80px] w-auto object-contain drop-shadow-sm transition-transform hover:scale-105 duration-300" />
         </div>
       </div>
     </div>
