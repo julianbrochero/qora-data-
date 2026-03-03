@@ -102,6 +102,7 @@ const SistemaFacturacion = () => {
     // Nuevas funciones para pedidos
     agregarPedido,
     actualizarEstadoPedido,
+    actualizarNotasPedido,
     actualizarPedido,
     eliminarPedido,
     facturarPedido,
@@ -430,6 +431,7 @@ const SistemaFacturacion = () => {
           registrarCobro, // ✅ NUEVO - para Factura Directa
           crearFacturaDirecta, // ✅ NUEVO - para Factura Directa
           guardarPresupuesto,  // ✅ NUEVO - para Presupuestos
+          actualizarNotasPedido, // ✅ NUEVO - para guardar notas en el detalle de venta
         }}
       />
     </div>
