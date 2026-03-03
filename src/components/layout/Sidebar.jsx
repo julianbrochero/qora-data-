@@ -17,7 +17,6 @@ import {
   ClipboardList,
   ChevronLeft,
   Shield,
-  Star,
 } from "lucide-react"
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
@@ -194,24 +193,24 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
           <div style={{ padding: '0 10px 14px' }}>
             <div style={{
               borderRadius: 10,
-              border: '1px solid rgba(220,237,49,.2)',
-              background: 'rgba(220,237,49,.05)',
+              border: '1px solid rgba(255,255,255,.06)',
+              background: 'rgba(255,255,255,.03)',
               padding: '10px 12px',
               display: 'flex', alignItems: 'center', gap: 10,
             }}>
               <div style={{
-                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                background: 'rgba(220,237,49,.12)',
+                width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+                background: 'rgba(255,255,255,.06)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Star size={13} fill="#DCED31" color="#DCED31" />
+                <Shield size={12} color="rgba(255,255,255,.45)" />
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{
-                  fontSize: 11, fontWeight: 700, color: '#DCED31',
-                  letterSpacing: '.01em', lineHeight: 1.2,
-                }}>Plan PRO activo</div>
-                <div style={{ fontSize: 9.5, color: 'rgba(139,137,130,.6)', marginTop: 1 }}>
+                  fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,.7)',
+                  letterSpacing: '.02em', lineHeight: 1.2,
+                }}>Plan PRO</div>
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,.3)', marginTop: 1 }}>
                   Acceso completo
                 </div>
               </div>
