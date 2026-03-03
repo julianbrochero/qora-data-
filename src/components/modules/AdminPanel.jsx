@@ -425,7 +425,7 @@ const AdminPanel = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                                {['Email', 'Estado', 'PRO desde', 'Plan hasta', 'Acción'].map(h => (
+                                {['Email', 'Estado', 'Trial hasta', 'PRO desde', 'Plan hasta', 'Acción'].map(h => (
                                     <th key={h} style={{
                                         padding: '14px 20px', textAlign: 'left',
                                         fontSize: 11, fontWeight: 700, color: '#6B7280',
@@ -470,6 +470,9 @@ const AdminPanel = () => {
                                                     </span>
                                                 )}
                                             </div>
+                                        </td>
+                                        <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                                            {fmtDate(row.trial_until)}
                                         </td>
                                         <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
                                             {fmtDate(row.pro_since)}

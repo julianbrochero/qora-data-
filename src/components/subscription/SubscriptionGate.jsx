@@ -305,16 +305,133 @@ const SubscriptionGate = ({ children }) => {
         )
     }
 
-    // ★ CUENTA BLOQUEADA MANUALMENTE — Modal bloqueante, NO se puede cerrar
+    // ★ CUENTA BLOQUEADA MANUALMENTE — Modal bloqueante sin cierre, solo admin puede reactivar
     if (manuallySuspended && status === 'suspended') {
         return <SuspendedBlockingModal email={email} />
+    }
+
+    // ★ CUENTA SUSPENDIDA NATURALMENTE — Modal de pago con auto-activación posible
+    if (status === 'suspended' && !manuallySuspended) {
+        return (
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 99999,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)',
+                fontFamily: "'Inter', -apple-system, sans-serif",
+                padding: 20,
+            }}>
+                <div style={{
+                    width: '100%', maxWidth: 440,
+                    background: '#fff', borderRadius: 24,
+                    boxShadow: '0 32px 100px rgba(0,0,0,.3)',
+                    overflow: 'hidden',
+                    animation: 'sbmSlideUp .3s ease',
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        background: 'linear-gradient(135deg, #1e2320 0%, #334139 50%, #1e2320 100%)',
+                        padding: '28px 28px 22px',
+                        textAlign: 'center',
+                        position: 'relative',
+                        overflow: 'hidden',
+                    }}>
+                        <div style={{
+                            position: 'absolute', top: -30, right: -30,
+                            width: 100, height: 100, borderRadius: '50%',
+                            background: 'rgba(220,237,49,.06)',
+                        }} />
+
+                        <div style={{
+                            width: 56, height: 56, borderRadius: 16,
+                            background: 'rgba(220,237,49,.12)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 14px',
+                            border: '2px solid rgba(220,237,49,.2)',
+                        }}>
+                            <AlertCircle size={26} color="#DCED31" />
+                        </div>
+
+                        <h1 style={{
+                            fontSize: 20, fontWeight: 900, color: '#fff',
+                            letterSpacing: '-.03em', margin: '0 0 6px',
+                        }}>
+                            Suscripción expirada
+                        </h1>
+                        <p style={{
+                            fontSize: 12, color: 'rgba(255,255,255,.6)',
+                            margin: 0, lineHeight: 1.5,
+                        }}>
+                            Tu período de prueba o plan PRO ha finalizado.
+                        </p>
+                    </div>
+
+                    {/* Contenido */}
+                    <div style={{ padding: '22px 28px 28px' }}>
+                        <div style={{
+                            background: '#FEF3C7', borderRadius: 12,
+                            padding: '14px 16px', marginBottom: 18,
+                            border: '1px solid #FCD34D',
+                            display: 'flex', alignItems: 'flex-start', gap: 10,
+                        }}>
+                            <AlertTriangle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: 1 }} />
+                            <div>
+                                <p style={{ fontSize: 12, fontWeight: 700, color: '#92400E', margin: '0 0 4px' }}>
+                                    Activá tu Plan PRO para seguir usando Gestify
+                                </p>
+                                <p style={{ fontSize: 11, color: '#B45309', margin: 0, lineHeight: 1.5 }}>
+                                    Realizá la transferencia y tu cuenta se activará automáticamente, o enviá el comprobante para una activación más rápida.
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setModalOpen(true)}
+                            style={{
+                                width: '100%', height: 48, borderRadius: 12,
+                                background: '#334139', color: '#DCED31', border: 'none',
+                                fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                                transition: 'all .15s',
+                                boxShadow: '0 4px 12px rgba(51,65,57,.2)',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#283330'}
+                            onMouseLeave={e => e.currentTarget.style.background = '#334139'}
+                        >
+                            💳 Ver datos de pago y activar PRO
+                        </button>
+
+                        <p style={{
+                            fontSize: 10, color: '#9CA3AF', textAlign: 'center',
+                            marginTop: 14, lineHeight: 1.5,
+                        }}>
+                            Plan Gestify PRO · $14.999/mes · Acceso completo a todas las funciones
+                        </p>
+                    </div>
+                </div>
+
+                <PaymentModal
+                    isOpen={modalOpen}
+                    onClose={() => setModalOpen(false)}
+                    userEmail={email}
+                    userId={userId}
+                    manuallySuspended={false}
+                    onProActivated={() => checkStatus()}
+                />
+
+                <style>{`
+                    @keyframes sbmSlideUp {
+                        from { transform: translateY(30px) scale(.96); opacity: 0 }
+                        to { transform: none; opacity: 1 }
+                    }
+                `}</style>
+            </div>
+        )
     }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
             {/* Banner Trial (solo si NO es PRO) */}
             {status === 'trial' && !isPro && <TrialBanner daysRemaining={daysRemaining} />}
-
 
             {/* PRO activo: sin banner (se muestra en Configuración y avatar) */}
 
@@ -341,33 +458,6 @@ const SubscriptionGate = ({ children }) => {
                         }}
                     >
                         Ver datos de pago
-                    </button>
-                </div>
-            )}
-
-            {/* Banner Suspended (suspensión normal, NO manual) */}
-            {status === 'suspended' && !manuallySuspended && (
-                <div style={{
-                    background: '#450a0a', borderBottom: '1px solid #7f1d1d',
-                    padding: '10px 20px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', gap: 14, flexWrap: 'wrap',
-                    zIndex: 50, position: 'relative'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fca5a5' }}>
-                        <AlertCircle size={16} />
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>
-                            Cuenta suspendida — solo lectura. Las acciones de escritura están bloqueadas.
-                        </span>
-                    </div>
-                    <button
-                        onClick={() => setModalOpen(true)}
-                        style={{
-                            background: '#25D366', color: 'white', border: 'none',
-                            padding: '5px 14px', borderRadius: 6, fontSize: 11,
-                            fontWeight: 700, cursor: 'pointer',
-                        }}
-                    >
-                        Regularizar suscripción
                     </button>
                 </div>
             )}
