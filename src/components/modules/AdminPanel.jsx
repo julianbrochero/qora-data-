@@ -120,48 +120,53 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                 pointerEvents: 'none',
             }}>
                 <div style={{
-                    width: '100%', maxWidth: 400, background: '#fff',
-                    borderRadius: 18, boxShadow: '0 24px 80px rgba(0,0,0,.18)',
+                    width: '100%', maxWidth: 440, background: '#fff',
+                    borderRadius: 20, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
                     overflow: 'hidden', pointerEvents: 'auto',
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "'Inter', sans-serif"
                 }}>
                     {/* Header */}
-                    <div style={{ background: '#282A28', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <p style={{ fontSize: 13, fontWeight: 800, color: '#fff', margin: 0 }}>Activar / Extender Plan</p>
-                            <p style={{ fontSize: 10, color: 'rgba(255,255,255,.5)', margin: 0 }}>{user.email}</p>
+                    <div style={{ background: '#1e2320', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Zap size={18} color="#DCED31" fill="#DCED31" />
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-.02em' }}>Activar / Extender Plan</h3>
+                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', margin: '2px 0 0', fontWeight: 500 }}>{user.email}</p>
+                            </div>
                         </div>
-                        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.5)', display: 'flex' }}>
+                        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .15s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.15)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.08)'}>
                             <X size={16} />
                         </button>
                     </div>
 
-                    <div style={{ padding: '20px' }}>
+                    <div style={{ padding: '24px' }}>
                         {/* Info actual */}
-                        <div style={{ background: '#F8F8F7', borderRadius: 10, padding: '12px 14px', marginBottom: 18, display: 'flex', justifyContent: 'space-between' }}>
+                        <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between' }}>
                             <div>
-                                <p style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, marginBottom: 4 }}>ESTADO ACTUAL</p>
+                                <p style={{ fontSize: 11, color: '#6B7280', fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '.05em' }}>ESTADO ACTUAL</p>
                                 <StatusBadge status={currentStatus} />
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, marginBottom: 4 }}>PLAN VENCE</p>
-                                <p style={{ fontSize: 12, fontWeight: 700, color: '#1e2320' }}>{fmtDate(user.paid_until)}</p>
+                                <p style={{ fontSize: 11, color: '#6B7280', fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '.05em' }}>VENCIMIENTO</p>
+                                <p style={{ fontSize: 13, fontWeight: 800, color: '#111827', margin: 0 }}>{fmtDate(user.paid_until)}</p>
                             </div>
                         </div>
 
                         {/* Selector de meses */}
-                        <p style={{ fontSize: 12, color: '#4B5563', marginBottom: 10, fontWeight: 600 }}>
-                            ¿Cuántos meses querés agregar?
+                        <p style={{ fontSize: 13, color: '#374151', fontWeight: 700, margin: '0 0 12px 0' }}>
+                            ¿Cuántos meses querés otorgar?
                         </p>
-                        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
                             {[1, 2, 3, 6, 12].map(m => (
                                 <button key={m} onClick={() => setMonths(m)} style={{
-                                    flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer',
-                                    border: months === m ? '2px solid #334139' : '1.5px solid #E5E7EB',
-                                    background: months === m ? '#334139' : '#fff',
-                                    color: months === m ? '#fff' : '#374151',
-                                    fontSize: 12, fontWeight: 700,
-                                    transition: 'all .13s',
+                                    flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
+                                    border: months === m ? '2px solid #1e2320' : '1px solid #E5E7EB',
+                                    background: months === m ? '#1e2320' : '#fff',
+                                    color: months === m ? '#DCED31' : '#4B5563',
+                                    fontSize: 13, fontWeight: 700,
+                                    transition: 'all .15s',
                                 }}>
                                     {m === 12 ? '1 año' : `${m} mes`}{m > 1 && m < 12 ? 'es' : ''}
                                 </button>
@@ -176,18 +181,18 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                             newDate.setMonth(newDate.getMonth() + months)
                             return (
                                 <div style={{
-                                    background: '#F0FDF4', borderRadius: 10, padding: '10px 14px',
-                                    border: '1px solid #BBF7D0', marginBottom: 18,
-                                    display: 'flex', alignItems: 'center', gap: 8
+                                    background: '#F0FDF4', borderRadius: 12, padding: '12px 16px',
+                                    border: '1px solid #BBF7D0', marginBottom: 24,
+                                    display: 'flex', alignItems: 'center', gap: 10
                                 }}>
-                                    <Calendar size={14} color="#15803D" />
+                                    <Calendar size={16} color="#15803D" />
                                     <div>
-                                        <span style={{ fontSize: 11, color: '#15803D', fontWeight: 600 }}>
-                                            Nuevo vencimiento: {' '}
-                                        </span>
-                                        <span style={{ fontSize: 13, color: '#14532D', fontWeight: 800 }}>
+                                        <div style={{ fontSize: 11, color: '#15803D', fontWeight: 700, marginBottom: 2 }}>
+                                            NUEVO VENCIMIENTO
+                                        </div>
+                                        <div style={{ fontSize: 14, color: '#14532D', fontWeight: 800 }}>
                                             {fmtDate(newDate.toISOString())}
-                                        </span>
+                                        </div>
                                     </div>
                                 </div>
                             )
@@ -203,15 +208,17 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                             onClick={handleActivate}
                             disabled={loading}
                             style={{
-                                width: '100%', height: 44, borderRadius: 10,
-                                background: loading ? '#9CA3AF' : '#334139', color: '#fff', border: 'none',
-                                fontSize: 13, fontWeight: 800, cursor: loading ? 'wait' : 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                transition: 'background .13s',
+                                width: '100%', height: 48, borderRadius: 10,
+                                background: loading ? '#9CA3AF' : '#1e2320', color: '#DCED31', border: 'none',
+                                fontSize: 14, fontWeight: 800, cursor: loading ? 'wait' : 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                transition: 'all .15s', boxShadow: loading ? 'none' : '0 4px 12px rgba(30,35,32,.2)',
                             }}
+                            onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = 'translateY(-1px)' }}
+                            onMouseLeave={e => { if (!loading) e.currentTarget.style.transform = 'none' }}
                         >
-                            <Zap size={15} />
-                            {loading ? 'Guardando...' : `Activar ${months} mes${months > 1 ? 'es' : ''}`}
+                            <Zap size={16} fill="#DCED31" />
+                            {loading ? 'Procesando...' : `Confirmar activación de ${months} mes${months > 1 ? 'es' : ''}`}
                         </button>
                     </div>
                 </div>
@@ -296,122 +303,132 @@ const AdminPanel = () => {
     }, {})
 
     return (
-        <div style={{ fontFamily: "'Inter', sans-serif", height: '100%', overflowY: 'auto', background: '#F5F5F3', padding: 24 }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", height: '100%', overflowY: 'auto', background: '#F5F5F3', padding: '32px' }}>
 
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#282A28', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Shield size={16} color="#DCED31" />
+                    <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-.03em', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#1e2320', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Shield size={18} color="#DCED31" />
                         </div>
-                        <h1 style={{ fontSize: 20, fontWeight: 900, color: '#1e2320', letterSpacing: '-.03em', margin: 0 }}>
-                            Panel Admin
-                        </h1>
-                    </div>
-                    <p style={{ fontSize: 12, color: '#9CA3AF', margin: 0 }}>
-                        Gestión de suscripciones · {rows.length} usuarios
-                        {lastRefresh && ` · Actualizado ${lastRefresh.toLocaleTimeString('es-AR')}`}
+                        Panel de Administración
+                    </h1>
+                    <p style={{ fontSize: 13, color: '#6B7280', margin: 0, fontWeight: 500 }}>
+                        Gestión centralizada de suscripciones · <strong style={{ color: '#111827' }}>{rows.length} usuarios totales</strong>
+                        {lastRefresh && ` · Ult. act: ${lastRefresh.toLocaleTimeString('es-AR')}`}
                     </p>
                 </div>
                 <button
                     onClick={fetchData}
                     disabled={loading}
                     style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '8px 14px', borderRadius: 8,
-                        background: '#282A28', color: '#fff', border: 'none',
-                        fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                        opacity: loading ? .6 : 1,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '10px 18px', borderRadius: 10,
+                        background: '#fff', color: '#374151', border: '1px solid #D1D5DB',
+                        fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                        boxShadow: '0 1px 2px rgba(0,0,0,.04)',
+                        opacity: loading ? .7 : 1, transition: 'all .15s'
                     }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
                 >
-                    <RefreshCw size={13} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-                    Actualizar
+                    <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+                    {loading ? 'Sincronizando...' : 'Sincronizar datos'}
                 </button>
             </div>
 
             {/* Stats cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14, marginBottom: 24 }}>
                 {/* Botón TODOS */}
                 <div
                     onClick={() => setFilter('all')}
                     style={{
-                        background: filterStatus === 'all' ? '#282A28' : '#fff',
-                        border: `1.5px solid ${filterStatus === 'all' ? '#282A28' : '#E8E8E6'}`,
-                        borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
-                        transition: 'all .13s',
+                        background: filterStatus === 'all' ? '#1e2320' : '#fff',
+                        border: filterStatus === 'all' ? '1px solid #1e2320' : '1px solid #E5E7EB',
+                        borderRadius: 14, padding: '16px 20px', cursor: 'pointer',
+                        boxShadow: filterStatus === 'all' ? '0 4px 12px rgba(30,35,32,.15)' : '0 1px 2px rgba(0,0,0,.03)',
+                        transition: 'all .2s ease-out', transform: filterStatus === 'all' ? 'translateY(-2px)' : 'none'
                     }}
                 >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <User size={14} color={filterStatus === 'all' ? '#DCED31' : '#6B7280'} />
-                        <span style={{ fontSize: 22, fontWeight: 900, color: filterStatus === 'all' ? '#fff' : '#1e2320' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <User size={16} color={filterStatus === 'all' ? '#DCED31' : '#9CA3AF'} />
+                        <span style={{ fontSize: 24, fontWeight: 900, color: filterStatus === 'all' ? '#fff' : '#111827', lineHeight: 1 }}>
                             {rows.length}
                         </span>
                     </div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: filterStatus === 'all' ? '#DCED31' : '#6B7280', margin: 0 }}>Todos</p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: filterStatus === 'all' ? '#D1D5DB' : '#6B7280', margin: 0 }}>Todos</p>
                 </div>
                 {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'sin_datos').map(([key, cfg]) => {
                     const Icon = cfg.icon
+                    const isActive = filterStatus === key
                     return (
                         <div
                             key={key}
-                            onClick={() => setFilter(filterStatus === key ? 'all' : key)}
+                            onClick={() => setFilter(isActive ? 'all' : key)}
                             style={{
-                                background: filterStatus === key ? cfg.bg : '#fff',
-                                border: `1.5px solid ${filterStatus === key ? cfg.color : '#E8E8E6'}`,
-                                borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
-                                transition: 'all .13s',
+                                background: isActive ? cfg.bg : '#fff',
+                                border: `1px solid ${isActive ? cfg.color : '#E5E7EB'}`,
+                                borderRadius: 14, padding: '16px 20px', cursor: 'pointer',
+                                boxShadow: isActive ? `0 4px 12px ${cfg.color}15` : '0 1px 2px rgba(0,0,0,.03)',
+                                transition: 'all .2s ease-out', transform: isActive ? 'translateY(-2px)' : 'none'
                             }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                <Icon size={14} color={cfg.color} />
-                                <span style={{ fontSize: 22, fontWeight: 900, color: filterStatus === key ? cfg.color : '#1e2320' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <Icon size={16} color={cfg.color} />
+                                <span style={{ fontSize: 24, fontWeight: 900, color: isActive ? cfg.color : '#111827', lineHeight: 1 }}>
                                     {counts[key] || 0}
                                 </span>
                             </div>
-                            <p style={{ fontSize: 11, fontWeight: 700, color: cfg.color, margin: 0 }}>{cfg.label}</p>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: isActive ? cfg.color : '#6B7280', margin: 0 }}>{cfg.label}</p>
                         </div>
                     )
                 })}
             </div>
 
             {/* Buscador */}
-            <div style={{ position: 'relative', marginBottom: 16 }}>
-                <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
+            <div style={{ position: 'relative', marginBottom: 20 }}>
+                <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
                 <input
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Buscar por email o ID..."
+                    placeholder="Buscar usuarios por email o ID..."
                     style={{
-                        width: '100%', height: 38, paddingLeft: 36, paddingRight: 12,
-                        borderRadius: 9, border: '1.5px solid #E5E7EB', fontSize: 12,
+                        width: '100%', height: 44, paddingLeft: 40, paddingRight: 16,
+                        borderRadius: 12, border: '1px solid #D1D5DB', fontSize: 14, fontWeight: 500,
                         fontFamily: "'Inter', sans-serif", outline: 'none',
-                        background: '#fff', color: '#1e2320', boxSizing: 'border-box',
+                        background: '#fff', color: '#111827', boxSizing: 'border-box',
+                        boxShadow: '0 1px 2px rgba(0,0,0,.02)', transition: 'border .2s'
                     }}
+                    onFocus={e => e.target.style.borderColor = '#1e2320'}
+                    onBlur={e => e.target.style.borderColor = '#D1D5DB'}
                 />
             </div>
 
             {/* Tabla */}
-            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E8E6', overflow: 'hidden' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
                 {loading ? (
-                    <div style={{ padding: 40, textAlign: 'center' }}>
-                        <RefreshCw size={24} color="#9CA3AF" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px' }} />
-                        <p style={{ fontSize: 13, color: '#9CA3AF' }}>Cargando usuarios...</p>
+                    <div style={{ padding: 60, textAlign: 'center' }}>
+                        <RefreshCw size={28} color="#9CA3AF" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+                        <p style={{ fontSize: 14, fontWeight: 500, color: '#6B7280', margin: 0 }}>Cargando usuarios del sistema...</p>
                     </div>
                 ) : filtered.length === 0 ? (
-                    <div style={{ padding: 40, textAlign: 'center' }}>
-                        <User size={24} color="#D1D5DB" style={{ margin: '0 auto 8px' }} />
-                        <p style={{ fontSize: 13, color: '#9CA3AF' }}>No hay usuarios con ese filtro.</p>
+                    <div style={{ padding: 60, textAlign: 'center' }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 12, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                            <User size={24} color="#9CA3AF" />
+                        </div>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#374151', margin: '0 0 4px 0' }}>Ningún usuario encontrado</p>
+                        <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>Intentá con otro filtro o término de búsqueda.</p>
                     </div>
                 ) : (
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                            <tr style={{ borderBottom: '1px solid #F0F0EE' }}>
+                            <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
                                 {['Email', 'Estado', 'PRO desde', 'Plan hasta', 'Acción'].map(h => (
                                     <th key={h} style={{
-                                        padding: '10px 16px', textAlign: 'left',
-                                        fontSize: 10, fontWeight: 700, color: '#9CA3AF',
-                                        textTransform: 'uppercase', letterSpacing: '.06em',
+                                        padding: '14px 20px', textAlign: 'left',
+                                        fontSize: 11, fontWeight: 700, color: '#6B7280',
+                                        textTransform: 'uppercase', letterSpacing: '.05em',
                                         whiteSpace: 'nowrap',
                                     }}>{h}</th>
                                 ))}
@@ -422,47 +439,50 @@ const AdminPanel = () => {
                                 const status = getStatus(row)
                                 return (
                                     <tr key={row.id || i} style={{
-                                        borderBottom: i < filtered.length - 1 ? '1px solid #F8F8F7' : 'none',
-                                        transition: 'background .1s',
+                                        borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none',
+                                        transition: 'background .15s',
                                     }}
-                                        onMouseEnter={e => e.currentTarget.style.background = '#FAFAFA'}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
                                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                                     >
-                                        <td style={{ padding: '12px 16px' }}>
+                                        <td style={{ padding: '14px 20px' }}>
                                             <div>
-                                                <p style={{ fontSize: 12, fontWeight: 600, color: '#1e2320', margin: 0 }}>
+                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: 0 }}>
                                                     {row.email || 'Sin email'}
                                                 </p>
-                                                <p style={{ fontSize: 9, fontFamily: 'monospace', color: '#9CA3AF', margin: '2px 0 0' }}>
+                                                <p style={{ fontSize: 10, fontFamily: 'monospace', color: '#9CA3AF', margin: '3px 0 0' }}>
                                                     {row.user_id ? row.user_id.slice(0, 12) + '...' : '—'}
                                                 </p>
                                             </div>
                                         </td>
-                                        <td style={{ padding: '12px 16px' }}>
+                                        <td style={{ padding: '14px 20px' }}>
                                             <StatusBadge status={status} />
                                         </td>
-                                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#4B5563', whiteSpace: 'nowrap' }}>
+                                        <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
                                             {fmtDate(row.pro_since)}
                                         </td>
-                                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#4B5563', whiteSpace: 'nowrap' }}>
+                                        <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
                                             {fmtDate(row.paid_until)}
                                         </td>
-                                        <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ display: 'flex', gap: 6 }}>
+                                        <td style={{ padding: '14px 20px' }}>
+                                            <div style={{ display: 'flex', gap: 8 }}>
                                                 <button
                                                     onClick={() => setSelected(row)}
                                                     style={{
-                                                        padding: '5px 10px', borderRadius: 6,
-                                                        background: status === 'active' ? '#F0FDF4' : '#334139',
+                                                        padding: '6px 14px', borderRadius: 8,
+                                                        background: status === 'active' ? '#F0FDF4' : '#1e2320',
                                                         color: status === 'active' ? '#15803D' : '#fff',
-                                                        border: status === 'active' ? '1px solid #BBF7D0' : 'none',
-                                                        fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', gap: 4,
-                                                        whiteSpace: 'nowrap',
+                                                        border: status === 'active' ? '1px solid #BBF7D0' : '1px solid #1e2320',
+                                                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: 6,
+                                                        whiteSpace: 'nowrap', transition: 'all .15s',
+                                                        boxShadow: status !== 'active' ? '0 2px 4px rgba(30,35,32,.2)' : 'none'
                                                     }}
+                                                    onMouseEnter={e => { if (status !== 'active') e.currentTarget.style.background = '#282A28' }}
+                                                    onMouseLeave={e => { if (status !== 'active') e.currentTarget.style.background = '#1e2320' }}
                                                 >
-                                                    <Zap size={11} />
-                                                    {status === 'active' ? 'Extender' : 'Activar'}
+                                                    <Zap size={12} fill={status !== 'active' ? '#DCED31' : 'none'} color={status !== 'active' ? '#DCED31' : 'currentColor'} />
+                                                    {status === 'active' ? 'Extender' : 'Activar PRO'}
                                                 </button>
                                                 {status === 'active' && (
                                                     <button
@@ -476,15 +496,17 @@ const AdminPanel = () => {
                                                             fetchData()
                                                         }}
                                                         style={{
-                                                            padding: '5px 10px', borderRadius: 6,
-                                                            background: '#FEF2F2', color: '#DC2626',
+                                                            padding: '6px 14px', borderRadius: 8,
+                                                            background: '#fff', color: '#EF4444',
                                                             border: '1px solid #FECACA',
-                                                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                                                            display: 'flex', alignItems: 'center', gap: 4,
-                                                            whiteSpace: 'nowrap',
+                                                            fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', gap: 6,
+                                                            whiteSpace: 'nowrap', transition: 'all .15s',
                                                         }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                                                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
                                                     >
-                                                        <AlertCircle size={11} />
+                                                        <AlertCircle size={12} />
                                                         Desactivar
                                                     </button>
                                                 )}
