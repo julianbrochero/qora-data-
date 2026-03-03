@@ -158,11 +158,11 @@ export default function Login() {
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-12">
 
           {/* Logo grande */}
-          <div className="mb-10 transition-all hover:scale-105 duration-500">
+          <div className="-mb-8 transition-all hover:scale-105 duration-500">
             <img
               src="/logologin4.png"
               alt="Gestify"
-              className="h-72 w-auto object-contain drop-shadow-2xl"
+              className="h-[380px] w-auto object-contain drop-shadow-2xl"
             />
           </div>
 
