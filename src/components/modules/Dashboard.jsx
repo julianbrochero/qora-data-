@@ -587,7 +587,7 @@ const Dashboard = ({
       </div>
 
       {/* ══════════ CONTENT ══════════ */}
-      <main className="flex-1 overflow-y-auto w-full" style={{ padding: 'clamp(14px, 3vw, 28px) clamp(12px, 3vw, 28px) 48px' }}>
+      <main className="flex-1 overflow-y-auto w-full" style={{ padding: 'clamp(12px, 3vw, 28px) clamp(12px, 3vw, 28px) 48px' }}>
 
         {/* ── PAGE HEADER ── */}
         <div className="flex items-end justify-between flex-wrap gap-3 mb-6">
@@ -614,7 +614,7 @@ const Dashboard = ({
         {/* ── KPI CARDS ── */}
         <div className="mb-6">
           <SectionLabel>Métricas Clave</SectionLabel>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
             <MetricCard title="Ventas este mes" value={fmtMoney(totalEsteMes)}
               subtitle={`Mes ant: ${fmtMoney(totalMesAnterior)}`} icon={DollarSign}
               trend={`${cambioVentas >= 0 ? '+' : ''}${cambioVentas}%`}
@@ -643,7 +643,7 @@ const Dashboard = ({
         {/* ── ANÁLISIS GRID ── */}
         <div className="mb-6">
           <SectionLabel>Análisis</SectionLabel>
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
 
             {/* ── COL 1: Rendimiento por cliente ── */}
             <div style={{ background: '#FAFAFA', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(48,54,47,.13)', boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }}>
@@ -942,11 +942,14 @@ const Dashboard = ({
           0% { opacity: 0; transform: translateX(12px); }
           100% { opacity: 1; transform: translateX(0); }
         }
-        @media (max-width: 1100px) {
-          .block-grid { grid-template-columns: 1fr 1fr !important; }
-        }
         @media (max-width: 768px) {
           .block-grid { grid-template-columns: 1fr !important; }
+          /* ocultar columna cliente en tablas largas en mobile */
+          .dash-table-cliente { display: none; }
+        }
+        @media (max-width: 480px) {
+          /* chart simplificado en pantallas muy pequeñas */
+          .chart-bar-label { font-size: 9px !important; }
         }
       `}</style>
     </div>

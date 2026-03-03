@@ -191,7 +191,7 @@ const Pedidos = ({
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ═══════════ HEADER ═══════════ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
             <Menu size={16} strokeWidth={2} />
@@ -205,21 +205,22 @@ const Pedidos = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           {/* Vista toggle */}
           <div style={{ display: 'flex', padding: 2, borderRadius: 9, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.05)' }}>
-            {[['lista', List, 'Lista'], ['semana', CalendarDays, 'Semana'], ['mes', Calendar, 'Mes']].map(([v, Icon, lbl]) => (
+            {[['lista', List, 'Lista'], ['semana', CalendarDays, ''], ['mes', Calendar, '']].map(([v, Icon, lbl]) => (
               <button key={v} onClick={() => setVistaActiva(v)} style={{
-                display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 7,
+                display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 7,
                 fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all .13s',
                 background: vistaActiva === v ? 'rgba(255,255,255,.12)' : 'transparent',
                 color: vistaActiva === v ? '#fff' : 'rgba(255,255,255,.5)',
               }}>
-                <Icon size={12} strokeWidth={2.5} /><span>{lbl}</span>
+                <Icon size={12} strokeWidth={2.5} />
+                {lbl && <span className="hidden sm:inline">{lbl}</span>}
               </button>
             ))}
           </div>
 
-          {/* Selección */}
-          <button onClick={toggleModoSeleccion} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
+          {/* Selección - oculto en móvil */}
+          <button onClick={toggleModoSeleccion} className="hidden sm:flex" style={{
+            alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
             fontSize: 11, fontWeight: 600,
             border: modoSeleccion ? '1px solid #DCED31' : '1px solid rgba(255,255,255,.2)',
             background: 'transparent',
@@ -229,15 +230,15 @@ const Pedidos = ({
             <CheckSquare size={12} strokeWidth={2} /> {modoSeleccion ? 'Cancelar' : 'Selección'}
           </button>
 
-          {/* Presupuesto */}
+          {/* Presupuesto - solo icono en móvil */}
           <button onClick={() => openModal && openModal("nuevo-presupuesto")} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
+            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
             fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,.25)', cursor: 'pointer', transition: 'all .13s',
             background: 'transparent', color: 'rgba(255,255,255,.75)',
           }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#fff' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,.75)' }}>
-            <FileText size={12} strokeWidth={2.5} /> Presupuesto
+            <FileText size={12} strokeWidth={2.5} /> <span className="hidden sm:inline">Presupuesto</span>
           </button>
 
           {/* Nuevo */}
@@ -246,8 +247,8 @@ const Pedidos = ({
             fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
             background: '#DCED31', color: '#282A28',
           }}>
-            <Plus size={12} strokeWidth={2.5} /> Nueva Venta
-            <span style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
+            <Plus size={12} strokeWidth={2.5} /> <span className="hidden sm:inline">Nueva Venta</span>
+            <span className="hidden md:inline" style={{ marginLeft: 2, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
           </button>
         </div>
       </header>
@@ -304,35 +305,37 @@ const Pedidos = ({
           <div className={cardCls} style={cardStyle}>
 
             {/* Filtros */}
-            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, display: 'flex', gap: 8, flexWrap: 'wrap', background: surface2 }}>
+            <div style={{ padding: 'clamp(8px,2vw,12px) clamp(12px,3vw,16px)', borderBottom: `1px solid ${border}`, display: 'flex', gap: 8, flexWrap: 'wrap', background: surface2, alignItems: 'center' }}>
               {/* Buscador */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 200, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '1 1 160px', minWidth: 140, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
                 <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
                 <input
-                  type="text" placeholder="Buscar por código o cliente…"
+                  type="text" placeholder="Buscar…"
                   value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)}
                   style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'Inter,sans-serif', color: ct1, width: '100%' }}
                 />
               </div>
-              <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={pillSelect}>
-                <option value="todos">Todos los estados</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="preparando">Preparando</option>
-                <option value="enviado">Enviado</option>
-                <option value="entregado">Entregado</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
-              <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} style={pillSelect}>
-                <option value="todos">Toda facturación</option>
-                <option value="facturados">Facturados</option>
-                <option value="no-facturados">Sin facturar</option>
-              </select>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ ...pillSelect, minWidth: 120 }}>
+                  <option value="todos">Todos los estados</option>
+                  <option value="pendiente">Pendiente</option>
+                  <option value="preparando">Preparando</option>
+                  <option value="enviado">Enviado</option>
+                  <option value="entregado">Entregado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+                <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} style={{ ...pillSelect, minWidth: 110 }}>
+                  <option value="todos">Toda facturación</option>
+                  <option value="facturados">Facturados</option>
+                  <option value="no-facturados">Sin facturar</option>
+                </select>
+              </div>
             </div>
 
             {/* Cabecera tabla */}
-            <div style={{ overflowX: 'auto' }}>
-              <div style={{ minWidth: 900 }}>
-                <div style={{
+            <div className="ventas-table-wrapper" style={{ overflowX: 'auto' }}>
+              <div style={{ minWidth: 600 }}>
+                <div className="ventas-row-grid" style={{
                   display: 'grid',
                   gridTemplateColumns: modoSeleccion ? '32px 1.1fr 1.6fr .8fr .9fr 1.2fr 240px' : '1.1fr 1.6fr .8fr .9fr 1.2fr 240px',
                   gap: 14, padding: '10px 16px', borderBottom: `1px solid ${border}`, background: surface2
@@ -344,8 +347,9 @@ const Pedidos = ({
                         onChange={toggleTodos} />
                     </div>
                   )}
-                  {['Código', 'Cliente', 'Fecha', 'Total', 'Estado', 'Acciones'].map((col, i) => (
-                    <div key={i} style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: i >= 2 && i <= 3 ? 'center' : i === 5 ? 'right' : 'left' }}>{col}</div>
+                  {[['Código', 'left'], ['Cliente', 'left'], ['Fecha', 'center'], ['Total', 'center'], ['Estado', 'left'], ['Acciones', 'right']].map(([col, align], i) => (
+                    <div key={i} className={i === 2 ? 'ventas-col-fecha' : i === 4 ? 'ventas-col-estado-pago' : i === 3 ? 'ventas-col-total' : ''}
+                      style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: align }}>{col}</div>
                   ))}
                 </div>
 
@@ -360,6 +364,7 @@ const Pedidos = ({
 
                     return (
                       <div key={pedido.id}
+                        className="ventas-row-grid"
                         onClick={modoSeleccion ? () => toggleSeleccion(pedido.id) : undefined}
                         style={{
                           display: 'grid',
@@ -420,17 +425,16 @@ const Pedidos = ({
                         </div>
 
                         {/* Fecha */}
-                        <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: ct2 }}>{fFecha(pedido.fecha_pedido)}</div>
+                        <div className="ventas-col-fecha" style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: ct2 }}>{fFecha(pedido.fecha_pedido)}</div>
 
                         {/* Total */}
-                        <div style={{ textAlign: 'center' }}>
+                        <div className="ventas-col-total" style={{ textAlign: 'center' }}>
                           <div style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-0.02em' }}>${fCorto(pedido.total)}</div>
                           {saldo > 0.01 && <div style={{ fontSize: 10, fontWeight: 600, color: accent, marginTop: 1 }}>Saldo: ${fCorto(saldo)}</div>}
                         </div>
 
-
-                        {/* Estado (operativo + pago — chips con colores solidos) */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-start', minWidth: 100 }}>
+                        {/* Estado */}
+                        <div className="ventas-col-estado-pago" style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-start', minWidth: 100 }}>
                           <select
                             value={pedido.estado}
                             onClick={e => e.stopPropagation()}
@@ -459,11 +463,11 @@ const Pedidos = ({
                           </span>
                         </div>
 
-                        {/* Acciones — botones con palabras bien minimalistas */}
+                        {/* Acciones */}
                         {modoSeleccion ? (
                           <div />
                         ) : (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
+                          <div className="ventas-col-acciones" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
                             <ActionBtn text="Ver" onClick={e => { e.stopPropagation(); openModal && openModal('ver-pedido', pedido) }} title="Ver detalles" D={D}>
                               <Eye size={12} strokeWidth={2.2} />
                             </ActionBtn>
@@ -773,6 +777,23 @@ const Pedidos = ({
         @keyframes kpiIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         select option { background: ${surface}; color: ${ct1}; }
+
+        /* ═ Tabla de ventas: responsive ═ */
+
+        /* Tablet (641-900px): ocultar columna fecha */
+        @media (max-width: 900px) {
+          .ventas-row-grid { grid-template-columns: 1.1fr 1.6fr 1.1fr 200px !important; gap: 10px !important; }
+          .ventas-col-fecha { display: none !important; }
+        }
+
+        /* Mobile (≤640px): mostrar solo código/cliente y acciones */
+        @media (max-width: 640px) {
+          .ventas-row-grid { grid-template-columns: 1fr auto !important; gap: 8px !important; padding: 10px 12px !important; }
+          .ventas-col-fecha,
+          .ventas-col-estado-pago,
+          .ventas-col-total { display: none !important; }
+          .ventas-col-acciones { justify-content: flex-end !important; }
+        }
       `}</style>
     </div>
   )
