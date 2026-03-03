@@ -51,7 +51,7 @@ export default function Login() {
         {/* ── Logo arriba */}
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center rounded-xl bg-[#1e2320] p-2 shadow-lg">
-            <img src="/logofavicon.png" alt="Gestify" className="h-9 w-9 object-contain" />
+            <img src="/esquina.png" alt="Gestify" className="h-9 w-9 object-contain" />
           </div>
           <span className="text-[20px] font-black tracking-tight text-[#1e2320]">
             Gestify
