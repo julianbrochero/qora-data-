@@ -299,8 +299,8 @@ const QuickStatsBar = ({ facturas, pedidos, onViewAllFacturas, onViewAllPedidos 
   const stats = [
     { label: 'Fact. pagadas', value: facturas.filter(f => f.estado === 'pagada').length, Icon: CheckCircle2, onClick: onViewAllFacturas },
     { label: 'Fact. pendientes', value: facturas.filter(f => f.estado === 'pendiente' || f.estado === 'parcial').length, Icon: Clock, onClick: onViewAllFacturas },
-    { label: 'Pedidos en curso', value: pedidos.filter(p => p.estado === 'preparando' || p.estado === 'enviado').length, Icon: ShoppingCart, onClick: onViewAllPedidos },
-    { label: 'Pedidos completados', value: pedidos.filter(p => p.estado === 'entregado' || p.estado === 'completado').length, Icon: Package, onClick: onViewAllPedidos },
+    { label: 'Ventas en curso', value: pedidos.filter(p => p.estado === 'preparando' || p.estado === 'enviado').length, Icon: ShoppingCart, onClick: onViewAllPedidos },
+    { label: 'Ventas completadas', value: pedidos.filter(p => p.estado === 'entregado' || p.estado === 'completado').length, Icon: Package, onClick: onViewAllPedidos },
   ]
   return (
     <div className="flex flex-wrap gap-2">
@@ -324,7 +324,7 @@ const QuickStatsBar = ({ facturas, pedidos, onViewAllFacturas, onViewAllPedidos 
           <span style={{ fontSize: 13, fontWeight: 700, color: '#1e2320', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
             {s.value}
           </span>
-          <span style={{ fontSize: 10.5, fontWeight: 500, color: '#8B8982' }}>{s.label}</span>
+          <span style={{ fontSize: 10.5, fontWeight: 700, color: '#606B6C', textTransform: 'uppercase', letterSpacing: '.03em' }}>{s.label}</span>
         </div>
       ))}
     </div>
