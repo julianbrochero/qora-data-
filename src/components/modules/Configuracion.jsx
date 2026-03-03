@@ -257,12 +257,12 @@ const Configuracion = () => {
 
                 {/* VERSIÓN */}
                 <div style={{ marginTop: 40, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 24, height: 24, background: '#1e2320', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#fff', fontSize: 12, fontWeight: 900, fontFamily: "'DM Mono', monospace" }}>Q</span>
+                    <div style={{ width: 24, height: 24, background: '#DCED31', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ color: '#111827', fontSize: 13, fontWeight: 900, fontFamily: "'Inter', sans-serif", letterSpacing: '-.05em' }}>G</span>
                     </div>
                     <div>
-                        <p style={{ fontSize: 11, fontWeight: 600, color: ct3, letterSpacing: '.02em' }}>FacturaPRO by Qora Data</p>
-                        <p style={{ fontSize: 10, color: 'rgba(139,137,130,.7)' }}>v2.0.1 (SaaS Build)</p>
+                        <p style={{ fontSize: 12, fontWeight: 800, color: '#111827', letterSpacing: '-.02em', margin: '0 0 2px 0' }}>Gestify</p>
+                        <p style={{ fontSize: 10, color: '#6B7280', margin: 0, fontWeight: 500 }}>v2.0.1 (SaaS Build)</p>
                     </div>
                 </div>
 
