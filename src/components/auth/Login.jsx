@@ -43,7 +43,7 @@ export default function Login() {
         {/* ── Logo arriba */}
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center rounded-xl bg-[#1e2320] p-2 shadow-md">
-            <img src="/logogestify3.png" alt="Gestify" className="h-7 w-7 object-contain" />
+            <img src="/logofavicon.png" alt="Gestify" className="h-9 w-9 object-contain" />
           </div>
           <span style={{ fontFamily: "'Inter', sans-serif" }} className="text-[18px] font-black tracking-tight text-[#1e2320]">
             Gestify
@@ -155,11 +155,11 @@ export default function Login() {
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-12">
 
           {/* Logo grande */}
-          <div className="mb-8 flex h-52 w-52 items-center justify-center rounded-full border border-white/20 bg-white/10 shadow-[0_0_80px_rgba(220,237,49,0.08)] backdrop-blur-md">
+          <div className="mb-8 flex h-56 w-56 items-center justify-center rounded-full border border-white/20 bg-white/10 shadow-[0_0_80px_rgba(220,237,49,0.08)] backdrop-blur-md">
             <img
-              src="/logogestify3.png"
+              src="/logofavicon.png"
               alt="Gestify"
-              className="h-32 w-32 object-contain drop-shadow-2xl"
+              className="h-36 w-36 object-contain drop-shadow-2xl"
             />
           </div>
 
