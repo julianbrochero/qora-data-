@@ -71,8 +71,9 @@ export const useFacturacion = () => {
         if (checkAuthError(errorClientes)) return
         console.error('Error cargando clientes:', errorClientes)
       } else if (clientesData) {
-        setClientes(clientesData)
+        setClientes(clientesData) // set inmediato; se recalculará más adelante
       }
+
 
       // Cargar productos
       const { data: productosData, error: errorProductos } = await supabase
@@ -98,7 +99,43 @@ export const useFacturacion = () => {
         console.error('Error cargando facturas:', errorFacturas)
       } else if (facturasData) {
         setFacturas(facturasData)
+
+        // ── RECALCULAR DEUDA REAL DE CADA CLIENTE ──────────────────────────
+        // Sumamos el saldopendiente de todas las facturas que NO estén pagadas ni anuladas.
+        // Cubre tanto las ventas de Pedidos como las Facturas Directas.
+        // Funciona con facturas que tengan cliente_id (FK) o solo nombre (fallback).
+        if (clientesData) {
+          // Índice por nombre (minúsculas) para compatibilidad con facturas antiguas
+          const clientePorNombre = {}
+          clientesData.forEach(c => {
+            if (c.nombre) clientePorNombre[c.nombre.toLowerCase()] = c.id
+          })
+
+          const deudaPorCliente = {}
+          facturasData.forEach(f => {
+            if (f.estado === 'anulada' || f.estado === 'pagada') return
+            const saldo = parseFloat(f.saldopendiente) || 0
+            if (saldo <= 0) return
+            // Priorizar cliente_id; si no existe, buscar por nombre
+            let cId = f.cliente_id
+            if (!cId && f.cliente) {
+              cId = clientePorNombre[f.cliente.toLowerCase()] || null
+            }
+            if (!cId) return
+            deudaPorCliente[cId] = (deudaPorCliente[cId] || 0) + saldo
+          })
+
+          // Actualizar la deuda calculada en el array de clientes (sin persistir en BD)
+          const clientesConDeuda = clientesData.map(c => ({
+            ...c,
+            deuda: deudaPorCliente[c.id] || 0
+          }))
+          setClientes(clientesConDeuda)
+        }
+        // ───────────────────────────────────────────────────────────────────
       }
+
+
 
       // Cargar proveedores
       const { data: proveedoresData, error: errorProveedores } = await supabase
@@ -365,6 +402,17 @@ export const useFacturacion = () => {
       // Actualizar estado local Facturas
       setFacturas(prev => prev.map(f => f.id === ventaId ? { ...f, montopagado: nuevoPagado, saldopendiente: nuevoSaldo, estado: nuevoEstado } : f))
 
+      // F. Actualizar deuda del cliente en estado local
+      if (venta.cliente_id) {
+        // Reducimos la deuda: si pagó de más el saldo delta es la reducción real
+        const reduccion = (parseFloat(venta.saldopendiente) || 0) - nuevoSaldo
+        setClientes(prev => prev.map(c =>
+          c.id === venta.cliente_id
+            ? { ...c, deuda: Math.max(0, (parseFloat(c.deuda) || 0) - reduccion) }
+            : c
+        ))
+      }
+
       // E. Sincronizar Pedido Asociado — usa FK pedido_id (no busca por texto en notas)
       if (venta.pedido_id) {
         const { data: pedido } = await supabase
@@ -458,6 +506,7 @@ export const useFacturacion = () => {
         numero: numeroFactura,
         fecha: new Date().toISOString().split('T')[0],
         cliente: pedidoData.clienteNombre,
+        cliente_id: pedidoData.clienteId || null, // ← guardar FK para calcular deuda por cliente
         pedido_id: nuevoPedido.id,  // ← FK directo (no texto en notas)
         metodopago: 'Efectivo',
         items: JSON.stringify(pedidoData.items),
@@ -474,6 +523,17 @@ export const useFacturacion = () => {
       // Actualizar estados locales
       setPedidos(prev => [nuevoPedido, ...prev])
       setFacturas(prev => [nuevaVenta, ...prev])
+
+      // Actualizar deuda del cliente en estado local (suma el saldo del nuevo pedido)
+      const montoPagadoInicial = parseFloat(pedidoData.montoPagado) || 0
+      const saldoNuevoPedido = total - montoPagadoInicial
+      if (pedidoData.clienteId && saldoNuevoPedido > 0) {
+        setClientes(prev => prev.map(c =>
+          c.id === pedidoData.clienteId
+            ? { ...c, deuda: (parseFloat(c.deuda) || 0) + saldoNuevoPedido }
+            : c
+        ))
+      }
 
       // C. Registrar Cobro Inicial — usa la función unificada registrarCobro()
       if (pedidoData.montoPagado && parseFloat(pedidoData.montoPagado) > 0) {
@@ -1133,6 +1193,7 @@ export const useFacturacion = () => {
         numero: numeroFactura,
         fecha: facturaData.fecha || new Date().toISOString().split('T')[0],
         cliente: facturaData.clienteNombre,
+        cliente_id: facturaData.clienteId || null, // ← FK para calcular deuda por cliente
         pedido_id: null,
         metodopago: facturaData.metodoPago || 'Efectivo',
         items: JSON.stringify(facturaData.items),
@@ -1150,11 +1211,23 @@ export const useFacturacion = () => {
       // Actualizar estado local
       setFacturas(prev => [nuevaFactura, ...prev])
 
+      // Actualizar deuda del cliente si la factura tiene cliente_id
+      const montoPagadoDF = parseFloat(facturaData.montoPagado) || 0
+      const saldoNuevaFactura = total - montoPagadoDF
+      if (facturaData.clienteId && saldoNuevaFactura > 0) {
+        setClientes(prev => prev.map(c =>
+          c.id === facturaData.clienteId
+            ? { ...c, deuda: (parseFloat(c.deuda) || 0) + saldoNuevaFactura }
+            : c
+        ))
+      }
+
       // Registrar cobro inicial si hay monto pagado
       const montoPagado = parseFloat(facturaData.montoPagado) || 0
       if (montoPagado > 0) {
         await registrarCobro(nuevaFactura.id, montoPagado, `Pago inicial - ${numeroFactura}`)
       }
+
 
       // Actualizar stock para productos del catálogo
       for (const item of facturaData.items) {
