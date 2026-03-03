@@ -21,9 +21,17 @@ import {
   X,
 } from "lucide-react"
 
-const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
+const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse, pedidos = [] }) => {
   const { user, logout } = useAuth()
   const { isPro } = useSubscriptionContext()
+
+  // Calcular ventas creadas hoy
+  const hoy = new Date().toISOString().split('T')[0]
+  const ventasHoy = pedidos.filter(p => {
+    const fecha = (p.created_at || p.fecha_pedido || '').split('T')[0]
+    return fecha === hoy
+  }).length
+  const badgeVentas = ventasHoy > 0 ? String(ventasHoy) : undefined
 
   const handleNavClick = (id) => {
     setActiveModule(id)
@@ -35,7 +43,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
       title: "Principal",
       items: [
         { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { id: "pedidos", icon: TrendingUp, label: "Ventas", badge: "3" },
+        { id: "pedidos", icon: TrendingUp, label: "Ventas", badge: badgeVentas },
         { id: "facturacion", icon: FileText, label: "Facturación" },
         { id: "clientes", icon: Users, label: "Clientes" },
       ]

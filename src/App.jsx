@@ -367,6 +367,7 @@ const SistemaFacturacion = () => {
         onClose={() => setSidebarOpen(false)}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        pedidos={pedidos}
       />
 
       {/* Contenido principal */}
