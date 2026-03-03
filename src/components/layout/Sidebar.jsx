@@ -3,6 +3,7 @@
 import React from "react"
 import { useAuth } from "../../lib/AuthContext"
 import { useTheme } from "../../lib/ThemeContext"
+import { useSubscriptionContext } from "../../lib/SubscriptionContext"
 import {
   LayoutDashboard,
   FileText,
@@ -20,6 +21,7 @@ import {
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const { user, logout } = useAuth()
+  const { isPro } = useSubscriptionContext()
 
   const handleNavClick = (id) => {
     setActiveModule(id)
@@ -192,17 +194,36 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
           {/* User info */}
           <div className="flex items-center overflow-hidden rounded-lg"
             style={{ gap: 9, padding: '8px 10px', marginBottom: 3 }}>
-            <div className="rounded-full flex items-center justify-center font-bold flex-shrink-0 overflow-hidden"
-              style={{ width: 27, height: 27, background: SB_BG3, border: '1.5px solid rgba(139,137,130,0.25)', fontSize: 11, color: T1 }}>
-              {user?.user_metadata?.avatar_url
-                ? <img src={user.user_metadata.avatar_url} alt="Perfil" className="w-full h-full object-cover" />
-                : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div className="rounded-full flex items-center justify-center font-bold overflow-hidden"
+                style={{ width: 27, height: 27, background: SB_BG3, border: isPro ? '1.5px solid #DCED31' : '1.5px solid rgba(139,137,130,0.25)', fontSize: 11, color: T1 }}>
+                {user?.user_metadata?.avatar_url
+                  ? <img src={user.user_metadata.avatar_url} alt="Perfil" className="w-full h-full object-cover" />
+                  : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
+              </div>
+              {isPro && isCollapsed && (
+                <div style={{
+                  position: 'absolute', bottom: -2, right: -2,
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#DCED31', border: '1.5px solid #282A28'
+                }} />
+              )}
             </div>
             {!isCollapsed && (
-              <div className="overflow-hidden" style={{ transition: 'opacity .18s' }}>
-                <div className="whitespace-nowrap overflow-hidden text-ellipsis"
-                  style={{ fontSize: 11.5, fontWeight: 600, color: T1 }}>
-                  {user?.user_metadata?.full_name || 'Administrador'}
+              <div className="flex-1 overflow-hidden" style={{ transition: 'opacity .18s' }}>
+                <div className="flex items-center gap-1.5">
+                  <span className="whitespace-nowrap overflow-hidden text-ellipsis"
+                    style={{ fontSize: 11.5, fontWeight: 600, color: T1 }}>
+                    {user?.user_metadata?.full_name || 'Administrador'}
+                  </span>
+                  {isPro && (
+                    <span style={{
+                      fontSize: 8, fontWeight: 900, color: '#282A28',
+                      background: '#DCED31', padding: '1px 5px',
+                      borderRadius: 3, letterSpacing: '.04em', flexShrink: 0,
+                      lineHeight: '13px',
+                    }}>PRO</span>
+                  )}
                 </div>
                 <div className="whitespace-nowrap overflow-hidden text-ellipsis"
                   style={{ fontSize: 9.5, color: T3 }}>
