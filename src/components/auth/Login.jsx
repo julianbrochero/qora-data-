@@ -50,7 +50,7 @@ export default function Login() {
 
         {/* ── Logo arriba */}
         <div className="flex items-center">
-          <img src="/esquina.png" alt="Gestify" className="h-11 w-auto object-contain drop-shadow-sm" />
+          <img src="/esquina.png" alt="Gestify" className="h-[100px] w-auto object-contain drop-shadow-sm" />
         </div>
 
         {/* ── Contenido central */}
