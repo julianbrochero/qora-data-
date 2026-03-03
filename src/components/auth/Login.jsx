@@ -62,9 +62,9 @@ export default function Login() {
         </div>
 
         {/* ── Contenido central */}
-        <div className="mx-auto w-full max-w-[400px]">
+        <div className="mx-auto w-full max-w-[400px] flex flex-col items-center">
           {/* Tagline */}
-          <div className="mb-10">
+          <div className="mb-10 text-center">
             <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[#DCED31] bg-[#1e2320] rounded-full px-4 py-1.5 inline-block shadow-md">
               Sistema de Gestión Empresarial
             </p>
@@ -80,7 +80,7 @@ export default function Login() {
           </div>
 
           {/* ── Feature pills */}
-          <div className="mb-10 grid grid-cols-2 gap-4">
+          <div className="mb-10 grid grid-cols-2 gap-4 w-full">
             {features.map((f, i) => (
               <div
                 key={i}
@@ -98,7 +98,7 @@ export default function Login() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="group relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-2xl border border-gray-200 bg-white py-5 text-[16px] font-bold text-[#1e2320] shadow-sm transition-all hover:border-[#1e2320] hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="group relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-2xl border border-gray-300 bg-white py-5 text-[16px] font-bold text-[#1e2320] shadow-sm transition-all hover:border-[#1e2320] hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {/* Fondo hover sutil */}
             <span className="absolute inset-0 bg-[#1e2320] opacity-0 transition-opacity group-hover:opacity-[0.03]" />
@@ -119,7 +119,7 @@ export default function Login() {
           </button>
 
           {/* ── Aviso datos seguros */}
-          <div className="mt-8 flex items-center justify-center gap-2.5 text-[13px] font-semibold text-gray-400">
+          <div className="mt-8 flex items-center justify-center gap-2.5 text-[13px] font-semibold text-gray-400 text-center">
             <ShieldCheck size={18} className="text-emerald-500" />
             <p>Tus datos están protegidos. No almacenamos contraseñas.</p>
           </div>
