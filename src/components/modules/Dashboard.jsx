@@ -526,7 +526,7 @@ const Dashboard = ({
         {/* buttons */}
         <div className="flex items-center gap-1.5">
           {[
-            { label: <div className="flex items-center gap-1"><span>Nuevo Pedido</span><span style={{ padding: '1.5px 4px', background: 'rgba(0,0,0,.15)', borderRadius: 3, fontSize: 8.5, fontFamily: "'DM Mono', monospace", marginLeft: 1 }}>Ctrl</span></div>, stringLabel: 'Nuevo Pedido', icon: <Plus size={10} strokeWidth={2.5} />, fn: () => openModal && openModal('nuevo-pedido'), primary: true, cls: 'hidden md:flex' },
+            { label: <div className="flex items-center gap-1"><span>Nueva Venta</span><span style={{ padding: '1.5px 4px', background: 'rgba(0,0,0,.15)', borderRadius: 3, fontSize: 8.5, fontFamily: "'DM Mono', monospace", marginLeft: 1 }}>Ctrl</span></div>, stringLabel: 'Nueva Venta', icon: <Plus size={10} strokeWidth={2.5} />, fn: () => openModal && openModal('nuevo-pedido'), primary: true, cls: 'hidden md:flex' },
             { label: 'Cliente', stringLabel: 'Cliente', icon: <UserPlus size={10} strokeWidth={2} />, fn: () => openModal && openModal('nuevo-cliente'), cls: 'hidden lg:flex' },
             { label: 'Producto', stringLabel: 'Producto', icon: <PackagePlus size={10} strokeWidth={2} />, fn: () => openModal && openModal('nuevo-producto'), cls: 'hidden lg:flex' },
             { label: 'Reportes', stringLabel: 'Reportes', icon: <BarChart3 size={10} strokeWidth={2} />, fn: () => { onViewReportes && onViewReportes() }, cls: 'hidden lg:flex' },
@@ -568,7 +568,7 @@ const Dashboard = ({
       <div className="md:hidden flex items-center gap-1.5 px-4 py-2 border-b overflow-x-auto"
         style={{ background: '#373F47', borderColor: 'rgba(255,255,255,.1)', scrollbarWidth: 'none' }}>
         {[
-          { label: 'Nuevo Pedido', fn: () => openModal && openModal('nuevo-pedido'), primary: true },
+          { label: 'Nueva Venta', fn: () => openModal && openModal('nuevo-pedido'), primary: true },
           { label: 'Cliente', fn: () => openModal && openModal('nuevo-cliente') },
           { label: 'Producto', fn: () => openModal && openModal('nuevo-producto') },
           { label: 'Reportes', fn: () => { onViewReportes && onViewReportes() } },
