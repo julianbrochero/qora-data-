@@ -73,7 +73,7 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
   const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
 
   return (
-    <div style={{ width: '100%', maxWidth: 420, fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ width: '100%', maxWidth: 420, margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
       {/* chip tipo */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
         <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', background: 'rgba(51,65,57,.1)', color: accent, border: '1px solid rgba(51,65,57,.2)' }}>

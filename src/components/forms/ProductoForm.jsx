@@ -81,7 +81,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal })
   const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
 
   return (
-    <div style={{ width: '100%', maxWidth: 420, fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ width: '100%', maxWidth: 420, margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
       {/* Chips de tipo */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
         {[
