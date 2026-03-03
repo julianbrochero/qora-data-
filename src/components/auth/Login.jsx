@@ -139,7 +139,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ══════════════ DERECHA — BRAND ══════════════ */}
       {/* ══════════════ DERECHA — IMAGEN MAC ══════════════ */}
       <div className="hidden md:flex md:w-[55%] relative items-center justify-center bg-[#F5F5F5] rounded-l-[40px] shadow-[-10px_0_30px_rgba(0,0,0,0.15)] z-10 transition-transform duration-500 overflow-hidden">
         <img
@@ -147,6 +146,12 @@ export default function Login() {
           alt="Gestify System en Mac"
           className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 duration-700 select-none"
         />
+
+        {/* Marca de agua / Nombre en la esquina superior derecha */}
+        <div className="absolute top-12 right-12 z-20 flex items-center gap-3 bg-white/60 backdrop-blur-md px-5 py-2.5 rounded-2xl shadow-sm border border-white/40">
+          <img src="/logologin4.png" alt="Gestify Icon" className="w-8 h-8 object-contain drop-shadow-sm" />
+          <span className="text-[22px] font-black text-[#1e2320] tracking-tight">Gestify</span>
+        </div>
       </div>
     </div>
   );
