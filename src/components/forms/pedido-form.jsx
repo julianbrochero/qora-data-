@@ -1,6 +1,6 @@
 ﻿"use client"
 
-import { Package, Search, Plus, Trash2, UserCheck, Pencil, Check, X, ChevronDown, Calendar } from "lucide-react"
+import { Package, Search, Plus, Trash2, UserCheck, Pencil, Check, X, ChevronDown, Calendar, CheckCircle } from "lucide-react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { toast } from "react-toastify"
 
@@ -69,6 +69,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
   const [priceDraft, setPriceDraft] = useState("")
 
   const [isProcessing, setIsProcessing] = useState(false)
+  const [alertaExito, setAlertaExito] = useState(null) // { mensaje: string }
   const generarBtnRef = useRef(null)
 
   // cerrar dropdowns al clic afuera
@@ -138,6 +139,11 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
   const handleNuevoCliente = () => openModal?.("nuevo-cliente", { onSuccess: c => openModal("nuevo-pedido", { savedState: pedidoData, newClient: c }) })
   const handleNuevoProducto = () => openModal?.("nuevo-producto", { onSuccess: p => openModal("nuevo-pedido", { savedState: pedidoData, newProduct: p }) })
 
+  const mostrarAlertaYCerrar = (msg) => {
+    setAlertaExito(msg)
+    setTimeout(() => { setAlertaExito(null); closeModal() }, 1800)
+  }
+
   const handleGuardar = async () => {
     setIsProcessing(true)
     const final = { ...pedidoData, total: calcTotal() }
@@ -145,7 +151,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
       if (!formActions?.actualizarPedido) { setIsProcessing(false); return }
       try {
         const r = await formActions.actualizarPedido(pedido.id, final)
-        if (r?.success) { toast.success(r.mensaje || 'Pedido actualizado'); formActions.recargarTodosLosDatos?.(); closeModal() }
+        if (r?.success) { formActions.recargarTodosLosDatos?.(); mostrarAlertaYCerrar(r.mensaje || '¡Venta actualizada correctamente!') }
         else toast.error('Error: ' + (r?.mensaje || 'Desconocido'))
       } catch (e) { toast.error('Error: ' + e.message) }
       setIsProcessing(false)
@@ -153,7 +159,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
     }
     if (formActions?.agregarPedidoSolo) {
       formActions.agregarPedidoSolo(final)
-        .then(r => { if (r?.success) { toast.success(r.mensaje || 'Pedido creado'); formActions.recargarTodosLosDatos?.(); closeModal() } else toast.error('Error: ' + (r?.mensaje || '')) })
+        .then(r => { if (r?.success) { formActions.recargarTodosLosDatos?.(); mostrarAlertaYCerrar(r.mensaje || '¡Venta creada exitosamente!') } else toast.error('Error: ' + (r?.mensaje || '')) })
         .catch(e => toast.error('Error: ' + e.message))
         .finally(() => setIsProcessing(false))
     } else if (formActions?.guardarVenta) {
@@ -199,19 +205,35 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
     <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased', width: '100%' }}>
 
       {/* ── HEADER ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, marginBottom: 14, borderBottom: `1px solid ${border}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, marginBottom: alertaExito ? 10 : 14, borderBottom: `1px solid ${border}` }}>
         <div style={{ width: 32, height: 32, borderRadius: 9, background: '#282A28', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Package size={15} strokeWidth={2} style={{ color: '#DCED31' }} />
         </div>
         <div>
           <p style={{ fontSize: 9, fontWeight: 700, color: ct3, letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: 1 }}>
-            {isEdit ? 'Modificar pedido' : 'Nuevo pedido'}
+            {isEdit ? 'Modificar venta' : 'Nueva venta'}
           </p>
           <h3 style={{ fontSize: 15, fontWeight: 800, color: ct1, letterSpacing: '-.03em', lineHeight: 1, margin: 0 }}>
-            {isEdit ? 'Editar Pedido' : 'Crear Pedido'}
+            {isEdit ? 'Editar Venta' : 'Crear Venta'}
           </h3>
         </div>
       </div>
+
+      {/* ── ALERTA ÉXITO ── */}
+      {alertaExito && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          borderLeft: '4px solid #22c55e',
+          background: 'rgba(34,197,94,0.08)',
+          borderRadius: '0 8px 8px 0',
+          padding: '10px 14px',
+          marginBottom: 14,
+          animation: 'fadeSlideIn .25s ease',
+        }}>
+          <CheckCircle size={16} strokeWidth={2.5} style={{ color: '#16a34a', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#15803d' }}>{alertaExito}</span>
+        </div>
+      )}
 
       <div style={{ padding: '0 2px' }}>
 
@@ -442,6 +464,10 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
     </div>
   )
