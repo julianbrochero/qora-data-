@@ -119,7 +119,7 @@ export const useVentas = () => {
         tipo: ventaData.tipoFactura || 'Factura A',
         numero: numeroFactura,
         fecha: ventaData.fechaVenta || new Date().toISOString().split('T')[0],
-        cliente_id: ventaData.clienteId,
+        cliente: clienteNombreFinal,
         cliente_nombre: clienteNombreFinal,
         pedido_id: pedidoGuardado[0].id,
         metodoPago: ventaData.metodoPago || 'Efectivo',

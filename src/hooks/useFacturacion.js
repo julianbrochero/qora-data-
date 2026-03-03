@@ -506,8 +506,7 @@ export const useFacturacion = () => {
         numero: numeroFactura,
         fecha: new Date().toISOString().split('T')[0],
         cliente: pedidoData.clienteNombre,
-        cliente_id: pedidoData.clienteId || null, // ← guardar FK para calcular deuda por cliente
-        pedido_id: nuevoPedido.id,  // ← FK directo (no texto en notas)
+        pedido_id: nuevoPedido.id,
         metodopago: 'Efectivo',
         items: JSON.stringify(pedidoData.items),
         total: total,
@@ -1193,7 +1192,6 @@ export const useFacturacion = () => {
         numero: numeroFactura,
         fecha: facturaData.fecha || new Date().toISOString().split('T')[0],
         cliente: facturaData.clienteNombre,
-        cliente_id: facturaData.clienteId || null, // ← FK para calcular deuda por cliente
         pedido_id: null,
         metodopago: facturaData.metodoPago || 'Efectivo',
         items: JSON.stringify(facturaData.items),
