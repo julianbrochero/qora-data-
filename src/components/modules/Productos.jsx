@@ -208,7 +208,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap', paddingBottom: 8, paddingTop: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
             <Menu size={16} strokeWidth={2} />
@@ -219,21 +219,21 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <button onClick={() => setModalCats(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.07)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <Tag size={12} strokeWidth={2} /> Categorías
           </button>
 
           <button onClick={() => openModal && openModal("nuevo-producto")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s', background: '#DCED31', color: '#282A28' }}>
-            <Plus size={12} strokeWidth={2.5} /> Nuevo Producto
-            <span style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
+            <Plus size={12} strokeWidth={2.5} /> Nuevo <span className="hidden sm:inline">Producto</span>
+            <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
           </button>
         </div>
       </header>
 
       {/* ══ CARDS RESUMEN ══ */}
-      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))', gap: 12 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
           { label: 'Total Productos', val: resumen.total, icon: Package, clr: '#373F47', sub: 'En catálogo' },
           { label: 'Con Stock', val: resumen.conStock, icon: CheckCircle, clr: '#065F46', sub: `${resumen.total > 0 ? Math.round(resumen.conStock / resumen.total * 100) : 0}% disponibles` },
@@ -259,7 +259,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
       </div>
 
       {/* ══ TABLA ══ */}
-      <div style={{ padding: '18px 24px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ ...cardStyle, borderRadius: 12, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* toolbar */}

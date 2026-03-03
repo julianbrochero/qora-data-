@@ -111,7 +111,7 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
         {!isRapido && (<>
 
           {/* Email + CUIT */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
             <div>
               <label style={labelBase}>Email <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
               <div style={{ position: 'relative' }}>

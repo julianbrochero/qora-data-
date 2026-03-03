@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from 'react'
-import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search, ChevronLeft, ChevronRight , Menu} from "lucide-react"
+import { Calendar, Users, Package, BarChart3, DollarSign, TrendingUp, TrendingDown, Download, Filter, Search, ChevronLeft, ChevronRight, Menu } from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -32,7 +32,7 @@ const pillSelect = {
   fontFamily: "'Inter', sans-serif", transition: 'border-color .15s'
 }
 
-const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], searchTerm = "", setSearchTerm , onOpenMobileSidebar}) => {
+const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], searchTerm = "", setSearchTerm, onOpenMobileSidebar }) => {
   const [periodo, setPeriodo] = useState("mes")
   const anioActualReal = new Date().getFullYear()
   const [anioSeleccionado, setAnioSeleccionado] = useState(anioActualReal)
@@ -138,43 +138,43 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', py: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Análisis</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Reportes Estadísticos</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Análisis</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Reportes Estadísticos</h2>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => window.print()} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: 32, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all .13s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.15)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.08)'}>
-            <Download size={13} strokeWidth={2.5} /> Exportar
+            <Download size={13} strokeWidth={2.5} /> <span className="hidden sm:inline">Exportar</span>
           </button>
         </div>
       </header>
 
       {/* ══ TOOLBAR BUSCADOR/FILTROS ══ */}
-      <div style={{ padding: '18px 24px 0', display: 'flex', gap: 10 }}>
-        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', background: surface, border: `1px solid ${border}`, borderRadius: 8, height: 32, padding: '0 12px', boxShadow: '0 1px 3px rgba(48,54,47,.04)' }}
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 200, position: 'relative', display: 'flex', alignItems: 'center', background: surface, border: `1px solid ${border}`, borderRadius: 8, height: 32, padding: '0 12px', boxShadow: '0 1px 3px rgba(48,54,47,.04)' }}
           onFocusCapture={e => e.currentTarget.style.borderColor = accent} onBlurCapture={e => e.currentTarget.style.borderColor = border}>
           <Search size={13} style={{ color: ct3, marginRight: 8, flexShrink: 0 }} />
-          <input type="text" placeholder="Filtrar estadísticas por cliente o nro de factura..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={inputStyle} />
+          <input type="text" placeholder="Filtrar por cliente o nro factura..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={inputStyle} />
         </div>
         <select value={periodo} onChange={e => setPeriodo(e.target.value)} style={pillSelect} onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border}>
-          <option value="dia">Día Actual (Hoy)</option>
+          <option value="dia">Hoy</option>
           <option value="semana">Últimos 7 Días</option>
           <option value="mes">Este Mes</option>
           <option value="anio">Este Año</option>
-          <option value="todos">Todos los tiempos</option>
+          <option value="todos">Todo</option>
         </select>
       </div>
 
       {/* ══ CARDS KPI ══ */}
-      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {kpis.map((k, i) => (
           <div key={i} style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
             onMouseEnter={e => { e.currentTarget.style.transform = `translateY(-2px)`; e.currentTarget.style.boxShadow = `0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)` }} onMouseLeave={e => { e.currentTarget.style.transform = ``; e.currentTarget.style.boxShadow = cardShadow }}>
@@ -194,7 +194,7 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
         ))}
       </div>
 
-      <div style={{ padding: '18px 24px', display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 14 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
 
         {/* GRÁFICO 7 DIAS */}
         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '16px 20px', display: 'flex', flexDirection: 'column' }}>
@@ -250,7 +250,7 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
       </div>
 
       {/* ══ RESUMEN MENSUAL AÑO ══ */}
-      <div style={{ padding: '0 24px 40px' }}>
+      <div style={{ padding: '0 clamp(12px, 3vw, 24px) 40px' }}>
         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
 
           <div style={{ padding: '16px 20px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: surface2 }}>

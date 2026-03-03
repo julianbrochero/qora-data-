@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Plus, Search, User, FileText, Mail, Phone, Edit, Trash2, Copy, Check, AlertCircle, DollarSign, ChevronLeft, ChevronRight, CheckCircle , Menu} from "lucide-react"
+import { Plus, Search, User, FileText, Mail, Phone, Edit, Trash2, Copy, Check, AlertCircle, DollarSign, ChevronLeft, ChevronRight, CheckCircle, Menu } from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -13,7 +13,7 @@ import { Plus, Search, User, FileText, Mail, Phone, Edit, Trash2, Copy, Check, A
    #DCED31  Primary Action (Lima Dashboard)
 ══════════════════════════════════════════════ */
 
-const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, eliminarCliente , onOpenMobileSidebar}) => {
+const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, eliminarCliente, onOpenMobileSidebar }) => {
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [clienteCopiado, setClienteCopiado] = useState(null)
@@ -119,15 +119,15 @@ const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, el
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ═══════════ HEADER ═══════════ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap', py: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Clientes</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Clientes</h2>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -138,13 +138,13 @@ const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, el
             background: '#DCED31', color: '#282A28',
           }}>
             <Plus size={12} strokeWidth={2.5} /> Nuevo Cliente
-            <span style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
+            <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
           </button>
         </div>
       </header>
 
       {/* ═══════════ CARDS RESUMEN ═══════════ */}
-      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
           { label: 'Total de Clientes', val: resumenClientes.totalClientes, icon: User, clr: '#373F47', sub: 'Registrados en el sistema' },
           { label: 'Clientes Activos', val: resumenClientes.clientesActivos, icon: CheckCircle, clr: '#065F46', sub: `${resumenClientes.totalClientes > 0 ? Math.round((resumenClientes.clientesActivos / resumenClientes.totalClientes) * 100) : 0}% del total` },
@@ -172,7 +172,7 @@ const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, el
       </div>
 
       {/* ═══════════ MAIN CONTENT (TABLA) ═══════════ */}
-      <div style={{ padding: '18px 24px 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ ...cardStyle, borderRadius: 12, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* TOOLBAR CONTROLES */}

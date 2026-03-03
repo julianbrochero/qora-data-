@@ -110,10 +110,12 @@ const Configuracion = () => {
 
     return (
         <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
-
             {/* ══ HEADER ══ */}
-            <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+                        <Menu size={16} strokeWidth={2} />
+                    </button>
                     <div>
                         <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Sistema</p>
                         <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Configuración</h2>
@@ -121,9 +123,8 @@ const Configuracion = () => {
                 </div>
             </header>
 
-            <div style={{ padding: '24px', maxWidth: 860, margin: '0 auto', width: '100%' }}>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+            <div style={{ padding: 'clamp(12px, 3vw, 24px)', maxWidth: 860, margin: '0 auto', width: '100%' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20, alignItems: 'start' }}>
 
                     {/* COLUMNA IZQUIERDA: PLAN Y SUSCRIPCION */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

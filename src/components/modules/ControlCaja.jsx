@@ -113,25 +113,25 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '8px clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
             <Menu size={16} strokeWidth={2} />
           </button>
-          <div>
+          <div className="hidden sm:block">
             <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Control de Caja</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Caja</h2>
           </div>
         </div>
 
         {/* SELECTOR FECHA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '5px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '5px 10px', order: { base: 2, sm: 'initial' } }}>
           <Calendar size={12} style={{ color: 'rgba(255,255,255,.5)', flexShrink: 0 }} />
           <button onClick={irAtras} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'transparent', border: 'none', color: 'rgba(255,255,255,.5)', cursor: 'pointer' }}>
             <ChevronLeft size={13} />
           </button>
           <input type="date" value={fechaSeleccionada} max={hoyStr} onChange={e => cambiarFecha(e.target.value)}
-            style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.85)', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }} />
+            style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.85)', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", width: 90 }} />
           <button onClick={irAdelante} disabled={fechaSeleccionada >= hoyStr} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'transparent', border: 'none', color: fechaSeleccionada >= hoyStr ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.5)', cursor: fechaSeleccionada >= hoyStr ? 'default' : 'pointer' }}>
             <ChevronRight size={13} />
           </button>
@@ -140,20 +140,17 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
         </div>
 
         {/* BOTONES ACCIÓN */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
           {esHoy ? (
             <>
-              <button onClick={() => openModal && openModal("ingreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', background: 'transparent', color: '#4ADE80', cursor: 'pointer', transition: 'all .13s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(74,222,128,.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <TrendingUp size={12} strokeWidth={2.5} /> Ingreso
+              <button onClick={() => openModal && openModal("ingreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #4ADE80', background: 'transparent', color: '#4ADE80', cursor: 'pointer' }}>
+                <TrendingUp size={11} strokeWidth={2.5} /> <span className="hidden xs:inline">Ingreso</span>
               </button>
-              <button onClick={() => openModal && openModal("egreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #F87171', background: 'transparent', color: '#F87171', cursor: 'pointer', transition: 'all .13s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} title="Atajo: Ctrl">
-                <TrendingDown size={12} strokeWidth={2.5} /> Egreso
-                <kbd style={{ fontSize: 9, fontWeight: 700, padding: '1px 4px', background: 'rgba(248,113,113,.15)', borderRadius: 4, marginLeft: 2 }}>Ctrl</kbd>
+              <button onClick={() => openModal && openModal("egreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #F87171', background: 'transparent', color: '#F87171', cursor: 'pointer' }} title="Atajo: Ctrl">
+                <TrendingDown size={11} strokeWidth={2.5} /> <span className="hidden xs:inline">Egreso</span>
               </button>
-              <button onClick={() => setMostrarConfirmCierre(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', background: '#DCED31', color: '#282A28' }}>
-                <CreditCard size={12} strokeWidth={2.5} /> Cerrar Caja
+              <button onClick={() => setMostrarConfirmCierre(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', background: '#DCED31', color: '#282A28' }}>
+                <CreditCard size={11} strokeWidth={2.5} /> Cerrar
               </button>
             </>
           ) : (
@@ -169,7 +166,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
 
       {/* ══ PANEL CIERRE ══ */}
       {mostrarConfirmCierre && (
-        <div style={{ margin: '14px 24px 0', background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ margin: 'clamp(10px, 2vw, 14px) clamp(12px, 3vw, 24px) 0', background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
           <div style={{ background: '#282A28', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(220,237,49,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -260,7 +257,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
       )}
 
       {/* ══ CARDS RESUMEN ══ */}
-      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(185px,1fr))', gap: 12 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 12 }}>
         {[
           { label: 'Ingresos del día', val: `$${fMonto(resumen.ingresos)}`, icon: TrendingUp, clr: '#065F46', sub: `${movimientosSeguros.filter(m => m.tipo === 'ingreso').length} movimientos` },
           { label: 'Egresos del día', val: `$${fMonto(resumen.egresos)}`, icon: TrendingDown, clr: '#991B1B', sub: `${movimientosSeguros.filter(m => m.tipo === 'egreso').length} movimientos` },
@@ -288,7 +285,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
       </div>
 
       {/* ══ TABLA MOVIMIENTOS ══ */}
-      <div style={{ padding: '18px 24px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* toolbar */}
@@ -448,7 +445,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
       </div>
 
       {/* ══ HISTORIAL DE CIERRES ══ */}
-      <div style={{ padding: '0 24px 24px' }}>
+      <div style={{ padding: '0 clamp(12px, 3vw, 24px) 24px' }}>
         <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, background: surface }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>Historial de Cierres</span>

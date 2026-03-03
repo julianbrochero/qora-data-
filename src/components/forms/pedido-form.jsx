@@ -278,7 +278,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         </div>
 
         {/* ── FECHAS Y ESTADO ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 10 }}>
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Fecha</label>
             <input type="date" style={{ ...inp, fontSize: 11 }} value={pedidoData.fechaPedido}
@@ -340,16 +340,16 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         {/* ── LISTA DE ITEMS ── */}
         <div style={{ border: `1px solid ${border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 10, background: surface }}>
           {/* cabecera */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 70px 28px', gap: 6, padding: '6px 10px', background: surface2, borderBottom: `1px solid ${border}` }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 28px', gap: 6, padding: '6px 10px', background: surface2, borderBottom: `1px solid ${border}` }}>
             {['Producto', 'Cant.', 'Total', ''].map((h, i) => (
               <div key={i} style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: i === 1 || i === 2 ? 'center' : 'left' }}>{h}</div>
             ))}
           </div>
 
           {/* items o vacío */}
-          <div style={{ minHeight: 64, maxHeight: 141, overflowY: 'auto' }}>
+          <div style={{ minHeight: 64, maxHeight: 200, overflowY: 'auto' }}>
             {pedidoData.items.length > 0 ? pedidoData.items.map((item, idx) => (
-              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 70px 28px', gap: 6, padding: '7px 10px', borderBottom: `1px solid ${border}`, alignItems: 'center' }}>
+              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 28px', gap: 6, padding: '7px 10px', borderBottom: `1px solid ${border}`, alignItems: 'center' }}>
 
                 {/* nombre + precio editable */}
                 <div style={{ minWidth: 0 }}>

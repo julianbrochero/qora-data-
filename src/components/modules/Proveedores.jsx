@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, DollarSign, Building, Edit, Trash2, FileText, Mail, Phone, ChevronLeft, ChevronRight, PackageCheck, AlertCircle , Menu} from "lucide-react"
+import { Plus, Search, DollarSign, Building, Edit, Trash2, FileText, Mail, Phone, ChevronLeft, ChevronRight, PackageCheck, AlertCircle, Menu } from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -32,7 +32,7 @@ const pillSelect = {
   fontFamily: "'Inter', sans-serif", transition: 'border-color .15s'
 }
 
-const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openModal, eliminarProveedor , onOpenMobileSidebar}) => {
+const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openModal, eliminarProveedor, onOpenMobileSidebar }) => {
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
 
@@ -71,27 +71,27 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', py: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión / Compras</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Proveedores</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión / Compras</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Proveedores</h2>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => openModal && openModal("nuevo-proveedor")} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 32, borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .13s', boxShadow: '0 2px 8px rgba(220,237,49,.2)' }}
             onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = ''}>
-            <Plus size={14} strokeWidth={2.5} /> Nuevo Proveedor
+            <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Nuevo Proveedor</span><span className="sm:hidden">Nuevo</span>
           </button>
         </div>
       </header>
 
       {/* ══ TOOLBAR BUSCADOR ══ */}
-      <div style={{ padding: '18px 24px 0', display: 'flex', gap: 10 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'flex', gap: 10 }}>
         <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', background: surface, border: `1px solid ${border}`, borderRadius: 8, height: 32, padding: '0 12px', boxShadow: '0 1px 3px rgba(48,54,47,.04)' }}
           onFocusCapture={e => e.currentTarget.style.borderColor = accent} onBlurCapture={e => e.currentTarget.style.borderColor = border}>
           <Search size={13} style={{ color: ct3, marginRight: 8, flexShrink: 0 }} />
@@ -100,7 +100,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
       </div>
 
       {/* ══ CARDS KPI ══ */}
-      <div style={{ padding: '18px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {kpis.map((k, i) => (
           <div key={i} style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
             onMouseEnter={e => { e.currentTarget.style.transform = `translateY(-2px)`; e.currentTarget.style.boxShadow = `0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)` }} onMouseLeave={e => { e.currentTarget.style.transform = ``; e.currentTarget.style.boxShadow = cardShadow }}>
@@ -121,7 +121,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
       </div>
 
       {/* ══ TABLA DE PROVEEDORES ══ */}
-      <div style={{ padding: '18px 24px 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           <div style={{ overflowX: 'auto' }}>

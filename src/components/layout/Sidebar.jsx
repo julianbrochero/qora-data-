@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   Shield,
   TrendingUp,
+  X,
 } from "lucide-react"
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
@@ -88,7 +89,13 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
 
         {/* Logo */}
         <div className="flex items-center overflow-hidden flex-shrink-0 relative"
-          style={{ height: 90, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
+          style={{ height: 80, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
+
+          {/* Botón cerrar móvil */}
+          <button onClick={onClose} className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+            <X size={16} />
+          </button>
+
 
           <img
             src="/logogestify3.png"
