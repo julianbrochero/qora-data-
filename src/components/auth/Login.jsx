@@ -49,16 +49,10 @@ export default function Login() {
       <div className="relative flex w-full flex-col justify-between py-10 px-8 bg-white md:w-[45%] lg:px-16 xl:px-24">
 
         {/* ── Logo arriba */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <div className="flex items-center justify-center rounded-xl bg-[#1e2320] p-2 shadow-lg">
             <img src="/esquina.png" alt="Gestify" className="h-9 w-9 object-contain" />
           </div>
-          <span className="text-[20px] font-black tracking-tight text-[#1e2320]">
-            Gestify
-          </span>
-          <span className="rounded-lg border-2 border-[#1e2320] px-2.5 py-0.5 text-[11px] font-black tracking-widest text-[#1e2320]">
-            PRO
-          </span>
         </div>
 
         {/* ── Contenido central */}
