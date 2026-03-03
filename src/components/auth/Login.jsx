@@ -166,11 +166,11 @@ export default function Login() {
         <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-12">
 
           {/* Logo grande */}
-          <div className="mb-10 flex h-64 w-64 items-center justify-center rounded-full border border-white/20 bg-white/10 shadow-[0_0_100px_rgba(220,237,49,0.1)] backdrop-blur-xl transition-all hover:scale-105 duration-500">
+          <div className="mb-10 transition-all hover:scale-105 duration-500">
             <img
-              src="/logofavicon.png"
+              src="/logologin2.png"
               alt="Gestify"
-              className="h-40 w-40 object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+              className="h-72 w-auto object-contain drop-shadow-2xl"
             />
           </div>
 
