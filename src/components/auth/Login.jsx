@@ -148,7 +148,7 @@ export default function Login() {
       </div>
 
       {/* ══════════════ DERECHA — BRAND ══════════════ */}
-      <div className="hidden md:flex md:w-[55%] relative overflow-hidden bg-[#1e2320]">
+      <div className="hidden md:flex md:w-[55%] relative overflow-hidden bg-[#1e2320] rounded-bl-[140px]">
         {/* Imagen de fondo SIN opacidad */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
