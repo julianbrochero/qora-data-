@@ -22,29 +22,31 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-white font-sans text-gray-800">
+    <div className="flex min-h-screen w-full font-sans text-gray-800 bg-cover bg-center bg-no-repeat bg-white md:bg-white bg-[url('/fondologin.PNG')] md:bg-none relative">
       {/* Mitad Izquierda - Formulario */}
-      <div className="relative flex w-full flex-col justify-center px-8 md:w-1/2 lg:px-24 xl:px-32">
-        <div className="mx-auto w-full max-w-sm">
+      <div className="relative flex w-full flex-col justify-center px-8 md:w-1/2 lg:px-24 xl:px-32 z-10">
+        <div className="mx-auto w-full max-w-sm bg-white/95 md:bg-transparent p-8 md:p-0 rounded-3xl md:rounded-none shadow-2xl md:shadow-none backdrop-blur-sm md:backdrop-blur-none border border-white/20 md:border-none">
           {/* Logo visible solo en móvil */}
-          <div className="mb-10 flex justify-center md:hidden">
-            <div className="rounded-2xl bg-[#1e2320] p-5 shadow-xl">
-              <img src="/logogestify3.png" alt="Gestify" className="h-10 object-contain" />
+          <div className="mb-8 flex justify-center md:hidden">
+            <div className="rounded-2xl bg-[#1e2320] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-white/10">
+              <img src="/logogestify3.png" alt="Gestify" className="h-8 object-contain" />
             </div>
           </div>
 
-          <h2 className="mb-2 text-[36px] font-extrabold tracking-tight text-[#1e2320]">
-            Iniciar Sesión
-          </h2>
-          <p className="mb-10 text-[15px] font-medium text-gray-500">
-            Ingresá con tu cuenta para acceder al sistema.
-          </p>
+          <div className="text-center md:text-left">
+            <h2 className="mb-2 text-[32px] md:text-[36px] font-extrabold tracking-tight text-[#1e2320]">
+              Iniciar Sesión
+            </h2>
+            <p className="mb-10 text-[14px] md:text-[15px] font-medium text-gray-500">
+              Ingresá con tu cuenta para acceder al sistema.
+            </p>
+          </div>
 
           {/* Botón de Google Único */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="group flex w-full items-center justify-center gap-3 rounded-[16px] bg-[#F4F7FE] py-4 text-sm font-bold text-[#1e2320] transition-all hover:bg-gray-100 border border-transparent hover:border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="group flex w-full items-center justify-center gap-3 rounded-[16px] bg-[#F4F7FE] md:bg-[#F4F7FE] py-4 text-sm font-bold text-[#1e2320] transition-all hover:bg-gray-100 border border-transparent md:border-transparent hover:border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm md:shadow-none"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -56,8 +58,8 @@ export default function Login() {
           </button>
         </div>
 
-        {/* Footer info izq */}
-        <div className="absolute bottom-10 left-0 w-full text-center text-[13px] font-medium text-gray-400 md:text-left md:left-10 lg:left-24 xl:left-32">
+        {/* Footer info izq visible siempre en PC, oculto en móvil si molesta */}
+        <div className="absolute bottom-6 md:bottom-10 left-0 w-full text-center text-[12px] md:text-[13px] font-medium text-white/80 md:text-gray-400 md:text-left md:left-10 lg:left-24 xl:left-32 drop-shadow-sm md:drop-shadow-none">
           © {new Date().getFullYear()} Gestify. Todos los derechos reservados.
         </div>
       </div>
@@ -69,7 +71,7 @@ export default function Login() {
           style={{ backgroundImage: "url('/fondologin.PNG')", backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           {/* Capacidad superpuesta con gradiente corporativo */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1e2320]/95 via-[#1e2320]/85 to-[#DCED31]/20 backdrop-blur-[2px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1e2320]/60 via-[#1e2320]/50 to-[#DCED31]/10 backdrop-blur-[2px]"></div>
 
           {/* Brillitos o manchas de luz */}
           <div className="absolute -top-[10%] -right-[10%] h-[500px] w-[500px] rounded-full bg-gradient-to-tr from-[#DCED31]/15 to-transparent blur-[100px]"></div>
