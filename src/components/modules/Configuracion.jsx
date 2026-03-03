@@ -53,7 +53,7 @@ const ConfigRow = ({ label, description, children, noBorder }) => (
 
 const Configuracion = () => {
     const { darkMode, toggleDarkMode } = useTheme()
-    const { status, daysRemaining, isTrial, createSubscription, cancelSubscription, getCheckoutUrl } = useSubscriptionContext()
+    const { status, daysRemaining, isTrial, isPro, email, createSubscription, cancelSubscription, getCheckoutUrl } = useSubscriptionContext()
     const { user, signOut } = useAuth()
     const [loadingSub, setLoadingSub] = useState(false)
     const [guardando, setGuardando] = useState(false)
@@ -100,9 +100,13 @@ const Configuracion = () => {
         }
     }
 
-    const planActivo = status === 'active'
+    const planActivo = isPro || status === 'active'
     const planTrial = status === 'trial'
-    const planVencido = status === 'expired'
+    const planVencido = status === 'expired' || status === 'suspended'
+    const planGrace = status === 'grace'
+
+    // Calcular progreso del plan (30 días)
+    const progresoPlan = planActivo ? Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100)) : 0
 
     return (
         <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
@@ -110,9 +114,6 @@ const Configuracion = () => {
             {/* ══ HEADER ══ */}
             <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 24px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
-                        <Menu size={16} strokeWidth={2} />
-                    </button>
                     <div>
                         <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Sistema</p>
                         <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Configuración</h2>
@@ -131,7 +132,7 @@ const Configuracion = () => {
                         <div style={{ background: surface, borderRadius: 14, border: planActivo ? `1px solid #DCED31` : `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
                             {planActivo && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: '#DCED31' }} />}
 
-                            <SectionTitle icon={CreditCard} title="Mi Suscripción" desc="Detalles de tu plan actual y facturación" />
+                            <SectionTitle icon={CreditCard} title="Mi Suscripción" desc="Detalles de tu plan actual" />
 
                             <div style={{ background: surface2, borderRadius: 10, border: `1px solid ${border}`, padding: '16px', marginBottom: 16 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -142,19 +143,44 @@ const Configuracion = () => {
                                             boxShadow: `0 0 0 2px ${planActivo ? 'rgba(220,237,49,.3)' : planTrial ? 'rgba(252,211,77,.3)' : 'rgba(229,57,53,.3)'}`
                                         }} />
                                         <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>
-                                            {planActivo ? 'Plan Pro Activo' : planTrial ? 'Prueba Gratuita' : 'Suscripción Vencida'}
+                                            {planActivo ? 'Gestify PRO' : planTrial ? 'Prueba Gratuita' : planGrace ? 'Período de Gracia' : 'Suscripción Vencida'}
                                         </span>
+                                        {planActivo && (
+                                            <span style={{
+                                                fontSize: 9, fontWeight: 900, color: '#282A28', background: '#DCED31',
+                                                padding: '1px 6px', borderRadius: 3, letterSpacing: '.04em',
+                                            }}>PRO</span>
+                                        )}
                                     </div>
                                     <span style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'rgba(48,54,47,.05)', padding: '2px 8px', borderRadius: 4 }}>
-                                        $20.000 / mes
+                                        $14.999 / mes
                                     </span>
                                 </div>
 
-                                <p style={{ fontSize: 12, color: ct2, lineHeight: 1.5 }}>
-                                    {planActivo && `Tu suscripción está al día. Próximo cobro en ${daysRemaining} días.`}
-                                    {planTrial && `Estás en período de prueba gratuito. Te quedan ${daysRemaining} días antes de que se pause tu cuenta.`}
-                                    {planVencido && `Tu plan ha expirado. Aboná para reactivar tu cuenta y seguir operando sin límites.`}
+                                <p style={{ fontSize: 12, color: ct2, lineHeight: 1.5, marginBottom: planActivo ? 12 : 0 }}>
+                                    {planActivo && `Tu plan PRO está activo. Se renueva en ${daysRemaining} días.`}
+                                    {planTrial && `Estás en período de prueba. Te quedan ${daysRemaining} días.`}
+                                    {planGrace && `Tu plan venció. Tenés ${daysRemaining} días para renovar.`}
+                                    {planVencido && `Tu plan ha expirado. Aboná para reactivar tu cuenta.`}
                                 </p>
+
+                                {/* Barra de progreso del plan PRO */}
+                                {planActivo && (
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                            <span style={{ fontSize: 10, color: ct3, fontWeight: 600 }}>Período actual</span>
+                                            <span style={{ fontSize: 10, color: ct3, fontWeight: 600 }}>{daysRemaining} días restantes</span>
+                                        </div>
+                                        <div style={{ height: 6, background: 'rgba(48,54,47,.08)', borderRadius: 10, overflow: 'hidden' }}>
+                                            <div style={{
+                                                height: '100%', borderRadius: 10,
+                                                background: progresoPlan > 80 ? '#E53935' : progresoPlan > 50 ? '#FCD34D' : '#DCED31',
+                                                width: `${progresoPlan}%`,
+                                                transition: 'width .5s ease',
+                                            }} />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div style={{ display: 'flex', gap: 10 }}>
@@ -162,19 +188,6 @@ const Configuracion = () => {
                                     <button onClick={handleSubscribe} disabled={loadingSub} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', transition: 'all .13s', opacity: loadingSub ? .7 : 1 }}>
                                         <Zap size={14} strokeWidth={2.5} /> {loadingSub ? 'Cargando...' : 'Suscribirme Ahora'}
                                     </button>
-                                )}
-
-                                {planActivo && (
-                                    <>
-                                        <button onClick={handleAbonar} disabled={loadingSub} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: surface2, border: `1px solid ${border}`, color: ct2, fontSize: 12, fontWeight: 600, cursor: loadingSub ? 'default' : 'pointer', transition: 'all .13s' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(48,54,47,.03)'} onMouseLeave={e => e.currentTarget.style.background = surface2}>
-                                            Adelantar Pago
-                                        </button>
-                                        <button onClick={handleCancel} disabled={loadingSub} style={{ padding: '10px 14px', borderRadius: 8, background: 'transparent', border: `1px solid rgba(229,57,53,.2)`, color: '#E53935', fontSize: 12, fontWeight: 600, cursor: loadingSub ? 'default' : 'pointer', transition: 'all .13s' }}
-                                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                            Cancelar
-                                        </button>
-                                    </>
                                 )}
                             </div>
 
@@ -185,8 +198,18 @@ const Configuracion = () => {
                             <SectionTitle icon={User} title="Mi Cuenta" desc="Información de tu perfil" />
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-                                <div style={{ width: 48, height: 48, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: accent, border: `1px solid rgba(51,65,57,.15)` }}>
-                                    {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                                <div style={{ position: 'relative' }}>
+                                    <div style={{ width: 48, height: 48, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: accent, border: planActivo ? '2px solid #DCED31' : `1px solid rgba(51,65,57,.15)` }}>
+                                        {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    {planActivo && (
+                                        <div style={{
+                                            position: 'absolute', bottom: -2, right: -4,
+                                            fontSize: 7, fontWeight: 900, color: '#282A28', background: '#DCED31',
+                                            padding: '1px 4px', borderRadius: 3, letterSpacing: '.04em',
+                                            border: '1.5px solid #fff',
+                                        }}>PRO</div>
+                                    )}
                                 </div>
                                 <div>
                                     <p style={{ fontSize: 14, fontWeight: 700, color: ct1 }}>{user?.user_metadata?.full_name || 'Administrador'}</p>

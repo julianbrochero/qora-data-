@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react"
 import { useAuth } from "../../lib/AuthContext"
+import { useSubscriptionContext } from "../../lib/SubscriptionContext"
 import {
   Search, Bell, Plus, DollarSign, FileText, Users, Wallet,
   Calendar, UserPlus, PackagePlus, BarChart3, CheckCircle2,
@@ -428,6 +429,7 @@ const Dashboard = ({
   onViewAllPedidos, onViewAllClientes, onViewAllCaja, openModal, onOpenMobileSidebar,
 }) => {
   const { user } = useAuth()
+  const { isPro } = useSubscriptionContext()
   const hoy = new Date()
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const inicioAnteriorMes = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
@@ -544,11 +546,20 @@ const Dashboard = ({
           ))}
 
           <div className="w-px h-4 mx-1 hidden md:block" style={{ background: 'rgba(255,255,255,.12)' }} />
-          <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-bold text-white cursor-pointer overflow-hidden border flex-shrink-0"
-            style={{ background: '#606B6C', borderColor: 'rgba(255,255,255,.2)' }}>
-            {user?.user_metadata?.avatar_url
-              ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
-              : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-bold text-white cursor-pointer overflow-hidden border flex-shrink-0"
+              style={{ background: '#606B6C', borderColor: isPro ? '#DCED31' : 'rgba(255,255,255,.2)', borderWidth: isPro ? 2 : 1 }}>
+              {user?.user_metadata?.avatar_url
+                ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+                : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
+            </div>
+            {isPro && (
+              <span style={{
+                fontSize: 8, fontWeight: 900, color: '#282A28', background: '#DCED31',
+                padding: '1px 5px', borderRadius: 3, letterSpacing: '.04em',
+                lineHeight: '14px',
+              }}>PRO</span>
+            )}
           </div>
         </div>
       </header>

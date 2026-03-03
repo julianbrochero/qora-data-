@@ -54,29 +54,8 @@ const SubscriptionGate = ({ children }) => {
             {/* Banner Trial (solo si NO es PRO) */}
             {status === 'trial' && !isPro && <TrialBanner daysRemaining={daysRemaining} />}
 
-            {/* Banner PRO activo */}
-            {status === 'active' && isPro && (
-                <div style={{
-                    background: 'linear-gradient(90deg, #282A28 0%, #334139 100%)',
-                    borderBottom: '1px solid rgba(220,237,49,.2)',
-                    padding: '6px 20px', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', gap: 10,
-                    zIndex: 50, position: 'relative'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            background: '#DCED31', padding: '2px 8px', borderRadius: 4,
-                        }}>
-                            <Crown size={10} color="#282A28" />
-                            <span style={{ fontSize: 10, fontWeight: 900, color: '#282A28', letterSpacing: '.04em' }}>PRO</span>
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(255,255,255,.7)' }}>
-                            Gestify PRO activo
-                        </span>
-                    </div>
-                </div>
-            )}
+
+            {/* PRO activo: sin banner (se muestra en Configuración y avatar) */}
 
             {/* Banner Grace Period */}
             {status === 'grace' && (
