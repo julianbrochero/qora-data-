@@ -176,11 +176,13 @@ export const useSubscription = () => {
             hasAccess: estado !== 'suspended',
             isTrial: estado === 'trial',
             isPro: isPro,
+            isNewUser: false,
             trialDaysLeft: trialDaysLeft,
             status: estado,
             daysRemaining: daysLeft,
             message: title,
             email: email,
+            userId: userId,       // ← ESTABA FALTANDO — causa que el pago no se guarde
             subscription: data
         }
 
