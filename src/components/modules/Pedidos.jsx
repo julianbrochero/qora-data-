@@ -253,7 +253,7 @@ const Pedidos = ({
       </header>
 
       {/* ═══════════ CARDS RESUMEN (4 diferenciadas) ═══════════ */}
-      <div style={{ padding: '12px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+      <div style={{ padding: 'clamp(10px,2vw,12px) clamp(12px,3vw,24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         {[
           {
             label: 'Pedidos activos', val: resumen.pendientes + resumen.enProceso,
@@ -300,7 +300,7 @@ const Pedidos = ({
 
       {/* ═══════════ VISTA LISTA ═══════════ */}
       {vistaActiva === "lista" && (
-        <div style={{ padding: '14px 24px 32px' }}>
+        <div style={{ padding: 'clamp(10px,2vw,14px) clamp(12px,3vw,24px) 32px' }}>
           <div className={cardCls} style={cardStyle}>
 
             {/* Filtros */}

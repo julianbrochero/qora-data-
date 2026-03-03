@@ -5,7 +5,8 @@ import {
   Search, Eye, DollarSign, FileText, Users, CreditCard, CheckCircle,
   Clock, Trash2, CheckSquare, Banknote, XCircle, Plus, ChevronLeft,
   ChevronRight, AlertCircle, Package, Printer
-, Menu} from "lucide-react"
+  , Menu
+} from "lucide-react"
 
 /* ── PALETA (igual a Pedidos) ── */
 const bg = '#F5F5F5'
@@ -39,7 +40,7 @@ const pillSel = {
 const Facturacion = ({
   facturas = [], pedidos = [], searchTerm = "", setSearchTerm,
   onNuevaFactura, registrarCobro, eliminarFactura, recargarDatos
-, onOpenMobileSidebar}) => {
+  , onOpenMobileSidebar }) => {
   const [filtroEstado, setFiltroEstado] = useState("todos")
   const [pestaña, setPestaña] = useState("todas")
   const [facturaSeleccionada, setFacturaSel] = useState(null)
@@ -156,9 +157,9 @@ const Facturacion = ({
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Facturación</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Facturación</h2>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button onClick={toggleModoSeleccion} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: modoSeleccion ? '1px solid #DCED31' : '1px solid rgba(255,255,255,.2)', background: 'transparent', color: modoSeleccion ? '#DCED31' : 'rgba(255,255,255,.6)', cursor: 'pointer' }}>
@@ -171,7 +172,7 @@ const Facturacion = ({
       </header>
 
       {/* ═══ KPI CARDS ═══ */}
-      <div style={{ padding: '12px 24px 0', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+      <div style={{ padding: 'clamp(10px,2vw,12px) clamp(12px,3vw,24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
         {[
           { label: 'Deuda Total', val: `$${fNum(resumen.totalDeuda)}`, sub: 'Saldo pendiente total', bar: '#334139', iconBg: 'rgba(51,65,57,.1)', iconC: '#334139', Icon: CreditCard },
           { label: 'Facturas Pendientes', val: resumen.pendientes, sub: 'Con saldo pendiente', bar: '#373F47', iconBg: 'rgba(55,63,71,.1)', iconC: '#373F47', Icon: FileText },
@@ -193,7 +194,7 @@ const Facturacion = ({
       </div>
 
       {/* ═══ TABLA ═══ */}
-      <div style={{ padding: '14px 24px 32px' }}>
+      <div style={{ padding: 'clamp(10px,2vw,14px) clamp(12px,3vw,24px) 32px' }}>
         <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
 
           {/* Filtros */}

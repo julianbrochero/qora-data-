@@ -587,7 +587,7 @@ const Dashboard = ({
       </div>
 
       {/* ══════════ CONTENT ══════════ */}
-      <main className="flex-1 overflow-y-auto w-full" style={{ padding: '28px 28px 48px' }}>
+      <main className="flex-1 overflow-y-auto w-full" style={{ padding: 'clamp(14px, 3vw, 28px) clamp(12px, 3vw, 28px) 48px' }}>
 
         {/* ── PAGE HEADER ── */}
         <div className="flex items-end justify-between flex-wrap gap-3 mb-6">
@@ -595,7 +595,7 @@ const Dashboard = ({
             <p style={{ fontSize: 10.5, color: '#8B8982', marginBottom: 5, letterSpacing: '.01em' }}>
               {saludo}, {nombreUsuario}
             </p>
-            <h1 className="font-bold leading-none" style={{ fontSize: 28, color: '#1e2320', letterSpacing: '-0.035em' }}>
+            <h1 className="font-bold leading-none" style={{ fontSize: 'clamp(20px, 4vw, 28px)', color: '#1e2320', letterSpacing: '-0.035em' }}>
               Resumen de Ventas
             </h1>
           </div>
@@ -643,8 +643,7 @@ const Dashboard = ({
         {/* ── ANÁLISIS GRID ── */}
         <div className="mb-6">
           <SectionLabel>Análisis</SectionLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.9fr', gap: 12 }}
-            className="xl:grid xl-cols-3 block-grid">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
 
             {/* ── COL 1: Rendimiento por cliente ── */}
             <div style={{ background: '#FAFAFA', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(48,54,47,.13)', boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }}>

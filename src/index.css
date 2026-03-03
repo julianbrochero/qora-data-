@@ -491,3 +491,60 @@ body {
   background: rgba(249, 79, 39, 0.18);
   color: inherit;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE & TABLET
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Evitar scroll horizontal global */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Tablas: scroll horizontal automático */
+table {
+  width: 100%;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Mobile (≤ 640px) ── */
+@media (max-width: 640px) {
+
+  /* Grids de 4 columnas → 2 columnas */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  /* Grids de 3 columnas → 1 columna */
+  .grid-cols-3 {
+    grid-template-columns: repeat(1, 1fr) !important;
+  }
+
+  /* Ocultar columnas menos relevantes en tablas */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Headers de módulos */
+  header h1, header h2 {
+    font-size: 16px !important;
+  }
+
+  /* padding lateral reducido en mobile */
+  .px-6, .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* ── Tablet (641px – 1024px) ── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

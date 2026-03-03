@@ -46,42 +46,41 @@ export default function Login() {
       className="flex min-h-screen w-full bg-[#282A28]"
     >
       {/* ══════════════ IZQUIERDA — FORMULARIO ══════════════ */}
-      <div className="relative flex w-full flex-col justify-between py-10 px-8 md:w-[45%] lg:px-16 xl:px-24">
+      <div className="relative flex w-full flex-col justify-between py-8 px-6 sm:py-10 sm:px-8 md:w-[45%] lg:px-16 xl:px-24">
 
-        {/* ── Logo arriba */}
         <div className="flex items-center">
-          <img src="/esquina.png" alt="Gestify" className="h-[100px] w-auto object-contain drop-shadow-sm" />
+          <img src="/esquina.png" alt="Gestify" className="h-[70px] sm:h-[100px] w-auto object-contain drop-shadow-sm" />
         </div>
 
         {/* ── Contenido central */}
         <div className="mx-auto w-full max-w-[400px] flex flex-col items-center">
           {/* Tagline */}
-          <div className="mb-10 text-center">
-            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-4 py-1.5 inline-block shadow-md">
+          <div className="mb-6 sm:mb-10 text-center">
+            <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
               Sistema de Gestión Empresarial
             </p>
             <h1
               style={{ letterSpacing: "-0.05em" }}
-              className="text-[48px] font-black leading-tight text-white whitespace-nowrap"
+              className="text-[32px] sm:text-[40px] md:text-[48px] font-black leading-tight text-white"
             >
               Iniciar Sesión
             </h1>
-            <p className="mt-2 text-[16px] font-medium leading-relaxed text-gray-400">
+            <p className="mt-2 text-[13px] sm:text-[16px] font-medium leading-relaxed text-gray-400">
               Accedé a tu panel de gestión de forma segura.
             </p>
           </div>
 
           {/* ── Feature pills ── */}
-          <div className="mb-10 grid grid-cols-2 gap-4 w-full">
+          <div className="mb-6 sm:mb-10 grid grid-cols-2 gap-3 sm:gap-4 w-full">
             {features.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/20 shadow-sm group"
+                className="flex items-center gap-2 sm:gap-3 rounded-2xl bg-white/5 p-3 sm:p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/20 shadow-sm group"
               >
-                <div className="p-2.5 bg-white/10 rounded-xl group-hover:scale-110 transition-transform">
+                <div className="p-2 sm:p-2.5 bg-white/10 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
                   {f.icon}
                 </div>
-                <span className="text-[12px] font-extrabold text-white leading-tight select-none">{f.label}</span>
+                <span className="text-[11px] sm:text-[12px] font-extrabold text-white leading-tight select-none">{f.label}</span>
               </div>
             ))}
           </div>
@@ -111,16 +110,16 @@ export default function Login() {
           </button>
 
           {/* ── Aviso datos seguros */}
-          <div className="mt-8 flex items-center justify-center gap-2.5 text-[13px] font-semibold text-gray-500 text-center">
-            <ShieldCheck size={18} className="text-[#DCED31]" />
+          <div className="mt-6 sm:mt-8 flex items-center justify-center gap-2.5 text-[12px] sm:text-[13px] font-semibold text-gray-500 text-center">
+            <ShieldCheck size={16} className="text-[#DCED31] flex-shrink-0" />
             <p>Tus datos están protegidos. No almacenamos contraseñas.</p>
           </div>
         </div>
 
         {/* ── Footer */}
-        <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] font-bold text-gray-500 mt-6">
           <span className="select-none">© {new Date().getFullYear()} Gestify. Todos los derechos reservados.</span>
-          <div className="flex gap-5">
+          <div className="flex gap-4 sm:gap-5">
             <a
               href="#"
               onClick={(e) => { e.preventDefault(); }}
@@ -132,7 +131,7 @@ export default function Login() {
               onClick={handleWhatsApp}
               className="hover:text-[#25D366] transition-colors flex items-center gap-1.5"
             >
-              <MessageCircle size={14} />
+              <MessageCircle size={12} />
               Soporte
             </button>
           </div>
