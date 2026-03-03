@@ -23,8 +23,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1e2320] flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 bg-[#1e2320] bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/fondologin.PNG')" }}
+    >
+      <div className="absolute inset-0 bg-[#1e2320]/60 backdrop-blur-[2px]"></div>
+      <div className="max-w-md w-full relative z-10">
         {/* Card */}
         <div className="bg-[#282a28] rounded-3xl shadow-2xl border border-[#30362f] p-8 md:p-10">
           {/* Logo/Título */}
