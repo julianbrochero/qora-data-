@@ -53,14 +53,37 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProAct
         setActivating(true)
         try {
             const paidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            await supabase
+            const trialEnd = new Date().toISOString()
+
+            // Intento 1: con pro_since (si la columna existe)
+            const { error: err1 } = await supabase
                 .from('subscriptions')
                 .update({
                     paid_until: paidUntil,
-                    pro_since: new Date().toISOString(),
-                    trial_until: new Date().toISOString(), // Terminar trial
+                    pro_since: trialEnd,
+                    trial_until: trialEnd,
                 })
                 .eq('user_id', userId)
+
+            if (err1) {
+                console.warn('Update con pro_since falló, reintentando sin ella:', err1.message)
+                // Intento 2: sin pro_since (columna no existe todavía)
+                const { error: err2 } = await supabase
+                    .from('subscriptions')
+                    .update({
+                        paid_until: paidUntil,
+                        trial_until: trialEnd,
+                    })
+                    .eq('user_id', userId)
+
+                if (err2) {
+                    console.error('Error final activando PRO:', err2)
+                } else {
+                    console.log('✅ PRO activado (sin pro_since)')
+                }
+            } else {
+                console.log('✅ PRO activado con pro_since')
+            }
         } catch (e) {
             console.error('Error activando PRO:', e)
         }
@@ -285,10 +308,10 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProAct
                             </div>
 
                             <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1e2320', marginBottom: 4, letterSpacing: '-.02em' }}>
-                                ¡Bienvenido a Gestify <span style={{ color: '#334139' }}>PRO</span>!
+                                ¡Tu plan <span style={{ color: '#334139' }}>PRO</span> está activo!
                             </h2>
                             <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 18, maxWidth: 320, margin: '0 auto 18px' }}>
-                                Tu pago está siendo procesado. En cuanto lo verifiquemos, tu plan se activará automáticamente.
+                                Ya podés usar todas las funciones sin límites. ¡Gracias por confiar en Gestify!
                             </p>
 
                             {/* Resumen */}
@@ -298,12 +321,12 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProAct
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                                     <CheckCircle size={16} color="#22c55e" />
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Pago registrado correctamente</span>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Plan PRO activado correctamente</span>
                                 </div>
                                 {[
                                     { icon: '📧', text: `${userEmail}` },
                                     { icon: '💰', text: `Plan Gestify PRO · ${PAYMENT_INFO.monto}/mes` },
-                                    { icon: '⚡', text: 'Activación: en minutos (con comprobante) o dentro de 24hs' },
+                                    { icon: '✅', text: 'PRO activo por 30 días' },
                                 ].map((item, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 6 : 0 }}>
                                         <span style={{ fontSize: 13, width: 20, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
@@ -313,7 +336,7 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProAct
                             </div>
 
                             <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16 }}>
-                                Si enviaste el comprobante por WhatsApp, tu activación será aún más rápida ⚡
+                                Recordá enviar el comprobante por WhatsApp para que quede registrado ⚡
                             </p>
 
                             <button
