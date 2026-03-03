@@ -255,10 +255,9 @@ const Configuracion = () => {
                     </div>
                 </div>
 
-                {/* VERSIÓN */}
                 <div style={{ marginTop: 40, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 24, height: 24, background: '#DCED31', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ color: '#111827', fontSize: 13, fontWeight: 900, fontFamily: "'Inter', sans-serif", letterSpacing: '-.05em' }}>G</span>
+                    <div style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img src="/333.png" alt="Gestify Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                     <div>
                         <p style={{ fontSize: 12, fontWeight: 800, color: '#111827', letterSpacing: '-.02em', margin: '0 0 2px 0' }}>Gestify</p>
