@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { X, Copy, CheckCircle, MessageCircle, CreditCard, ChevronRight, Clock, PartyPopper } from 'lucide-react'
+import { X, Copy, CheckCircle, MessageCircle, CreditCard, ChevronRight, Clock, PartyPopper, AlertTriangle } from 'lucide-react'
 
 // ─── CONFIGURA ESTOS DATOS ────────────────────────────────────────────────────
 const PAYMENT_INFO = {
@@ -21,7 +21,7 @@ const PAYMENT_INFO = {
 const WHATSAPP_NUMBER = '5493534087718'
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProActivated = null }) => {
+const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProActivated = null, manuallySuspended = false }) => {
     const [copiedAlias, setCopiedAlias] = useState(false)
     const [copiedCbu, setCopiedCbu] = useState(false)
     const [step, setStep] = useState(1)
@@ -90,10 +90,12 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProAct
         setActivating(false)
     }
 
-    // Cuando pasa al paso 3, activar PRO automáticamente
+    // Cuando pasa al paso 3, activar PRO automáticamente SOLO si NO fue suspendido manualmente
     const goToStep3 = async () => {
         setStep(3)
-        await activatePro()
+        if (!manuallySuspended) {
+            await activatePro()
+        }
     }
 
     const handleClose = () => {
@@ -301,43 +303,88 @@ const PaymentModal = ({ isOpen, onClose, userEmail = '', userId = null, onProAct
                                 </div>
                                 <div style={{
                                     padding: '4px 10px', borderRadius: 6,
-                                    background: '#DCED31', border: '1.5px solid #282A28',
+                                    background: manuallySuspended ? '#FEF2F2' : '#DCED31',
+                                    border: manuallySuspended ? '1.5px solid #FECACA' : '1.5px solid #282A28',
                                 }}>
-                                    <span style={{ fontSize: 12, fontWeight: 900, color: '#282A28', letterSpacing: '.04em' }}>PRO</span>
+                                    <span style={{
+                                        fontSize: 12, fontWeight: 900,
+                                        color: manuallySuspended ? '#DC2626' : '#282A28',
+                                        letterSpacing: '.04em'
+                                    }}>
+                                        {manuallySuspended ? 'PENDIENTE' : 'PRO'}
+                                    </span>
                                 </div>
                             </div>
 
-                            <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1e2320', marginBottom: 4, letterSpacing: '-.02em' }}>
-                                ¡Tu plan <span style={{ color: '#334139' }}>PRO</span> está activo!
-                            </h2>
-                            <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 18, maxWidth: 320, margin: '0 auto 18px' }}>
-                                Ya podés usar todas las funciones sin límites. ¡Gracias por confiar en Gestify!
-                            </p>
+                            {manuallySuspended ? (
+                                /* Mensaje para usuarios suspendidos manualmente */
+                                <>
+                                    <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1e2320', marginBottom: 4, letterSpacing: '-.02em' }}>
+                                        Pago registrado
+                                    </h2>
+                                    <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 18, maxWidth: 320, margin: '0 auto 18px' }}>
+                                        Tu pago será verificado manualmente. Una vez confirmado, tu cuenta se reactivará.
+                                    </p>
 
-                            {/* Resumen */}
-                            <div style={{
-                                background: '#F0FDF4', borderRadius: 12, padding: '14px 16px',
-                                border: '1px solid #BBF7D0', marginBottom: 14, textAlign: 'left',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                                    <CheckCircle size={16} color="#22c55e" />
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Plan PRO activado correctamente</span>
-                                </div>
-                                {[
-                                    { icon: '📧', text: `${userEmail}` },
-                                    { icon: '💰', text: `Plan Gestify PRO · ${PAYMENT_INFO.monto}/mes` },
-                                    { icon: '✅', text: 'PRO activo por 30 días' },
-                                ].map((item, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 6 : 0 }}>
-                                        <span style={{ fontSize: 13, width: 20, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
-                                        <span style={{ fontSize: 11, color: '#4B5563', fontWeight: 500 }}>{item.text}</span>
+                                    <div style={{
+                                        background: '#FEF3C7', borderRadius: 12, padding: '14px 16px',
+                                        border: '1px solid #FCD34D', marginBottom: 14, textAlign: 'left',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                            <AlertTriangle size={16} color="#D97706" />
+                                            <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>Activación manual</span>
+                                        </div>
+                                        {[
+                                            { icon: '📧', text: `${userEmail}` },
+                                            { icon: '💰', text: `Plan Gestify PRO · ${PAYMENT_INFO.monto}/mes` },
+                                            { icon: '⏳', text: 'Activación tras verificación del pago' },
+                                        ].map((item, i) => (
+                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 6 : 0 }}>
+                                                <span style={{ fontSize: 13, width: 20, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
+                                                <span style={{ fontSize: 11, color: '#4B5563', fontWeight: 500 }}>{item.text}</span>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
 
-                            <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16 }}>
-                                Recordá enviar el comprobante por WhatsApp para que quede registrado ⚡
-                            </p>
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16 }}>
+                                        Enviá el comprobante por WhatsApp para acelerar la activación ⚡
+                                    </p>
+                                </>
+                            ) : (
+                                /* Mensaje para usuarios normales */
+                                <>
+                                    <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1e2320', marginBottom: 4, letterSpacing: '-.02em' }}>
+                                        ¡Tu plan <span style={{ color: '#334139' }}>PRO</span> está activo!
+                                    </h2>
+                                    <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 18, maxWidth: 320, margin: '0 auto 18px' }}>
+                                        Ya podés usar todas las funciones sin límites. ¡Gracias por confiar en Gestify!
+                                    </p>
+
+                                    <div style={{
+                                        background: '#F0FDF4', borderRadius: 12, padding: '14px 16px',
+                                        border: '1px solid #BBF7D0', marginBottom: 14, textAlign: 'left',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                                            <CheckCircle size={16} color="#22c55e" />
+                                            <span style={{ fontSize: 12, fontWeight: 700, color: '#166534' }}>Plan PRO activado correctamente</span>
+                                        </div>
+                                        {[
+                                            { icon: '📧', text: `${userEmail}` },
+                                            { icon: '💰', text: `Plan Gestify PRO · ${PAYMENT_INFO.monto}/mes` },
+                                            { icon: '✅', text: 'PRO activo por 30 días' },
+                                        ].map((item, i) => (
+                                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: i < 2 ? 6 : 0 }}>
+                                                <span style={{ fontSize: 13, width: 20, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
+                                                <span style={{ fontSize: 11, color: '#4B5563', fontWeight: 500 }}>{item.text}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16 }}>
+                                        Recordá enviar el comprobante por WhatsApp para que quede registrado ⚡
+                                    </p>
+                                </>
+                            )}
 
                             <button
                                 onClick={handleClose}

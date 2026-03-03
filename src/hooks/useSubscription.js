@@ -28,7 +28,7 @@ export const useSubscription = () => {
             // Consultar base de datos
             let { data, error: dbError } = await supabase
                 .from('subscriptions')
-                .select('trial_until, paid_until, plan_price')
+                .select('trial_until, paid_until, plan_price, manually_suspended')
                 .eq('user_id', user.id)
                 .maybeSingle()
 
@@ -48,7 +48,7 @@ export const useSubscription = () => {
                         trial_until: null,
                         plan_price: 14999.00
                     })
-                    .select('trial_until, paid_until, plan_price')
+                    .select('trial_until, paid_until, plan_price, manually_suspended')
                     .single()
 
                 if (insertError) {
@@ -56,7 +56,7 @@ export const useSubscription = () => {
                     // Tal vez el trigger ya la creó pero no la podemos leer aún
                     const { data: retryData } = await supabase
                         .from('subscriptions')
-                        .select('trial_until, paid_until, plan_price')
+                        .select('trial_until, paid_until, plan_price, manually_suspended')
                         .eq('user_id', user.id)
                         .maybeSingle()
 
@@ -172,17 +172,26 @@ export const useSubscription = () => {
             title = 'Suscripción expirada o suspendida.'
         }
 
+        // Si fue suspendido manualmente por el admin, forzar estado suspendido
+        const manuallySuspended = !!data.manually_suspended
+        if (manuallySuspended && estado !== 'active') {
+            estado = 'suspended'
+        }
+
         const result = {
-            hasAccess: estado !== 'suspended',
+            hasAccess: (estado !== 'suspended') && !manuallySuspended,
             isTrial: estado === 'trial',
             isPro: isPro,
             isNewUser: false,
+            manuallySuspended: manuallySuspended,
             trialDaysLeft: trialDaysLeft,
             status: estado,
             daysRemaining: daysLeft,
-            message: title,
+            message: manuallySuspended && estado === 'suspended'
+                ? 'Cuenta bloqueada — Realizá el pago para reactivar tu suscripción.'
+                : title,
             email: email,
-            userId: userId,       // ← ESTABA FALTANDO — causa que el pago no se guarde
+            userId: userId,
             subscription: data
         }
 
@@ -213,6 +222,7 @@ export const useSubscription = () => {
         isTrial: subscription?.isTrial || false,
         isPro: subscription?.isPro || false,
         isNewUser: subscription?.isNewUser || false,
+        manuallySuspended: subscription?.manuallySuspended || false,
         userId: subscription?.userId || null,
         trialDaysLeft: subscription?.trialDaysLeft || 0,
         daysRemaining: subscription?.daysRemaining || 0,

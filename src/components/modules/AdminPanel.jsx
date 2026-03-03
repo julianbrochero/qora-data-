@@ -92,8 +92,9 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                 .from('subscriptions')
                 .update({
                     paid_until: newPaidUntil.toISOString(),
-                    pro_since: user.pro_since || new Date().toISOString(), // Solo setear si es la primera vez
+                    pro_since: user.pro_since || new Date().toISOString(),
                     trial_until: new Date().toISOString(),
+                    manually_suspended: false, // ← Desbloquear al activar
                 })
                 .eq('user_id', user.user_id)
 
@@ -456,7 +457,19 @@ const AdminPanel = () => {
                                             </div>
                                         </td>
                                         <td style={{ padding: '14px 20px' }}>
-                                            <StatusBadge status={status} />
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                                <StatusBadge status={status} />
+                                                {row.manually_suspended && (
+                                                    <span style={{
+                                                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                                                        padding: '3px 7px', borderRadius: 6,
+                                                        background: '#450a0a', border: '1px solid #7f1d1d',
+                                                        fontSize: 10, fontWeight: 700, color: '#fca5a5',
+                                                    }}>
+                                                        🔒 Bloqueado
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
                                             {fmtDate(row.pro_since)}
@@ -491,7 +504,12 @@ const AdminPanel = () => {
                                                             const pastDate = new Date(2020, 0, 1).toISOString()
                                                             await supabase
                                                                 .from('subscriptions')
-                                                                .update({ paid_until: null, pro_since: null, trial_until: pastDate })
+                                                                .update({
+                                                                    paid_until: null,
+                                                                    pro_since: null,
+                                                                    trial_until: pastDate,
+                                                                    manually_suspended: true, // ← Bloquear al desactivar
+                                                                })
                                                                 .eq('user_id', row.user_id)
                                                             fetchData()
                                                         }}
