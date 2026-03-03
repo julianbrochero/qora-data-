@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import {
   Plus, Search, Edit, Trash2, Tag, Package, X, ChevronLeft, ChevronRight,
   AlertTriangle, CheckCircle, BarChart2, Archive, Download, Upload
-, Menu} from "lucide-react"
+  , Menu
+} from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -34,7 +35,7 @@ const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4,
 /* ══════════════════════════════════════════════
    MODAL CATEGORÍAS
 ══════════════════════════════════════════════ */
-const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onEliminar , onOpenMobileSidebar}) => {
+const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onEliminar, onOpenMobileSidebar }) => {
   const [nombre, setNombre] = useState("")
   const [desc, setDesc] = useState("")
   const [editId, setEditId] = useState(null)
@@ -135,7 +136,7 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onElimin
 /* ══════════════════════════════════════════════
    MÓDULO PRINCIPAL PRODUCTOS
 ══════════════════════════════════════════════ */
-const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto }) => {
+const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, onOpenMobileSidebar }) => {
   const [filtroStock, setFiltroStock] = useState("todos")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
@@ -213,9 +214,9 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Productos</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Productos</h2>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

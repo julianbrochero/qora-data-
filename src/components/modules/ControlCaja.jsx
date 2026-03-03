@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, X, Trash2, ChevronLeft, ChevronRight , Menu} from "lucide-react"
+import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, X, Trash2, ChevronLeft, ChevronRight, Menu } from "lucide-react"
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -20,7 +20,7 @@ const cardShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)'
 const inputBase = { height: 32, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif" }
 const pillSel = { ...inputBase, cursor: 'pointer', appearance: 'none', paddingRight: 24, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }
 
-const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openModal, cerrarCaja, eliminarMovimientoCaja, cargarMovimientosPorFecha, recargarDatos }) => {
+const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openModal, cerrarCaja, eliminarMovimientoCaja, cargarMovimientosPorFecha, recargarDatos, onOpenMobileSidebar }) => {
   const hoyStr = new Date().toISOString().split('T')[0]
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyStr)
   const [movimientosVista, setMovimientosVista] = useState(null)
@@ -119,9 +119,9 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Control de Caja</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Control de Caja</h2>
+          </div>
         </div>
 
         {/* SELECTOR FECHA */}
