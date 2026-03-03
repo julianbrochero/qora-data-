@@ -148,8 +148,8 @@ export default function Login() {
         />
 
         {/* Marca de agua esquina superior derecha */}
-        <div className="absolute top-10 right-10 z-20">
-          <img src="/esquinader.png" alt="Gestify" className="h-[110px] w-auto object-contain drop-shadow-sm transition-transform hover:scale-105 duration-300" />
+        <div className="absolute top-6 right-6 z-20">
+          <img src="/esquinader.png" alt="Gestify" className="h-[130px] w-auto object-contain drop-shadow-sm transition-transform hover:scale-105 duration-300" />
         </div>
       </div>
     </div>
