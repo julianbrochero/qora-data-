@@ -11,7 +11,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../lib/AuthContext'
 import {
     Shield, RefreshCw, CheckCircle, AlertTriangle, AlertCircle, Clock,
-    Calendar, User, Search, ChevronDown, X, Zap
+    Calendar, User, Search, ChevronDown, X, Zap, Trash2
 } from 'lucide-react'
 
 // ─── ¡CAMBIA ESTO POR TU EMAIL DE ADMINISTRADOR! ──────────────────────────────
@@ -531,6 +531,29 @@ const AdminPanel = () => {
                                                         Desactivar
                                                     </button>
                                                 )}
+
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!confirm(`¿Eliminar definitivamente a ${row.email || 'este usuario'} de tu lista?\n\nSi vuelve a iniciar sesión, se creará de nuevo como usuario gratis. Si querés que NO pueda entrar, mejor suspendelo manualmente.`)) return
+                                                        await supabase
+                                                            .from('subscriptions')
+                                                            .delete()
+                                                            .eq('user_id', row.user_id)
+                                                        fetchData()
+                                                    }}
+                                                    title="Eliminar de la lista"
+                                                    style={{
+                                                        padding: '6px', borderRadius: 8,
+                                                        background: '#fff', color: '#9CA3AF',
+                                                        border: '1px solid #E5E7EB',
+                                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        transition: 'all .15s',
+                                                    }}
+                                                    onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FECACA'; }}
+                                                    onMouseLeave={e => { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
