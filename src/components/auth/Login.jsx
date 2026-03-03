@@ -162,7 +162,7 @@ export default function Login() {
           {/* Logo grande */}
           <div className="mb-10 transition-all hover:scale-105 duration-500">
             <img
-              src="/logologin2.png"
+              src="/logologin4.png"
               alt="Gestify"
               className="h-72 w-auto object-contain drop-shadow-2xl"
             />
