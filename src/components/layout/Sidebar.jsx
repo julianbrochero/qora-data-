@@ -33,7 +33,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
       title: "Principal",
       items: [
         { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { id: "pedidos", icon: ClipboardList, label: "Pedidos", badge: "3" },
+        { id: "pedidos", icon: ClipboardList, label: "Ventas", badge: "3" },
         { id: "facturacion", icon: FileText, label: "Facturación" },
         { id: "clientes", icon: Users, label: "Clientes" },
       ]

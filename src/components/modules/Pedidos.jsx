@@ -6,7 +6,8 @@ import {
   Truck, Edit, Eye, FileText, DollarSign, ChevronLeft,
   ChevronRight, List, CalendarDays, Calendar, CheckSquare,
   Trash2, ChevronDown, AlertCircle, X
-, Menu} from "lucide-react"
+  , Menu
+} from "lucide-react"
 import { useTheme } from '../../lib/ThemeContext'
 
 /* ══════════════════════════════════════════════
@@ -28,7 +29,7 @@ const Pedidos = ({
   eliminarPedido,
   facturarPedido,
   recargarDatos
-, onOpenMobileSidebar}) => {
+  , onOpenMobileSidebar }) => {
   const { darkMode } = useTheme()
   const D = darkMode // alias corto
 
@@ -142,7 +143,7 @@ const Pedidos = ({
 
   const handleFacturar = (id) => facturarPedido && customConfirm('Facturar Pedido', '¿Facturar este pedido? Se creará una factura separada.', async () => { const r = await facturarPedido(id); if (r?.success && recargarDatos) recargarDatos() })
   const handleEstado = async (id, est) => { if (actualizarEstadoPedido) { const r = await actualizarEstadoPedido(id, est); if (r?.success && recargarDatos) recargarDatos() } }
-  const handleEliminar = (id) => eliminarPedido && customConfirm('Eliminar Pedido', '¿Estás seguro de eliminar este pedido?', async () => { const r = await eliminarPedido(id); if (r?.success && recargarDatos) recargarDatos() }, true)
+  const handleEliminar = (id) => eliminarPedido && customConfirm('Eliminar Venta', '¿Estás seguro de eliminar esta venta?', async () => { const r = await eliminarPedido(id); if (r?.success && recargarDatos) recargarDatos() }, true)
 
   const toggleModoSeleccion = () => { setModoSeleccion(p => !p); setPedidosSeleccionados([]) }
   const toggleSeleccion = (id) => setPedidosSeleccionados(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
@@ -196,9 +197,9 @@ const Pedidos = ({
             <Menu size={16} strokeWidth={2} />
           </button>
           <div>
-          <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Pedidos</h2>
-        </div>
+            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Ventas</h2>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -245,7 +246,7 @@ const Pedidos = ({
             fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
             background: '#DCED31', color: '#282A28',
           }}>
-            <Plus size={12} strokeWidth={2.5} /> Nuevo Pedido
+            <Plus size={12} strokeWidth={2.5} /> Nueva Venta
             <span style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
           </button>
         </div>
@@ -488,7 +489,7 @@ const Pedidos = ({
                       <div style={{ width: 44, height: 44, borderRadius: 12, background: accentL, border: `1px solid ${accent}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
                         <Package size={18} strokeWidth={1.5} style={{ color: accent, opacity: .6 }} />
                       </div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: ct3 }}>No se encontraron pedidos</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: ct3 }}>No se encontraron ventas</p>
                       <p style={{ fontSize: 11, color: ct3, opacity: .6, marginTop: 3 }}>Intentá cambiar los filtros</p>
                     </div>
                   )}

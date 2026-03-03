@@ -1,7 +1,26 @@
 "use client"
 
-import { Package, User, Calendar, DollarSign, FileText, Clock, CheckCircle, XCircle, Truck, AlertCircle, CreditCard, Edit2, Banknote, BadgeCheck, Pencil } from "lucide-react"
+import {
+    Package, User, Calendar, DollarSign, FileText, Clock,
+    CheckCircle, XCircle, Truck, AlertCircle, CreditCard,
+    Edit2, Banknote, BadgeCheck, Pencil, ShoppingBag
+} from "lucide-react"
 import { useState, useEffect } from "react"
+
+/* ─── tokens del sistema ─────────────────────────────────── */
+const SYS = {
+    bg: '#F5F5F3',
+    surface: '#FFFFFF',
+    surface2: '#F5F5F3',
+    border: 'rgba(48,54,47,.12)',
+    ct1: '#1e2320',
+    ct2: '#30362F',
+    ct3: '#8B8982',
+    accent: '#334139',
+    accentL: 'rgba(51,65,57,.08)',
+    lime: '#DCED31',
+    header: '#282A28',
+}
 
 const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, closeModal, abonos = [] }) => {
     const [montoAbono, setMontoAbono] = useState('')
@@ -18,429 +37,324 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
         setFechaEntrega(pedido?.fecha_entrega_estimada || '')
     }, [pedido])
 
-    // Parsear items del pedido
+    /* helpers */
     const items = typeof pedido?.items === 'string'
         ? JSON.parse(pedido.items || '[]')
         : (pedido?.items || [])
 
-    const formatearFecha = (fecha) => {
-        if (!fecha) return "No especificada"
-        try {
-            return new Date(fecha).toLocaleDateString("es-AR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric"
-            })
-        } catch {
-            return "Fecha inválida"
-        }
+    const fFecha = (f) => {
+        if (!f) return '—'
+        try { return new Date(f).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
+        catch { return '—' }
     }
 
-    const formatearMonto = (monto) => {
-        const numero = Number.parseFloat(monto) || 0
-        return numero.toLocaleString("es-AR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        })
-    }
+    const fMonto = (m) => (parseFloat(m) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
     const estadosConfig = {
-        pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Clock },
-        preparando: { label: 'Preparando', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Package },
-        enviado: { label: 'Enviado', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Truck },
-        entregado: { label: 'Entregado', color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle },
-        cancelado: { label: 'Cancelado', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
+        pendiente: { label: 'Pendiente', color: '#b45309', bg: '#fef3c7', border: '#fde68a', icon: Clock },
+        preparando: { label: 'Preparando', color: '#1d4ed8', bg: '#dbeafe', border: '#bfdbfe', icon: Package },
+        enviado: { label: 'Enviado', color: '#6d28d9', bg: '#ede9fe', border: '#ddd6fe', icon: Truck },
+        entregado: { label: 'Entregado', color: '#15803d', bg: '#dcfce7', border: '#bbf7d0', icon: CheckCircle },
+        cancelado: { label: 'Cancelado', color: '#b91c1c', bg: '#fee2e2', border: '#fecaca', icon: XCircle },
     }
 
     const estadoActual = estadosConfig[pedido?.estado] || estadosConfig.pendiente
     const EstadoIcon = estadoActual.icon
     const cliente = clientes.find(c => c.id === pedido?.cliente_id)
 
-    // Calcular montos del pedido
-    const total = Number.parseFloat(pedido?.total) || 0
-    const montoAbonado = Number.parseFloat(pedido?.monto_abonado) || 0
+    const total = parseFloat(pedido?.total) || 0
+    const montoAbonado = parseFloat(pedido?.monto_abonado) || 0
     const saldoPendiente = pedido?.saldo_pendiente !== null && pedido?.saldo_pendiente !== undefined
-        ? Number.parseFloat(pedido.saldo_pendiente)
+        ? parseFloat(pedido.saldo_pendiente)
         : total - montoAbonado
-
     const estaPagadoCompleto = saldoPendiente <= 0.01
     const porcentajePagado = total > 0 ? Math.min(100, (montoAbonado / total) * 100) : 0
 
-    const mostrarExito = (msg) => {
-        setMensajeExito(msg)
-        setTimeout(() => setMensajeExito(''), 3000)
-    }
+    const mostrarExito = (msg) => { setMensajeExito(msg); setTimeout(() => setMensajeExito(''), 3000) }
 
+    /* handlers — sin cambios de lógica */
     const handleRegistrarAbonoDirecto = async () => {
         const monto = parseFloat(montoAbono)
-        if (!monto || monto <= 0 || monto > saldoPendiente) {
-            alert('Ingrese un monto válido (mayor a 0 y no mayor al saldo pendiente)')
-            return
-        }
-
-        if (!formActions?.agregarAbonoAPedido) {
-            alert('Función de pago no disponible')
-            return
-        }
-
+        if (!monto || monto <= 0 || monto > saldoPendiente) { alert('Ingrese un monto válido (mayor a 0 y no mayor al saldo pendiente)'); return }
+        if (!formActions?.agregarAbonoAPedido) { alert('Función de pago no disponible'); return }
         setCargando(true)
         try {
-            const resultado = await formActions.agregarAbonoAPedido(pedido.id, monto, metodoCobro)
-
-            if (resultado.success) {
-                mostrarExito(`✅ Abono de $${formatearMonto(monto)} registrado`)
-                setMontoAbono('')
-                setEditandoPago(false)
-                if (formActions.recargarTodosLosDatos) {
-                    formActions.recargarTodosLosDatos()
-                }
-            } else {
-                alert('❌ Error: ' + resultado.mensaje)
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message)
-        } finally {
-            setCargando(false)
-        }
+            const r = await formActions.agregarAbonoAPedido(pedido.id, monto, metodoCobro)
+            if (r.success) {
+                mostrarExito(`✅ Abono de $${fMonto(monto)} registrado`)
+                setMontoAbono(''); setEditandoPago(false)
+                if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos()
+            } else { alert('❌ Error: ' + r.mensaje) }
+        } catch (e) { alert('❌ Error: ' + e.message) }
+        finally { setCargando(false) }
     }
 
     const handleMarcarPagadoDirecto = async () => {
         if (estaPagadoCompleto) return
-
-        const confirmar = window.confirm(
-            `¿Registrar pago total del saldo restante?\n\nSaldo a saldar: $${formatearMonto(saldoPendiente)}`
-        )
-        if (!confirmar) return
-
-        if (!formActions?.marcarPedidoPagadoTotal) {
-            alert('Función no disponible')
-            return
-        }
-
+        if (!window.confirm(`¿Registrar pago total del saldo restante?\n\nSaldo a saldar: $${fMonto(saldoPendiente)}`)) return
+        if (!formActions?.marcarPedidoPagadoTotal) { alert('Función no disponible'); return }
         setCargando(true)
         try {
-            const resultado = await formActions.marcarPedidoPagadoTotal(pedido.id, metodoCobro)
-
-            if (resultado.success) {
-                mostrarExito('✅ Pedido saldado completamente')
-                if (formActions.recargarTodosLosDatos) {
-                    formActions.recargarTodosLosDatos()
-                }
-            } else {
-                alert('❌ Error: ' + resultado.mensaje)
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message)
-        } finally {
-            setCargando(false)
-        }
+            const r = await formActions.marcarPedidoPagadoTotal(pedido.id, metodoCobro)
+            if (r.success) { mostrarExito('✅ Venta saldada completamente'); if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos() }
+            else { alert('❌ Error: ' + r.mensaje) }
+        } catch (e) { alert('❌ Error: ' + e.message) }
+        finally { setCargando(false) }
     }
 
     const handleCambiarEstado = async (nuevoEstado) => {
         if (!formActions?.actualizarEstadoPedido || pedido?.estado === nuevoEstado) return
-
+        if (!window.confirm(`¿Cambiar estado a ${estadosConfig[nuevoEstado]?.label || nuevoEstado}?`)) return
         try {
-            const confirmar = window.confirm(`¿Cambiar estado a ${estadosConfig[nuevoEstado]?.label || nuevoEstado}?`)
-            if (!confirmar) return
-
-            const resultado = await formActions.actualizarEstadoPedido(pedido.id, nuevoEstado)
-            if (resultado.success) {
-                mostrarExito('✅ Estado actualizado')
-                if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos()
-            } else {
-                alert('❌ Error: ' + resultado.mensaje)
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message)
-        }
+            const r = await formActions.actualizarEstadoPedido(pedido.id, nuevoEstado)
+            if (r.success) { mostrarExito('✅ Estado actualizado'); if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos() }
+            else { alert('❌ Error: ' + r.mensaje) }
+        } catch (e) { alert('❌ Error: ' + e.message) }
     }
 
     const handleGuardarNotas = async () => {
         if (!formActions?.actualizarNotasPedido) return
         try {
-            const resultado = await formActions.actualizarNotasPedido(pedido.id, notas)
-            if (resultado.success) {
-                mostrarExito('✅ Notas guardadas')
-            } else {
-                alert('❌ Error: ' + resultado.mensaje)
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message)
-        }
+            const r = await formActions.actualizarNotasPedido(pedido.id, notas)
+            if (r.success) mostrarExito('✅ Notas guardadas')
+            else alert('❌ Error: ' + r.mensaje)
+        } catch (e) { alert('❌ Error: ' + e.message) }
     }
 
     const handleGuardarFechaEntrega = async () => {
-        if (!formActions?.actualizarPedido) {
-            alert('Función no disponible')
-            return
-        }
+        if (!formActions?.actualizarPedido) { alert('Función no disponible'); return }
         try {
-            const resultado = await formActions.actualizarPedido(pedido.id, { fecha_entrega_estimada: fechaEntrega || null })
-            if (resultado?.success) {
-                mostrarExito('✅ Fecha de entrega actualizada')
-                setEditandoFecha(false)
-                if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos()
-            } else {
-                alert('❌ Error: ' + (resultado?.mensaje || 'Error desconocido'))
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message)
-        }
+            const r = await formActions.actualizarPedido(pedido.id, { fecha_entrega_estimada: fechaEntrega || null })
+            if (r?.success) { mostrarExito('✅ Fecha de entrega actualizada'); setEditandoFecha(false); if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos() }
+            else { alert('❌ Error: ' + (r?.mensaje || 'Error desconocido')) }
+        } catch (e) { alert('❌ Error: ' + e.message) }
     }
 
+    /* ─── render ─────────────────────────────────────────────── */
     return (
-        <div className="w-full max-w-[440px] mx-auto space-y-2">
+        <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
-            {/* Mensaje de éxito flotante */}
+            {/* ── Mensaje éxito ── */}
             {mensajeExito && (
-                <div className="bg-green-50 border border-green-200 text-green-700 text-xs font-medium px-3 py-2 rounded-lg flex items-center gap-2 animate-pulse">
-                    <BadgeCheck size={14} />
-                    {mensajeExito}
+                <div style={{
+                    background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#15803d',
+                    fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 10,
+                    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12,
+                }}>
+                    <BadgeCheck size={14} /> {mensajeExito}
                 </div>
             )}
 
-            {/* Header */}
-            <div className="pb-1.5 border-b border-gray-200">
-                <div className="flex items-center justify-between">
+            {/* ══ HEADER ══ */}
+            <div style={{ background: SYS.header, borderRadius: 14, padding: '16px 18px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: SYS.accentL, border: `1px solid rgba(220,237,49,.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <ShoppingBag size={17} color={SYS.lime} />
+                    </div>
                     <div>
-                        <h3 className="text-sm font-bold text-gray-900">Detalle del Pedido</h3>
-                        <p className="text-[10px] text-gray-500">Ref: <span className="font-mono font-bold text-blue-600">{pedido?.codigo || 'N/A'}</span></p>
-                    </div>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${estadoActual.color}`}>
-                        <EstadoIcon size={10} />
-                        {estadoActual.label}
-                    </span>
-                </div>
-            </div>
-
-            {/* Info Principal */}
-            <div className="grid grid-cols-3 gap-1.5">
-                <div className="col-span-1 bg-gray-50 rounded-lg p-2 border border-gray-100">
-                    <div className="flex items-center gap-1 mb-0.5">
-                        <User size={8} className="text-gray-400" />
-                        <span className="text-[8px] text-gray-500 uppercase font-semibold">Cliente</span>
-                    </div>
-                    <p className="text-[10px] font-bold text-gray-900 truncate">{pedido?.cliente_nombre || 'No especificado'}</p>
-                    {cliente?.telefono && (
-                        <p className="text-[8px] text-gray-500 truncate">{cliente.telefono}</p>
-                    )}
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
-                    <span className="text-[8px] text-gray-500 uppercase font-semibold block mb-0.5">Pedido</span>
-                    <p className="text-[9px] font-bold text-gray-900">{formatearFecha(pedido?.fecha_pedido)}</p>
-                </div>
-
-                {/* Fecha entrega editable */}
-                <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
-                    <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[8px] text-gray-500 uppercase font-semibold">Entrega</span>
-                        <button
-                            onClick={() => setEditandoFecha(v => !v)}
-                            className="text-blue-400 hover:text-blue-600 transition-colors"
-                            title="Editar fecha"
-                        >
-                            <Pencil size={8} />
-                        </button>
-                    </div>
-                    {editandoFecha ? (
-                        <div className="space-y-1">
-                            <input
-                                type="date"
-                                className="w-full border border-blue-300 rounded px-1 py-0.5 text-[9px] focus:ring-1 focus:ring-blue-500"
-                                value={fechaEntrega}
-                                onChange={e => setFechaEntrega(e.target.value)}
-                                autoFocus
-                            />
-                            <div className="flex gap-1">
-                                <button
-                                    onClick={() => { setEditandoFecha(false); setFechaEntrega(pedido?.fecha_entrega_estimada || '') }}
-                                    className="flex-1 text-[8px] bg-gray-100 hover:bg-gray-200 text-gray-600 rounded py-0.5"
-                                >
-                                    ✕
-                                </button>
-                                <button
-                                    onClick={handleGuardarFechaEntrega}
-                                    className="flex-1 text-[8px] bg-blue-600 hover:bg-blue-700 text-white rounded py-0.5 font-bold"
-                                >
-                                    ✓
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-[9px] font-bold text-gray-900">{formatearFecha(fechaEntrega) || 'Sin fecha'}</p>
-                    )}
-                </div>
-            </div>
-
-            {/* Productos */}
-            <div>
-                <div className="flex items-center gap-1 mb-1">
-                    <Package size={10} className="text-gray-500" />
-                    <span className="text-[10px] font-bold text-gray-700 uppercase">Productos ({items.length})</span>
-                </div>
-                <div className="border border-gray-100 rounded-lg max-h-[90px] overflow-y-auto bg-white shadow-sm">
-                    {items.length > 0 ? (
-                        <div className="divide-y divide-gray-100">
-                            {items.map((item, index) => (
-                                <div key={index} className="px-2.5 py-1.5 flex items-center justify-between hover:bg-gray-50">
-                                    <div className="flex items-center gap-2">
-                                        <div className="bg-blue-50 p-1 rounded">
-                                            <Package size={11} className="text-blue-500" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-semibold text-gray-900">{item.producto || item.nombre || 'Producto'}</p>
-                                            <p className="text-[10px] text-gray-500">${formatearMonto(item.precio)} × {item.cantidad}</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-xs font-bold text-gray-800">
-                                        ${formatearMonto((item.precio || 0) * (item.cantidad || 1))}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="p-3 text-center">
-                            <p className="text-xs text-gray-400">No hay productos registrados</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* ===== PANEL DE COBRO ===== */}
-            <div className={`rounded-xl border-2 p-3 ${estaPagadoCompleto ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                <div className="flex items-center gap-1.5 mb-2">
-                    <CreditCard size={12} className={estaPagadoCompleto ? 'text-green-600' : 'text-blue-600'} />
-                    <h4 className={`text-[10px] uppercase font-bold ${estaPagadoCompleto ? 'text-green-700' : 'text-blue-700'}`}>
-                        Cobros
-                    </h4>
-                </div>
-
-                {/* Barra de progreso */}
-                <div className="mb-2">
-                    <div className="flex justify-between text-[9px] text-gray-500 mb-0.5">
-                        <span>Progreso de pago</span>
-                        <span className="font-bold">{porcentajePagado.toFixed(0)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                        <div
-                            className={`h-1.5 rounded-full transition-all duration-500 ${estaPagadoCompleto ? 'bg-green-500' : 'bg-blue-500'}`}
-                            style={{ width: `${porcentajePagado}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Montos */}
-                <div className="grid grid-cols-3 gap-1 mb-2">
-                    <div className="bg-white rounded-lg p-1.5 text-center border border-gray-100">
-                        <p className="text-[8px] text-gray-500 uppercase">Total</p>
-                        <p className="text-[11px] font-bold text-gray-900">${formatearMonto(total)}</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-1.5 text-center border border-green-100">
-                        <p className="text-[8px] text-green-600 uppercase">Cobrado</p>
-                        <p className="text-[11px] font-bold text-green-600">${formatearMonto(montoAbonado)}</p>
-                    </div>
-                    <div className={`rounded-lg p-1.5 text-center border ${estaPagadoCompleto ? 'bg-green-100 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
-                        <p className={`text-[8px] uppercase ${estaPagadoCompleto ? 'text-green-600' : 'text-orange-600'}`}>Saldo</p>
-                        <p className={`text-[11px] font-bold ${estaPagadoCompleto ? 'text-green-600' : 'text-orange-600'}`}>
-                            ${formatearMonto(saldoPendiente)}
+                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 2 }}>
+                            Detalle de Venta
+                        </p>
+                        <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', lineHeight: 1 }}>
+                            {pedido?.codigo || 'N/A'}
                         </p>
                     </div>
                 </div>
+                <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700,
+                    background: estadoActual.bg, color: estadoActual.color, border: `1px solid ${estadoActual.border}`,
+                }}>
+                    <EstadoIcon size={11} />
+                    {estadoActual.label}
+                </span>
+            </div>
 
-                {/* Acciones de cobro */}
+            {/* ══ INFO PRINCIPAL ══ */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
+                {/* Cliente */}
+                <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                        <User size={10} color={SYS.ct3} />
+                        <span style={{ fontSize: 9, fontWeight: 700, color: SYS.ct3, letterSpacing: '.07em', textTransform: 'uppercase' }}>Cliente</span>
+                    </div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: SYS.ct1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
+                        {pedido?.cliente_nombre || 'Sin especificar'}
+                    </p>
+                    {cliente?.telefono && <p style={{ fontSize: 10, color: SYS.ct3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cliente.telefono}</p>}
+                </div>
+
+                {/* Fecha pedido */}
+                <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 12, padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                        <Calendar size={10} color={SYS.ct3} />
+                        <span style={{ fontSize: 9, fontWeight: 700, color: SYS.ct3, letterSpacing: '.07em', textTransform: 'uppercase' }}>Venta</span>
+                    </div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: SYS.ct1, margin: 0 }}>{fFecha(pedido?.fecha_pedido)}</p>
+                </div>
+
+                {/* Fecha entrega */}
+                <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 12, padding: '12px 14px', position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <Truck size={10} color={SYS.ct3} />
+                            <span style={{ fontSize: 9, fontWeight: 700, color: SYS.ct3, letterSpacing: '.07em', textTransform: 'uppercase' }}>Entrega</span>
+                        </div>
+                        <button onClick={() => setEditandoFecha(v => !v)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: SYS.accent, display: 'flex' }}>
+                            <Pencil size={9} />
+                        </button>
+                    </div>
+                    {editandoFecha ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <input type="date" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} autoFocus
+                                style={{ width: '100%', border: `1px solid ${SYS.accent}`, borderRadius: 6, padding: '2px 4px', fontSize: 10, fontFamily: 'Inter', outline: 'none', boxSizing: 'border-box' }} />
+                            <div style={{ display: 'flex', gap: 4 }}>
+                                <button onClick={() => { setEditandoFecha(false); setFechaEntrega(pedido?.fecha_entrega_estimada || '') }}
+                                    style={{ flex: 1, fontSize: 9, background: '#f3f4f6', border: 'none', borderRadius: 5, padding: '3px 0', cursor: 'pointer', color: SYS.ct2 }}>✕</button>
+                                <button onClick={handleGuardarFechaEntrega}
+                                    style={{ flex: 1, fontSize: 9, background: SYS.accent, border: 'none', borderRadius: 5, padding: '3px 0', cursor: 'pointer', color: '#fff', fontWeight: 700 }}>✓</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <p style={{ fontSize: 12, fontWeight: 700, color: SYS.ct1, margin: 0 }}>{fFecha(fechaEntrega) || 'Sin fecha'}</p>
+                    )}
+                </div>
+            </div>
+
+            {/* ══ PRODUCTOS ══ */}
+            <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 12, overflow: 'hidden', marginBottom: 10 }}>
+                <div style={{ padding: '10px 14px 8px', borderBottom: `1px solid ${SYS.border}`, display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <Package size={12} color={SYS.accent} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: SYS.ct1, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                        Productos ({items.length})
+                    </span>
+                </div>
+                <div style={{ maxHeight: 130, overflowY: 'auto' }}>
+                    {items.length > 0 ? items.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderBottom: i < items.length - 1 ? `1px solid ${SYS.border}` : 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: 8, background: SYS.accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Package size={12} color={SYS.accent} />
+                                </div>
+                                <div>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: SYS.ct1, margin: 0 }}>{item.producto || item.nombre || 'Producto'}</p>
+                                    <p style={{ fontSize: 10, color: SYS.ct3, margin: 0 }}>${fMonto(item.precio)} × {item.cantidad}</p>
+                                </div>
+                            </div>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: SYS.ct1, letterSpacing: '-.01em' }}>
+                                ${fMonto((item.precio || 0) * (item.cantidad || 1))}
+                            </span>
+                        </div>
+                    )) : (
+                        <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                            <p style={{ fontSize: 12, color: SYS.ct3, margin: 0 }}>No hay productos registrados</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* ══ COBROS ══ */}
+            <div style={{
+                borderRadius: 12, border: `2px solid ${estaPagadoCompleto ? '#bbf7d0' : 'rgba(51,65,57,.2)'}`,
+                background: estaPagadoCompleto ? '#f0fdf4' : SYS.surface,
+                padding: 14, marginBottom: 10,
+            }}>
+                {/* título */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 7, background: estaPagadoCompleto ? '#dcfce7' : SYS.accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CreditCard size={13} color={estaPagadoCompleto ? '#15803d' : SYS.accent} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: estaPagadoCompleto ? '#15803d' : SYS.ct1, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                        Cobros
+                    </span>
+                </div>
+
+                {/* barra progreso */}
+                <div style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <span style={{ fontSize: 10, color: SYS.ct3, fontWeight: 600 }}>Progreso de pago</span>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: estaPagadoCompleto ? '#15803d' : SYS.ct1 }}>{porcentajePagado.toFixed(0)}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: 6, background: '#e5e7eb', borderRadius: 999, overflow: 'hidden' }}>
+                        <div style={{ height: 6, borderRadius: 999, width: `${porcentajePagado}%`, background: estaPagadoCompleto ? '#22c55e' : SYS.accent, transition: 'width .5s ease' }} />
+                    </div>
+                </div>
+
+                {/* montos */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+                    <div style={{ background: SYS.surface2, border: `1px solid ${SYS.border}`, borderRadius: 10, padding: '10px 0', textAlign: 'center' }}>
+                        <p style={{ fontSize: 9, color: SYS.ct3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 4px' }}>Total</p>
+                        <p style={{ fontSize: 13, fontWeight: 800, color: SYS.ct1, margin: 0 }}>${fMonto(total)}</p>
+                    </div>
+                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 0', textAlign: 'center' }}>
+                        <p style={{ fontSize: 9, color: '#15803d', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 4px' }}>Cobrado</p>
+                        <p style={{ fontSize: 13, fontWeight: 800, color: '#15803d', margin: 0 }}>${fMonto(montoAbonado)}</p>
+                    </div>
+                    <div style={{ background: estaPagadoCompleto ? '#f0fdf4' : '#fff7ed', border: `1px solid ${estaPagadoCompleto ? '#bbf7d0' : '#fed7aa'}`, borderRadius: 10, padding: '10px 0', textAlign: 'center' }}>
+                        <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 4px', color: estaPagadoCompleto ? '#15803d' : '#c2410c' }}>Saldo</p>
+                        <p style={{ fontSize: 13, fontWeight: 800, margin: 0, color: estaPagadoCompleto ? '#15803d' : '#ea580c' }}>${fMonto(saldoPendiente)}</p>
+                    </div>
+                </div>
+
+                {/* acciones cobro */}
                 {estaPagadoCompleto ? (
-                    <div className="flex items-center justify-center gap-2 bg-green-100 border border-green-300 py-2 rounded-lg">
-                        <CheckCircle size={14} className="text-green-600" />
-                        <span className="text-xs font-bold text-green-700">PAGADO COMPLETAMENTE</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 0' }}>
+                        <CheckCircle size={15} color="#15803d" />
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#15803d' }}>PAGADO COMPLETAMENTE</span>
                     </div>
                 ) : (
                     <div>
                         {editandoPago ? (
-                            /* Formulario de abono */
-                            <div className="bg-white rounded-lg p-2 border border-blue-200 space-y-2">
-                                {/* Método de pago */}
-                                <div>
-                                    <label className="block text-[10px] font-semibold text-gray-600 mb-1">Método de pago</label>
-                                    <div className="flex flex-wrap gap-1">
-                                        {['Efectivo', 'Transferencia', 'Tarjeta', 'MercadoPago'].map(metodo => (
-                                            <button
-                                                key={metodo}
-                                                type="button"
-                                                onClick={() => setMetodoCobro(metodo)}
-                                                className={`px-2 py-0.5 text-[9px] rounded-full border font-medium transition-colors ${metodoCobro === metodo
-                                                        ? 'bg-blue-600 text-white border-blue-600'
-                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-                                                    }`}
-                                            >
-                                                {metodo}
-                                            </button>
-                                        ))}
-                                    </div>
+                            <div style={{ background: SYS.surface2, border: `1px solid ${SYS.border}`, borderRadius: 10, padding: 12 }}>
+                                {/* método pago */}
+                                <p style={{ fontSize: 10, fontWeight: 700, color: SYS.ct2, marginBottom: 7 }}>Método de pago</p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                                    {['Efectivo', 'Transferencia', 'Tarjeta', 'MercadoPago'].map(m => (
+                                        <button key={m} onClick={() => setMetodoCobro(m)} style={{
+                                            padding: '5px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all .13s',
+                                            background: metodoCobro === m ? SYS.accent : 'transparent',
+                                            color: metodoCobro === m ? '#fff' : SYS.ct3,
+                                            border: `1px solid ${metodoCobro === m ? SYS.accent : SYS.border}`,
+                                        }}>{m}</button>
+                                    ))}
                                 </div>
 
-                                <div>
-                                    <label className="block text-[10px] font-semibold text-gray-600 mb-1">
-                                        Monto a cobrar <span className="text-gray-400">(máx: ${formatearMonto(saldoPendiente)})</span>
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
-                                        <input
-                                            type="number"
-                                            className="w-full border border-gray-300 rounded-lg pl-5 pr-2 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="0.00"
-                                            value={montoAbono}
-                                            onChange={(e) => setMontoAbono(e.target.value)}
-                                            autoFocus
-                                            step="0.01"
-                                            min="0.01"
-                                            max={saldoPendiente}
-                                            disabled={cargando}
-                                        />
-                                    </div>
-                                    {/* Acceso rápido: pagar todo */}
-                                    <button
-                                        onClick={() => setMontoAbono(saldoPendiente.toString())}
-                                        className="mt-1 text-[9px] text-blue-600 hover:underline"
-                                    >
-                                        Usar saldo completo (${formatearMonto(saldoPendiente)})
-                                    </button>
+                                {/* monto */}
+                                <p style={{ fontSize: 10, fontWeight: 700, color: SYS.ct2, marginBottom: 5 }}>
+                                    Monto a cobrar <span style={{ color: SYS.ct3, fontWeight: 500 }}>(máx: ${fMonto(saldoPendiente)})</span>
+                                </p>
+                                <div style={{ position: 'relative', marginBottom: 5 }}>
+                                    <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: SYS.ct3, fontWeight: 700 }}>$</span>
+                                    <input type="number" value={montoAbono} onChange={e => setMontoAbono(e.target.value)} autoFocus
+                                        placeholder="0.00" step="0.01" min="0.01" max={saldoPendiente} disabled={cargando}
+                                        style={{ width: '100%', boxSizing: 'border-box', border: `1.5px solid ${SYS.border}`, borderRadius: 9, paddingLeft: 24, paddingRight: 10, paddingTop: 9, paddingBottom: 9, fontSize: 14, fontWeight: 700, fontFamily: 'Inter', outline: 'none', color: SYS.ct1, background: SYS.surface }} />
                                 </div>
-                                <div className="flex gap-1.5">
-                                    <button
-                                        onClick={() => { setEditandoPago(false); setMontoAbono('') }}
-                                        disabled={cargando}
-                                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1.5 rounded-lg text-[10px] font-medium disabled:opacity-50"
-                                    >
+                                <button onClick={() => setMontoAbono(saldoPendiente.toString())} style={{ fontSize: 10, color: SYS.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600, marginBottom: 12 }}>
+                                    Usar saldo completo (${fMonto(saldoPendiente)})
+                                </button>
+
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <button onClick={() => { setEditandoPago(false); setMontoAbono('') }} disabled={cargando}
+                                        style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: `1px solid ${SYS.border}`, background: SYS.surface, color: SYS.ct2, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter' }}>
                                         Cancelar
                                     </button>
-                                    <button
-                                        onClick={handleRegistrarAbonoDirecto}
-                                        disabled={cargando || !montoAbono || parseFloat(montoAbono) <= 0}
-                                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
-                                    >
-                                        <Banknote size={11} />
+                                    <button onClick={handleRegistrarAbonoDirecto} disabled={cargando || !montoAbono || parseFloat(montoAbono) <= 0}
+                                        style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: cargando ? '#9ca3af' : SYS.accent, color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'Inter' }}>
+                                        <Banknote size={13} />
                                         {cargando ? 'Procesando...' : 'Confirmar Cobro'}
                                     </button>
                                 </div>
                             </div>
                         ) : (
-                            /* Botones principales */
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setEditandoPago(true)}
-                                    disabled={cargando}
-                                    className="flex-1 bg-white border-2 border-blue-500 text-blue-600 hover:bg-blue-50 px-2 py-2 rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                                >
-                                    <DollarSign size={11} />
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <button onClick={() => setEditandoPago(true)} disabled={cargando}
+                                    style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `2px solid ${SYS.accent}`, background: 'transparent', color: SYS.accent, fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'Inter', transition: 'all .13s' }}>
+                                    <DollarSign size={13} />
                                     Registrar Cobro
                                 </button>
-                                <button
-                                    onClick={handleMarcarPagadoDirecto}
-                                    disabled={cargando}
-                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-2 py-2 rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-1 shadow-sm"
-                                >
-                                    <CheckCircle size={11} />
+                                <button onClick={handleMarcarPagadoDirecto} disabled={cargando}
+                                    style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', background: '#16a34a', color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'Inter', boxShadow: '0 2px 8px rgba(22,163,74,.3)', transition: 'all .13s' }}>
+                                    <CheckCircle size={13} />
                                     Saldar Todo
                                 </button>
                             </div>
@@ -449,65 +363,61 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                 )}
             </div>
 
-            {/* Notas */}
-            <div className="bg-yellow-50 rounded-lg p-2 border border-yellow-100">
-                <label className="text-[9px] uppercase font-bold text-yellow-700 mb-1 flex items-center gap-1">
-                    <Edit2 size={9} />
-                    Notas
-                </label>
-                <textarea
-                    className="w-full bg-transparent text-[11px] text-gray-700 focus:outline-none resize-none min-h-[28px]"
-                    value={notas}
-                    onChange={(e) => setNotas(e.target.value)}
-                    placeholder="Sin notas..."
-                    disabled={cargando}
-                />
+            {/* ══ NOTAS ══ */}
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 12, padding: '12px 14px', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
+                    <Edit2 size={11} color="#92400e" />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '.07em' }}>Notas</span>
+                </div>
+                <textarea value={notas} onChange={e => setNotas(e.target.value)} placeholder="Sin notas..." disabled={cargando}
+                    style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', fontSize: 12, color: '#78350f', fontFamily: 'Inter', minHeight: 36, lineHeight: 1.5, boxSizing: 'border-box' }} />
                 {notas !== pedido?.notas && (
-                    <button
-                        onClick={handleGuardarNotas}
-                        disabled={cargando}
-                        className="mt-0.5 text-[10px] bg-yellow-600 text-white px-2 py-0.5 rounded hover:bg-yellow-700 transition-colors disabled:opacity-50"
-                    >
+                    <button onClick={handleGuardarNotas} disabled={cargando}
+                        style={{ marginTop: 6, fontSize: 11, fontWeight: 700, background: '#b45309', color: '#fff', border: 'none', borderRadius: 7, padding: '5px 14px', cursor: 'pointer', fontFamily: 'Inter' }}>
                         Guardar
                     </button>
                 )}
             </div>
 
-            {/* Estado Operativo */}
-            <div>
-                <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">Estado Operativo</p>
-                <div className="flex flex-wrap gap-1">
-                    {Object.entries(estadosConfig).map(([key, config]) => {
-                        const Icon = config.icon
+            {/* ══ ESTADO OPERATIVO ══ */}
+            <div style={{ marginBottom: 14 }}>
+                <p style={{ fontSize: 9, fontWeight: 800, color: SYS.ct3, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 8 }}>
+                    Estado Operativo
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {Object.entries(estadosConfig).map(([key, cfg]) => {
+                        const Icon = cfg.icon
                         const isActive = pedido?.estado === key
                         return (
-                            <button
-                                key={key}
-                                onClick={() => handleCambiarEstado(key)}
-                                disabled={isActive || cargando}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold border transition-all ${isActive
-                                    ? config.color + ' shadow-sm'
-                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                                    } disabled:cursor-not-allowed`}
-                            >
-                                <Icon size={10} />
-                                {config.label}
+                            <button key={key} onClick={() => handleCambiarEstado(key)} disabled={isActive || cargando}
+                                style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                                    padding: '6px 13px', borderRadius: 999,
+                                    fontSize: 11, fontWeight: 700, cursor: isActive ? 'default' : 'pointer',
+                                    border: `1.5px solid ${isActive ? cfg.border : SYS.border}`,
+                                    background: isActive ? cfg.bg : SYS.surface,
+                                    color: isActive ? cfg.color : SYS.ct3,
+                                    transition: 'all .13s',
+                                }}>
+                                <Icon size={11} />
+                                {cfg.label}
                             </button>
                         )
                     })}
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex gap-2 pt-1 border-t border-gray-100">
-                <button
-                    onClick={closeModal}
-                    disabled={cargando}
-                    className="flex-1 bg-white text-gray-600 px-3 py-1.5 text-[11px] rounded-lg hover:bg-gray-50 transition-colors border border-gray-200 font-bold disabled:opacity-50"
-                >
-                    CERRAR
-                </button>
-            </div>
+            {/* ══ FOOTER ══ */}
+            <button onClick={closeModal} disabled={cargando}
+                style={{
+                    width: '100%', padding: '11px 0', borderRadius: 10, border: `1px solid ${SYS.border}`,
+                    background: SYS.surface, color: SYS.ct2, fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: 'Inter', letterSpacing: '.01em', transition: 'all .13s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = SYS.surface2 }}
+                onMouseLeave={e => { e.currentTarget.style.background = SYS.surface }}>
+                CERRAR
+            </button>
         </div>
     )
 }
