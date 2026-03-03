@@ -17,6 +17,7 @@ import {
   ClipboardList,
   ChevronLeft,
   Shield,
+  Star,
 } from "lucide-react"
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse }) => {
@@ -203,7 +204,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                 background: 'rgba(220,237,49,.12)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <span style={{ fontSize: 13 }}>⚡</span>
+                <Star size={13} fill="#DCED31" color="#DCED31" />
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{
