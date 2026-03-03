@@ -47,7 +47,6 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
     if (e) e.preventDefault()
     if (!data.nombre?.trim()) { alert('Por favor, ingrese el nombre del cliente'); nombreRef.current?.focus(); return }
     const tel = data.telefono?.trim() || ''
-    if (!tel || tel.length < 8) { alert('Por favor, ingrese un número de teléfono válido (mínimo 8 dígitos)'); telefonoRef.current?.focus(); return }
 
     let result
     if (isRapido) result = await agregarClienteRapido()
@@ -66,8 +65,8 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
   }
 
   useEffect(() => {
-    if (!isEdit) { const t = setTimeout(() => nombreRef.current?.focus(), 100); return () => clearTimeout(t) }
-  }, [isEdit])
+    const t = setTimeout(() => nombreRef.current?.focus(), 100); return () => clearTimeout(t)
+  }, [])
 
   const focusStyle = (e) => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
   const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
@@ -97,12 +96,12 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
 
         {/* Teléfono */}
         <div>
-          <label style={labelBase}>Teléfono <span style={{ color: '#DC2626' }}>*</span></label>
+          <label style={labelBase}>Teléfono <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
           <div style={{ position: 'relative' }}>
             <Phone size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-            <input ref={telefonoRef} type="tel" required value={data.telefono || ''} placeholder="351-1234567"
-              onChange={e => handleChange('telefono', e.target.value)} onKeyDown={e => handleKeyDown(e, isRapido ? null : emailRef)}
-              onFocus={focusStyle} onBlur={blurStyle} minLength="8" maxLength="15"
+            <input ref={telefonoRef} type="tel" value={data.telefono || ''} placeholder="351-1234567"
+              onChange={e => handleChange('telefono', e.target.value)} onKeyDown={e => handleKeyDown(e, null)}
+              onFocus={focusStyle} onBlur={blurStyle} maxLength="15"
               style={{ ...inputBase, paddingLeft: 30 }} />
           </div>
         </div>
