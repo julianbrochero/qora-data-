@@ -64,9 +64,9 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
   const SB_BG3 = '#1f211f'
   const LINE = 'rgba(139,137,130,0.2)'
   const T1 = '#ffffff'
-  const T2 = 'rgba(139,137,130,0.7)'
-  const T3 = 'rgba(139,137,130,0.55)'
-  const T4 = 'rgba(139,137,130,0.3)'
+  const T2 = 'rgba(255,255,255,0.65)'
+  const T3 = 'rgba(255,255,255,0.45)'
+  const T4 = 'rgba(255,255,255,0.25)'
 
   return (
     <>
