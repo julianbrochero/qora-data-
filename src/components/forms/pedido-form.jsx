@@ -281,13 +281,23 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 8, marginBottom: 10 }}>
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Fecha</label>
-            <input type="date" style={{ ...inp, fontSize: 11 }} value={pedidoData.fechaPedido}
-              onChange={e => setPedidoData(d => ({ ...d, fechaPedido: e.target.value }))} />
+            <div style={{ position: 'relative' }}>
+              <input type="date" className="gestify-date-input" style={{ ...inp, fontSize: 11, paddingRight: 30 }} value={pedidoData.fechaPedido}
+                onChange={e => setPedidoData(d => ({ ...d, fechaPedido: e.target.value }))} />
+              <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: ct3, display: 'flex' }}>
+                <Calendar size={13} strokeWidth={2} />
+              </div>
+            </div>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Entrega</label>
-            <input type="date" style={{ ...inp, fontSize: 11 }} value={pedidoData.fechaEntregaEstimada}
-              onChange={e => setPedidoData(d => ({ ...d, fechaEntregaEstimada: e.target.value }))} />
+            <div style={{ position: 'relative' }}>
+              <input type="date" className="gestify-date-input" style={{ ...inp, fontSize: 11, paddingRight: 30 }} value={pedidoData.fechaEntregaEstimada}
+                onChange={e => setPedidoData(d => ({ ...d, fechaEntregaEstimada: e.target.value }))} />
+              <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: ct3, display: 'flex' }}>
+                <Calendar size={13} strokeWidth={2} />
+              </div>
+            </div>
           </div>
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Estado</label>
@@ -463,7 +473,21 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
+        
+        /* Modificar el input date para ocultar el calendario nativo y expandir su área clickeable */
+        .gestify-date-input::-webkit-calendar-picker-indicator { 
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+            width: auto; height: auto; color: transparent; background: transparent; 
+            cursor: pointer; z-index: 10;
+        }
+        
+        /* Ocultar las flechas de spinner nativas en Chrome/Edge y Firefox */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+
         @keyframes fadeSlideIn {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
