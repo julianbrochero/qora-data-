@@ -249,6 +249,9 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
         </div>
       </div>
 
+      <style>{`
+        @keyframes kpiIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: translateY(0) } }
+      `}</style>
     </div>
   )
 }
