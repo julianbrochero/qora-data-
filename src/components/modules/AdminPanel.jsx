@@ -332,6 +332,24 @@ const AdminPanel = () => {
 
             {/* Stats cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+                {/* Botón TODOS */}
+                <div
+                    onClick={() => setFilter('all')}
+                    style={{
+                        background: filterStatus === 'all' ? '#282A28' : '#fff',
+                        border: `1.5px solid ${filterStatus === 'all' ? '#282A28' : '#E8E8E6'}`,
+                        borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
+                        transition: 'all .13s',
+                    }}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <User size={14} color={filterStatus === 'all' ? '#DCED31' : '#6B7280'} />
+                        <span style={{ fontSize: 22, fontWeight: 900, color: filterStatus === 'all' ? '#fff' : '#1e2320' }}>
+                            {rows.length}
+                        </span>
+                    </div>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: filterStatus === 'all' ? '#DCED31' : '#6B7280', margin: 0 }}>Todos</p>
+                </div>
                 {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'sin_datos').map(([key, cfg]) => {
                     const Icon = cfg.icon
                     return (
@@ -449,10 +467,11 @@ const AdminPanel = () => {
                                                 {status === 'active' && (
                                                     <button
                                                         onClick={async () => {
-                                                            if (!confirm(`¿Desactivar PRO de ${row.email}?`)) return
+                                                            if (!confirm(`¿Desactivar PRO de ${row.email}? Quedará suspendido inmediatamente.`)) return
+                                                            const pastDate = new Date(2020, 0, 1).toISOString()
                                                             await supabase
                                                                 .from('subscriptions')
-                                                                .update({ paid_until: null, pro_since: null })
+                                                                .update({ paid_until: null, pro_since: null, trial_until: pastDate })
                                                                 .eq('user_id', row.user_id)
                                                             fetchData()
                                                         }}
