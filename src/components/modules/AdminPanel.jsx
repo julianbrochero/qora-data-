@@ -304,7 +304,7 @@ const AdminPanel = () => {
     }, {})
 
     return (
-        <div style={{ fontFamily: "'Inter', sans-serif", height: '100%', overflowY: 'auto', background: '#F5F5F3', padding: '32px' }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", height: '100%', overflowY: 'auto', background: '#F5F5F3', padding: 'clamp(16px, 4vw, 32px)' }}>
 
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
@@ -407,7 +407,7 @@ const AdminPanel = () => {
             </div>
 
             {/* Tabla */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflowX: 'auto', overflowY: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
                 {loading ? (
                     <div style={{ padding: 60, textAlign: 'center' }}>
                         <RefreshCw size={28} color="#9CA3AF" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
@@ -481,7 +481,7 @@ const AdminPanel = () => {
                                             {fmtDate(row.paid_until)}
                                         </td>
                                         <td style={{ padding: '14px 20px' }}>
-                                            <div style={{ display: 'flex', gap: 8 }}>
+                                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                                 <button
                                                     onClick={() => setSelected(row)}
                                                     style={{
