@@ -71,7 +71,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    // El onAuthStateChange se encargará de redirigir a /login
+  };
+
+  const updateUserData = async (metadata) => {
+    const { data, error } = await supabase.auth.updateUser({ data: metadata })
+    if (error) throw error
+    setUser(data.user)
+    return data.user
   };
 
   return (
@@ -79,7 +85,8 @@ export const AuthProvider = ({ children }) => {
       user,
       loading: loading && !authChecked,
       loginWithGoogle,
-      logout
+      logout,
+      updateUserData,
     }}>
       {children}
     </AuthContext.Provider>

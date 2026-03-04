@@ -55,6 +55,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
     const { darkMode, toggleDarkMode } = useTheme()
     const { status, daysRemaining, isTrial, isPro, email, createSubscription, cancelSubscription, getCheckoutUrl } = useSubscriptionContext()
     const { user, signOut } = useAuth()
+    const { updateUserData } = useAuth()
     const [loadingSub, setLoadingSub] = useState(false)
     const [guardando, setGuardando] = useState(false)
 
@@ -63,18 +64,32 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
         setTimeout(() => setGuardando(false), 800)
     }
 
-    // Datos empresa guardados en localStorage
-    const [empresa, setEmpresa] = useState(() => localStorage.getItem('gestify_empresa') || '')
-    const [cuit, setCuit] = useState(() => localStorage.getItem('gestify_cuit') || '')
-    const [direccion, setDireccion] = useState(() => localStorage.getItem('gestify_direccion') || '')
+    // Datos empresa: se cargan desde user_metadata (Supabase) — persistente en la nube
+    const meta = user?.user_metadata || {}
+    const [empresa, setEmpresa] = useState(meta.empresa || meta.gestify_empresa || localStorage.getItem('gestify_empresa') || '')
+    const [cuit, setCuit] = useState(meta.cuit || localStorage.getItem('gestify_cuit') || '')
+    const [direccion, setDireccion] = useState(meta.direccion || localStorage.getItem('gestify_direccion') || '')
     const [savedOk, setSavedOk] = useState(false)
+    const [savingEmpresa, setSavingEmpresa] = useState(false)
+    const [saveError, setSaveError] = useState('')
 
-    const guardarEmpresa = () => {
-        localStorage.setItem('gestify_empresa', empresa.trim())
-        localStorage.setItem('gestify_cuit', cuit.trim())
-        localStorage.setItem('gestify_direccion', direccion.trim())
-        setSavedOk(true)
-        setTimeout(() => setSavedOk(false), 2000)
+    const guardarEmpresa = async () => {
+        setSavingEmpresa(true)
+        setSaveError('')
+        try {
+            // Guardar en Supabase (persistente en la nube)
+            await updateUserData({ empresa: empresa.trim(), cuit: cuit.trim(), direccion: direccion.trim() })
+            // Sincronizar tambien en localStorage (cache local para PDFs)
+            localStorage.setItem('gestify_empresa', empresa.trim())
+            localStorage.setItem('gestify_cuit', cuit.trim())
+            localStorage.setItem('gestify_direccion', direccion.trim())
+            setSavedOk(true)
+            setTimeout(() => setSavedOk(false), 2500)
+        } catch (e) {
+            setSaveError('No se pudo guardar. Intentá de nuevo.')
+        } finally {
+            setSavingEmpresa(false)
+        }
     }
 
     const handleSubscribe = async () => {
@@ -293,16 +308,22 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
 
                                 <button
                                     onClick={guardarEmpresa}
-                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .15s', background: savedOk ? '#22C55E' : '#DCED31', color: savedOk ? '#fff' : '#282A28', fontFamily: "'Inter', sans-serif" }}
-                                    onMouseEnter={e => { if (!savedOk) e.currentTarget.style.opacity = '.9' }}
-                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                    disabled={savingEmpresa}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: savingEmpresa ? 'wait' : 'pointer', transition: 'all .15s', background: savedOk ? '#22C55E' : '#DCED31', color: savedOk ? '#fff' : '#282A28', fontFamily: "'Inter', sans-serif", opacity: savingEmpresa ? 0.7 : 1 }}
+                                    onMouseEnter={e => { if (!savedOk && !savingEmpresa) e.currentTarget.style.opacity = '.9' }}
+                                    onMouseLeave={e => { if (!savingEmpresa) e.currentTarget.style.opacity = '1' }}>
                                     {savedOk
-                                        ? <><CheckCircle size={14} /> ¡Guardado!</>
-                                        : <><Save size={14} /> Guardar datos</>}
+                                        ? <><CheckCircle size={14} /> ¡Guardado en tu cuenta!</>
+                                        : savingEmpresa
+                                            ? 'Guardando...'
+                                            : <><Save size={14} /> Guardar datos</>}
                                 </button>
 
+                                {saveError && (
+                                    <p style={{ fontSize: 11, color: '#DC2626', textAlign: 'center', margin: 0 }}>{saveError}</p>
+                                )}
                                 <p style={{ fontSize: 10, color: ct3, textAlign: 'center', margin: 0 }}>
-                                    Estos datos se incluyen en todos los PDFs generados.
+                                    💾 Se guarda en tu cuenta — disponible en cualquier dispositivo.
                                 </p>
                             </div>
                         </div>
