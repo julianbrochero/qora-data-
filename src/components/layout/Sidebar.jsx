@@ -9,9 +9,9 @@ import {
   FileText,
   Users,
   Package,
-  DollarSign,
+  Wallet,
   BarChart3,
-  ShoppingCart,
+  Truck,
   Settings,
   LogOut,
   ClipboardList,
@@ -40,21 +40,31 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
 
   const sections = [
     {
-      title: "Principal",
+      title: "Inicio",
       items: [
         { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { id: "pedidos", icon: TrendingUp, label: "Ventas", badge: badgeVentas },
-        { id: "facturacion", icon: FileText, label: "Facturación" },
-        { id: "presupuestos", icon: ClipboardList, label: "Presupuestos" },
-        { id: "clientes", icon: Users, label: "Clientes" },
       ]
     },
     {
-      title: "Gestión",
+      title: "Comercial",
+      items: [
+        { id: "pedidos", icon: TrendingUp, label: "Ventas", badge: badgeVentas },
+        { id: "presupuestos", icon: ClipboardList, label: "Presupuestos" },
+        { id: "facturacion", icon: FileText, label: "Facturación" },
+      ]
+    },
+    {
+      title: "Contactos",
+      items: [
+        { id: "clientes", icon: Users, label: "Clientes" },
+        { id: "proveedores", icon: Truck, label: "Proveedores" },
+      ]
+    },
+    {
+      title: "Inventario & Finanzas",
       items: [
         { id: "productos", icon: Package, label: "Productos" },
-        { id: "caja", icon: DollarSign, label: "Caja" },
-        { id: "proveedores", icon: ShoppingCart, label: "Proveedores" },
+        { id: "caja", icon: Wallet, label: "Caja" },
         { id: "reportes", icon: BarChart3, label: "Reportes" },
       ]
     },
