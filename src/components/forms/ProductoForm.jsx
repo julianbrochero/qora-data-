@@ -119,17 +119,22 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal })
           </div>
 
           <div>
-            <label style={labelBase}>Categoría</label>
+            <label style={labelBase}>
+              Categoría <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span>
+            </label>
             <div style={{ position: 'relative' }}>
-              <Tag size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3, zIndex: 1 }} />
-              <select ref={categoriaRef} value={data.categoria || ''} onChange={e => handleChange('categoria', e.target.value)} onKeyDown={e => handleKeyDown(e, precioRef)}
-                onFocus={focusStyle} onBlur={blurStyle}
-                style={{ ...inputBase, paddingLeft: 30, cursor: 'pointer', appearance: 'none' }}>
-                <option value="">Seleccionar</option>
-                <option>General</option>
-                <option>Categoría 1</option>
-                <option>Categoría 2</option>
-              </select>
+              <Tag size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input
+                ref={categoriaRef}
+                type="text"
+                value={data.categoria || ''}
+                onChange={e => handleChange('categoria', e.target.value)}
+                onKeyDown={e => handleKeyDown(e, precioRef)}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+                placeholder="Ej: Indumentaria, Electrónica..."
+                style={{ ...inputBase, paddingLeft: 30 }}
+              />
             </div>
           </div>
         </div>
