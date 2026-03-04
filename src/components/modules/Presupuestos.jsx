@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import {
     FileText, Plus, Download, Search, Filter, Trash2, ShoppingCart,
     ChevronDown, Calendar, User, Clock, CheckCircle, XCircle,
-    AlertCircle, Menu, TrendingUp, Package, Eye, MoreHorizontal
+    AlertCircle, Menu, TrendingUp, Package, Eye, MoreHorizontal, Edit2
 } from 'lucide-react'
 import { generarPDFPresupuesto } from '../../utils/presupuestoGenerator'
 
@@ -207,7 +207,7 @@ const Presupuestos = ({
                 <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
 
                     {/* Header tabla */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px 100px 90px 110px', gap: 0, padding: '8px 14px', borderBottom: `1px solid ${border}`, background: '#EFEFED' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px 100px 90px 180px', gap: 0, padding: '8px 14px', borderBottom: `1px solid ${border}`, background: '#EFEFED' }}>
                         {['Número', 'Cliente', 'Fecha', 'Válido', 'Total', 'Estado'].map(h => (
                             <span key={h} style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em' }}>{h}</span>
                         ))}
@@ -233,7 +233,7 @@ const Presupuestos = ({
                             const items = (() => { try { return JSON.parse(pres.items || '[]') } catch { return [] } })()
                             return (
                                 <div key={pres.id} className="pres-row"
-                                    style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px 100px 90px 110px', gap: 0, padding: '11px 14px', borderBottom: idx < filtrados.length - 1 ? `1px solid ${border}` : 'none', transition: 'background .13s', alignItems: 'center' }}>
+                                    style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px 100px 90px 180px', gap: 0, padding: '11px 14px', borderBottom: idx < filtrados.length - 1 ? `1px solid ${border}` : 'none', transition: 'background .13s', alignItems: 'center' }}>
 
                                     {/* Número */}
                                     <div>
@@ -260,34 +260,59 @@ const Presupuestos = ({
                                     {/* Estado + Acciones */}
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
                                         <EstadoPill estado={estado} />
-                                        {/* Menú acciones */}
-                                        <div style={{ position: 'relative' }}>
-                                            <button
-                                                className="btn-action"
-                                                onClick={e => { e.stopPropagation(); setMenu(menuAbierto === pres.id ? null : pres.id) }}
-                                                style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}>
-                                                <MoreHorizontal size={13} strokeWidth={2} />
+
+                                        <div style={{ display: 'flex', gap: 4 }}>
+                                            {/* Acción Rápida: Descargar PDF */}
+                                            <button onClick={e => { e.stopPropagation(); handlePDF(pres) }} title="Descargar PDF"
+                                                style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = ct2; e.currentTarget.style.background = 'rgba(51,65,57,.06)' }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = ct3; e.currentTarget.style.background = 'transparent' }}>
+                                                <Download size={13} strokeWidth={2.5} />
                                             </button>
 
-                                            {menuAbierto === pres.id && (
-                                                <div onClick={e => e.stopPropagation()}
-                                                    style={{ position: 'absolute', right: 0, top: 30, width: 180, background: '#fff', borderRadius: 10, border: `1px solid ${border}`, boxShadow: '0 8px 28px rgba(0,0,0,.12)', zIndex: 100, overflow: 'hidden' }}>
-                                                    {[
-                                                        { icon: Download, label: 'Descargar PDF', fn: () => { handlePDF(pres); setMenu(null) }, color: ct2 },
-                                                        { icon: ShoppingCart, label: 'Convertir en Venta', fn: () => { convertirPresupuestoPedido?.(pres); setMenu(null) }, color: accent },
-                                                        { icon: CheckCircle, label: 'Marcar Aceptado', fn: () => { actualizarEstadoPresupuesto?.(pres.id, 'aceptado'); setMenu(null) }, color: '#1a6b3c' },
-                                                        { icon: XCircle, label: 'Marcar Rechazado', fn: () => { actualizarEstadoPresupuesto?.(pres.id, 'rechazado'); setMenu(null) }, color: '#991b1b' },
-                                                        { icon: Trash2, label: 'Eliminar', fn: () => { if (confirm('¿Eliminar este presupuesto?')) { eliminarPresupuesto?.(pres.id); setMenu(null) } }, color: '#DC2626' },
-                                                    ].map(({ icon: Icon, label, fn, color }) => (
-                                                        <button key={label} onClick={fn}
-                                                            style={{ width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 9, fontSize: 12, fontWeight: 500, color, fontFamily: 'Inter,sans-serif', textAlign: 'left', transition: 'background .1s' }}
-                                                            onMouseEnter={e => e.currentTarget.style.background = accentL}
-                                                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                                            <Icon size={13} strokeWidth={2} /> {label}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
+                                            {/* Acción Rápida: Editar */}
+                                            <button onClick={e => { e.stopPropagation(); openModal && openModal('editar-presupuesto', pres) }} title="Editar Presupuesto"
+                                                style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.background = accentL }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = ct3; e.currentTarget.style.background = 'transparent' }}>
+                                                <Edit2 size={13} strokeWidth={2.5} />
+                                            </button>
+
+                                            {/* Acción Rápida: Eliminar */}
+                                            <button onClick={e => { e.stopPropagation(); if (confirm('¿Eliminar este presupuesto?')) { eliminarPresupuesto?.(pres.id) } }} title="Eliminar Presupuesto"
+                                                style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}
+                                                onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = 'rgba(220,38,38,.08)' }}
+                                                onMouseLeave={e => { e.currentTarget.style.color = ct3; e.currentTarget.style.background = 'transparent' }}>
+                                                <Trash2 size={13} strokeWidth={2.5} />
+                                            </button>
+
+                                            {/* Menú acciones secundarias */}
+                                            <div style={{ position: 'relative' }}>
+                                                <button
+                                                    className="btn-action"
+                                                    onClick={e => { e.stopPropagation(); setMenu(menuAbierto === pres.id ? null : pres.id) }}
+                                                    style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}>
+                                                    <MoreHorizontal size={13} strokeWidth={2} />
+                                                </button>
+
+                                                {menuAbierto === pres.id && (
+                                                    <div onClick={e => e.stopPropagation()}
+                                                        style={{ position: 'absolute', right: 0, top: 30, width: 180, background: '#fff', borderRadius: 10, border: `1px solid ${border}`, boxShadow: '0 8px 28px rgba(0,0,0,.12)', zIndex: 100, overflow: 'hidden' }}>
+                                                        {[
+                                                            { icon: ShoppingCart, label: 'Convertir en Venta', fn: () => { convertirPresupuestoPedido?.(pres); setMenu(null) }, color: accent },
+                                                            { icon: CheckCircle, label: 'Marcar Aceptado', fn: () => { actualizarEstadoPresupuesto?.(pres.id, 'aceptado'); setMenu(null) }, color: '#1a6b3c' },
+                                                            { icon: XCircle, label: 'Marcar Rechazado', fn: () => { actualizarEstadoPresupuesto?.(pres.id, 'rechazado'); setMenu(null) }, color: '#991b1b' },
+                                                        ].map(({ icon: Icon, label, fn, color }) => (
+                                                            <button key={label} onClick={fn}
+                                                                style={{ width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 9, fontSize: 12, fontWeight: 500, color, fontFamily: 'Inter,sans-serif', textAlign: 'left', transition: 'background .1s' }}
+                                                                onMouseEnter={e => e.currentTarget.style.background = accentL}
+                                                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                                <Icon size={13} strokeWidth={2} /> {label}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

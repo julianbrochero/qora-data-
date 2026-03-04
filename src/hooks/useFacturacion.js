@@ -1797,10 +1797,13 @@ export const useFacturacion = () => {
   const guardarPresupuesto = async (data) => {
     try {
       const hoy = new Date().toISOString().split('T')[0]
-      const { data: ultimo } = await supabase.from('presupuestos').select('numero').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
-      let num = 1
-      if (ultimo?.[0]?.numero) { const m = ultimo[0].numero.match(/\d+/); if (m) num = parseInt(m[0]) + 1 }
-      const numero = data.numero || `PRES-${num.toString().padStart(5, '0')}`
+      let numero = data.numero;
+      if (!numero) {
+        const { data: ultimo } = await supabase.from('presupuestos').select('numero').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
+        let num = 1
+        if (ultimo?.[0]?.numero) { const m = ultimo[0].numero.match(/\d+/); if (m) num = parseInt(m[0]) + 1 }
+        numero = `PRES-${num.toString().padStart(5, '0')}`
+      }
       const subtotalGeneral = (data.items || []).reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0)
       const ivaValor = subtotalGeneral * ((data.iva ?? 21) / 100)
       const total = data.incluirIva ? subtotalGeneral + ivaValor : subtotalGeneral
@@ -1810,14 +1813,23 @@ export const useFacturacion = () => {
         iva: data.iva ?? 21, incluir_iva: data.incluirIva ?? true,
         observaciones: data.observaciones || '', condiciones_pago: data.condicionesPago || '',
         nombre_empresa: data.nombreEmpresa || '', subtotal: subtotalGeneral,
-        iva_valor: ivaValor, total, estado: 'vigente',
-        user_id: user.id, created_at: new Date().toISOString()
+        iva_valor: ivaValor, total, estado: data.estado || 'vigente',
+        user_id: user.id
       }
-      const { data: inserted, error } = await supabase.from('presupuestos').insert([row]).select()
-      if (error) throw error
-      setPresupuestos(prev => [inserted[0], ...prev])
-      return { success: true, presupuesto: inserted[0] }
-    } catch (e) { console.error('Error guardando presupuesto:', e); return { success: false, mensaje: e.message } }
+
+      if (data.id) {
+        const { data: updated, error } = await supabase.from('presupuestos').update(row).eq('id', data.id).select()
+        if (error) throw error
+        setPresupuestos(prev => prev.map(p => p.id === data.id ? updated[0] : p))
+        return { success: true, presupuesto: updated[0] }
+      } else {
+        row.created_at = new Date().toISOString()
+        const { data: inserted, error } = await supabase.from('presupuestos').insert([row]).select()
+        if (error) throw error
+        setPresupuestos(prev => [inserted[0], ...prev])
+        return { success: true, presupuesto: inserted[0] }
+      }
+    } catch (e) { console.error('Error guardando/editando presupuesto:', e); return { success: false, mensaje: e.message } }
   }
 
   /* ── eliminarPresupuesto ────────────────────────────── */

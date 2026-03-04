@@ -146,12 +146,14 @@ const Modal = ({
         );
 
       case 'nuevo-presupuesto':
+      case 'editar-presupuesto':
         return (
           <PresupuestoForm
             clientes={formData.clientes || []}
             productos={formData.productos || []}
             formActions={formActions}
             closeModal={onClose}
+            presupuestoEditar={modalType === 'editar-presupuesto' ? formData.selectedItem : null}
           />
         );
 
@@ -200,7 +202,8 @@ const Modal = ({
         return 'max-w-lg';
 
       case 'nuevo-presupuesto':
-        return 'max-w-lg';
+      case 'editar-presupuesto':
+        return 'max-w-4xl';
 
       case 'detalle-cierre':
         return 'max-w-4xl';
