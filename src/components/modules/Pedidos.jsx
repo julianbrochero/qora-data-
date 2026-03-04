@@ -230,16 +230,7 @@ const Pedidos = ({
             <CheckSquare size={12} strokeWidth={2} /> {modoSeleccion ? 'Cancelar' : 'Selección'}
           </button>
 
-          {/* Presupuesto - solo icono en móvil */}
-          <button onClick={() => openModal && openModal("nuevo-presupuesto")} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
-            fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,.25)', cursor: 'pointer', transition: 'all .13s',
-            background: 'transparent', color: 'rgba(255,255,255,.75)',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#fff' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,.75)' }}>
-            <FileText size={12} strokeWidth={2.5} /> <span className="hidden sm:inline">Presupuesto</span>
-          </button>
+
 
           {/* Nuevo */}
           <button onClick={() => openModal && openModal("nuevo-pedido")} style={{
