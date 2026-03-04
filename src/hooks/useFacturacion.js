@@ -182,15 +182,15 @@ export const useFacturacion = () => {
         setAbonos(abonosData)
       }
 
-      // Cargar movimientos de caja del día (fecha es timestamp, filtramos por rango)
-      const hoy = new Date().toISOString().split('T')[0]
-      const manana = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+      // Cargar movimientos de caja del día con rango ISO correcto por timezone local
+      const inicioHoy = new Date(); inicioHoy.setHours(0, 0, 0, 0)
+      const finHoy = new Date(); finHoy.setHours(23, 59, 59, 999)
       const { data: movimientosData, error: errorMovimientos } = await supabase
         .from('movimientos_caja')
         .select('*')
         .eq('user_id', user.id)
-        .gte('fecha', hoy)
-        .lt('fecha', manana)
+        .gte('fecha', inicioHoy.toISOString())
+        .lte('fecha', finHoy.toISOString())
         .order('fecha', { ascending: false })
 
       if (errorMovimientos) {
@@ -224,15 +224,15 @@ export const useFacturacion = () => {
   // Función para calcular caja manualmente
   const calcularCajaManual = async () => {
     try {
-      // Filtrar por rango de timestamp porque fecha es timestamp with time zone
-      const hoy = new Date().toISOString().split('T')[0]
-      const manana = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+      // Rango de inicio/fin del día local en UTC para matchear timestamps correctamente
+      const inicioHoy = new Date(); inicioHoy.setHours(0, 0, 0, 0)
+      const finHoy = new Date(); finHoy.setHours(23, 59, 59, 999)
       const { data: movimientosHoy, error } = await supabase
         .from('movimientos_caja')
         .select('*')
         .eq('user_id', user.id)
-        .gte('fecha', hoy)
-        .lt('fecha', manana)
+        .gte('fecha', inicioHoy.toISOString())
+        .lte('fecha', finHoy.toISOString())
         .order('fecha', { ascending: false })
 
       if (error) {
@@ -269,16 +269,17 @@ export const useFacturacion = () => {
     try {
       if (!user) return { movimientos: [], caja: { ingresos: 0, egresos: 0, saldo: 0 } }
 
-      const fechaSiguiente = new Date(fechaStr)
-      fechaSiguiente.setDate(fechaSiguiente.getDate() + 1)
-      const fechaFin = fechaSiguiente.toISOString().split('T')[0]
+      // Calcular rango inicio/fin del día local en UTC
+      const fechaBase = new Date(fechaStr + 'T00:00:00')
+      const inicioFecha = new Date(fechaBase); inicioFecha.setHours(0, 0, 0, 0)
+      const finFecha = new Date(fechaBase); finFecha.setHours(23, 59, 59, 999)
 
       const { data: movimientos, error } = await supabase
         .from('movimientos_caja')
         .select('*')
         .eq('user_id', user.id)
-        .gte('fecha', fechaStr)
-        .lt('fecha', fechaFin)
+        .gte('fecha', inicioFecha.toISOString())
+        .lte('fecha', finFecha.toISOString())
         .order('fecha', { ascending: false })
 
       if (error) {
