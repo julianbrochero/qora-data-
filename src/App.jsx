@@ -17,6 +17,7 @@ import Reportes from './components/modules/Reportes';
 import Proveedores from './components/modules/Proveedores';
 import Pedidos from './components/modules/Pedidos';
 import Configuracion from './components/modules/Configuracion';
+import Presupuestos from './components/modules/Presupuestos';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
 import SubscriptionGate from './components/subscription/SubscriptionGate';
@@ -115,7 +116,10 @@ const SistemaFacturacion = () => {
     crearFacturaDirecta, // ✅ NUEVA - para Factura Directa
     eliminarMovimientoCaja, // ✅ NUEVA - para borrar movimientos de caja
     cargarMovimientosPorFecha, // ✅ NUEVA - selector de fecha en caja
-    guardarPresupuesto, // ✅ NUEVA - para crear presupuestos
+    presupuestos,
+    guardarPresupuesto,
+    eliminarPresupuesto,
+    actualizarEstadoPresupuesto,
   } = useFacturacion();
 
   // ✅ FUNCIÓN CORREGIDA: openModal
@@ -344,6 +348,22 @@ const SistemaFacturacion = () => {
       ),
       configuracion: <Configuracion {...commonProps} />,
       admin: <AdminPanel />,
+      presupuestos: (
+        <Presupuestos
+          {...commonProps}
+          presupuestos={presupuestos}
+          clientes={clientes}
+          productos={productos}
+          eliminarPresupuesto={eliminarPresupuesto}
+          actualizarEstadoPresupuesto={actualizarEstadoPresupuesto}
+          convertirPresupuestoPedido={async (pres) => {
+            const items = (() => { try { return JSON.parse(pres.items || '[]') } catch { return [] } })()
+            const r = await agregarPedidoSolo({ clienteNombre: pres.cliente, items, notas: `Presupuesto ${pres.numero}`, estado: 'pendiente' })
+            if (r?.success) { await actualizarEstadoPresupuesto(pres.id, 'aceptado') }
+            return r
+          }}
+        />
+      ),
     }[activeModule] || (
         <Dashboard
           {...commonProps}
@@ -432,8 +452,8 @@ const SistemaFacturacion = () => {
           agregarAbonoAPedido, // ✅ NUEVO
           registrarCobro, // ✅ NUEVO - para Factura Directa
           crearFacturaDirecta, // ✅ NUEVO - para Factura Directa
-          guardarPresupuesto,  // ✅ NUEVO - para Presupuestos
-          actualizarNotasPedido, // ✅ NUEVO - para guardar notas en el detalle de venta
+          guardarPresupuesto,  // para Presupuestos
+          actualizarNotasPedido, // para guardar notas en el detalle de venta
         }}
       />
     </div>

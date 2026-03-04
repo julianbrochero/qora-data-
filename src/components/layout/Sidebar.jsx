@@ -45,6 +45,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
         { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
         { id: "pedidos", icon: TrendingUp, label: "Ventas", badge: badgeVentas },
         { id: "facturacion", icon: FileText, label: "Facturación" },
+        { id: "presupuestos", icon: ClipboardList, label: "Presupuestos" },
         { id: "clientes", icon: Users, label: "Clientes" },
       ]
     },

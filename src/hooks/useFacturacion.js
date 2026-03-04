@@ -26,6 +26,7 @@ export const useFacturacion = () => {
   const [cierresCaja, setCierresCaja] = useState([])
   const [pedidos, setPedidos] = useState([])
   const [abonos, setAbonos] = useState([])
+  const [presupuestos, setPresupuestos] = useState([])
 
   // Estados para modales
   const [nuevoCliente, setNuevoCliente] = useState({ nombre: '', telefono: '', cuit: '' })
@@ -215,6 +216,14 @@ export const useFacturacion = () => {
 
       // Calcular caja manualmente (la tabla 'caja' no existe)
       await calcularCajaManual()
+
+      // Cargar presupuestos
+      const { data: presupuestosData } = await supabase
+        .from('presupuestos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      if (presupuestosData) setPresupuestos(presupuestosData)
 
     } catch (error) {
       console.error('Error general cargando datos:', error)
@@ -1783,54 +1792,46 @@ export const useFacturacion = () => {
     }
   }
 
-  // ── GUARDAR PRESUPUESTO ──────────────────────────────────────────────────
+
+  /* ── guardarPresupuesto ─────────────────────────────── */
   const guardarPresupuesto = async (data) => {
     try {
-      // Generar número si no tiene
-      let numero = data.numero
-      if (!numero) {
-        const { data: last } = await supabase
-          .from('presupuestos')
-          .select('numero')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-        let n = 1
-        if (last?.[0]?.numero) {
-          const m = last[0].numero.match(/\d+/)
-          if (m) n = parseInt(m[0]) + 1
-        }
-        numero = `PRES-${n.toString().padStart(5, '0')}`
-      }
-
+      const hoy = new Date().toISOString().split('T')[0]
+      const { data: ultimo } = await supabase.from('presupuestos').select('numero').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
+      let num = 1
+      if (ultimo?.[0]?.numero) { const m = ultimo[0].numero.match(/\d+/); if (m) num = parseInt(m[0]) + 1 }
+      const numero = data.numero || `PRES-${num.toString().padStart(5, '0')}`
+      const subtotalGeneral = (data.items || []).reduce((s, i) => s + (parseFloat(i.subtotal) || 0), 0)
+      const ivaValor = subtotalGeneral * ((data.iva ?? 21) / 100)
+      const total = data.incluirIva ? subtotalGeneral + ivaValor : subtotalGeneral
       const row = {
-        numero,
-        cliente: data.cliente || '',
-        fecha: data.fecha || new Date().toISOString().split('T')[0],
-        validez: data.validez || 7,
-        items: JSON.stringify(data.items || []),
-        subtotal: data.subtotalGeneral || 0,
-        iva_porcentaje: data.iva || 21,
-        incluir_iva: data.incluirIva ?? true,
-        iva_valor: data.ivaValor || 0,
-        total: data.total || 0,
-        observaciones: data.observaciones || '',
-        condiciones_pago: data.condicionesPago || '',
-        estado: 'pendiente',
-        user_id: user.id,
-        created_at: new Date().toISOString(),
+        numero, fecha: data.fecha || hoy, validez: data.validez ?? 7,
+        cliente: data.cliente || '', items: JSON.stringify(data.items || []),
+        iva: data.iva ?? 21, incluir_iva: data.incluirIva ?? true,
+        observaciones: data.observaciones || '', condiciones_pago: data.condicionesPago || '',
+        nombre_empresa: data.nombreEmpresa || '', subtotal: subtotalGeneral,
+        iva_valor: ivaValor, total, estado: 'vigente',
+        user_id: user.id, created_at: new Date().toISOString()
       }
+      const { data: inserted, error } = await supabase.from('presupuestos').insert([row]).select()
+      if (error) throw error
+      setPresupuestos(prev => [inserted[0], ...prev])
+      return { success: true, presupuesto: inserted[0] }
+    } catch (e) { console.error('Error guardando presupuesto:', e); return { success: false, mensaje: e.message } }
+  }
 
-      const { error } = await supabase.from('presupuestos').insert([row])
-      if (error) {
-        // Si la tabla no existe aún, no rompemos — el PDF igual se genera
-        console.warn('Tabla presupuestos no disponible (crear en Supabase):', error.message)
-      }
-      return { success: true, numero }
-    } catch (e) {
-      console.error('guardarPresupuesto:', e)
-      return { success: false, mensaje: e.message }
-    }
+  /* ── eliminarPresupuesto ────────────────────────────── */
+  const eliminarPresupuesto = async (id) => {
+    const { error } = await supabase.from('presupuestos').delete().eq('id', id).eq('user_id', user.id)
+    if (!error) setPresupuestos(prev => prev.filter(p => p.id !== id))
+    return { success: !error }
+  }
+
+  /* ── actualizarEstadoPresupuesto ────────────────────── */
+  const actualizarEstadoPresupuesto = async (id, nuevoEstado) => {
+    const { error } = await supabase.from('presupuestos').update({ estado: nuevoEstado }).eq('id', id).eq('user_id', user.id)
+    if (!error) setPresupuestos(prev => prev.map(p => p.id === id ? { ...p, estado: nuevoEstado } : p))
+    return { success: !error }
   }
 
   return {
@@ -1907,6 +1908,9 @@ export const useFacturacion = () => {
 
     // Presupuestos
     guardarPresupuesto,
+    eliminarPresupuesto,
+    actualizarEstadoPresupuesto,
+    presupuestos,
 
     // Funciones para caja
     agregarMovimientoCaja,
