@@ -248,6 +248,8 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     const W = doc.internal.pageSize.getWidth()
     const hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     const empresa = localStorage.getItem('gestify_empresa') || ''
+    const cuitPdf = localStorage.getItem('gestify_cuit') || ''
+    const direccionPdf = localStorage.getItem('gestify_direccion') || ''
 
     // Header fondo oscuro
     doc.setFillColor(40, 42, 40)
@@ -256,7 +258,10 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     // Nombre empresa (si lo hay)
     if (empresa) {
       doc.setFontSize(11).setFont('helvetica', 'bold').setTextColor(255, 255, 255)
-      doc.text(empresa, 14, 14)
+      doc.text(empresa, 14, 13)
+      let subY = 19
+      if (cuitPdf) { doc.setFontSize(8).setFont('helvetica', 'normal').setTextColor(160, 160, 160); doc.text(`CUIT: ${cuitPdf}`, 14, subY); subY += 5 }
+      if (direccionPdf) { doc.setFontSize(8).setFont('helvetica', 'normal').setTextColor(160, 160, 160); doc.text(direccionPdf, 14, subY) }
     }
 
     // Título

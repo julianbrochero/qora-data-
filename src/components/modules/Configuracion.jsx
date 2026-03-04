@@ -3,7 +3,7 @@
 import React, { useState } from "react"
 import { useTheme } from "../../lib/ThemeContext"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
-import { Moon, Sun, Palette, Shield, User, ChevronRight, Save, LayoutTemplate, Smartphone, Zap, Clock, AlertTriangle, CreditCard, LogOut, Menu } from "lucide-react"
+import { Moon, Sun, Palette, Shield, User, ChevronRight, Save, LayoutTemplate, Smartphone, Zap, Clock, AlertTriangle, CreditCard, LogOut, Menu, Building2, CheckCircle } from "lucide-react"
 import { useAuth } from "../../lib/AuthContext"
 
 /* ══════════════════════════════════════════════
@@ -61,6 +61,20 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
     const handleGuardar = () => {
         setGuardando(true)
         setTimeout(() => setGuardando(false), 800)
+    }
+
+    // Datos empresa guardados en localStorage
+    const [empresa, setEmpresa] = useState(() => localStorage.getItem('gestify_empresa') || '')
+    const [cuit, setCuit] = useState(() => localStorage.getItem('gestify_cuit') || '')
+    const [direccion, setDireccion] = useState(() => localStorage.getItem('gestify_direccion') || '')
+    const [savedOk, setSavedOk] = useState(false)
+
+    const guardarEmpresa = () => {
+        localStorage.setItem('gestify_empresa', empresa.trim())
+        localStorage.setItem('gestify_cuit', cuit.trim())
+        localStorage.setItem('gestify_direccion', direccion.trim())
+        setSavedOk(true)
+        setTimeout(() => setSavedOk(false), 2000)
     }
 
     const handleSubscribe = async () => {
@@ -228,6 +242,70 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
 
                     {/* COLUMNA DERECHA: APARIENCIA Y EXTRAS */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                        {/* DATOS DE LA EMPRESA */}
+                        <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
+                            <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usan en PDFs de presupuestos y lista de precios" />
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 600, color: ct2, display: 'block', marginBottom: 5 }}>
+                                        Nombre de la empresa <span style={{ color: '#DC2626' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={empresa}
+                                        onChange={e => setEmpresa(e.target.value)}
+                                        placeholder="Ej: Mi Empresa S.A."
+                                        onFocus={e => e.target.style.borderColor = accent}
+                                        onBlur={e => e.target.style.borderColor = border}
+                                        style={{ width: '100%', height: 36, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 600, color: ct2, display: 'block', marginBottom: 5 }}>
+                                        CUIT <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={cuit}
+                                        onChange={e => setCuit(e.target.value)}
+                                        placeholder="Ej: 20-12345678-9"
+                                        onFocus={e => e.target.style.borderColor = accent}
+                                        onBlur={e => e.target.style.borderColor = border}
+                                        style={{ width: '100%', height: 36, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 600, color: ct2, display: 'block', marginBottom: 5 }}>
+                                        Dirección <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={direccion}
+                                        onChange={e => setDireccion(e.target.value)}
+                                        placeholder="Ej: Av. Corrientes 1234, CABA"
+                                        onFocus={e => e.target.style.borderColor = accent}
+                                        onBlur={e => e.target.style.borderColor = border}
+                                        style={{ width: '100%', height: 36, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif", boxSizing: 'border-box' }}
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={guardarEmpresa}
+                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .15s', background: savedOk ? '#22C55E' : '#DCED31', color: savedOk ? '#fff' : '#282A28', fontFamily: "'Inter', sans-serif" }}
+                                    onMouseEnter={e => { if (!savedOk) e.currentTarget.style.opacity = '.9' }}
+                                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                                    {savedOk
+                                        ? <><CheckCircle size={14} /> ¡Guardado!</>
+                                        : <><Save size={14} /> Guardar datos</>}
+                                </button>
+
+                                <p style={{ fontSize: 10, color: ct3, textAlign: 'center', margin: 0 }}>
+                                    Estos datos se incluyen en todos los PDFs generados.
+                                </p>
+                            </div>
+                        </div>
 
                         {/* APARIENCIA */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '20px 24px' }}>
