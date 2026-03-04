@@ -209,7 +209,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
   }, [openModal])
 
-  const productosSeguros = Array.isArray(productos) ? productos : []
+
 
   const filtrados = productosSeguros.filter(p => {
     const q = (searchTerm || "").toLowerCase()
