@@ -35,27 +35,32 @@ const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4,
 /* ══════════════════════════════════════════════
    MODAL CATEGORÍAS
 ══════════════════════════════════════════════ */
-const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onEliminar, onOpenMobileSidebar }) => {
-  const [nombre, setNombre] = useState("")
-  const [desc, setDesc] = useState("")
+const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onEliminar }) => {
+  const [nombre, setNombre] = useState('')
+  const [editNombre, setEditNombre] = useState('')
   const [editId, setEditId] = useState(null)
-  const [filtro, setFiltro] = useState("")
+  const [filtro, setFiltro] = useState('')
 
   if (!isOpen) return null
 
   const filtradas = categorias.filter(c =>
-    c.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    c.descripcion?.toLowerCase().includes(filtro.toLowerCase())
+    c.nombre.toLowerCase().includes(filtro.toLowerCase())
   )
+
+  const iniciarEdicion = (cat) => { setEditId(cat.nombre); setEditNombre(cat.nombre) }
+  const cancelar = () => { setEditId(null); setEditNombre('') }
 
   const guardar = () => {
     if (!nombre.trim()) return
-    onGuardar({ id: editId || `cat_${Date.now()}`, nombre: nombre.trim(), descripcion: desc.trim(), productosAsociados: editId ? categorias.find(c => c.id === editId)?.productosAsociados || 0 : 0 }, editId)
-    setNombre(""); setDesc(""); setEditId(null)
+    // no duplicadas
+    if (categorias.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
+      alert('Esa categoría ya existe'); return
+    }
+    // "crear" no tiene efecto directo en BD (se crea al asignar un producto)
+    // solo mostramos una nota
+    alert(`La categoría "${nombre.trim()}" se puede usar ahora al cargar un producto.`)
+    setNombre('')
   }
-
-  const iniciarEdicion = (cat) => { setNombre(cat.nombre); setDesc(cat.descripcion || ""); setEditId(cat.id) }
-  const cancelar = () => { setNombre(""); setDesc(""); setEditId(null) }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(3px)' }}>
@@ -72,20 +77,10 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onElimin
         </div>
 
         <div style={{ padding: 20 }}>
-          {/* formulario */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Nombre de categoría <span style={{ color: '#DC2626' }}>*</span></label>
-            <input style={inputStyle} value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Electrónica, Ropa..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Descripción (opcional)</label>
-            <textarea style={{ ...inputStyle, height: 60, resize: 'none', paddingTop: 8 }} value={desc} onChange={e => setDesc(e.target.value)} placeholder="Breve descripción..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-            <button onClick={guardar} style={{ flex: 1, height: 34, borderRadius: 8, fontSize: 12, fontWeight: 700, background: '#DCED31', color: '#282A28', border: 'none', cursor: 'pointer' }}>
-              {editId ? 'Actualizar' : 'Guardar Categoría'}
-            </button>
-            {editId && <button onClick={cancelar} style={{ padding: '0 14px', height: 34, borderRadius: 8, fontSize: 12, fontWeight: 600, background: surface, color: ct2, border: `1px solid ${border}`, cursor: 'pointer' }}>Cancelar</button>}
+          {/* info */}
+          <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(51,65,57,.06)', border: '1px solid rgba(51,65,57,.15)', marginBottom: 16 }}>
+            <p style={{ fontSize: 11, color: accent, fontWeight: 600, margin: 0 }}>Las categorías se crean automáticamente
+              Cuando asignás una categoría a un producto, aparece acá. Pueden renombrarse y eso actualiza todos los productos de esa categoría.</p>
           </div>
 
           {/* buscador */}
@@ -95,31 +90,52 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onElimin
           </div>
 
           {/* lista */}
-          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+          <div style={{ maxHeight: 260, overflowY: 'auto', marginBottom: 16 }}>
             {filtradas.length > 0 ? filtradas.map(cat => (
-              <div key={cat.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: `1px solid ${border}`, marginBottom: 6, background: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Tag size={12} style={{ color: accent }} />
+              <div key={cat.nombre} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: `1px solid ${border}`, marginBottom: 6, background: '#fff' }}>
+                {editId === cat.nombre ? (
+                  <div style={{ display: 'flex', gap: 6, flex: 1, alignItems: 'center' }}>
+                    <input
+                      value={editNombre}
+                      onChange={e => setEditNombre(e.target.value)}
+                      style={{ ...inputStyle, height: 28, flex: 1 }}
+                      onFocus={e => e.target.style.borderColor = accent}
+                      onBlur={e => e.target.style.borderColor = border}
+                      autoFocus
+                    />
+                    <button onClick={() => { if (editNombre.trim()) { onRenombrar(cat.nombre, editNombre.trim()); cancelar() } }}
+                      style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: accent, color: '#fff', border: 'none', cursor: 'pointer' }}>OK</button>
+                    <button onClick={cancelar}
+                      style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: surface, color: ct2, border: `1px solid ${border}`, cursor: 'pointer' }}>Cancelar</button>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: ct1 }}>{cat.nombre}</div>
-                    {cat.descripcion && <div style={{ fontSize: 10, color: ct3 }}>{cat.descripcion}</div>}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span style={{ fontSize: 10, color: ct3, padding: '2px 8px', background: surface, borderRadius: 6, border: `1px solid ${border}` }}>{cat.productosAsociados || 0} prods.</span>
-                  <button onClick={() => iniciarEdicion(cat)} style={{ width: 26, height: 26, borderRadius: 6, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
-                    <Edit size={11} />
-                  </button>
-                  <button onClick={() => { if ((cat.productosAsociados || 0) > 0) return; onEliminar(cat.id) }} disabled={(cat.productosAsociados || 0) > 0} style={{ width: 26, height: 26, borderRadius: 6, background: (cat.productosAsociados || 0) > 0 ? 'transparent' : surface, border: `1px solid ${(cat.productosAsociados || 0) > 0 ? 'transparent' : border}`, cursor: (cat.productosAsociados || 0) > 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', opacity: (cat.productosAsociados || 0) > 0 ? 0.3 : 1 }}>
-                    <Trash2 size={11} />
-                  </button>
-                </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Tag size={12} style={{ color: accent }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: ct1 }}>{cat.nombre}</div>
+                        <div style={{ fontSize: 10, color: ct3 }}>{cat.cantidad} producto{cat.cantidad !== 1 ? 's' : ''}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button onClick={() => iniciarEdicion(cat)} title="Renombrar" style={{ width: 26, height: 26, borderRadius: 6, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                        <Edit size={11} />
+                      </button>
+                      <button
+                        onClick={() => { if (cat.cantidad > 0) { alert('No se puede eliminar una categoría con productos asignados. Primero reasignálos.'); return } onEliminar(cat.nombre) }}
+                        title={cat.cantidad > 0 ? 'Tiene productos asignados' : 'Eliminar'}
+                        style={{ width: 26, height: 26, borderRadius: 6, background: cat.cantidad > 0 ? 'transparent' : surface, border: `1px solid ${cat.cantidad > 0 ? 'transparent' : border}`, cursor: cat.cantidad > 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', opacity: cat.cantidad > 0 ? 0.3 : 1 }}>
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )) : (
               <div style={{ textAlign: 'center', padding: '20px 0', color: ct3, fontSize: 12 }}>
-                {categorias.length === 0 ? 'Aún no hay categorías cargadas.' : 'Sin resultados para la búsqueda.'}
+                {categorias.length === 0 ? 'Aún no hay categorías. Asigná una a un producto para que aparezca.' : 'Sin resultados.'}
               </div>
             )}
           </div>
@@ -136,19 +152,44 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onGuardar, onElimin
 /* ══════════════════════════════════════════════
    MÓDULO PRINCIPAL PRODUCTOS
 ══════════════════════════════════════════════ */
-const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, onOpenMobileSidebar }) => {
+const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, editarProducto, onOpenMobileSidebar }) => {
   const [filtroStock, setFiltroStock] = useState("todos")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [modalCats, setModalCats] = useState(false)
   const [dialogo, setDialogo] = useState({ open: false, title: '', message: '', onConfirm: null })
-  const [categorias, setCategorias] = useState([
-    { id: "cat1", nombre: "Electrónica", descripcion: "Productos electrónicos", productosAsociados: 5 },
-    { id: "cat2", nombre: "Ropa", descripcion: "Prendas de vestir", productosAsociados: 3 },
-    { id: "cat3", nombre: "Hogar", descripcion: "Artículos para el hogar", productosAsociados: 8 },
-    { id: "cat4", nombre: "Oficina", descripcion: "Material de oficina", productosAsociados: 12 },
-    { id: "cat5", nombre: "Deportes", descripcion: "Artículos deportivos", productosAsociados: 6 },
-  ])
+
+  const productosSeguros = Array.isArray(productos) ? productos : []
+
+  // Categorías derivadas dinámicamente de los productos reales
+  const categorias = (() => {
+    const mapa = {}
+    productosSeguros.forEach(p => {
+      const cat = (p.categoria || '').trim()
+      if (!cat) return
+      if (!mapa[cat]) mapa[cat] = 0
+      mapa[cat]++
+    })
+    return Object.entries(mapa).map(([nombre, cantidad]) => ({ nombre, cantidad }))
+  })()
+
+  // Renombrar categoría en todos los productos que la tienen
+  const handleRenombrarCategoria = async (nombreViejo, nombreNuevo) => {
+    // Actualizar en Supabase todos los productos con esa categoría
+    const { supabase } = await import('../../lib/supabaseClient')
+    const ids = productosSeguros.filter(p => p.categoria === nombreViejo).map(p => p.id)
+    await Promise.all(ids.map(id => supabase.from('productos').update({ categoria: nombreNuevo }).eq('id', id)))
+    // Recargar la página de productos sería ideal — por ahora lo notificamos
+    alert(`Categoría renombrada. Recargá la lista de productos para ver el cambio.`)
+  }
+
+  // "Eliminar" categoría = limpiar el campo categoria en todos los productos que la tengan
+  const handleEliminarCategoria = async (nombreCat) => {
+    const { supabase } = await import('../../lib/supabaseClient')
+    const ids = productosSeguros.filter(p => p.categoria === nombreCat).map(p => p.id)
+    await Promise.all(ids.map(id => supabase.from('productos').update({ categoria: '' }).eq('id', id)))
+    alert(`Categoría eliminada de todos los productos.`)
+  }
 
   /* ── atajo de teclado (solo Ctrl) ── */
   useEffect(() => {
@@ -411,10 +452,11 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
       {/* MODAL CATEGORÍAS */}
       <ModalCategorias
-        isOpen={modalCats} onClose={() => setModalCats(false)}
+        isOpen={modalCats}
+        onClose={() => setModalCats(false)}
         categorias={categorias}
-        onGuardar={(data, id) => id ? setCategorias(p => p.map(c => c.id === id ? data : c)) : setCategorias(p => [...p, data])}
-        onEliminar={id => setCategorias(p => p.filter(c => c.id !== id))}
+        onRenombrar={handleRenombrarCategoria}
+        onEliminar={handleEliminarCategoria}
       />
 
       {/* DIALOGO CONFIRMACIÓN */}

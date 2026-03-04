@@ -25,7 +25,7 @@ const labelBase = {
   marginBottom: 5, display: 'block', letterSpacing: '.01em',
 }
 
-const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal }) => {
+const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, categorias = [] }) => {
   const { nuevoProducto, setNuevoProducto, productoRapido, setProductoRapido } = formData
   const { agregarProducto, editarProducto, agregarProductoRapido } = formActions
 
@@ -127,6 +127,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal })
               <input
                 ref={categoriaRef}
                 type="text"
+                list="categorias-list"
                 value={data.categoria || ''}
                 onChange={e => handleChange('categoria', e.target.value)}
                 onKeyDown={e => handleKeyDown(e, precioRef)}
@@ -135,6 +136,13 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal })
                 placeholder="Ej: Indumentaria, Electrónica..."
                 style={{ ...inputBase, paddingLeft: 30 }}
               />
+              {categorias.length > 0 && (
+                <datalist id="categorias-list">
+                  {categorias.map(c => (
+                    <option key={c.nombre || c} value={c.nombre || c} />
+                  ))}
+                </datalist>
+              )}
             </div>
           </div>
         </div>

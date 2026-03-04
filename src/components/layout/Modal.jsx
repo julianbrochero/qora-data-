@@ -109,9 +109,16 @@ const Modal = ({
         return (
           <ProductoForm
             type={modalType}
+            selectedItem={formData.selectedItem}
             formData={formData}
             formActions={formActions}
             closeModal={onClose}
+            categorias={(() => {
+              const prods = formData.productos || []
+              const mapa = {}
+              prods.forEach(p => { const c = (p.categoria || '').trim(); if (c) mapa[c] = true })
+              return Object.keys(mapa).map(nombre => ({ nombre }))
+            })()}
           />
         );
 
