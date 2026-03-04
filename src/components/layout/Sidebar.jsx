@@ -108,45 +108,44 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
 
         {/* Logo */}
         <div className="flex items-center overflow-hidden flex-shrink-0 relative"
-          style={{ height: 80, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
+          style={{ height: 52, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
 
           {/* Botón cerrar móvil */}
-          <button onClick={onClose} className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
-            <X size={16} />
+          <button onClick={onClose} className="md:hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+            <X size={14} />
           </button>
-
 
           <img
             src="/logogestify3.png"
             alt="Gestify"
             className="transition-all duration-200 object-contain"
             style={{
-              height: 80,
+              height: 52,
               opacity: isCollapsed ? 0 : 1,
-              transform: isCollapsed ? 'scale(0.8)' : 'scale(1.7)',
+              transform: isCollapsed ? 'scale(0.8)' : 'scale(1.5)',
               width: isCollapsed ? 0 : 'auto',
             }}
           />
 
           {isCollapsed && (
-            <div className="flex items-center justify-center font-black flex-shrink-0 w-8 h-8 rounded-lg absolute inset-auto"
-              style={{ background: SB_BG3, fontSize: 15, color: T1, border: `1px solid rgba(139,137,130,0.2)` }}>
+            <div className="flex items-center justify-center font-black flex-shrink-0 w-7 h-7 rounded-lg absolute inset-auto"
+              style={{ background: SB_BG3, fontSize: 13, color: T1, border: `1px solid rgba(139,137,130,0.2)` }}>
               G
             </div>
           )}
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden pb-4"
-          style={{ padding: '12px 8px', scrollbarWidth: 'none' }}>
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden"
+          style={{ padding: '8px 6px', scrollbarWidth: 'none' }}>
 
           {sections.map((sec, idx) => (
-            <div key={idx} style={{ marginBottom: 18 }}>
+            <div key={idx} style={{ marginBottom: 10 }}>
               {/* Section label */}
               <div className="transition-all duration-200 overflow-hidden whitespace-nowrap"
                 style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
-                  color: T4, padding: '0 10px', marginBottom: 4,
+                  fontSize: 8, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
+                  color: T4, padding: '0 8px', marginBottom: 2,
                   opacity: isCollapsed ? 0 : 1,
                   height: isCollapsed ? 0 : 'auto',
                 }}>
@@ -164,11 +163,11 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                       onClick={() => handleNavClick(item.id)}
                       className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 relative focus:outline-none focus:ring-0"
                       style={{
-                        gap: 9, padding: '8px 10px',
+                        gap: 8, padding: '5px 8px',
                         background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
                         color: isActive ? T1 : T2,
                         fontFamily: 'Inter, sans-serif',
-                        fontSize: 13, fontWeight: isActive ? 600 : 500,
+                        fontSize: 12, fontWeight: isActive ? 600 : 500,
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                         textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden',
                       }}
@@ -215,105 +214,66 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
           ))}
         </nav>
 
-        {/* PRO card — espacio vacío */}
+        {/* PRO badge – compacto, solo si no colapsado */}
         {isPro && !isCollapsed && (
-          <div style={{ padding: '0 10px 14px' }}>
-            <div style={{
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,.06)',
-              background: 'rgba(255,255,255,.03)',
-              padding: '10px 12px',
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 7, flexShrink: 0,
-                background: 'rgba(255,255,255,.06)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Shield size={12} color="rgba(255,255,255,.45)" />
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{
-                  fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,.7)',
-                  letterSpacing: '.02em', lineHeight: 1.2,
-                }}>Plan PRO</div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,.3)', marginTop: 1 }}>
-                  Acceso completo
-                </div>
-              </div>
+          <div style={{ padding: '0 8px 8px' }}>
+            <div style={{ borderRadius: 8, border: '1px solid rgba(220,237,49,.18)', background: 'rgba(220,237,49,.05)', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Shield size={11} color="rgba(220,237,49,.6)" />
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(220,237,49,.7)', letterSpacing: '.04em' }}>PRO ACTIVO</span>
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex-shrink-0 flex flex-col" style={{ borderTop: `1px solid ${LINE}`, padding: '10px 8px', gap: 0 }}>
+        <div className="flex-shrink-0 flex flex-col" style={{ borderTop: `1px solid ${LINE}`, padding: '6px 6px 6px' }}>
 
-          {/* User info */}
-          <div className="flex items-center overflow-hidden rounded-lg"
-            style={{ gap: 9, padding: '8px 10px', marginBottom: 3 }}>
+          {/* User info + logout en una sola fila */}
+          <div className="flex items-center overflow-hidden rounded-lg" style={{ gap: 8, padding: '5px 8px', marginBottom: 2 }}>
             <div className="rounded-full flex items-center justify-center font-bold flex-shrink-0 overflow-hidden"
-              style={{ width: 27, height: 27, background: SB_BG3, border: '1.5px solid rgba(139,137,130,0.25)', fontSize: 11, color: T1 }}>
+              style={{ width: 24, height: 24, background: SB_BG3, border: '1.5px solid rgba(139,137,130,0.25)', fontSize: 10, color: T1 }}>
               {user?.user_metadata?.avatar_url
                 ? <img src={user.user_metadata.avatar_url} alt="Perfil" className="w-full h-full object-cover" />
                 : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
             </div>
             {!isCollapsed && (
-              <div className="overflow-hidden" style={{ transition: 'opacity .18s' }}>
+              <div className="overflow-hidden flex-1" style={{ transition: 'opacity .18s' }}>
                 <div className="whitespace-nowrap overflow-hidden text-ellipsis"
-                  style={{ fontSize: 11.5, fontWeight: 600, color: T1 }}>
-                  {user?.user_metadata?.full_name || 'Administrador'}
-                </div>
-                <div className="whitespace-nowrap overflow-hidden text-ellipsis"
-                  style={{ fontSize: 9.5, color: T3 }}>
-                  {user?.email || 'admin@gestify.com'}
+                  style={{ fontSize: 11, fontWeight: 600, color: T1 }}>
+                  {user?.user_metadata?.full_name || 'Admin'}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Collapse button */}
-          <button
-            title={isCollapsed ? "Expandir" : "Colapsar"}
-            onClick={() => {
-              if (window.innerWidth < 768) { if (onClose) onClose() }
-              else { if (onToggleCollapse) onToggleCollapse() }
-            }}
-            className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-0"
-            style={{
-              gap: 9, padding: '7px 10px',
-              background: 'transparent', color: T2,
-              fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              overflow: 'hidden', whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = T1 }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 }}>
-            <span className="flex items-center flex-shrink-0 transition-transform duration-300"
-              style={{ width: 14, height: 14, transform: isCollapsed ? 'rotate(180deg)' : 'none' }}>
-              <ChevronLeft size={14} strokeWidth={2.5} />
-            </span>
-            {!isCollapsed && <span>Colapsar</span>}
-          </button>
+          {/* Collapse + Logout en fila */}
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button
+              title={isCollapsed ? 'Expandir' : 'Colapsar'}
+              onClick={() => {
+                if (window.innerWidth < 768) { if (onClose) onClose() }
+                else { if (onToggleCollapse) onToggleCollapse() }
+              }}
+              className="flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 focus:outline-none"
+              style={{ gap: 6, padding: '5px 8px', flex: isCollapsed ? undefined : 1, background: 'transparent', color: T2, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, justifyContent: isCollapsed ? 'center' : 'flex-start', whiteSpace: 'nowrap', overflow: 'hidden' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = T1 }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 }}>
+              <span style={{ transform: isCollapsed ? 'rotate(180deg)' : 'none', display: 'flex', transition: 'transform .3s' }}>
+                <ChevronLeft size={13} strokeWidth={2.5} />
+              </span>
+              {!isCollapsed && <span>Colapsar</span>}
+            </button>
 
-          {/* Logout button */}
-          <button
-            onClick={logout}
-            title={isCollapsed ? "Cerrar sesión" : undefined}
-            className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-0"
-            style={{
-              gap: 9, padding: '7px 10px',
-              background: 'transparent', color: T2,
-              fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
-              justifyContent: isCollapsed ? 'center' : 'flex-start',
-              overflow: 'hidden', whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,137,130,0.15)'; e.currentTarget.style.color = 'rgba(255,180,170,0.85)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 }}>
-            <span className="flex items-center flex-shrink-0" style={{ width: 14, height: 14 }}>
-              <LogOut size={14} strokeWidth={2} style={{ transform: 'scaleX(-1)' }} />
-            </span>
-            {!isCollapsed && <span>Cerrar sesión</span>}
-          </button>
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              className="flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 focus:outline-none"
+              style={{ gap: 6, padding: '5px 8px', background: 'transparent', color: T2, fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 500, justifyContent: 'center', whiteSpace: 'nowrap', overflow: 'hidden', flexShrink: 0 }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,137,130,0.15)'; e.currentTarget.style.color = 'rgba(255,180,170,0.85)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = T2 }}>
+              <LogOut size={13} strokeWidth={2} style={{ transform: 'scaleX(-1)' }} />
+              {!isCollapsed && <span>Salir</span>}
+            </button>
+          </div>
         </div>
       </div>
     </>
