@@ -239,6 +239,96 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
   const handleEliminar = (id) => customConfirm('Eliminar Producto', '¿Estás seguro? Esta acción no se puede deshacer.', async () => { eliminarProducto && eliminarProducto(id); cerrarDialogo() })
 
+  /* ── Descargar Lista de Precios PDF ──────────────── */
+  const descargarListaPrecios = async () => {
+    const { jsPDF } = await import('jspdf')
+    const autoTable = (await import('jspdf-autotable')).default
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const W = doc.internal.pageSize.getWidth()
+    const hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    const empresa = localStorage.getItem('gestify_empresa') || ''
+
+    // Header fondo oscuro
+    doc.setFillColor(40, 42, 40)
+    doc.rect(0, 0, W, 38, 'F')
+
+    // Nombre empresa (si lo hay)
+    if (empresa) {
+      doc.setFontSize(11).setFont('helvetica', 'bold').setTextColor(255, 255, 255)
+      doc.text(empresa, 14, 14)
+    }
+
+    // Título
+    doc.setFontSize(18).setFont('helvetica', 'bold').setTextColor(220, 237, 49)
+    doc.text('LISTA DE PRECIOS', W - 14, 16, { align: 'right' })
+
+    doc.setFontSize(8).setFont('helvetica', 'normal').setTextColor(180, 180, 180)
+    doc.text(`Emitida: ${hoy}`, W - 14, 22, { align: 'right' })
+    doc.text(`${productosSeguros.length} producto${productosSeguros.length !== 1 ? 's' : ''}`, W - 14, 27, { align: 'right' })
+
+    // Agrupar por categoría
+    const grupos = {}
+    productosSeguros
+      .slice()
+      .sort((a, b) => (a.categoria || 'Sin categoría').localeCompare(b.categoria || 'Sin categoría') || (a.nombre || '').localeCompare(b.nombre || ''))
+      .forEach(p => {
+        const cat = (p.categoria || '').trim() || 'Sin categoría'
+        if (!grupos[cat]) grupos[cat] = []
+        grupos[cat].push(p)
+      })
+
+    let startY = 44
+
+    Object.entries(grupos).forEach(([cat, prods], gi) => {
+      // Encabezado de grupo
+      doc.setFontSize(9).setFont('helvetica', 'bold').setTextColor(51, 65, 57)
+      doc.text(cat.toUpperCase(), 14, startY)
+      doc.setDrawColor(51, 65, 57)
+      doc.setLineWidth(0.3)
+      doc.line(14, startY + 1.5, W - 14, startY + 1.5)
+      startY += 4
+
+      const rows = prods.map((p, i) => [
+        String(i + 1),
+        p.codigo || '—',
+        p.nombre || '—',
+        `$${fMonto(p.precio)}`,
+        p.controlastock ? String(p.stock ?? 0) : '∞',
+      ])
+
+      autoTable(doc, {
+        startY,
+        head: [['#', 'Código', 'Producto', 'Precio', 'Stock']],
+        body: rows,
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: { top: 3, bottom: 3, left: 4, right: 4 }, font: 'helvetica', textColor: [48, 54, 47] },
+        headStyles: { fillColor: [239, 239, 237], textColor: [139, 137, 130], fontSize: 8, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [249, 249, 247] },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 28 },
+          2: { cellWidth: 'auto' },
+          3: { cellWidth: 28, halign: 'right', fontStyle: 'bold' },
+          4: { cellWidth: 20, halign: 'center' },
+        },
+        margin: { left: 14, right: 14 },
+      })
+
+      startY = doc.lastAutoTable.finalY + 8
+    })
+
+    // Footer
+    const pages = doc.getNumberOfPages()
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i)
+      doc.setFontSize(7).setFont('helvetica', 'normal').setTextColor(180, 180, 180)
+      doc.text(`Generado con Gestify • Página ${i}/${pages}`, W / 2, 292, { align: 'center' })
+    }
+
+    doc.save(`Lista-de-precios-${hoy.replace(/\//g, '-')}.pdf`)
+  }
+
   const pillSelect = {
     height: 32, padding: '0 10px', fontSize: 11, fontWeight: 600, color: ct2, background: '#fff',
     border: `1px solid ${border}`, borderRadius: 8, outline: 'none', cursor: 'pointer',
@@ -264,6 +354,15 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
           <button onClick={() => setModalCats(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.07)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <Tag size={12} strokeWidth={2} /> Categorías
+          </button>
+
+          <button onClick={descargarListaPrecios}
+            title="Descargar lista de precios en PDF"
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.07)'; e.currentTarget.style.color = '#DCED31' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,.7)' }}>
+            <Download size={12} strokeWidth={2} />
+            <span className="hidden sm:inline">Lista de precios</span>
           </button>
 
           <button onClick={() => openModal && openModal("nuevo-producto")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s', background: '#DCED31', color: '#282A28' }}>
