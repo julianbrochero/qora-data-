@@ -9,6 +9,7 @@ import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 import { useAuth } from '../../lib/AuthContext'
 import PaymentModal from './PaymentModal'
 
+import { supabase } from '../../lib/supabaseClient'
 const ct1 = '#1e2320'
 const ct3 = '#8B8982'
 const accent = '#334139'
@@ -17,8 +18,31 @@ const SubscriptionExpired = () => {
     const { email } = useSubscriptionContext()
     const { logout, user } = useAuth()
     const [modalOpen, setModalOpen] = useState(false)
-
+    const [mpLoading, setMpLoading] = useState(false)
     const userEmail = email || user?.email || ''
+
+    const handleMercadoPago = async () => {
+        setMpLoading(true)
+        try {
+            const { data, error } = await supabase.functions.invoke('mercadopago-suscripcion-crear', {
+                body: { email: userEmail }
+            })
+
+            if (error) throw error
+
+            if (data && data.init_point) {
+                window.location.href = data.init_point
+            } else {
+                throw new Error("No se generó el link de pago.")
+            }
+        } catch (e) {
+            console.error("Error con MP:", e)
+            alert("Hubo un error contactando a Mercado Pago. Por favor intentá por transferencia.")
+            setModalOpen(true)
+        } finally {
+            setMpLoading(false)
+        }
+    }
 
     return (
         <div style={{
@@ -85,24 +109,44 @@ const SubscriptionExpired = () => {
                     </div>
 
                     {/* CTA principal */}
+                    {/* Botón Principal MP */}
+                    <button
+                        onClick={handleMercadoPago}
+                        disabled={mpLoading}
+                        style={{
+                            width: '100%', height: 46, borderRadius: 10,
+                            background: '#009EE3', color: '#fff', border: 'none',
+                            fontSize: 14, fontWeight: 800, cursor: mpLoading ? 'wait' : 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            fontFamily: "'Inter', sans-serif",
+                            transition: 'filter .13s, transform .1s',
+                            marginBottom: 10,
+                            boxShadow: '0 4px 12px rgba(0, 158, 227, .25)',
+                        }}
+                        onMouseEnter={e => { if (!mpLoading) e.currentTarget.style.filter = 'brightness(1.1)' }}
+                        onMouseLeave={e => { if (!mpLoading) e.currentTarget.style.filter = 'none' }}
+                        onMouseDown={e => { if (!mpLoading) e.currentTarget.style.transform = 'scale(.98)' }}
+                        onMouseUp={e => { if (!mpLoading) e.currentTarget.style.transform = 'scale(1)' }}
+                    >
+                        {mpLoading ? 'Cargando Mercado Pago...' : '💳 Suscribirse con Mercado Pago'}
+                    </button>
+
+                    {/* CTA secundario */}
                     <button
                         onClick={() => setModalOpen(true)}
                         style={{
-                            width: '100%', height: 46, borderRadius: 10,
-                            background: '#334139', color: '#fff', border: 'none',
-                            fontSize: 14, fontWeight: 800, cursor: 'pointer',
+                            width: '100%', height: 42, borderRadius: 10,
+                            background: '#f5f5f5', color: '#334139', border: '1px solid #e0e0e0',
+                            fontSize: 13, fontWeight: 700, cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                             fontFamily: "'Inter', sans-serif",
-                            transition: 'background .13s, transform .1s',
+                            transition: 'background .13s',
                             marginBottom: 10,
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#283330'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#334139'}
-                        onMouseDown={e => e.currentTarget.style.transform = 'scale(.98)'}
-                        onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onMouseEnter={e => e.currentTarget.style.background = '#ebebeb'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#f5f5f5'}
                     >
-                        <CreditCard size={16} />
-                        Ver datos de pago y activar
+                        Ver datos para Transferencia Manual
                     </button>
 
                     <p style={{ fontSize: 10, color: ct3, textAlign: 'center' }}>

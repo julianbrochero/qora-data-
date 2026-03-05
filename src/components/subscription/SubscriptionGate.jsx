@@ -14,6 +14,7 @@ import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 import TrialBanner from './TrialBanner'
 import PaymentModal from './PaymentModal'
 import WelcomeTrialModal from './WelcomeTrialModal'
+import { supabase } from '../../lib/supabaseClient'
 import { AlertTriangle, AlertCircle, Crown, Shield, Copy, CheckCircle, MessageCircle, Lock, Mail } from 'lucide-react'
 
 // ─── DATOS DE PAGO (iguales a PaymentModal) ────────────────────────────────────
@@ -275,6 +276,29 @@ const SuspendedBlockingModal = ({ email }) => {
 const SubscriptionGate = ({ children }) => {
     const { status, loading, daysRemaining, email, isPro, userId, manuallySuspended, checkStatus } = useSubscriptionContext()
     const [modalOpen, setModalOpen] = useState(false)
+    const [mpLoading, setMpLoading] = useState(false)
+
+    const handleMercadoPago = async () => {
+        setMpLoading(true)
+        try {
+            const { data, error } = await supabase.functions.invoke('mercadopago-suscripcion-crear', {
+                body: { email: email }
+            })
+
+            if (error) throw error
+
+            if (data && data.init_point) {
+                window.location.href = data.init_point
+            } else {
+                throw new Error("No se generó el link de pago.")
+            }
+        } catch (e) {
+            console.error("Error con MP:", e)
+            alert("Hubo un error contactando a Mercado Pago. Por favor intentá por transferencia.")
+        } finally {
+            setMpLoading(false)
+        }
+    }
 
     if (loading) {
         return (
@@ -385,20 +409,38 @@ const SubscriptionGate = ({ children }) => {
                             </div>
                         </div>
 
+                        {/* Botón Mercado Pago */}
+                        <button
+                            onClick={handleMercadoPago}
+                            disabled={mpLoading}
+                            style={{
+                                width: '100%', minHeight: 48, borderRadius: 12,
+                                background: '#009EE3', color: '#fff', border: 'none',
+                                fontSize: 13, fontWeight: 800, cursor: mpLoading ? 'wait' : 'pointer', padding: '10px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                                transition: 'all .15s', flexWrap: 'wrap',
+                                boxShadow: '0 4px 12px rgba(0, 158, 227, .25)',
+                                marginBottom: 12
+                            }}
+                            onMouseEnter={e => { if (!mpLoading) e.currentTarget.style.filter = 'brightness(1.1)' }}
+                            onMouseLeave={e => { if (!mpLoading) e.currentTarget.style.filter = 'none' }}
+                        >
+                            {mpLoading ? 'Cargando Mercado Pago...' : '💳 Suscribirse con Mercado Pago'}
+                        </button>
+
                         <button
                             onClick={() => setModalOpen(true)}
                             style={{
-                                width: '100%', minHeight: 48, borderRadius: 12,
-                                background: '#334139', color: '#DCED31', border: 'none',
-                                fontSize: 13, fontWeight: 800, cursor: 'pointer', padding: '10px',
+                                width: '100%', minHeight: 44, borderRadius: 12,
+                                background: '#f5f5f5', color: '#334139', border: '1px solid #e0e0e0',
+                                fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '10px',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                                 transition: 'all .15s', flexWrap: 'wrap',
-                                boxShadow: '0 4px 12px rgba(51,65,57,.2)',
                             }}
-                            onMouseEnter={e => e.currentTarget.style.background = '#283330'}
-                            onMouseLeave={e => e.currentTarget.style.background = '#334139'}
+                            onMouseEnter={e => e.currentTarget.style.background = '#ebebeb'}
+                            onMouseLeave={e => e.currentTarget.style.background = '#f5f5f5'}
                         >
-                            💳 Ver datos de pago y activar PRO
+                            Ver datos para Transferencia Manual
                         </button>
 
                         <p style={{
