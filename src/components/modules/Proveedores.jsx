@@ -50,6 +50,41 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
 
   useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
+  /* ── atajo de teclado (solo Ctrl) ── */
+  useEffect(() => {
+    let ctrlPressed = false
+    let otherKeyPressed = false
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Control') {
+        ctrlPressed = true
+      } else if (ctrlPressed) {
+        otherKeyPressed = true
+      }
+    }
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'Control') {
+        if (!otherKeyPressed && openModal) {
+          const active = document.activeElement
+          const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+          if (!isInput) {
+            openModal('nuevo-proveedor')
+          }
+        }
+        ctrlPressed = false
+        otherKeyPressed = false
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [openModal])
+
   const resumenProveedores = {
     totalProveedores: proveedoresSeguros.length,
     proveedoresActivos: proveedoresSeguros.filter(p => !p.estado || p.estado === "activo").length,
@@ -85,7 +120,9 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => openModal && openModal("nuevo-proveedor")} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 32, borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .13s', boxShadow: '0 2px 8px rgba(220,237,49,.2)' }}
             onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = ''}>
-            <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Nuevo Proveedor</span><span className="sm:hidden">Nuevo</span>
+            <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Nuevo Proveedor</span>
+            <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
+            <span className="sm:hidden">Nuevo</span>
           </button>
         </div>
       </header>

@@ -160,6 +160,7 @@ const Modal = ({
             productos={formData.productos || []}
             formActions={formActions}
             closeModal={onClose}
+            openModal={openModal}
             presupuestoEditar={modalType === 'editar-presupuesto' ? formData.selectedItem : null}
           />
         );
@@ -183,15 +184,16 @@ const Modal = ({
   const getModalWidth = () => {
     switch (modalType) {
       case 'nueva-factura':
-      case 'nueva-venta': // ✅ AÑADE ESTE
-      case 'editar-pedido': // ✅ AÑADE ESTE
       case 'ingreso-caja':
       case 'egreso-caja':
+      case 'ver-pedido':
         return 'max-w-md';
 
+      case 'nueva-venta':
+      case 'editar-pedido':
       case 'nuevo-pedido':
       case 'factura-directa':
-        return 'max-w-[400px]'; // Reduced width for compact view
+        return 'max-w-[480px]';
 
       case 'nuevo-cliente':
       case 'editar-cliente':
@@ -199,19 +201,12 @@ const Modal = ({
       case 'nuevo-producto':
       case 'editar-producto':
       case 'producto-rapido':
-        return 'max-w-lg';
-
-      case 'ver-pedido':
-        return 'max-w-md';
-
       case 'nuevo-proveedor':
       case 'editar-proveedor':
         return 'max-w-lg';
 
       case 'nuevo-presupuesto':
       case 'editar-presupuesto':
-        return 'max-w-4xl';
-
       case 'detalle-cierre':
         return 'max-w-4xl';
 

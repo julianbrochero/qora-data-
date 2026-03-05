@@ -109,8 +109,43 @@ const Presupuestos = ({
         return () => window.removeEventListener('click', handler)
     }, [])
 
+    /* ── Atajo: Abrir modal con tecla Ctrl sola ───────────── */
+    useEffect(() => {
+        let ctrlPressed = false
+        let otherKeyPressed = false
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Control') {
+                ctrlPressed = true
+            } else if (ctrlPressed) {
+                otherKeyPressed = true
+            }
+        }
+
+        const handleKeyUp = (e) => {
+            if (e.key === 'Control') {
+                if (!otherKeyPressed && openModal) {
+                    const active = document.activeElement
+                    const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+                    if (!isInput) {
+                        openModal('nuevo-presupuesto')
+                    }
+                }
+                ctrlPressed = false
+                otherKeyPressed = false
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        window.addEventListener('keyup', handleKeyUp)
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+            window.removeEventListener('keyup', handleKeyUp)
+        }
+    }, [openModal])
+
     return (
-        <div style={{ width: '100%', minHeight: '100vh', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+        <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
             <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         @keyframes kpiIn { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
@@ -120,68 +155,74 @@ const Presupuestos = ({
         .btn-action:hover { background: rgba(51,65,57,.12) !important; }
       `}</style>
 
-            {/* ═══ TOPBAR ════════════════════════════════ */}
-            <header style={{ height: 52, padding: '0 20px', background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                <button onClick={onOpenMobileSidebar}
-                    className="md:hidden"
-                    style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                    <Menu size={14} strokeWidth={2} />
-                </button>
-
-                {/* Search */}
-                <div style={{ height: 30, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '0 10px', flex: 1, maxWidth: 220 }}>
-                    <Search size={11} strokeWidth={2} style={{ color: 'rgba(255,255,255,.4)', flexShrink: 0 }} />
-                    <input
-                        type="text"
-                        placeholder="Buscar presupuesto..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 11.5, color: '#fff', width: '100%', fontFamily: 'Inter,sans-serif' }}
-                    />
+            {/* ═══════════ HEADER ═══════════ */}
+            <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap', py: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+                        <Menu size={16} strokeWidth={2} />
+                    </button>
+                    <div>
+                        <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Comercial</p>
+                        <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Presupuestos</h2>
+                    </div>
                 </div>
 
-                <div style={{ flex: 1 }} />
-
-                {/* Nuevo presupuesto */}
-                <button
-                    onClick={() => openModal && openModal('nuevo-presupuesto')}
-                    style={{ height: 30, padding: '0 12px', borderRadius: 8, background: lime, border: '1px solid ' + lime, color: '#282A28', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Inter,sans-serif' }}>
-                    <Plus size={12} strokeWidth={2.5} />
-                    <span className="hidden md:inline">Nuevo Presupuesto</span>
-                    <span className="md:hidden">Nuevo</span>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {/* Nuevo Presupuesto */}
+                    <button onClick={() => openModal && openModal("nuevo-presupuesto")} style={{
+                        display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
+                        fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
+                        background: '#DCED31', color: '#282A28',
+                    }}>
+                        <Plus size={12} strokeWidth={2.5} /> Nuevo Presupuesto
+                        <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
+                    </button>
+                </div>
             </header>
 
             {/* ═══ CONTENT ═══════════════════════════════ */}
-            <main style={{ padding: 'clamp(14px,3vw,28px)', maxWidth: 1200, margin: '0 auto' }}>
+            <main style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
 
-                {/* Page header */}
-                <div style={{ marginBottom: 22 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 10, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid rgba(51,65,57,.15)` }}>
-                            <FileText size={15} strokeWidth={2} style={{ color: accent }} />
-                        </div>
-                        <h1 style={{ fontSize: 'clamp(18px,3.5vw,24px)', fontWeight: 800, color: ct1, letterSpacing: '-0.03em', margin: 0 }}>Presupuestos</h1>
+                {/* Toolbar & Controles Superiores */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 260, position: 'relative' }}>
+                        <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+                        <input
+                            type="text"
+                            placeholder="Buscar presupuesto..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            style={{ width: '100%', height: 32, padding: '0 12px 0 30px', fontSize: 12, color: ct1, background: surface, border: `1px solid ${border}`, borderRadius: 8, outline: 'none', transition: 'all .15s' }}
+                            onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border}
+                        />
                     </div>
-                    <p style={{ fontSize: 12, color: ct3, margin: 0 }}>Creá, descargá y convertí presupuestos en ventas</p>
                 </div>
 
-                {/* ── KPI Cards ──────────────────────────── */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 12, marginBottom: 24 }}>
+
+
+                {/* ═══════════ CARDS RESUMEN ═══════════ */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
                     {[
-                        { label: 'Total', value: presupuestos.length, icon: FileText, color: ct3, delay: 0 },
-                        { label: 'Vigentes', value: vigentes, icon: Clock, color: accent, delay: 1 },
-                        { label: 'Aceptados', value: aceptados, icon: CheckCircle, color: '#1a6b3c', delay: 2 },
-                        { label: 'Facturado', value: `$${fNum(totalVal)}`, icon: TrendingUp, color: accent, delay: 3 },
-                    ].map(({ label, value, icon: Icon, color, delay }) => (
-                        <div key={label} className="pres-card"
-                            style={{ background: '#E1E1E0', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: '14px 16px', transition: 'all .2s', animation: `kpiIn .4s ${.05 + delay * .07}s ease both`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <div style={{ width: 34, height: 34, borderRadius: 9, background: `rgba(51,65,57,.07)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Icon size={15} strokeWidth={2} style={{ color }} />
-                            </div>
-                            <div>
-                                <p style={{ fontSize: 22, fontWeight: 800, color: ct1, letterSpacing: '-0.04em', margin: 0, lineHeight: 1 }}>{value}</p>
-                                <p style={{ fontSize: 11, fontWeight: 600, color: ct3, margin: '3px 0 0' }}>{label}</p>
+                        { label: 'Total', val: presupuestos.length, icon: FileText, clr: '#373F47' },
+                        { label: 'Vigentes', val: vigentes, icon: Clock, clr: '#334139' },
+                        { label: 'Aceptados', val: aceptados, icon: CheckCircle, clr: '#065F46' },
+                        { label: 'Facturado', val: `$${fNum(totalVal)}`, icon: TrendingUp, clr: '#991B1B' },
+                    ].map((s, i) => (
+                        <div key={i} className="rounded-xl overflow-hidden border relative flex flex-col justify-center cursor-default"
+                            style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)' }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = cardShadow }}>
+                            <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${s.clr}15, transparent 70%)` }} />
+                            {/* barra lateral de color */}
+                            <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: s.clr, borderRadius: '0 2px 2px 0' }} />
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{s.label}</span>
+                                    <span style={{ fontSize: 20, fontWeight: 600, color: ct1, letterSpacing: '-.03em', display: 'block', lineHeight: 1.1 }}>{s.val}</span>
+                                </div>
+                                <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${s.clr}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <s.icon size={15} strokeWidth={2.5} style={{ color: s.clr }} />
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -223,7 +264,7 @@ const Presupuestos = ({
                             {!search && (
                                 <button onClick={() => openModal && openModal('nuevo-presupuesto')}
                                     style={{ height: 34, padding: '0 16px', borderRadius: 8, background: ct1, color: '#fff', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                    <Plus size={12} strokeWidth={2.5} /> Nuevo Presupuesto
+                                    <Plus size={12} strokeWidth={2.5} /> Nuevo Presupuesto <span style={{ fontSize: 9, opacity: 0.6, background: 'rgba(255,255,255,0.15)', padding: '1px 4px', borderRadius: 4, marginLeft: 2, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
                                 </button>
                             )}
                         </div>
@@ -270,22 +311,6 @@ const Presupuestos = ({
                                                 <Download size={13} strokeWidth={2.5} />
                                             </button>
 
-                                            {/* Acción Rápida: Editar */}
-                                            <button onClick={e => { e.stopPropagation(); openModal && openModal('editar-presupuesto', pres) }} title="Editar Presupuesto"
-                                                style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}
-                                                onMouseEnter={e => { e.currentTarget.style.color = accent; e.currentTarget.style.background = accentL }}
-                                                onMouseLeave={e => { e.currentTarget.style.color = ct3; e.currentTarget.style.background = 'transparent' }}>
-                                                <Edit2 size={13} strokeWidth={2.5} />
-                                            </button>
-
-                                            {/* Acción Rápida: Eliminar */}
-                                            <button onClick={e => { e.stopPropagation(); if (confirm('¿Eliminar este presupuesto?')) { eliminarPresupuesto?.(pres.id) } }} title="Eliminar Presupuesto"
-                                                style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}
-                                                onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = 'rgba(220,38,38,.08)' }}
-                                                onMouseLeave={e => { e.currentTarget.style.color = ct3; e.currentTarget.style.background = 'transparent' }}>
-                                                <Trash2 size={13} strokeWidth={2.5} />
-                                            </button>
-
                                             {/* Menú acciones secundarias */}
                                             <div style={{ position: 'relative' }}>
                                                 <button
@@ -299,9 +324,29 @@ const Presupuestos = ({
                                                     <div onClick={e => e.stopPropagation()}
                                                         style={{ position: 'absolute', right: 0, top: 30, width: 180, background: '#fff', borderRadius: 10, border: `1px solid ${border}`, boxShadow: '0 8px 28px rgba(0,0,0,.12)', zIndex: 100, overflow: 'hidden' }}>
                                                         {[
-                                                            { icon: ShoppingCart, label: 'Convertir en Venta', fn: () => { convertirPresupuestoPedido?.(pres); setMenu(null) }, color: accent },
+                                                            {
+                                                                icon: ShoppingCart, label: 'Convertir en Venta', color: accent, fn: () => {
+                                                                    const itemsParsed = typeof pres.items === 'string' ? JSON.parse(pres.items) : (pres.items || []);
+                                                                    const pedidoData = {
+                                                                        cliente_nombre: pres.cliente || '',
+                                                                        notas: `Ref: Presupuesto ${pres.numero}`,
+                                                                        items: itemsParsed.map((it, idx) => ({
+                                                                            id: Date.now() + idx,
+                                                                            productoId: it.productoId || null,
+                                                                            producto: it.producto || it.descripcion,
+                                                                            precio: parseFloat(it.precio) || 0,
+                                                                            cantidad: parseFloat(it.cantidad) || 1,
+                                                                            subtotal: parseFloat(it.subtotal) || 0
+                                                                        }))
+                                                                    }
+                                                                    openModal && openModal('nuevo-pedido', pedidoData);
+                                                                    setMenu(null)
+                                                                }
+                                                            },
                                                             { icon: CheckCircle, label: 'Marcar Aceptado', fn: () => { actualizarEstadoPresupuesto?.(pres.id, 'aceptado'); setMenu(null) }, color: '#1a6b3c' },
                                                             { icon: XCircle, label: 'Marcar Rechazado', fn: () => { actualizarEstadoPresupuesto?.(pres.id, 'rechazado'); setMenu(null) }, color: '#991b1b' },
+                                                            { icon: Edit2, label: 'Editar Presupuesto', fn: () => { openModal && openModal('editar-presupuesto', pres); setMenu(null) }, color: ct2 },
+                                                            { icon: Trash2, label: 'Eliminar Presupuesto', fn: () => { if (confirm('¿Eliminar este presupuesto?')) { eliminarPresupuesto?.(pres.id) }; setMenu(null) }, color: '#DC2626' },
                                                         ].map(({ icon: Icon, label, fn, color }) => (
                                                             <button key={label} onClick={fn}
                                                                 style={{ width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 9, fontSize: 12, fontWeight: 500, color, fontFamily: 'Inter,sans-serif', textAlign: 'left', transition: 'background .1s' }}

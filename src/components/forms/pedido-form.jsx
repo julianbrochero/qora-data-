@@ -65,8 +65,8 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
   const [dropCliente, setDropCliente] = useState(false)
   const [busProducto, setBusProducto] = useState("")
   const [dropProducto, setDropProducto] = useState(false)
-  const [editPrecioId, setEditPrecioId] = useState(null)
-  const [priceDraft, setPriceDraft] = useState("")
+  const [page, setPage] = useState(0)
+  const ITEMS_PER_PAGE = 3
 
   const [isProcessing, setIsProcessing] = useState(false)
   const [alertaExito, setAlertaExito] = useState(null) // { mensaje: string }
@@ -101,26 +101,40 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
   const agregarProducto = p => {
     setPedidoData(d => {
       const existe = d.items.find(i => i.productoId === p.id)
-      if (existe) return { ...d, items: d.items.map(i => i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1, subtotal: (i.cantidad + 1) * i.precio } : i) }
-      return { ...d, items: [...d.items, { id: Date.now(), productoId: p.id, producto: p.nombre, precio: p.precio, cantidad: 1, subtotal: p.precio }] }
+      let nuevosItems
+      if (existe) {
+        nuevosItems = d.items.map(i => i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1, subtotal: (i.cantidad + 1) * i.precio } : i)
+      } else {
+        nuevosItems = [...d.items, { id: Date.now(), productoId: p.id, producto: p.nombre, precio: p.precio, cantidad: 1, subtotal: p.precio }]
+      }
+
+      // Auto-ir a la ultima pagina
+      const totalPages = Math.ceil(nuevosItems.length / ITEMS_PER_PAGE)
+      if (totalPages > 0) setPage(totalPages - 1)
+
+      return { ...d, items: nuevosItems }
     })
     setBusProducto("")
     setDropProducto(false)
   }
 
-  const actualizarCantidad = (idx, n) => {
-    if (n < 1) { setPedidoData(d => ({ ...d, items: d.items.filter((_, i) => i !== idx) })); return }
-    setPedidoData(d => { const it = [...d.items]; it[idx] = { ...it[idx], cantidad: n, subtotal: it[idx].precio * n }; return { ...d, items: it } })
+  const updateItem = (id, campo, valor) => {
+    setPedidoData(d => {
+      const it = d.items.map(o => {
+        if (o.id !== id) return o
+        const updated = { ...o, [campo]: valor }
+        if (campo === 'cantidad' || campo === 'precio') {
+          const q = campo === 'cantidad' ? parseFloat(valor) || 0 : parseFloat(o.cantidad) || 0
+          const p = campo === 'precio' ? parseFloat(valor) || 0 : parseFloat(o.precio) || 0
+          updated.subtotal = q * p
+        }
+        return updated
+      })
+      return { ...d, items: it }
+    })
   }
 
-  const commitPrecio = id => {
-    const idx = pedidoData.items.findIndex(i => i.id === id)
-    if (idx >= 0) {
-      const precio = parseFloat(priceDraft) || 0
-      setPedidoData(d => { const it = [...d.items]; it[idx] = { ...it[idx], precio, subtotal: precio * it[idx].cantidad }; return { ...d, items: it } })
-    }
-    setEditPrecioId(null); setPriceDraft("")
-  }
+  const removeItem = (id) => setPedidoData(d => ({ ...d, items: d.items.filter(i => i.id !== id) }))
 
   const calcTotal = () => pedidoData.items.reduce((s, i) => s + i.precio * i.cantidad, 0)
 
@@ -202,7 +216,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
   }
 
   return (
-    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased', width: '100%' }}>
+    <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased', width: '100%', maxWidth: '460px', margin: '0 auto' }}>
 
       {/* ── HEADER ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 14, marginBottom: alertaExito ? 10 : 14, borderBottom: `1px solid ${border}` }}>
@@ -350,68 +364,84 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         {/* ── LISTA DE ITEMS ── */}
         <div style={{ border: `1px solid ${border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 10, background: surface }}>
           {/* cabecera */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 28px', gap: 6, padding: '6px 10px', background: surface2, borderBottom: `1px solid ${border}` }}>
-            {['Producto', 'Cant.', 'Total', ''].map((h, i) => (
-              <div key={i} style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: i === 1 || i === 2 ? 'center' : 'left' }}>{h}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.5fr) 60px 70px 70px 24px', gap: 6, padding: '4px 8px', background: surface2, borderBottom: `1px solid ${border}` }}>
+            {['Producto', 'Cant.', 'Precio', 'Total', ''].map((h, i) => (
+              <div key={i} style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: i === 1 || i === 2 || i === 3 ? 'center' : 'left' }}>{h}</div>
             ))}
           </div>
 
-          {/* items o vacío */}
-          <div style={{ minHeight: 64, maxHeight: 200, overflowY: 'auto' }}>
-            {pedidoData.items.length > 0 ? pedidoData.items.map((item, idx) => (
-              <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1fr 70px 70px 28px', gap: 6, padding: '7px 10px', borderBottom: `1px solid ${border}`, alignItems: 'center' }}>
+          <div style={{ minHeight: 96, background: '#fff', overflow: 'hidden' }}>
+            {pedidoData.items.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 96, gap: 4 }}>
+                <Package size={16} strokeWidth={1.5} style={{ color: border }} />
+                <span style={{ fontSize: 10, color: ct3 }}>Agrega productos</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {pedidoData.items.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE).map((item, idx) => {
+                  const absIdx = page * ITEMS_PER_PAGE + idx
+                  return (
+                    <div key={item.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.5fr) 60px 70px 70px 24px', gap: 6, padding: '4px 8px', borderBottom: `1px solid ${border}`, alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={item.producto}
+                        onChange={e => updateItem(item.id, 'producto', e.target.value)}
+                        style={{ ...inp, height: 26, fontSize: 11, fontWeight: 600, color: ct1, padding: '0 6px' }}
+                      />
 
-                {/* nombre + precio editable */}
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: ct1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.producto}</div>
-                  {editPrecioId === item.id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
-                      <span style={{ fontSize: 10, color: ct3 }}>$</span>
-                      <input autoFocus type="number" value={priceDraft} step="0.01"
-                        onChange={e => setPriceDraft(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitPrecio(item.id) } if (e.key === 'Escape') { setEditPrecioId(null) } }}
-                        style={{ width: 70, height: 20, border: `1px solid ${border}`, borderRadius: 4, fontSize: 11, fontWeight: 600, color: ct1, padding: '0 4px', outline: 'none', background: surface2 }} />
-                      <button type="button" onClick={() => commitPrecio(item.id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: accent, padding: 0, display: 'flex' }}><Check size={11} strokeWidth={2.5} /></button>
-                      <button type="button" onClick={() => setEditPrecioId(null)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: ct3, padding: 0, display: 'flex' }}><X size={11} strokeWidth={2.5} /></button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                      <span style={{ fontSize: 10, color: ct3 }}>${fNum(item.precio)}</span>
-                      <button type="button" onClick={() => { setEditPrecioId(item.id); setPriceDraft(String(item.precio || "")) }}
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: ct3, padding: 0, display: 'flex' }} title="Editar precio">
-                        <Pencil size={9} strokeWidth={2.5} />
+                      <input
+                        type="number" min="1"
+                        value={item.cantidad}
+                        onChange={e => updateItem(item.id, 'cantidad', e.target.value)}
+                        style={{ ...inp, height: 26, textAlign: 'center', fontSize: 11, fontWeight: 700, padding: 0 }}
+                      />
+
+                      <div style={{ position: 'relative' }}>
+                        <span style={{ position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: ct3, pointerEvents: 'none' }}>$</span>
+                        <input
+                          type="number" min="0" step="0.01"
+                          value={item.precio}
+                          onChange={e => updateItem(item.id, 'precio', e.target.value)}
+                          style={{ ...inp, height: 26, textAlign: 'right', fontSize: 11, padding: '0 4px 0 12px' }}
+                        />
+                      </div>
+
+                      <div style={{ textAlign: 'right', fontSize: 11, fontWeight: 700, color: accent }}>${fMon(item.subtotal || 0)}</div>
+
+                      <button type="button" onClick={() => removeItem(item.id)}
+                        style={{ width: 22, height: 22, border: 'none', background: 'transparent', cursor: 'pointer', color: 'rgba(180,60,60,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, transition: 'all .12s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(180,60,60,.08)'; e.currentTarget.style.color = '#c62828' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(180,60,60,.6)' }}>
+                        <Trash2 size={11} strokeWidth={2} />
                       </button>
                     </div>
-                  )}
-                </div>
-
-                {/* cantidad */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                  <button type="button" onClick={() => actualizarCantidad(idx, item.cantidad - 1)}
-                    style={{ width: 20, height: 20, borderRadius: 5, border: `1px solid ${border}`, background: surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: ct2, lineHeight: 1 }}>−</button>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: ct1, minWidth: 16, textAlign: 'center' }}>{item.cantidad}</span>
-                  <button type="button" onClick={() => actualizarCantidad(idx, item.cantidad + 1)}
-                    style={{ width: 20, height: 20, borderRadius: 5, border: `1px solid ${border}`, background: surface2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: ct2, lineHeight: 1 }}>+</button>
-                </div>
-
-                {/* subtotal */}
-                <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: ct1 }}>${fNum(item.precio * item.cantidad)}</div>
-
-                {/* eliminar */}
-                <button type="button" onClick={() => setPedidoData(d => ({ ...d, items: d.items.filter((_, i) => i !== idx) }))}
-                  style={{ width: 22, height: 22, border: 'none', background: 'transparent', cursor: 'pointer', color: 'rgba(180,60,60,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, transition: 'all .12s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(180,60,60,.08)'; e.currentTarget.style.color = '#c62828' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(180,60,60,.6)' }}>
-                  <Trash2 size={11} strokeWidth={2} />
-                </button>
-              </div>
-            )) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 64, gap: 4 }}>
-                <Package size={18} strokeWidth={1.5} style={{ color: border }} />
-                <span style={{ fontSize: 11, color: ct3 }}>Agrega productos para comenzar</span>
+                  )
+                })}
               </div>
             )}
           </div>
+
+          {pedidoData.items.length > ITEMS_PER_PAGE && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px', background: surface }}>
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                style={{ background: 'transparent', border: 'none', cursor: page === 0 ? 'default' : 'pointer', fontSize: 11, color: page === 0 ? border : accent, fontWeight: 600 }}>
+                Anterior
+              </button>
+              <span style={{ fontSize: 10, color: ct3 }}>
+                Pág {page + 1} de {Math.ceil(pedidoData.items.length / ITEMS_PER_PAGE)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage(p => Math.min(Math.ceil(pedidoData.items.length / ITEMS_PER_PAGE) - 1, p + 1))}
+                disabled={page >= Math.ceil(pedidoData.items.length / ITEMS_PER_PAGE) - 1}
+                style={{ background: 'transparent', border: 'none', cursor: page >= Math.ceil(pedidoData.items.length / ITEMS_PER_PAGE) - 1 ? 'default' : 'pointer', fontSize: 11, color: page >= Math.ceil(pedidoData.items.length / ITEMS_PER_PAGE) - 1 ? border : accent, fontWeight: 600 }}>
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ── NOTAS ── */}

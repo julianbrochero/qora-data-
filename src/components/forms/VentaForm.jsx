@@ -19,7 +19,8 @@ const VentaForm = ({
   const [busquedaProducto, setBusquedaProducto] = useState("")
   const [mostrarDropdownCliente, setMostrarDropdownCliente] = useState(false)
   const [mostrarDropdownProducto, setMostrarDropdownProducto] = useState(false)
-  const [editandoPrecio, setEditandoPrecio] = useState(null)
+  const [page, setPage] = useState(0)
+  const ITEMS_PER_PAGE = 3
 
   const clienteRef = useRef(null)
   const productoRef = useRef(null)
@@ -101,14 +102,13 @@ const VentaForm = ({
   }
 
   const agregarProducto = (producto) => {
+    let nuevosItems = [...items]
     const itemExistenteIndex = items.findIndex(item => item.productoId === producto.id)
     if (itemExistenteIndex !== -1) {
-      const nuevosItems = [...items]
       nuevosItems[itemExistenteIndex].cantidad += 1
       nuevosItems[itemExistenteIndex].subtotal = nuevosItems[itemExistenteIndex].cantidad * nuevosItems[itemExistenteIndex].precio
-      setVentaData({ ...ventaData, items: nuevosItems })
     } else {
-      const nuevoItem = {
+      nuevosItems.push({
         id: Date.now(),
         productoId: producto.id,
         producto: producto.nombre,
@@ -116,27 +116,37 @@ const VentaForm = ({
         precio: producto.precio,
         subtotal: producto.precio,
         stockDisponible: producto.stock,
-      }
-      setVentaData({ ...ventaData, items: [...items, nuevoItem] })
+      })
     }
+
+    // Auto-ir a la última página
+    const totalPages = Math.ceil(nuevosItems.length / ITEMS_PER_PAGE)
+    if (totalPages > 0) setPage(totalPages - 1)
+
+    setVentaData({ ...ventaData, items: nuevosItems })
     setBusquedaProducto("")
     setMostrarDropdownProducto(false)
   }
 
-  const actualizarCantidad = (index, nuevaCantidad) => {
-    if (nuevaCantidad < 1) { eliminarItem(index); return }
+  const actualizarItemTexto = (index, campo, valor) => {
     const nuevosItems = [...items]
-    nuevosItems[index].cantidad = nuevaCantidad
-    nuevosItems[index].subtotal = nuevosItems[index].precio * nuevaCantidad
+    nuevosItems[index][campo] = valor
+    setVentaData({ ...ventaData, items: nuevosItems })
+  }
+
+  const actualizarCantidad = (index, nuevaCantidad) => {
+    const qty = parseFloat(nuevaCantidad) || 0
+    const nuevosItems = [...items]
+    nuevosItems[index].cantidad = qty
+    nuevosItems[index].subtotal = nuevosItems[index].precio * qty
     setVentaData({ ...ventaData, items: nuevosItems })
   }
 
   const actualizarPrecio = (index, nuevoPrecio) => {
     const precio = parseFloat(nuevoPrecio) || 0
-    if (precio < 0) return
     const nuevosItems = [...items]
-    nuevosItems[index].precio = precio
-    nuevosItems[index].subtotal = precio * nuevosItems[index].cantidad
+    nuevosItems[index].precio = Math.max(0, precio)
+    nuevosItems[index].subtotal = nuevosItems[index].precio * nuevosItems[index].cantidad
     setVentaData({ ...ventaData, items: nuevosItems })
   }
 
@@ -232,7 +242,7 @@ const VentaForm = ({
   }
 
   return (
-    <div className="w-full max-w-[360px] mx-auto space-y-2">
+    <div className="w-full max-w-[460px] mx-auto space-y-2">
       {/* Header */}
       <div className="pb-1.5 border-b border-gray-100 flex items-center justify-between">
         <div>
@@ -359,47 +369,80 @@ const VentaForm = ({
           <label className="block text-[11px] font-medium text-gray-700 mb-0.5">
             Productos ({items.length})
           </label>
-          <div className="border border-gray-200 rounded-md h-[90px] overflow-hidden">
-            {items.length > 0 ? (
-              <div className="divide-y divide-gray-100 h-full overflow-y-auto">
-                {Array.isArray(items) && items.map((item, index) => (
-                  <div key={item.id} className="px-1.5 py-1 flex items-center gap-1.5 bg-white">
-                    <div className="bg-blue-100 p-0.5 rounded">
-                      <Package className="w-2.5 h-2.5 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-medium text-gray-900 truncate">{item.producto}</div>
-                      {editandoPrecio === index ? (
+          <div className="border border-gray-200 rounded-md overflow-hidden bg-white mb-2">
+            <div className="grid grid-cols-[minmax(0,1.5fr)_50px_60px_60px_24px] gap-1 px-2 py-1 bg-gray-50 border-b border-gray-200">
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Producto</div>
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center">Cant.</div>
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center">Precio</div>
+              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center">Total</div>
+              <div></div>
+            </div>
+
+            <div className="h-[96px] overflow-hidden">
+              {items.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center gap-1">
+                  <Package className="w-4 h-4 text-gray-300" />
+                  <span className="text-[10px] text-gray-400">Agrega productos</span>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {items.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE).map((item, idx) => {
+                    const absIdx = page * ITEMS_PER_PAGE + idx
+                    return (
+                      <div key={item.id} className="grid grid-cols-[minmax(0,1.5fr)_50px_60px_60px_24px] gap-1 px-2 py-1 border-b border-gray-100 items-center last:border-0 hover:bg-gray-50 transition-colors">
                         <input
-                          type="number"
-                          className="w-16 px-1 text-[9px] border border-blue-300 rounded focus:outline-none"
-                          value={item.precio}
-                          onChange={(e) => actualizarPrecio(index, e.target.value)}
-                          onBlur={() => setEditandoPrecio(null)}
-                          onKeyDown={(e) => e.key === "Enter" && setEditandoPrecio(null)}
-                          autoFocus
+                          type="text"
+                          value={item.producto}
+                          onChange={e => actualizarItemTexto(absIdx, 'producto', e.target.value)}
+                          className="w-full text-[10px] font-semibold text-gray-900 bg-transparent focus:bg-white border border-transparent focus:border-blue-300 rounded px-1 py-0.5 outline-none truncate"
                         />
-                      ) : (
-                        <span onClick={() => setEditandoPrecio(index)} className="text-[9px] text-gray-500 cursor-pointer hover:text-blue-600">
-                          ${item.precio?.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-0.5">
-                      <button onClick={() => actualizarCantidad(index, item.cantidad - 1)} className="w-4 h-4 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:bg-gray-50 text-[10px]">-</button>
-                      <span className="w-5 text-center text-[10px] font-medium">{item.cantidad}</span>
-                      <button onClick={() => actualizarCantidad(index, item.cantidad + 1)} className="w-4 h-4 flex items-center justify-center border border-gray-200 rounded text-gray-500 hover:bg-gray-50 text-[10px]">+</button>
-                    </div>
-                    <div className="text-[10px] font-semibold text-gray-900 w-12 text-right">${item.subtotal?.toLocaleString()}</div>
-                    <button onClick={() => eliminarItem(index)} className="p-0.5 text-red-500 hover:bg-red-50 rounded">
-                      <Trash2 className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-[10px] text-gray-400">No hay productos agregados</p>
+                        <input
+                          type="number" min="1"
+                          value={item.cantidad}
+                          onChange={e => actualizarCantidad(absIdx, e.target.value)}
+                          className="w-full text-[10px] font-bold text-center bg-gray-50 focus:bg-white border border-gray-200 focus:border-blue-300 rounded px-1 py-0.5 outline-none"
+                        />
+                        <div className="relative">
+                          <span className="absolute left-1 top-1/2 -translate-y-1/2 text-[9px] text-gray-400 pointer-events-none">$</span>
+                          <input
+                            type="number" min="0" step="0.01"
+                            value={item.precio}
+                            onChange={e => actualizarPrecio(absIdx, e.target.value)}
+                            className="w-full text-[10px] text-right bg-gray-50 focus:bg-white border border-gray-200 focus:border-blue-300 rounded pl-3 pr-1 py-0.5 outline-none"
+                          />
+                        </div>
+                        <div className="text-right text-[10px] font-bold text-blue-600 truncate">
+                          ${(item.subtotal || 0).toLocaleString()}
+                        </div>
+                        <button onClick={() => eliminarItem(absIdx)} className="flex items-center justify-center p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors w-full">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {items.length > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-between px-2 py-1 bg-gray-50 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className={`text-[10px] font-bold ${page === 0 ? 'text-gray-300 cursor-default' : 'text-blue-600 hover:text-blue-700'}`}>
+                  Anterior
+                </button>
+                <span className="text-[9px] font-medium text-gray-500">
+                  Pág {page + 1} / {Math.ceil(items.length / ITEMS_PER_PAGE)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPage(p => Math.min(Math.ceil(items.length / ITEMS_PER_PAGE) - 1, p + 1))}
+                  disabled={page >= Math.ceil(items.length / ITEMS_PER_PAGE) - 1}
+                  className={`text-[10px] font-bold ${page >= Math.ceil(items.length / ITEMS_PER_PAGE) - 1 ? 'text-gray-300 cursor-default' : 'text-blue-600 hover:text-blue-700'}`}>
+                  Siguiente
+                </button>
               </div>
             )}
           </div>

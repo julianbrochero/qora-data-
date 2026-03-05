@@ -40,6 +40,7 @@ const PresupuestoForm = ({
     productos = [],
     formActions = {},
     closeModal,
+    openModal,
     presupuestoEditar = null,   // para futura edición
 }) => {
     const { guardarPresupuesto, agregarPedido, agregarPedidoSolo } = formActions
@@ -49,7 +50,16 @@ const PresupuestoForm = ({
     const [fecha, setFecha] = useState(presupuestoEditar?.fecha || new Date().toISOString().split('T')[0])
     const [validez, setValidez] = useState(presupuestoEditar?.validez ?? 7)
     const [clienteInput, setClienteInput] = useState(presupuestoEditar?.cliente || '')
-    const [items, setItems] = useState(presupuestoEditar?.items || [])
+
+    /* ── Items parse ────────────────────────────── */
+    const getInitialItems = () => {
+        if (!presupuestoEditar?.items) return []
+        if (typeof presupuestoEditar.items === 'string') {
+            try { return JSON.parse(presupuestoEditar.items) } catch { return [] }
+        }
+        return presupuestoEditar.items
+    }
+    const [items, setItems] = useState(getInitialItems)
     const [iva, setIva] = useState(presupuestoEditar?.iva ?? 21)
     const [incluirIva, setIncluirIva] = useState(presupuestoEditar?.incluirIva ?? true)
     const [observaciones, setObs] = useState(presupuestoEditar?.observaciones || '')
@@ -125,6 +135,7 @@ const PresupuestoForm = ({
 
     /* ── Datos para PDF / guardado ─────────────── */
     const buildData = () => ({
+        id: presupuestoEditar?.id,
         numero, fecha, validez, cliente: clienteInput,
         items, iva, incluirIva, observaciones, condicionesPago,
         subtotalGeneral, ivaValor, total,
@@ -156,21 +167,22 @@ const PresupuestoForm = ({
         if (items.length === 0 || !clienteInput) return
         setConv(true)
         try {
-            const fn = agregarPedidoSolo || agregarPedido
-            if (fn) {
-                const r = await fn({
-                    clienteNombre: clienteInput,
-                    items: items.map(it => ({
-                        producto: it.producto,
-                        cantidad: it.cantidad,
-                        precio: it.precio,
-                        subtotal: it.subtotal,
+            if (openModal) {
+                // Cerramos este modal actual
+                closeModal?.()
+                // Y abrimos el modal de nuevo pedido con estos datos precargados
+                openModal('nuevo-pedido', {
+                    cliente_nombre: clienteInput,
+                    notas: `Ref: Presupuesto ${numero}${observaciones ? ' — ' + observaciones : ''}`,
+                    items: items.map((it, idx) => ({
+                        id: Date.now() + idx,
                         productoId: it.productoId || null,
-                    })),
-                    notas: `Presupuesto ${numero}${observaciones ? ' — ' + observaciones : ''}`,
-                    estado: 'pendiente',
+                        producto: it.producto || it.descripcion,
+                        precio: parseFloat(it.precio) || 0,
+                        cantidad: parseFloat(it.cantidad) || 1,
+                        subtotal: parseFloat(it.subtotal) || 0
+                    }))
                 })
-                if (r?.success) closeModal?.()
             }
         } finally {
             setConv(false)
@@ -181,6 +193,19 @@ const PresupuestoForm = ({
     const prodsFiltrados = productos.filter(p =>
         (p.nombre || '').toLowerCase().includes(busqProd.toLowerCase())
     ).slice(0, 8)
+
+    /* ── Atajo de teclado: Ctrl+Enter para Guardar ── */
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault()
+                e.stopPropagation()
+                if (!saving && items.length > 0) handleGuardar()
+            }
+        }
+        window.addEventListener("keydown", handleKeyDown)
+        return () => window.removeEventListener("keydown", handleKeyDown)
+    }, [handleGuardar, saving, items.length])
 
     return (
         <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: ct1, WebkitFontSmoothing: 'antialiased' }}>
@@ -480,7 +505,11 @@ const PresupuestoForm = ({
                         opacity: saving || items.length === 0 ? .4 : 1, transition: 'all .15s',
                     }}>
                         {saving ? <Loader size={13} style={{ animation: 'spin .7s linear infinite' }} /> : <FileText size={13} />}
-                        {saving ? 'Guardando...' : 'Guardar'}
+                        {saving ? 'Guardando...' : (
+                            <>
+                                Guardar <span style={{ fontSize: 9, opacity: 0.6, background: 'rgba(51,65,57,0.1)', padding: '2px 5px', borderRadius: 4, letterSpacing: '0.02em' }}>Ctrl+↵</span>
+                            </>
+                        )}
                     </button>
                 </div>
 
