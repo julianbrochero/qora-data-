@@ -140,7 +140,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
           style={{ padding: '8px 6px', scrollbarWidth: 'none' }}>
 
           {sections.map((sec, idx) => (
-            <div key={idx} style={{ marginBottom: 10 }}>
+            <div key={idx} style={{ marginBottom: 'clamp(4px, 1.5vh, 10px)' }}>
               {/* Section label */}
               <div className="transition-all duration-200 overflow-hidden whitespace-nowrap"
                 style={{
@@ -163,11 +163,11 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                       onClick={() => handleNavClick(item.id)}
                       className="w-full flex items-center rounded-lg border-none cursor-pointer transition-all duration-150 relative focus:outline-none focus:ring-0"
                       style={{
-                        gap: 8, padding: '5px 8px',
+                        gap: 10, padding: 'clamp(5px, 0.8vh, 8px) 10px',
                         background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
                         color: isActive ? T1 : T2,
                         fontFamily: 'Inter, sans-serif',
-                        fontSize: 12, fontWeight: isActive ? 600 : 500,
+                        fontSize: 'clamp(12px, 1.5vh, 13.5px)', fontWeight: isActive ? 600 : 500,
                         justifyContent: isCollapsed ? 'center' : 'flex-start',
                         textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden',
                       }}
@@ -181,8 +181,8 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                       )}
 
                       {/* Icon */}
-                      <span className="flex items-center justify-center flex-shrink-0" style={{ width: 15, height: 15 }}>
-                        <item.icon size={14} strokeWidth={isActive ? 2.5 : 2} />
+                      <span className="flex items-center justify-center flex-shrink-0" style={{ width: 16, height: 16 }}>
+                        <item.icon size={15} strokeWidth={isActive ? 2.5 : 2} />
                       </span>
 
                       {/* Label */}
