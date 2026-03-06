@@ -102,7 +102,8 @@ const SubscriptionGate = ({ children }) => {
         )
     }
 
-    if (status === 'new_user') { return <WelcomeTrialModal userId={userId} onTrialStarted={() => checkStatus()} /> }
+    // new_user: mostrar el sistema de fondo + modal encima (no reemplazar la pantalla)
+    const showWelcomeModal = status === 'new_user'
 
     if (manuallySuspended && status === 'suspended') { return <SuspendedBlockingModal email={email} /> }
 
@@ -160,19 +161,15 @@ const SubscriptionGate = ({ children }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-            {status === 'trial' && !isPro && <TrialBanner daysRemaining={daysRemaining} />}
-            {status === 'grace' && (
-                <div style={{ background: '#FEF3C7', borderBottom: '1px solid #FCD34D', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, flexWrap: 'wrap', zIndex: 50, position: 'relative' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#92400E' }}>
-                        <AlertTriangle size={16} />
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>{isPro ? 'Tu plan PRO venció' : 'Tu prueba venció'}. Tenés {daysRemaining} días antes de la suspensión.</span>
-                    </div>
-                    <button onClick={handleMercadoPago} style={{ background: '#D97706', color: 'white', border: 'none', padding: '5px 14px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', gap: 6, alignItems: 'center' }} disabled={mpLoading}>
-                        <CreditCard size={12} /> Pagar Suscripción
-                    </button>
-                </div>
-            )}
+            {/* TrialBanner maneja: trial (≤7d), active PRO (≤7d), grace, y el toast PRO al pagar */}
+            <TrialBanner daysRemaining={daysRemaining} />
+
             <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>{children}</div>
+
+            {/* Modal de bienvenida para usuarios nuevos — overlay encima del sistema */}
+            {showWelcomeModal && (
+                <WelcomeTrialModal userId={userId} onTrialStarted={() => checkStatus()} />
+            )}
         </div>
     )
 }

@@ -1,23 +1,31 @@
 /**
  * Gestify — WelcomeTrialModal
- * Se muestra a usuarios nuevos que aún no iniciaron la prueba gratuita.
- * Al aceptar, se activa el trial de 7 días en Supabase.
+ * Modal de bienvenida para nuevos usuarios.
+ * Se muestra como overlay encima del sistema al primer login.
+ * Al confirmar, activa el trial de 7 días en Supabase.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { Sparkles, Check, Zap, BarChart3, FileText, Users, ShoppingCart } from 'lucide-react'
+import { Sparkles, Check, Zap, BarChart3, FileText, Users, ShoppingCart, ArrowRight, Gift } from 'lucide-react'
 
 const FEATURES = [
-    { icon: FileText, text: 'Facturación profesional' },
-    { icon: Users, text: 'Gestión de clientes' },
+    { icon: FileText, text: 'Facturación y ventas profesional' },
+    { icon: Users, text: 'Gestión completa de clientes' },
     { icon: ShoppingCart, text: 'Pedidos y presupuestos' },
-    { icon: BarChart3, text: 'Reportes y estadísticas' },
-    { icon: Zap, text: 'Control de caja en tiempo real' },
+    { icon: BarChart3, text: 'Reportes y estadísticas en tiempo real' },
+    { icon: Zap, text: 'Control de caja integrado' },
 ]
 
 const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
     const [loading, setLoading] = useState(false)
+    const [visible, setVisible] = useState(false)
+
+    // Pequeño delay para que aparezca con animación suave después de que el sistema cargue
+    useEffect(() => {
+        const t = setTimeout(() => setVisible(true), 350)
+        return () => clearTimeout(t)
+    }, [])
 
     const handleStartTrial = async () => {
         setLoading(true)
@@ -49,158 +57,273 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                 onTrialStarted()
             } catch (e2) {
                 console.error('Error en fallback:', e2)
+                setLoading(false)
             }
-        } finally {
-            setLoading(false)
         }
     }
 
     return (
-        <div style={{
-            position: 'fixed', inset: 0, zIndex: 10000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(6px)',
-            fontFamily: "'Inter', -apple-system, sans-serif",
-            padding: 20,
-        }}>
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+                @keyframes wtm-backdrop-in {
+                    from { opacity: 0 }
+                    to { opacity: 1 }
+                }
+                @keyframes wtm-card-in {
+                    from { transform: translateY(40px) scale(.94); opacity: 0 }
+                    to { transform: translateY(0) scale(1); opacity: 1 }
+                }
+                @keyframes wtm-shimmer {
+                    0%   { background-position: -200% center }
+                    100% { background-position:  200% center }
+                }
+                @keyframes wtm-pulse-ring {
+                    0%   { transform: scale(1); opacity: .6 }
+                    100% { transform: scale(1.6); opacity: 0 }
+                }
+                @keyframes wtm-float {
+                    0%, 100% { transform: translateY(0) }
+                    50% { transform: translateY(-6px) }
+                }
+                .wtm-btn:hover:not(:disabled) {
+                    transform: translateY(-1px);
+                    box-shadow: 0 10px 36px rgba(220,237,49,.35) !important;
+                }
+                .wtm-btn:active:not(:disabled) {
+                    transform: translateY(0);
+                }
+                .wtm-feature-row:hover .wtm-feature-icon {
+                    background: rgba(220,237,49,.18) !important;
+                    border-color: rgba(220,237,49,.35) !important;
+                }
+            `}</style>
+
+            {/* Backdrop */}
             <div style={{
-                width: '100%', maxWidth: 440,
-                background: '#fff', borderRadius: 24,
-                boxShadow: '0 32px 100px rgba(0,0,0,.25)',
-                overflow: 'hidden',
-                animation: 'wtmSlideUp .3s ease',
+                position: 'fixed', inset: 0, zIndex: 10000,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,.72)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                fontFamily: "'Inter', -apple-system, sans-serif",
+                padding: '20px',
+                animation: visible ? 'wtm-backdrop-in .25s ease' : 'none',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity .25s ease',
             }}>
-                {/* Header con gradiente */}
+
+                {/* Card */}
                 <div style={{
-                    background: 'linear-gradient(135deg, #282A28 0%, #334139 50%, #282A28 100%)',
-                    padding: '32px 28px 24px',
-                    textAlign: 'center',
-                    position: 'relative',
+                    width: '100%', maxWidth: 460,
+                    background: '#111713',
+                    borderRadius: 28,
+                    boxShadow: '0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(220,237,49,.12)',
                     overflow: 'hidden',
+                    animation: visible ? 'wtm-card-in .35s cubic-bezier(.22,1,.36,1)' : 'none',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
                 }}>
-                    {/* Decorative circles */}
-                    <div style={{
-                        position: 'absolute', top: -30, right: -30,
-                        width: 100, height: 100, borderRadius: '50%',
-                        background: 'rgba(220,237,49,.08)',
-                    }} />
-                    <div style={{
-                        position: 'absolute', bottom: -20, left: -20,
-                        width: 80, height: 80, borderRadius: '50%',
-                        background: 'rgba(220,237,49,.05)',
-                    }} />
 
+                    {/* ── Header ── */}
                     <div style={{
-                        width: 52, height: 52, borderRadius: 14,
-                        background: '#DCED31', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto 14px',
-                        boxShadow: '0 4px 16px rgba(220,237,49,.3)',
+                        background: 'linear-gradient(140deg, #1a2218 0%, #253023 40%, #1f2a1d 100%)',
+                        padding: '36px 32px 28px',
+                        textAlign: 'center',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        borderBottom: '1px solid rgba(220,237,49,.08)',
                     }}>
-                        <Sparkles size={24} color="#282A28" />
-                    </div>
-
-                    <h1 style={{
-                        fontSize: 22, fontWeight: 900, color: '#fff',
-                        letterSpacing: '-.03em', margin: '0 0 6px',
-                    }}>
-                        ¡Bienvenido a Gestify!
-                    </h1>
-                    <p style={{
-                        fontSize: 13, color: 'rgba(255,255,255,.6)',
-                        margin: 0, lineHeight: 1.4,
-                    }}>
-                        Tu sistema de gestión profesional está listo.
-                    </p>
-                </div>
-
-                {/* Contenido */}
-                <div style={{ padding: '20px 28px 28px' }}>
-                    {/* Trial info */}
-                    <div style={{
-                        background: '#F0FDF4', borderRadius: 12,
-                        padding: '14px 16px', marginBottom: 18,
-                        border: '1px solid #BBF7D0',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                    }}>
+                        {/* BG decorative blobs */}
                         <div style={{
-                            width: 36, height: 36, borderRadius: 8,
-                            background: '#22c55e', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0,
-                        }}>
-                            <span style={{ fontSize: 18 }}>🎁</span>
-                        </div>
-                        <div>
-                            <p style={{ fontSize: 13, fontWeight: 800, color: '#14532D', margin: '0 0 2px' }}>
-                                7 días gratis — Sin tarjeta
-                            </p>
-                            <p style={{ fontSize: 11, color: '#166534', margin: 0 }}>
-                                Probá todas las funciones sin compromiso.
-                            </p>
-                        </div>
-                    </div>
+                            position: 'absolute', top: -60, right: -60,
+                            width: 180, height: 180, borderRadius: '50%',
+                            background: 'radial-gradient(circle, rgba(220,237,49,.07) 0%, transparent 70%)',
+                            pointerEvents: 'none',
+                        }} />
+                        <div style={{
+                            position: 'absolute', bottom: -40, left: -40,
+                            width: 140, height: 140, borderRadius: '50%',
+                            background: 'radial-gradient(circle, rgba(220,237,49,.04) 0%, transparent 70%)',
+                            pointerEvents: 'none',
+                        }} />
 
-                    {/* Features */}
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 10 }}>
-                        INCLUYE TODO ESTO
-                    </p>
-                    <div style={{ marginBottom: 22 }}>
-                        {FEATURES.map((f, i) => (
-                            <div key={i} style={{
-                                display: 'flex', alignItems: 'center', gap: 10,
-                                padding: '6px 0',
+                        {/* Icon with pulse ring */}
+                        <div style={{ position: 'relative', display: 'inline-flex', marginBottom: 18 }}>
+                            <div style={{
+                                position: 'absolute', inset: 0, borderRadius: '50%',
+                                background: 'rgba(220,237,49,.3)',
+                                animation: 'wtm-pulse-ring 2s ease-out infinite',
+                                transformOrigin: 'center',
+                            }} />
+                            <div style={{
+                                width: 64, height: 64, borderRadius: 18,
+                                background: 'linear-gradient(135deg, #DCED31 0%, #c8d828 100%)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 8px 28px rgba(220,237,49,.4)',
+                                animation: 'wtm-float 3s ease-in-out infinite',
+                                position: 'relative',
                             }}>
-                                <div style={{
-                                    width: 22, height: 22, borderRadius: 6,
-                                    background: 'rgba(51,65,57,.06)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                }}>
-                                    <f.icon size={12} color="#334139" />
-                                </div>
-                                <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{f.text}</span>
-                                <Check size={14} color="#22c55e" style={{ marginLeft: 'auto' }} />
+                                <Gift size={28} color="#1a2218" strokeWidth={2.2} />
                             </div>
-                        ))}
+                        </div>
+
+                        <h1 style={{
+                            fontSize: 26, fontWeight: 900, color: '#fff',
+                            letterSpacing: '-.04em', margin: '0 0 8px',
+                            lineHeight: 1.15,
+                        }}>
+                            ¡Bienvenido a{' '}
+                            <span style={{
+                                background: 'linear-gradient(90deg, #DCED31, #b8d400, #DCED31)',
+                                backgroundSize: '200% auto',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                animation: 'wtm-shimmer 3s linear infinite',
+                            }}>Gestify</span>
+                            !
+                        </h1>
+                        <p style={{
+                            fontSize: 14, color: 'rgba(255,255,255,.55)',
+                            margin: 0, lineHeight: 1.5,
+                        }}>
+                            Tu sistema de gestión profesional está listo para usar.
+                        </p>
                     </div>
 
-                    {/* CTA */}
-                    <button
-                        onClick={handleStartTrial}
-                        disabled={loading}
-                        style={{
-                            width: '100%', height: 48, borderRadius: 12,
-                            background: loading ? '#9CA3AF' : '#334139',
-                            color: '#fff', border: 'none',
-                            fontSize: 14, fontWeight: 800, cursor: loading ? 'wait' : 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                            transition: 'all .15s',
-                            boxShadow: '0 4px 12px rgba(51,65,57,.2)',
-                        }}
-                        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#283330' }}
-                        onMouseLeave={e => { if (!loading) e.currentTarget.style.background = '#334139' }}
-                    >
-                        <Sparkles size={16} />
-                        {loading ? 'Iniciando...' : 'Iniciar prueba gratuita de 7 días'}
-                    </button>
+                    {/* ── Body ── */}
+                    <div style={{ padding: '24px 32px 32px' }}>
 
-                    <p style={{
-                        fontSize: 10, color: '#9CA3AF', textAlign: 'center',
-                        marginTop: 12, lineHeight: 1.4,
-                    }}>
-                        Sin tarjeta de crédito · Cancelá cuando quieras · Después $14.999/mes
-                    </p>
+                        {/* Trial pill */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, rgba(220,237,49,.10) 0%, rgba(220,237,49,.05) 100%)',
+                            borderRadius: 14,
+                            padding: '16px 18px',
+                            marginBottom: 22,
+                            border: '1px solid rgba(220,237,49,.18)',
+                            display: 'flex', alignItems: 'center', gap: 14,
+                        }}>
+                            <div style={{
+                                width: 44, height: 44, borderRadius: 12,
+                                background: 'rgba(220,237,49,.15)',
+                                border: '1px solid rgba(220,237,49,.25)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                flexShrink: 0,
+                                fontSize: 22,
+                            }}>🎁</div>
+                            <div>
+                                <p style={{
+                                    fontSize: 15, fontWeight: 800, color: '#DCED31',
+                                    margin: '0 0 3px', letterSpacing: '-.02em',
+                                }}>
+                                    7 días gratis — Sin tarjeta de crédito
+                                </p>
+                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', margin: 0, lineHeight: 1.4 }}>
+                                    Explorá todas las funciones PRO sin ningún compromiso.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Features */}
+                        <p style={{
+                            fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.3)',
+                            textTransform: 'uppercase', letterSpacing: '.1em',
+                            marginBottom: 12, margin: '0 0 12px',
+                        }}>
+                            INCLUIDO EN TU PRUEBA
+                        </p>
+
+                        <div style={{ marginBottom: 26 }}>
+                            {FEATURES.map((f, i) => (
+                                <div
+                                    key={i}
+                                    className="wtm-feature-row"
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 12,
+                                        padding: '8px 0',
+                                        borderBottom: i < FEATURES.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none',
+                                        transition: 'all .15s',
+                                        cursor: 'default',
+                                    }}
+                                >
+                                    <div
+                                        className="wtm-feature-icon"
+                                        style={{
+                                            width: 30, height: 30, borderRadius: 8,
+                                            background: 'rgba(255,255,255,.06)',
+                                            border: '1px solid rgba(255,255,255,.08)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            flexShrink: 0,
+                                            transition: 'all .15s',
+                                        }}
+                                    >
+                                        <f.icon size={14} color="rgba(255,255,255,.6)" />
+                                    </div>
+                                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)', fontWeight: 500, flex: 1 }}>
+                                        {f.text}
+                                    </span>
+                                    <Check size={15} color="#DCED31" strokeWidth={2.5} />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* CTA button */}
+                        <button
+                            className="wtm-btn"
+                            onClick={handleStartTrial}
+                            disabled={loading}
+                            style={{
+                                width: '100%', height: 54, borderRadius: 14,
+                                background: loading
+                                    ? 'rgba(255,255,255,.08)'
+                                    : 'linear-gradient(135deg, #DCED31 0%, #c8d828 100%)',
+                                color: loading ? 'rgba(255,255,255,.4)' : '#1a2218',
+                                border: 'none',
+                                fontSize: 15, fontWeight: 900,
+                                cursor: loading ? 'wait' : 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                                transition: 'all .2s cubic-bezier(.22,1,.36,1)',
+                                boxShadow: loading ? 'none' : '0 6px 24px rgba(220,237,49,.3)',
+                                letterSpacing: '-.02em',
+                                marginBottom: 0,
+                            }}
+                        >
+                            {loading ? (
+                                <>
+                                    <div style={{
+                                        width: 18, height: 18,
+                                        border: '2px solid rgba(255,255,255,.3)',
+                                        borderTopColor: 'rgba(255,255,255,.7)',
+                                        borderRadius: '50%',
+                                        animation: 'wtm-spin 1s linear infinite',
+                                    }} />
+                                    Iniciando prueba...
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={18} strokeWidth={2.2} />
+                                    Iniciar prueba gratuita de 7 días
+                                    <ArrowRight size={16} strokeWidth={2.5} />
+                                </>
+                            )}
+                        </button>
+
+                        <p style={{
+                            fontSize: 11, color: 'rgba(255,255,255,.25)',
+                            textAlign: 'center', marginTop: 14, lineHeight: 1.5,
+                        }}>
+                            Sin tarjeta · Cancelá cuando quieras · Luego $14.999/mes
+                        </p>
+                    </div>
                 </div>
             </div>
 
             <style>{`
-                @keyframes wtmSlideUp {
-                    from { transform: translateY(30px) scale(.96); opacity: 0 }
-                    to { transform: none; opacity: 1 }
-                }
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+                @keyframes wtm-spin { to { transform: rotate(360deg) } }
             `}</style>
-        </div>
+        </>
     )
 }
 
