@@ -1351,17 +1351,34 @@ export const useFacturacion = () => {
 
   const agregarProducto = async () => {
     try {
-      // Validar nombre
       if (!nuevoProducto.nombre || nuevoProducto.nombre.trim() === '') {
         throw new Error('El nombre del producto es requerido')
       }
 
+      // Código automático si está vacío
+      let codigo = (nuevoProducto.codigo || '').trim()
+      if (!codigo) {
+        const prefijo = 'PROD-'
+        let index = productos.length + 1
+        codigo = prefijo + String(index).padStart(4, '0')
+        while (productos.some(p => p.codigo === codigo)) {
+          index++
+          codigo = prefijo + String(index).padStart(4, '0')
+        }
+      }
+
+      // Construir payload con campos explícitos (sin camelCase de estado)
       const productoData = {
-        ...nuevoProducto,
+        nombre: nuevoProducto.nombre.trim(),
+        codigo,
+        precio: parseFloat(nuevoProducto.precio) || 0,
+        stock: parseInt(nuevoProducto.stock) || 0,
+        categoria: nuevoProducto.categoria || '',
+        descripcion: nuevoProducto.descripcion || '',
+        controlastock: !!(nuevoProducto.controlaStock || nuevoProducto.controlastock),
         user_id: user.id,
         created_at: new Date().toISOString()
       }
-      delete productoData.stockMinimo // Ensure camelCase version is removed
 
       const { data, error } = await supabase
         .from('productos')
@@ -1371,7 +1388,7 @@ export const useFacturacion = () => {
       if (error) throw error
 
       setProductos(prev => [data[0], ...prev])
-      setNuevoProducto({ nombre: '', precio: 0, stock: 0 })
+      setNuevoProducto({ nombre: '', precio: 0, stock: 0, codigo: '', categoria: '', descripcion: '', controlaStock: false })
 
       return { success: true, producto: data[0] }
     } catch (error) {
@@ -1382,24 +1399,35 @@ export const useFacturacion = () => {
 
   const editarProducto = async (productoId, datosActualizados) => {
     try {
-      // Validar nombre
       if (datosActualizados.nombre && datosActualizados.nombre.trim() === '') {
         throw new Error('El nombre del producto no puede estar vacío')
       }
 
+      // Construir payload seguro: solo campos válidos en la tabla
+      const payload = {}
+      if (datosActualizados.nombre !== undefined) payload.nombre = datosActualizados.nombre.trim()
+      if (datosActualizados.codigo !== undefined) payload.codigo = datosActualizados.codigo
+      if (datosActualizados.precio !== undefined) payload.precio = parseFloat(datosActualizados.precio) || 0
+      if (datosActualizados.stock !== undefined) payload.stock = parseInt(datosActualizados.stock) || 0
+      if (datosActualizados.categoria !== undefined) payload.categoria = datosActualizados.categoria
+      if (datosActualizados.descripcion !== undefined) payload.descripcion = datosActualizados.descripcion
+      // Normalizar controlastock
+      const cs = datosActualizados.controlaStock !== undefined ? datosActualizados.controlaStock
+        : datosActualizados.controlastock !== undefined ? datosActualizados.controlastock
+          : undefined
+      if (cs !== undefined) payload.controlastock = !!cs
+
       const { error } = await supabase
         .from('productos')
-        .update({
-          ...datosActualizados,
-          updated_at: new Date().toISOString()
-        })
+        .update(payload)
         .eq('id', productoId)
 
       if (error) throw error
 
+      // Actualizar estado local (guardar con controlastock minúsculas también)
       setProductos(prev => prev.map(producto =>
         producto.id === productoId
-          ? { ...producto, ...datosActualizados }
+          ? { ...producto, ...payload }
           : producto
       ))
 
@@ -1555,6 +1583,16 @@ export const useFacturacion = () => {
       user_id: user.id,
       created_at: new Date().toISOString()
     }
+
+    // Código automático
+    const prefijo = 'PROD-'
+    let index = productos.length + 1
+    let nuevoCodigo = prefijo + String(index).padStart(4, '0')
+    while (productos.some(p => p.codigo === nuevoCodigo)) {
+      index++
+      nuevoCodigo = prefijo + String(index).padStart(4, '0')
+    }
+    productoData.codigo = nuevoCodigo
 
     const { data, error } = await supabase
       .from('productos')

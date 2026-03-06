@@ -40,16 +40,29 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
 
   const data = isRapido ? productoRapido : nuevoProducto
 
+  // Normalizar: Supabase devuelve 'controlastock' (minúsculas), el form usa 'controlaStock'
+  // Aceptamos ambas variantes
+  const csActivo = !!(data.controlaStock || data.controlastock)
+
   const handleChange = (campo, valor) => {
     if (isRapido) setProductoRapido({ ...productoRapido, [campo]: valor })
     else setNuevoProducto({ ...nuevoProducto, [campo]: valor })
   }
 
+  const toggleControlaStock = () => {
+    const nov = !csActivo
+    handleChange('controlaStock', nov)
+    // limpiar variante minúsculas para no tener duplicado
+    if (isRapido) setProductoRapido(prev => { const n = { ...prev, controlaStock: nov }; delete n.controlastock; return n })
+    else setNuevoProducto(prev => { const n = { ...prev, controlaStock: nov }; delete n.controlastock; return n })
+  }
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
     if (!data.nombre?.trim()) { alert('El nombre del producto es requerido'); nombreRef.current?.focus(); return }
-    if ((parseFloat(data.precio) || 0) <= 0) { alert('El precio debe ser mayor a 0'); precioRef.current?.focus(); return }
-    if (!isRapido && data.controlaStock && (parseInt(data.stock) || 0) < 0) { alert('El stock no puede ser negativo'); stockRef.current?.focus(); return }
+    const precioNum = parseFloat(String(data.precio).replace(',', '.'))
+    if (!precioNum || precioNum <= 0) { alert('El precio debe ser mayor a 0'); precioRef.current?.focus(); return }
+    if (!isRapido && csActivo && (parseInt(data.stock) || 0) < 0) { alert('El stock no puede ser negativo'); stockRef.current?.focus(); return }
 
     let result
     if (isRapido) result = await agregarProductoRapido()
@@ -68,12 +81,36 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   }
 
   useEffect(() => {
-    if (!isRapido && !data.controlaStock && data.stock !== 0) handleChange('stock', 0)
-  }, [data.controlaStock, isRapido])
+    if (!isRapido && !csActivo && data.stock !== 0) handleChange('stock', 0)
+  }, [csActivo, isRapido])
 
   useEffect(() => {
     if (!isEdit) { const t = setTimeout(() => nombreRef.current?.focus(), 100); return () => clearTimeout(t) }
   }, [isEdit])
+
+  // Prellenar categoría si vino del modal de categorías (solo en nuevo producto)
+  useEffect(() => {
+    if (!isEdit && !isRapido && selectedItem?.categoria) {
+      setNuevoProducto(prev => ({ ...prev, categoria: selectedItem.categoria }))
+    }
+  }, [])
+
+  // EDICIÓN: cargar TODOS los datos del producto directamente desde selectedItem
+  // (no depende de nuevoProducto global para evitar condiciones de carrera)
+  useEffect(() => {
+    if (isEdit && selectedItem?.id) {
+      const cs = !!(selectedItem.controlaStock || selectedItem.controlastock)
+      setNuevoProducto({
+        nombre: selectedItem.nombre || '',
+        codigo: selectedItem.codigo || '',
+        precio: selectedItem.precio ?? 0,
+        stock: selectedItem.stock ?? 0,
+        categoria: selectedItem.categoria || '',
+        descripcion: selectedItem.descripcion || '',
+        controlaStock: cs,
+      })
+    }
+  }, [selectedItem?.id])
 
   const fmtPrecio = (parseFloat(data.precio) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -154,7 +191,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
             <div style={{ position: 'relative' }}>
               <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
               <input ref={precioRef} type="number" required value={data.precio || ''} onChange={e => handleChange('precio', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
-                onKeyDown={e => handleKeyDown(e, isRapido ? null : stockRef)}
+                onKeyDown={e => handleKeyDown(e, null)}
                 onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0.01"
                 style={{ ...inputBase, paddingLeft: 30 }} />
             </div>
@@ -164,30 +201,31 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
             <div style={{ position: 'relative' }}>
               <Box size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
               <input ref={stockRef} type="number" value={data.stock ?? 0} onChange={e => handleChange('stock', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
-                disabled={!isRapido && !data.controlaStock}
+                disabled={!isRapido && !csActivo}
                 onFocus={focusStyle} onBlur={blurStyle} placeholder="0" min="0"
-                style={{ ...inputBase, paddingLeft: 30, background: (!isRapido && !data.controlaStock) ? 'rgba(0,0,0,.03)' : '#fff', color: (!isRapido && !data.controlaStock) ? ct3 : ct1, cursor: (!isRapido && !data.controlaStock) ? 'not-allowed' : 'text' }} />
+                style={{ ...inputBase, paddingLeft: 30, background: (!isRapido && !csActivo) ? 'rgba(0,0,0,.03)' : '#fff', color: (!isRapido && !csActivo) ? ct3 : ct1, cursor: (!isRapido && !csActivo) ? 'not-allowed' : 'text' }} />
             </div>
           </div>
         </div>
 
         {/* Toggle control de inventario */}
         {!isRapido && (
-          <div style={{ padding: '12px 14px', borderRadius: 10, background: 'rgba(48,54,47,.04)', border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-            onClick={() => handleChange('controlaStock', !data.controlaStock)}>
+          <div style={{ padding: '12px 14px', borderRadius: 10, background: csActivo ? 'rgba(51,65,57,.07)' : 'rgba(48,54,47,.04)', border: `1px solid ${csActivo ? 'rgba(51,65,57,.25)' : border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', transition: 'all .15s' }}
+            onClick={toggleControlaStock}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {data.controlaStock
+              {csActivo
                 ? <ToggleRight size={20} style={{ color: accent }} />
                 : <ToggleLeft size={20} style={{ color: ct3 }} />}
               <div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: ct1 }}>Control de inventario</div>
                 <div style={{ fontSize: 10, color: ct3, marginTop: 1 }}>
-                  {data.controlaStock ? 'Stock se descontará en cada venta.' : 'Stock ilimitado, no se descontará.'}
+                  {csActivo ? 'Stock se descontará en cada venta.' : 'Stock ilimitado, no se descontará.'}
                 </div>
               </div>
             </div>
-            <input type="checkbox" checked={data.controlaStock === true} onChange={e => handleChange('controlaStock', e.target.checked)} onClick={e => e.stopPropagation()}
-              style={{ width: 14, height: 14, accentColor: accent, cursor: 'pointer' }} />
+            <div style={{ width: 36, height: 20, borderRadius: 10, background: csActivo ? accent : 'rgba(0,0,0,.15)', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 2, left: csActivo ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)', transition: 'left .2s' }} />
+            </div>
           </div>
         )}
 
@@ -211,7 +249,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
               <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Precio de venta</span>
               <span style={{ fontSize: 16, fontWeight: 800, color: accent, letterSpacing: '-.03em' }}>${fmtPrecio}</span>
             </div>
-            {data.controlaStock && (
+            {csActivo && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: `1px solid rgba(51,65,57,.12)` }}>
                 <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Stock disponible</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>{parseInt(data.stock) || 0} u.</span>

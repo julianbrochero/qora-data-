@@ -151,6 +151,21 @@ const SistemaFacturacion = () => {
       });
       setTipoOperacion('venta-productos');
     }
+
+    if (type === 'editar-producto' && data) {
+      // Normalizar controlastock → controlaStock para el form
+      const cs = !!(data.controlaStock || data.controlastock)
+      setNuevoProducto({
+        ...data,
+        controlaStock: cs,
+        controlastock: undefined,
+      })
+    }
+
+    if (type === 'nuevo-producto') {
+      // Resetear pero conservar categoría si vino del modal de categorías
+      setNuevoProducto({ nombre: '', precio: 0, stock: 0, codigo: '', categoria: data?.categoria || '', descripcion: '', controlaStock: false })
+    }
   };
 
   const closeModalHandler = () => {
@@ -304,6 +319,8 @@ const SistemaFacturacion = () => {
         <Productos
           {...commonProps}
           productos={filtrarProductos}
+          eliminarProducto={eliminarProducto}
+          editarProducto={editarProducto}
         />
       ),
       caja: (

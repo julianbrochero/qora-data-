@@ -35,11 +35,11 @@ const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4,
 /* ══════════════════════════════════════════════
    MODAL CATEGORÍAS
 ══════════════════════════════════════════════ */
-const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onEliminar }) => {
-  const [nombre, setNombre] = useState('')
+const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onEliminar, onNuevoProductoConCategoria }) => {
   const [editNombre, setEditNombre] = useState('')
   const [editId, setEditId] = useState(null)
   const [filtro, setFiltro] = useState('')
+  const [nuevaCat, setNuevaCat] = useState('')
 
   if (!isOpen) return null
 
@@ -50,23 +50,16 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
   const iniciarEdicion = (cat) => { setEditId(cat.nombre); setEditNombre(cat.nombre) }
   const cancelar = () => { setEditId(null); setEditNombre('') }
 
-  const guardar = () => {
-    if (!nombre.trim()) return
-    // no duplicadas
-    if (categorias.some(c => c.nombre.toLowerCase() === nombre.trim().toLowerCase())) {
-      alert('Esa categoría ya existe'); return
-    }
-    // "crear" no tiene efecto directo en BD (se crea al asignar un producto)
-    // solo mostramos una nota
-    alert(`La categoría "${nombre.trim()}" se puede usar ahora al cargar un producto.`)
-    setNombre('')
+  const crearProductoConCategoria = (cat) => {
+    onNuevoProductoConCategoria && onNuevoProductoConCategoria(cat)
+    onClose()
   }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(3px)' }}>
-      <div style={{ background: '#fff', width: '90%', maxWidth: 420, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,.12)', overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ background: '#fff', width: '90%', maxWidth: 440, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,.12)', overflow: 'hidden', fontFamily: "'Inter', sans-serif", maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
         {/* header */}
-        <div style={{ background: '#282A28', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: '#282A28', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Inventario</p>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-.02em' }}>Gestionar Categorías</h3>
@@ -76,11 +69,41 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
           </button>
         </div>
 
-        <div style={{ padding: 20 }}>
-          {/* info */}
-          <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(51,65,57,.06)', border: '1px solid rgba(51,65,57,.15)', marginBottom: 16 }}>
-            <p style={{ fontSize: 11, color: accent, fontWeight: 600, margin: 0 }}>Las categorías se crean automáticamente
-              Cuando asignás una categoría a un producto, aparece acá. Pueden renombrarse y eso actualiza todos los productos de esa categoría.</p>
+        <div style={{ padding: 20, overflowY: 'auto', flex: 1 }}>
+
+          {/* ── Agregar nueva categoría ── */}
+          <div style={{ marginBottom: 18, padding: '14px 16px', borderRadius: 12, background: 'rgba(51,65,57,.05)', border: '1px solid rgba(51,65,57,.18)' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: accent, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Plus size={12} strokeWidth={2.5} /> Nueva categoría
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <Tag size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+                <input
+                  value={nuevaCat}
+                  onChange={e => setNuevaCat(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && nuevaCat.trim()) {
+                      crearProductoConCategoria(nuevaCat.trim())
+                      setNuevaCat('')
+                    }
+                  }}
+                  placeholder="Ej: Electrónica, Ropa, Bebidas..."
+                  style={{ ...inputStyle, paddingLeft: 28, height: 34, fontSize: 12 }}
+                  onFocus={e => e.target.style.borderColor = accent}
+                  onBlur={e => e.target.style.borderColor = border}
+                />
+              </div>
+              <button
+                onClick={() => { if (nuevaCat.trim()) { crearProductoConCategoria(nuevaCat.trim()); setNuevaCat('') } }}
+                disabled={!nuevaCat.trim()}
+                style={{ padding: '0 14px', height: 34, borderRadius: 8, fontSize: 12, fontWeight: 700, background: nuevaCat.trim() ? accent : 'rgba(0,0,0,.04)', color: nuevaCat.trim() ? '#fff' : ct3, border: 'none', cursor: nuevaCat.trim() ? 'pointer' : 'default', transition: 'all .15s', whiteSpace: 'nowrap' }}>
+                + Agregar
+              </button>
+            </div>
+            <p style={{ fontSize: 10, color: ct3, marginTop: 8 }}>
+              Se abrirá el formulario de nuevo producto con esta categoría prellenada.
+            </p>
           </div>
 
           {/* buscador */}
@@ -90,7 +113,7 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
           </div>
 
           {/* lista */}
-          <div style={{ maxHeight: 260, overflowY: 'auto', marginBottom: 16 }}>
+          <div style={{ maxHeight: 260, overflowY: 'auto' }}>
             {filtradas.length > 0 ? filtradas.map(cat => (
               <div key={cat.nombre} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: `1px solid ${border}`, marginBottom: 6, background: '#fff' }}>
                 {editId === cat.nombre ? (
@@ -101,6 +124,7 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
                       style={{ ...inputStyle, height: 28, flex: 1 }}
                       onFocus={e => e.target.style.borderColor = accent}
                       onBlur={e => e.target.style.borderColor = border}
+                      onKeyDown={e => { if (e.key === 'Enter' && editNombre.trim()) { onRenombrar(cat.nombre, editNombre.trim()); cancelar() } if (e.key === 'Escape') cancelar() }}
                       autoFocus
                     />
                     <button onClick={() => { if (editNombre.trim()) { onRenombrar(cat.nombre, editNombre.trim()); cancelar() } }}
@@ -119,12 +143,17 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
                         <div style={{ fontSize: 10, color: ct3 }}>{cat.cantidad} producto{cat.cantidad !== 1 ? 's' : ''}</div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                      {/* nuevo producto en esta categoría */}
+                      <button onClick={() => crearProductoConCategoria(cat.nombre)} title="Nuevo producto en esta categoría"
+                        style={{ height: 26, padding: '0 8px', borderRadius: 6, background: '#DCED31', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#282A28' }}>
+                        <Plus size={10} strokeWidth={2.5} /> Producto
+                      </button>
                       <button onClick={() => iniciarEdicion(cat)} title="Renombrar" style={{ width: 26, height: 26, borderRadius: 6, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
                         <Edit size={11} />
                       </button>
                       <button
-                        onClick={() => { if (cat.cantidad > 0) { alert('No se puede eliminar una categoría con productos asignados. Primero reasignálos.'); return } onEliminar(cat.nombre) }}
+                        onClick={() => { if (cat.cantidad > 0) { alert('No se puede eliminar una categoría con productos. Primero reasignálos.'); return } onEliminar(cat.nombre) }}
                         title={cat.cantidad > 0 ? 'Tiene productos asignados' : 'Eliminar'}
                         style={{ width: 26, height: 26, borderRadius: 6, background: cat.cantidad > 0 ? 'transparent' : surface, border: `1px solid ${cat.cantidad > 0 ? 'transparent' : border}`, cursor: cat.cantidad > 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', opacity: cat.cantidad > 0 ? 0.3 : 1 }}>
                         <Trash2 size={11} />
@@ -135,13 +164,13 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
               </div>
             )) : (
               <div style={{ textAlign: 'center', padding: '20px 0', color: ct3, fontSize: 12 }}>
-                {categorias.length === 0 ? 'Aún no hay categorías. Asigná una a un producto para que aparezca.' : 'Sin resultados.'}
+                {categorias.length === 0 ? 'Aún no hay categorías. Creá una arriba ↑' : 'Sin resultados.'}
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ padding: '12px 20px', borderTop: `1px solid ${border}`, display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ padding: '12px 20px', borderTop: `1px solid ${border}`, display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
           <button onClick={onClose} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: surface, border: `1px solid ${border}`, cursor: 'pointer' }}>Cerrar</button>
         </div>
       </div>
@@ -154,6 +183,7 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
 ══════════════════════════════════════════════ */
 const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, editarProducto, onOpenMobileSidebar }) => {
   const [filtroStock, setFiltroStock] = useState("todos")
+  const [filtroCategoria, setFiltroCategoria] = useState("todas")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [modalCats, setModalCats] = useState(false)
@@ -175,20 +205,16 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
   // Renombrar categoría en todos los productos que la tienen
   const handleRenombrarCategoria = async (nombreViejo, nombreNuevo) => {
-    // Actualizar en Supabase todos los productos con esa categoría
-    const { supabase } = await import('../../lib/supabaseClient')
-    const ids = productosSeguros.filter(p => p.categoria === nombreViejo).map(p => p.id)
-    await Promise.all(ids.map(id => supabase.from('productos').update({ categoria: nombreNuevo }).eq('id', id)))
-    // Recargar la página de productos sería ideal — por ahora lo notificamos
-    alert(`Categoría renombrada. Recargá la lista de productos para ver el cambio.`)
+    if (!editarProducto) return
+    const prods = productosSeguros.filter(p => p.categoria === nombreViejo)
+    await Promise.all(prods.map(p => editarProducto(p.id, { categoria: nombreNuevo })))
   }
 
   // "Eliminar" categoría = limpiar el campo categoria en todos los productos que la tengan
   const handleEliminarCategoria = async (nombreCat) => {
-    const { supabase } = await import('../../lib/supabaseClient')
-    const ids = productosSeguros.filter(p => p.categoria === nombreCat).map(p => p.id)
-    await Promise.all(ids.map(id => supabase.from('productos').update({ categoria: '' }).eq('id', id)))
-    alert(`Categoría eliminada de todos los productos.`)
+    if (!editarProducto) return
+    const prods = productosSeguros.filter(p => p.categoria === nombreCat)
+    await Promise.all(prods.map(p => editarProducto(p.id, { categoria: '' })))
   }
 
   /* ── atajo de teclado (solo Ctrl) ── */
@@ -214,8 +240,10 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const filtrados = productosSeguros.filter(p => {
     const q = (searchTerm || "").toLowerCase()
     const match = (p.nombre || "").toLowerCase().includes(q) || (p.codigo || "").toLowerCase().includes(q)
-    if (filtroStock === "en-stock") return match && p.controlaStock && (p.stock || 0) > 0
-    if (filtroStock === "bajo-stock") return match && p.controlaStock && (p.stock || 0) <= 10
+    if (filtroCategoria !== "todas" && (p.categoria || '').trim() !== filtroCategoria) return false
+    const cs = !!(p.controlastock || p.controlaStock)
+    if (filtroStock === "en-stock") return match && cs && (p.stock || 0) > 0
+    if (filtroStock === "bajo-stock") return match && cs && (p.stock || 0) <= 10
     return match
   })
 
@@ -223,21 +251,27 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
   const productosPag = filtrados.slice(indiceInicio, indiceInicio + itemsPorPagina)
 
-  useEffect(() => { setPaginaActual(1) }, [filtroStock, searchTerm, itemsPorPagina])
+  useEffect(() => { setPaginaActual(1) }, [filtroStock, filtroCategoria, searchTerm, itemsPorPagina])
 
   const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   const resumen = {
     total: productosSeguros.length,
-    conStock: productosSeguros.filter(p => p.controlaStock && (p.stock || 0) > 0).length,
-    bajoStock: productosSeguros.filter(p => p.controlaStock && (p.stock || 0) <= 10).length,
-    sinControl: productosSeguros.filter(p => !p.controlaStock).length,
+    conStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > 0).length,
+    bajoStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= 10).length,
+    sinControl: productosSeguros.filter(p => !(p.controlastock || p.controlaStock)).length,
   }
 
   const customConfirm = (title, message, onConfirm) => setDialogo({ open: true, title, message, onConfirm })
   const cerrarDialogo = () => setDialogo(p => ({ ...p, open: false }))
 
   const handleEliminar = (id) => customConfirm('Eliminar Producto', '¿Estás seguro? Esta acción no se puede deshacer.', async () => { eliminarProducto && eliminarProducto(id); cerrarDialogo() })
+
+  // Abrir form de nuevo producto con categoría prellenada
+  const handleNuevoProductoConCategoria = (categoria) => {
+    openModal && openModal('nuevo-producto', { categoria })
+    setModalCats(false)
+  }
 
   /* ── Descargar Lista de Precios PDF ──────────────── */
   const descargarListaPrecios = async () => {
@@ -424,6 +458,14 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
               <option value="bajo-stock">Bajo stock (≤10)</option>
             </select>
 
+            {/* filtro categoria */}
+            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} style={pillSelect}>
+              <option value="todas">Todas las categorías</option>
+              {categorias.sort((a, b) => a.nombre.localeCompare(b.nombre)).map(cat => (
+                <option key={cat.nombre} value={cat.nombre}>{cat.nombre}</option>
+              ))}
+            </select>
+
             <div style={{ display: 'flex', gap: 6 }}>
               <button style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10 }}>
                 <Download size={11} /> CSV
@@ -449,7 +491,8 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
               <tbody>
                 {productosPag.length > 0 ? productosPag.map(prod => {
                   const precioNeto = (parseFloat(prod.precio) || 0) * 0.79
-                  const stockLow = prod.controlaStock && (prod.stock || 0) <= 10 && (prod.stock || 0) >= 0
+                  const csOk = !!(prod.controlastock || prod.controlaStock)
+                  const stockLow = csOk && (prod.stock || 0) <= 10 && (prod.stock || 0) >= 0
 
                   return (
                     <tr key={prod.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: 'default' }}
@@ -482,7 +525,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
                       {/* stock */}
                       <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
-                        {prod.controlaStock ? (
+                        {csOk ? (
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: stockLow ? '#FEF2F2' : '#F0FDF4', color: stockLow ? '#991B1B' : '#065F46', border: `1px solid ${stockLow ? '#FCA5A5' : '#6EE7B7'}` }}>
                             {stockLow && <AlertTriangle size={11} strokeWidth={2.5} />}
                             {prod.stock || 0} u.
@@ -492,8 +535,8 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
                       {/* control */}
                       <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
-                        <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 600, background: prod.controlaStock ? '#F0FDF4' : surface, color: prod.controlaStock ? '#065F46' : ct3, border: `1px solid ${prod.controlaStock ? '#6EE7B7' : border}` }}>
-                          {prod.controlaStock ? 'Sí' : 'No'}
+                        <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 600, background: csOk ? '#F0FDF4' : surface, color: csOk ? '#065F46' : ct3, border: `1px solid ${csOk ? '#6EE7B7' : border}` }}>
+                          {csOk ? 'Sí' : 'No'}
                         </span>
                       </td>
 
@@ -561,6 +604,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
         categorias={categorias}
         onRenombrar={handleRenombrarCategoria}
         onEliminar={handleEliminarCategoria}
+        onNuevoProductoConCategoria={handleNuevoProductoConCategoria}
       />
 
       {/* DIALOGO CONFIRMACIÓN */}
