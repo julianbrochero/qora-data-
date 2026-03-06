@@ -214,13 +214,24 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
           ))}
         </nav>
 
-        {/* PRO badge – compacto, solo si no colapsado */}
-        {isPro && !isCollapsed && (
+        {/* PRO badge / Suscribirme */}
+        {!isCollapsed && (
           <div style={{ padding: '0 8px 8px' }}>
-            <div style={{ borderRadius: 8, border: '1px solid rgba(220,237,49,.18)', background: 'rgba(220,237,49,.05)', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 7 }}>
-              <Shield size={11} color="rgba(220,237,49,.6)" />
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(220,237,49,.7)', letterSpacing: '.04em' }}>PRO ACTIVO</span>
-            </div>
+            {isPro ? (
+              <div style={{ borderRadius: 8, border: '1px solid rgba(220,237,49,.18)', background: 'rgba(220,237,49,.05)', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Shield size={11} color="rgba(220,237,49,.6)" />
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(220,237,49,.7)', letterSpacing: '.04em' }}>PRO ACTIVO</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => window.location.href = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=b658460a7699475eb06b492b25e0160a"}
+                style={{ borderRadius: 8, background: '#009EE3', padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: 'none', width: '100%', cursor: 'pointer', transition: 'filter .15s' }}
+                onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
+                onMouseLeave={e => e.currentTarget.style.filter = 'none'}
+              >
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: '.02em' }}>⚡ HACETE PRO</span>
+              </button>
+            )}
           </div>
         )}
 

@@ -6,11 +6,9 @@
 import React, { useState } from 'react'
 import { X, CreditCard } from 'lucide-react'
 import { useSubscriptionContext } from '../../lib/SubscriptionContext'
-import PaymentModal from './PaymentModal'
 
 const TrialBanner = ({ daysRemaining }) => {
     const [dismissed, setDismissed] = useState(false)
-    const [modalOpen, setModalOpen] = useState(false)
     const { status, email, userId, checkStatus } = useSubscriptionContext()
 
     if (dismissed || status === 'active') return null
@@ -30,7 +28,7 @@ const TrialBanner = ({ daysRemaining }) => {
                 </span>
 
                 <button
-                    onClick={() => setModalOpen(true)}
+                    onClick={() => window.location.href = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=b658460a7699475eb06b492b25e0160a"}
                     style={{
                         padding: '3px 10px', borderRadius: 5, border: 'none',
                         cursor: 'pointer', fontSize: 11, fontWeight: 700,
@@ -58,14 +56,6 @@ const TrialBanner = ({ daysRemaining }) => {
                     <X size={13} />
                 </button>
             </div>
-
-            <PaymentModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                userEmail={email}
-                userId={userId}
-                onProActivated={() => checkStatus()}
-            />
         </>
     )
 }
