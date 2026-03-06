@@ -331,7 +331,7 @@ const AdminPanel = () => {
                             try {
                                 const { error } = await supabase
                                     .from('subscriptions')
-                                    .update({ paid_until: null, mp_status: 'cancelled' })
+                                    .update({ paid_until: null })
                                     .neq('user_id', '00000000-0000-0000-0000-000000000000'); // actualiza todo
 
                                 if (error) throw error;
