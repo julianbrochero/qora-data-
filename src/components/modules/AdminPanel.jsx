@@ -320,23 +320,62 @@ const AdminPanel = () => {
                         {lastRefresh && ` · Ult. act: ${lastRefresh.toLocaleTimeString('es-AR')}`}
                     </p>
                 </div>
-                <button
-                    onClick={fetchData}
-                    disabled={loading}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '10px 18px', borderRadius: 10,
-                        background: '#fff', color: '#374151', border: '1px solid #D1D5DB',
-                        fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                        boxShadow: '0 1px 2px rgba(0,0,0,.04)',
-                        opacity: loading ? .7 : 1, transition: 'all .15s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
-                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                >
-                    <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-                    {loading ? 'Sincronizando...' : 'Sincronizar datos'}
-                </button>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <button
+                        onClick={async () => {
+                            if (!confirm('¿Estás SEGURO de que querés QUITAR EL ACCESO PRO a TODOS LOS USUARIOS?\n\nPasarán a su estado original (gratis o expirado). Esta acción no se puede deshacer.')) return;
+                            const password = prompt('Para confirmar esta acción masiva, escribí en mayúsculas: RESET');
+                            if (password !== 'RESET') { alert('Acción cancelada.'); return; }
+
+                            setLoading(true);
+                            try {
+                                const { error } = await supabase
+                                    .from('subscriptions')
+                                    .update({ paid_until: null, mp_status: 'cancelled' })
+                                    .neq('user_id', '00000000-0000-0000-0000-000000000000'); // actualiza todo
+
+                                if (error) throw error;
+                                alert('Todos los usuarios han sido reseteados correctamente y perdieron el PRO.');
+                                fetchData();
+                            } catch (e) {
+                                alert('Hubo un error reseteando a todos: ' + e.message);
+                            } finally {
+                                setLoading(false);
+                            }
+                        }}
+                        disabled={loading}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '10px 18px', borderRadius: 10,
+                            background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA',
+                            fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                            boxShadow: '0 1px 2px rgba(0,0,0,.04)',
+                            opacity: loading ? .7 : 1, transition: 'all .15s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#FEE2E2'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#FEF2F2'}
+                    >
+                        <AlertTriangle size={14} />
+                        Resetear Todos a Gratis
+                    </button>
+                    <button
+                        onClick={fetchData}
+                        disabled={loading}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '10px 18px', borderRadius: 10,
+                            background: '#fff', color: '#374151', border: '1px solid #D1D5DB',
+                            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                            boxShadow: '0 1px 2px rgba(0,0,0,.04)',
+                            opacity: loading ? .7 : 1, transition: 'all .15s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                    >
+                        <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+                        {loading ? 'Sincronizando...' : 'Sincronizar datos'}
+                    </button>
+                </div>
             </div>
 
             {/* Stats cards */}
