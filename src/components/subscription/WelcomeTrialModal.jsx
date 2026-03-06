@@ -98,6 +98,22 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                     background: rgba(220,237,49,.18) !important;
                     border-color: rgba(220,237,49,.35) !important;
                 }
+
+                @media (max-width: 480px) {
+                    .wtm-card { border-radius: 20px !important; }
+                    .wtm-header { padding: 28px 20px 24px !important; }
+                    .wtm-title { font-size: 22px !important; }
+                    .wtm-subtitle { font-size: 13px !important; }
+                    .wtm-body { padding: 20px 20px 24px !important; }
+                    .wtm-pill { padding: 14px 14px !important; gap: 12px !important; margin-bottom: 20px !important; }
+                    .wtm-pill-icon { width: 38px !important; height: 38px !important; font-size: 18px !important; }
+                    .wtm-pill-title { font-size: 13.5px !important; }
+                    .wtm-pill-desc { font-size: 11px !important; }
+                    .wtm-feature-text { font-size: 12.5px !important; }
+                    .wtm-btn-text { font-size: 14px !important; }
+                    .wtm-btn-style { height: 50px !important; }
+                    .wtm-footer-text { font-size: 10px !important; }
+                }
             `}</style>
 
             {/* Backdrop */}
@@ -108,14 +124,14 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 fontFamily: "'Inter', -apple-system, sans-serif",
-                padding: '20px',
+                padding: '16px',
                 animation: visible ? 'wtm-backdrop-in .25s ease' : 'none',
                 opacity: visible ? 1 : 0,
                 transition: 'opacity .25s ease',
             }}>
 
                 {/* Card */}
-                <div style={{
+                <div className="wtm-card" style={{
                     width: '100%', maxWidth: 460,
                     background: '#111713',
                     borderRadius: 28,
@@ -127,7 +143,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                 }}>
 
                     {/* ── Header ── */}
-                    <div style={{
+                    <div className="wtm-header" style={{
                         background: 'linear-gradient(140deg, #1a2218 0%, #253023 40%, #1f2a1d 100%)',
                         padding: '36px 32px 28px',
                         textAlign: 'center',
@@ -169,7 +185,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                             </div>
                         </div>
 
-                        <h1 style={{
+                        <h1 className="wtm-title" style={{
                             fontSize: 26, fontWeight: 900, color: '#fff',
                             letterSpacing: '-.04em', margin: '0 0 8px',
                             lineHeight: 1.15,
@@ -185,7 +201,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                             }}>Gestify</span>
                             !
                         </h1>
-                        <p style={{
+                        <p className="wtm-subtitle" style={{
                             fontSize: 14, color: 'rgba(255,255,255,.55)',
                             margin: 0, lineHeight: 1.5,
                         }}>
@@ -194,10 +210,10 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                     </div>
 
                     {/* ── Body ── */}
-                    <div style={{ padding: '24px 32px 32px' }}>
+                    <div className="wtm-body" style={{ padding: '24px 32px 32px' }}>
 
                         {/* Trial pill */}
-                        <div style={{
+                        <div className="wtm-pill" style={{
                             background: 'linear-gradient(135deg, rgba(220,237,49,.10) 0%, rgba(220,237,49,.05) 100%)',
                             borderRadius: 14,
                             padding: '16px 18px',
@@ -205,7 +221,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                             border: '1px solid rgba(220,237,49,.18)',
                             display: 'flex', alignItems: 'center', gap: 14,
                         }}>
-                            <div style={{
+                            <div className="wtm-pill-icon" style={{
                                 width: 44, height: 44, borderRadius: 12,
                                 background: 'rgba(220,237,49,.15)',
                                 border: '1px solid rgba(220,237,49,.25)',
@@ -214,13 +230,13 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                                 fontSize: 22,
                             }}>🎁</div>
                             <div>
-                                <p style={{
+                                <p className="wtm-pill-title" style={{
                                     fontSize: 15, fontWeight: 800, color: '#DCED31',
                                     margin: '0 0 3px', letterSpacing: '-.02em',
                                 }}>
                                     7 días gratis — Sin tarjeta de crédito
                                 </p>
-                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', margin: 0, lineHeight: 1.4 }}>
+                                <p className="wtm-pill-desc" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', margin: 0, lineHeight: 1.4 }}>
                                     Explorá todas las funciones PRO sin ningún compromiso.
                                 </p>
                             </div>
@@ -261,7 +277,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                                     >
                                         <f.icon size={14} color="rgba(255,255,255,.6)" />
                                     </div>
-                                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,.7)', fontWeight: 500, flex: 1 }}>
+                                    <span className="wtm-feature-text" style={{ fontSize: 13, color: 'rgba(255,255,255,.7)', fontWeight: 500, flex: 1 }}>
                                         {f.text}
                                     </span>
                                     <Check size={15} color="#DCED31" strokeWidth={2.5} />
@@ -271,7 +287,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
 
                         {/* CTA button */}
                         <button
-                            className="wtm-btn"
+                            className="wtm-btn wtm-btn-style"
                             onClick={handleStartTrial}
                             disabled={loading}
                             style={{
@@ -304,13 +320,13 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                             ) : (
                                 <>
                                     <Sparkles size={18} strokeWidth={2.2} />
-                                    Iniciar prueba gratuita de 7 días
+                                    <span className="wtm-btn-text" style={{ fontSize: 15, fontWeight: 900 }}>Iniciar prueba gratuita de 7 días</span>
                                     <ArrowRight size={16} strokeWidth={2.5} />
                                 </>
                             )}
                         </button>
 
-                        <p style={{
+                        <p className="wtm-footer-text" style={{
                             fontSize: 11, color: 'rgba(255,255,255,.25)',
                             textAlign: 'center', marginTop: 14, lineHeight: 1.5,
                         }}>

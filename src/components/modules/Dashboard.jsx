@@ -28,7 +28,7 @@ const accentMap = {
   neutral: { bar: 'rgba(139,137,130,.3)', fill: '#606B6C', icon: 'rgba(55,63,71,.07)', iconC: '#8B8982' },
 }
 
-const MetricCard = ({ title, value, subtitle, icon: Icon, trend, trendType, accent = 'neutral', progress = 0, progressLabel = '', delay = 0, onClick }) => {
+const MetricCard = ({ title, value, subtitle, icon: Icon, trend, trendType, accent = 'neutral', progress = 0, progressLabel = '', delay = 0, onClick, beam = false }) => {
   const ac = accentMap[accent] || accentMap.neutral
   const trendUp = trendType === 'up'
   const trendDown = trendType === 'down'
@@ -37,10 +37,10 @@ const MetricCard = ({ title, value, subtitle, icon: Icon, trend, trendType, acce
   const TrendIcon = trendUp ? TrendingUp : trendDown ? TrendingDown : Activity
   const pct = Math.min(100, Math.max(0, progress))
 
-  return (
+  const cardInner = (
     <div className="relative rounded-xl overflow-hidden transition-all duration-200"
       onClick={onClick}
-      style={{ background: '#E1E1E0', border: '1px solid rgba(48,54,47,.13)', boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)', animation: `kpiInDash .4s ${.05 + delay * .08}s ease both`, cursor: onClick ? 'pointer' : 'default' }}
+      style={{ background: '#E1E1E0', boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)', animation: `kpiInDash .4s ${.05 + delay * .08}s ease both`, cursor: onClick ? 'pointer' : 'default' }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)' }}
       onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }}>
 
@@ -83,6 +83,40 @@ const MetricCard = ({ title, value, subtitle, icon: Icon, trend, trendType, acce
         </div>
       </div>
     </div>
+  )
+
+  if (!beam) return cardInner
+
+  return (
+    <>
+      <style>{`
+        @keyframes mc-beam-spin {
+          from { --mc-beam-angle: 0deg }
+          to   { --mc-beam-angle: 360deg }
+        }
+        @property --mc-beam-angle {
+          syntax: '<angle>';
+          initial-value: 0deg;
+          inherits: false;
+        }
+        .mc-beam-wrapper {
+          border-radius: 13px;
+          padding: 1.5px;
+          background: conic-gradient(
+            from var(--mc-beam-angle),
+            transparent 40deg,
+            rgba(80,90,90,0.12) 70deg,
+            rgba(80,90,90,0.75) 110deg,
+            rgba(80,90,90,0.12) 150deg,
+            transparent 180deg
+          );
+          animation: mc-beam-spin 18s linear infinite;
+        }
+      `}</style>
+      <div className="mc-beam-wrapper">
+        {cardInner}
+      </div>
+    </>
   )
 }
 
@@ -620,7 +654,7 @@ const Dashboard = ({
               trend={`${cambioVentas >= 0 ? '+' : ''}${cambioVentas}%`}
               trendType={cambioVentas >= 0 ? 'up' : 'down'} accent="green"
               progress={totalMesAnterior > 0 ? Math.min(100, Math.round((totalEsteMes / Math.max(totalEsteMes, totalMesAnterior)) * 100)) : totalEsteMes > 0 ? 100 : 0}
-              progressLabel="Meta mensual" delay={0} />
+              progressLabel="Meta mensual" delay={0} beam />
             <MetricCard title="Facturas pendientes" value={facturasPendientes}
               subtitle={`De ${facturas.length} en total`} icon={FileText}
               trend={facturasPendientes > 0 ? `${facturasPendientes} activas` : 'Al día'}

@@ -217,20 +217,85 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
         {/* PRO badge / Suscribirme */}
         {!isCollapsed && (
           <div style={{ padding: '0 8px 8px' }}>
+
+            {/* Keyframes para el border beam */}
+            <style>{`
+              @keyframes sb-beam-spin {
+                from { --sb-beam-angle: 0deg }
+                to   { --sb-beam-angle: 360deg }
+              }
+              @property --sb-beam-angle {
+                syntax: '<angle>';
+                initial-value: 0deg;
+                inherits: false;
+              }
+              .sb-beam-wrapper {
+                border-radius: 9px;
+                padding: 1.5px;
+                background: conic-gradient(
+                  from var(--sb-beam-angle),
+                  transparent 40deg,
+                  rgba(220,237,49,0.2) 80deg,
+                  #DCED31 120deg,
+                  rgba(220,237,49,0.2) 160deg,
+                  transparent 200deg
+                );
+                animation: sb-beam-spin 12s linear infinite;
+              }
+              .sb-beam-inner {
+                border-radius: 8px;
+                background: #2b2d28;
+                padding: 7px 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                width: 100%;
+                cursor: pointer;
+                border: none;
+                transition: background .15s;
+              }
+              .sb-beam-inner:hover {
+                background: #33362f !important;
+              }
+            `}</style>
+
             {isPro ? (
-              <div style={{ borderRadius: 8, border: '1px solid rgba(220,237,49,.18)', background: 'rgba(220,237,49,.05)', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <Shield size={11} color="rgba(220,237,49,.6)" />
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(220,237,49,.7)', letterSpacing: '.04em' }}>PRO ACTIVO</span>
+              // Badge PRO ACTIVO animado (girando mucho más lento)
+              <div className="sb-beam-wrapper" style={{ animation: 'sb-beam-spin 25s linear infinite' }}>
+                <div style={{
+                  borderRadius: 8,
+                  background: '#2b2d28',
+                  padding: '7px 10px',
+                  display: 'flex', alignItems: 'center', gap: 7,
+                  width: '100%', cursor: 'default',
+                }}>
+                  <div style={{
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: '#DCED31',
+                    boxShadow: '0 0 6px rgba(220,237,49,.7)',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(220,237,49,.85)', letterSpacing: '.06em' }}>PLAN PRO ACTIVO</span>
+                </div>
               </div>
             ) : (
-              <button
-                onClick={() => window.location.href = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=b658460a7699475eb06b492b25e0160a"}
-                style={{ borderRadius: 8, background: '#009EE3', padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: 'none', width: '100%', cursor: 'pointer', transition: 'filter .15s' }}
-                onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
-                onMouseLeave={e => e.currentTarget.style.filter = 'none'}
-              >
-                <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: '.02em' }}>⚡ HACETE PRO</span>
-              </button>
+              // Botón con border beam animado
+              <div className="sb-beam-wrapper">
+                <button
+                  className="sb-beam-inner"
+                  onClick={() => window.location.href = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=b658460a7699475eb06b492b25e0160a"}
+                  style={{ width: '100%' }}
+                >
+                  <div style={{
+                    width: 5, height: 5, borderRadius: '50%',
+                    background: '#DCED31',
+                    boxShadow: '0 0 4px rgba(220,237,49,.6)',
+                    flexShrink: 0,
+                  }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#DCED31', letterSpacing: '.04em' }}>Activar Plan PRO</span>
+                </button>
+              </div>
             )}
           </div>
         )}

@@ -366,17 +366,7 @@ const Presupuestos = ({
                     )}
                 </div>
 
-                {/* ── SQL hint ──────────────────────────────── */}
-                {presupuestos.length === 0 && (
-                    <div style={{ marginTop: 18, padding: '12px 16px', borderRadius: 10, background: 'rgba(51,65,57,.05)', border: `1px solid rgba(51,65,57,.15)` }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, color: accent, margin: '0 0 5px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <AlertCircle size={12} /> Tabla requerida en Supabase
-                        </p>
-                        <p style={{ fontSize: 10.5, color: ct3, margin: 0, lineHeight: 1.6 }}>
-                            Crear la tabla <strong>presupuestos</strong> con el SQL que se muestra en la documentación del módulo.
-                        </p>
-                    </div>
-                )}
+
             </main>
         </div>
     )
