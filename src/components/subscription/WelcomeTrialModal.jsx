@@ -99,20 +99,85 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                     border-color: rgba(220,237,49,.35) !important;
                 }
 
-                @media (max-width: 480px) {
-                    .wtm-card { border-radius: 20px !important; }
-                    .wtm-header { padding: 28px 20px 24px !important; }
-                    .wtm-title { font-size: 22px !important; }
-                    .wtm-subtitle { font-size: 13px !important; }
-                    .wtm-body { padding: 20px 20px 24px !important; }
-                    .wtm-pill { padding: 14px 14px !important; gap: 12px !important; margin-bottom: 20px !important; }
-                    .wtm-pill-icon { width: 38px !important; height: 38px !important; font-size: 18px !important; }
-                    .wtm-pill-title { font-size: 13.5px !important; }
-                    .wtm-pill-desc { font-size: 11px !important; }
-                    .wtm-feature-text { font-size: 12.5px !important; }
-                    .wtm-btn-text { font-size: 14px !important; }
-                    .wtm-btn-style { height: 50px !important; }
-                    .wtm-footer-text { font-size: 10px !important; }
+                /* ── Responsive móvil ── */
+                @media (max-width: 520px) {
+                    .wtm-card {
+                        border-radius: 18px !important;
+                        max-height: 95vh !important;
+                    }
+                    .wtm-header {
+                        padding: 24px 18px 20px !important;
+                    }
+                    .wtm-header-icon {
+                        width: 54px !important;
+                        height: 54px !important;
+                        border-radius: 15px !important;
+                        margin-bottom: 14px !important;
+                    }
+                    .wtm-title {
+                        font-size: 21px !important;
+                        margin-bottom: 6px !important;
+                    }
+                    .wtm-subtitle {
+                        font-size: 13px !important;
+                    }
+                    .wtm-body {
+                        padding: 18px 18px 22px !important;
+                    }
+                    .wtm-pill {
+                        padding: 13px 13px !important;
+                        gap: 11px !important;
+                        margin-bottom: 18px !important;
+                        border-radius: 12px !important;
+                    }
+                    .wtm-pill-icon {
+                        width: 36px !important;
+                        height: 36px !important;
+                        font-size: 17px !important;
+                        border-radius: 9px !important;
+                        flex-shrink: 0 !important;
+                    }
+                    .wtm-pill-title {
+                        font-size: 13px !important;
+                        line-height: 1.3 !important;
+                    }
+                    .wtm-pill-desc {
+                        font-size: 11px !important;
+                    }
+                    .wtm-section-label {
+                        font-size: 9px !important;
+                    }
+                    .wtm-feature-row {
+                        padding: 7px 0 !important;
+                        gap: 10px !important;
+                    }
+                    .wtm-feature-icon-wrap {
+                        width: 27px !important;
+                        height: 27px !important;
+                        border-radius: 7px !important;
+                    }
+                    .wtm-feature-text {
+                        font-size: 12px !important;
+                    }
+                    .wtm-btn-style {
+                        height: 48px !important;
+                        border-radius: 12px !important;
+                    }
+                    .wtm-btn-text {
+                        font-size: 13.5px !important;
+                        font-weight: 800 !important;
+                    }
+                    .wtm-footer-text {
+                        font-size: 10px !important;
+                        margin-top: 10px !important;
+                    }
+                }
+                @media (max-width: 380px) {
+                    .wtm-title { font-size: 19px !important; }
+                    .wtm-pill-title { font-size: 12px !important; }
+                    .wtm-btn-text { font-size: 12.5px !important; }
+                    .wtm-header { padding: 20px 14px 16px !important; }
+                    .wtm-body { padding: 14px 14px 18px !important; }
                 }
             `}</style>
 
@@ -173,7 +238,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                                 animation: 'wtm-pulse-ring 2s ease-out infinite',
                                 transformOrigin: 'center',
                             }} />
-                            <div style={{
+                            <div className="wtm-header-icon" style={{
                                 width: 64, height: 64, borderRadius: 18,
                                 background: 'linear-gradient(135deg, #DCED31 0%, #c8d828 100%)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -243,7 +308,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                         </div>
 
                         {/* Features */}
-                        <p style={{
+                        <p className="wtm-section-label" style={{
                             fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.3)',
                             textTransform: 'uppercase', letterSpacing: '.1em',
                             marginBottom: 12, margin: '0 0 12px',
@@ -265,7 +330,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                                     }}
                                 >
                                     <div
-                                        className="wtm-feature-icon"
+                                        className="wtm-feature-icon wtm-feature-icon-wrap"
                                         style={{
                                             width: 30, height: 30, borderRadius: 8,
                                             background: 'rgba(255,255,255,.06)',
