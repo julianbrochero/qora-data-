@@ -28,7 +28,7 @@ export const useSubscription = () => {
             // Consultar base de datos
             let { data, error: dbError } = await supabase
                 .from('subscriptions')
-                .select('trial_until, paid_until, plan_price, manually_suspended')
+                .select('trial_until, paid_until, plan_price, manually_suspended, is_exempt')
                 .eq('user_id', user.id)
                 .maybeSingle()
 
@@ -56,7 +56,7 @@ export const useSubscription = () => {
                     // Tal vez el trigger ya la creó pero no la podemos leer aún
                     const { data: retryData } = await supabase
                         .from('subscriptions')
-                        .select('trial_until, paid_until, plan_price, manually_suspended')
+                        .select('trial_until, paid_until, plan_price, manually_suspended, is_exempt')
                         .eq('user_id', user.id)
                         .maybeSingle()
 
@@ -104,6 +104,26 @@ export const useSubscription = () => {
      */
     const evaluateDates = (data, email, userId) => {
         const now = new Date()
+
+        // 🎁 Cuenta exenta — PRO gratuito permanente
+        if (data.is_exempt) {
+            const result = {
+                hasAccess: true,
+                isTrial: false,
+                isPro: true,
+                isExempt: true,
+                isNewUser: false,
+                trialDaysLeft: 0,
+                status: 'exempt',
+                daysRemaining: 9999,
+                message: 'Cuenta con acceso PRO gratuito.',
+                email: email,
+                userId: userId,
+                subscription: data
+            }
+            setSubscription(result)
+            return result
+        }
 
         const trialUntilDt = data.trial_until ? new Date(data.trial_until) : null
         const paidUntilDt = data.paid_until ? new Date(data.paid_until) : null
@@ -183,6 +203,7 @@ export const useSubscription = () => {
             isTrial: estado === 'trial',
             isPro: isPro,
             isNewUser: false,
+            isExempt: false,
             manuallySuspended: manuallySuspended,
             trialDaysLeft: trialDaysLeft,
             status: estado,
@@ -222,6 +243,7 @@ export const useSubscription = () => {
         isTrial: subscription?.isTrial || false,
         isPro: subscription?.isPro || false,
         isNewUser: subscription?.isNewUser || false,
+        isExempt: subscription?.isExempt || false,
         manuallySuspended: subscription?.manuallySuspended || false,
         userId: subscription?.userId || null,
         trialDaysLeft: subscription?.trialDaysLeft || 0,
