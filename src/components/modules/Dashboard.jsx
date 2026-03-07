@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { useAuth } from "../../lib/AuthContext"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
 import {
@@ -131,6 +131,115 @@ const estadoPill = (estado) => {
   if (e === 'parcial') return { bg: 'rgba(55,63,71,.1)', fg: '#373F47', label: 'Parcial', dot: '#373F47' }
   if (e === 'cancelada') return { bg: 'rgba(139,137,130,.08)', fg: '#8B8982', label: 'Cancelada', dot: '#6b6762' }
   return { bg: 'rgba(139,137,130,.1)', fg: '#8B8982', label: estado.charAt(0).toUpperCase() + estado.slice(1), dot: '#8B8982' }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   SEARCH SPOTLIGHT
+───────────────────────────────────────────────────────────────────────────── */
+const SearchSpotlight = ({ clientes = [], facturas = [], pedidos = [], onViewAllClientes, onViewAllFacturas, onViewAllPedidos }) => {
+  const [q, setQ] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const query = q.toLowerCase().trim()
+  const matchC = query ? clientes.filter(c => (c.nombre || '').toLowerCase().includes(query) || (c.email || '').toLowerCase().includes(query)).slice(0, 4) : []
+  const matchF = query ? facturas.filter(f => (f.numero || '').toLowerCase().includes(query) || (f.cliente_nombre || f.cliente || '').toLowerCase().includes(query)).slice(0, 4) : []
+  const matchP = query ? pedidos.filter(p => (p.codigo || '').toLowerCase().includes(query) || (p.cliente_nombre || '').toLowerCase().includes(query)).slice(0, 4) : []
+  const hasResults = matchC.length > 0 || matchF.length > 0 || matchP.length > 0
+  const showDropdown = open && query.length > 0
+
+  const clear = () => { setQ(''); setOpen(false) }
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flex: 1, maxWidth: 300 }}>
+      <div className="flex items-center gap-2 rounded-lg border px-2.5"
+        style={{ height: 30, background: q ? 'rgba(220,237,49,.08)' : 'rgba(255,255,255,.05)', borderColor: q ? 'rgba(220,237,49,.35)' : 'rgba(255,255,255,.12)', transition: 'all .2s' }}>
+        <Search size={11} strokeWidth={2} style={{ color: q ? '#DCED31' : 'rgba(255,255,255,.4)', flexShrink: 0, transition: 'color .2s' }} />
+        <input
+          type="text"
+          placeholder="Buscar cliente, factura, venta..."
+          value={q}
+          onChange={e => { setQ(e.target.value); setOpen(true) }}
+          onFocus={() => setOpen(true)}
+          className="bg-transparent border-none w-full focus:outline-none focus:ring-0"
+          style={{ fontSize: 11.5, color: 'white', fontFamily: 'Inter,sans-serif', outline: 'none' }}
+        />
+        {q ? (
+          <button onClick={clear}
+            style={{ color: 'rgba(255,255,255,.4)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0, flexShrink: 0 }}
+            onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,.8)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,.4)'}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>×</span>
+          </button>
+        ) : (
+          <kbd className="text-[7.5px] px-1 py-0.5 rounded hidden sm:block"
+            style={{ fontFamily: "'DM Mono',monospace", background: 'rgba(0,0,0,.25)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.1)' }}>
+            ⌘K
+          </kbd>
+        )}
+      </div>
+
+      {showDropdown && (
+        <div style={{
+          position: 'absolute', top: 36, left: 0, right: 0, minWidth: 320,
+          background: '#1e2320', borderRadius: 12,
+          border: '1px solid rgba(255,255,255,.1)',
+          boxShadow: '0 24px 60px rgba(0,0,0,.55)',
+          zIndex: 9999, overflow: 'hidden',
+          fontFamily: 'Inter,sans-serif'
+        }}>
+          {!hasResults ? (
+            <div style={{ padding: '20px 16px', textAlign: 'center', color: 'rgba(255,255,255,.3)', fontSize: 12 }}>
+              Sin resultados para «{q}»
+            </div>
+          ) : (
+            <>
+              {[
+                { label: 'Clientes', items: matchC, icon: Users, navigate: () => { onViewAllClientes?.(); clear() }, render: c => ({ title: c.nombre, sub: c.email || c.telefono || '' }) },
+                { label: 'Facturas', items: matchF, icon: FileText, navigate: () => { onViewAllFacturas?.(); clear() }, render: f => ({ title: f.numero || 'Factura', sub: `${f.cliente_nombre || f.cliente || '—'} · $${(f.total || 0).toLocaleString('es-AR')}` }) },
+                { label: 'Ventas', items: matchP, icon: ShoppingCart, navigate: () => { onViewAllPedidos?.(); clear() }, render: p => ({ title: p.codigo || 'Venta', sub: `${p.cliente_nombre || '—'} · ${p.estado || 'pendiente'}` }) },
+              ].filter(g => g.items.length > 0).map((grp, gi) => (
+                <div key={grp.label} style={{ borderTop: gi > 0 ? '1px solid rgba(255,255,255,.06)' : 'none' }}>
+                  <div style={{ padding: '8px 14px 4px', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.3)' }}>
+                    {grp.label}
+                  </div>
+                  {grp.items.map((item, i) => {
+                    const rendered = grp.render(item)
+                    const Icon = grp.icon
+                    return (
+                      <button key={i} onClick={grp.navigate}
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .1s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: '#2e3631', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon size={13} color="rgba(255,255,255,.6)" />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rendered.title}</div>
+                          {rendered.sub && <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rendered.sub}</div>}
+                        </div>
+                        <ArrowRight size={11} color="rgba(255,255,255,.2)" />
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+              <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '7px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,.25)' }}>{matchC.length + matchF.length + matchP.length} resultados</span>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,.2)' }}>Click → ir al módulo</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -542,18 +651,15 @@ const Dashboard = ({
           <Menu size={14} strokeWidth={2} />
         </button>
 
-        {/* search */}
-        <div className="flex items-center gap-2 rounded-lg border px-2.5 flex-1 max-w-[220px]"
-          style={{ height: 30, background: 'rgba(255,255,255,.05)', borderColor: 'rgba(255,255,255,.12)' }}>
-          <Search size={11} strokeWidth={2} style={{ color: 'rgba(255,255,255,.4)', flexShrink: 0 }} />
-          <input type="text" placeholder="Buscar..."
-            className="bg-transparent border-none w-full focus:outline-none focus:ring-0"
-            style={{ fontSize: 11.5, color: 'white', fontFamily: 'Inter,sans-serif', outline: 'none' }} />
-          <kbd className="text-[7.5px] px-1 py-0.5 rounded hidden sm:block"
-            style={{ fontFamily: "'DM Mono',monospace", background: 'rgba(0,0,0,.25)', color: 'rgba(255,255,255,.35)', border: '1px solid rgba(255,255,255,.1)' }}>
-            ⌘K
-          </kbd>
-        </div>
+        {/* search spotlight */}
+        <SearchSpotlight
+          clientes={clientes}
+          facturas={facturas}
+          pedidos={pedidos}
+          onViewAllClientes={onViewAllClientes}
+          onViewAllFacturas={onViewAllFacturas}
+          onViewAllPedidos={onViewAllPedidos}
+        />
 
         <div className="flex-1" />
 

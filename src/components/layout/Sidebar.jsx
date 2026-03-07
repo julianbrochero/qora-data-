@@ -16,7 +16,6 @@ import {
   LogOut,
   ClipboardList,
   ChevronLeft,
-  Shield,
   TrendingUp,
   X,
 } from "lucide-react"
@@ -72,10 +71,6 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
       title: "Sistema",
       items: [
         { id: "configuracion", icon: Settings, label: "Configuración" },
-        ...(user?.email === 'brocherojulian72@gmail.com'
-          ? [{ id: "admin", icon: Shield, label: "Admin", badge: '★' }]
-          : []
-        ),
       ]
     }
   ]
@@ -108,7 +103,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
 
         {/* Logo */}
         <div className="flex items-center overflow-hidden flex-shrink-0 relative"
-          style={{ height: 52, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
+          style={{ height: 84, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
 
           {/* Botón cerrar móvil */}
           <button onClick={onClose} className="md:hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
@@ -120,9 +115,9 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
             alt="Gestify"
             className="transition-all duration-200 object-contain"
             style={{
-              height: 52,
+              height: 64,
               opacity: isCollapsed ? 0 : 1,
-              transform: isCollapsed ? 'scale(0.8)' : 'scale(1.5)',
+              transform: isCollapsed ? 'scale(0.8)' : 'scale(1.85)',
               width: isCollapsed ? 0 : 'auto',
             }}
           />
