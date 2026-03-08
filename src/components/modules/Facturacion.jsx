@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import {
   Search, Eye, DollarSign, FileText, Users, CreditCard, CheckCircle,
   Clock, Trash2, CheckSquare, Banknote, XCircle, Plus, ChevronLeft,
-  ChevronRight, AlertCircle, Package, Printer
+  ChevronRight, AlertCircle, Package, Printer, Tag
   , Menu
 } from "lucide-react"
 
@@ -42,6 +42,7 @@ const Facturacion = ({
   onNuevaFactura, registrarCobro, eliminarFactura, recargarDatos
   , onOpenMobileSidebar }) => {
   const [filtroEstado, setFiltroEstado] = useState("todos")
+  const [filtroCanal, setFiltroCanal] = useState("todos")
   const [pestaña, setPestaña] = useState("todas")
   const [facturaSeleccionada, setFacturaSel] = useState(null)
   const [mostrarPago, setMostrarPago] = useState(false)
@@ -56,6 +57,15 @@ const Facturacion = ({
   const [cargandoPago, setCargandoPago] = useState(false)
   const [mostrarFormAbono, setMostrarAbono] = useState(false)
   const [dialogo, setDialogo] = useState({ open: false, type: 'alert', title: '', message: '', onConfirm: null, isDestructive: false })
+
+  // Cargar canales configurados por el usuario
+  const canalesConfig = (() => {
+    try {
+      const ls = localStorage.getItem('gestify_canales_venta')
+      if (ls) return JSON.parse(ls)
+    } catch { }
+    return []
+  })()
 
   const alert2 = (title, message) => setDialogo({ open: true, type: 'alert', title, message, onConfirm: null, isDestructive: false })
   const confirm2 = (title, message, onConfirm, isDestructive = false) => setDialogo({ open: true, type: 'confirm', title, message, onConfirm, isDestructive })
@@ -73,14 +83,15 @@ const Facturacion = ({
         (getCodigoPedido(f.pedido_id) || "").toLowerCase().includes(q)
       const pst = pestaña === "todas" || (pestaña === "pagadas" && f.estado === "pagada") || (pestaña === "deudas" && f.estado !== "pagada")
       const est = filtroEstado === "todos" || f.estado === filtroEstado || (filtroEstado === "pendientes" && (f.estado === "pendiente" || f.estado === "parcial"))
-      return bus && pst && est
+      const canal = filtroCanal === "todos" || f.canal_venta === filtroCanal || (filtroCanal === "sin-canal" && !f.canal_venta)
+      return bus && pst && est && canal
     })
     .sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0))
 
   const totalPaginas = Math.ceil(filtradas.length / itemsPorPagina)
   const paginadas = filtradas.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina)
 
-  useEffect(() => { setPaginaActual(1); setSeleccionadas(new Set()) }, [pestaña, filtroEstado, searchTerm, itemsPorPagina])
+  useEffect(() => { setPaginaActual(1); setSeleccionadas(new Set()) }, [pestaña, filtroEstado, filtroCanal, searchTerm, itemsPorPagina])
 
   const toggleModoSeleccion = () => { setModoSeleccion(p => !p); setSeleccionadas(new Set()) }
   const toggleSel = id => setSeleccionadas(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -198,20 +209,82 @@ const Facturacion = ({
         <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
 
           {/* Filtros */}
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, display: 'flex', gap: 8, flexWrap: 'wrap', background: surface2 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 200, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
-              <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
-              <input type="text" placeholder="Buscar por número, cliente o pedido…" value={searchTerm}
-                onChange={e => setSearchTerm?.(e.target.value)}
-                style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'Inter,sans-serif', color: ct1, width: '100%' }} />
+          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, background: surface2 }}>
+            {/* Fila 1: Buscador + Estado */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: canalesConfig.length > 0 ? 10 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 200, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
+                <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
+                <input type="text" placeholder="Buscar por número, cliente o pedido…" value={searchTerm}
+                  onChange={e => setSearchTerm?.(e.target.value)}
+                  style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'Inter,sans-serif', color: ct1, width: '100%' }} />
+              </div>
+              <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={pillSel}>
+                <option value="todos">Todos los estados</option>
+                <option value="pendientes">Pendientes</option>
+                <option value="parcial">Pago Parcial</option>
+                <option value="pagada">Pagadas</option>
+                <option value="anulada">Anuladas</option>
+              </select>
             </div>
-            <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={pillSel}>
-              <option value="todos">Todos los estados</option>
-              <option value="pendientes">Pendientes</option>
-              <option value="parcial">Pago Parcial</option>
-              <option value="pagada">Pagadas</option>
-              <option value="anulada">Anuladas</option>
-            </select>
+
+            {/* Fila 2: Filtro por canal (solo si hay canales configurados) */}
+            {canalesConfig.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 4 }}>
+                  <Tag size={11} strokeWidth={2} style={{ color: ct3 }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.07em' }}>Canal:</span>
+                </div>
+                {/* Botón Todos */}
+                <button
+                  onClick={() => setFiltroCanal('todos')}
+                  style={{
+                    padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none',
+                    background: filtroCanal === 'todos' ? accent : 'rgba(48,54,47,.07)',
+                    color: filtroCanal === 'todos' ? '#fff' : ct3,
+                    transition: 'all .13s'
+                  }}
+                >
+                  Todos ({facturasArr.length})
+                </button>
+                {/* Un botón por canal */}
+                {canalesConfig.map(canal => {
+                  const count = facturasArr.filter(f => f.canal_venta === canal).length
+                  const activo = filtroCanal === canal
+                  return (
+                    <button
+                      key={canal}
+                      onClick={() => setFiltroCanal(activo ? 'todos' : canal)}
+                      style={{
+                        padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none',
+                        background: activo ? '#4338CA' : 'rgba(99,102,241,.08)',
+                        color: activo ? '#fff' : '#4338CA',
+                        transition: 'all .13s'
+                      }}
+                    >
+                      {canal} ({count})
+                    </button>
+                  )
+                })}
+                {/* Botón sin canal */}
+                {(() => {
+                  const count = facturasArr.filter(f => !f.canal_venta).length
+                  if (count === 0) return null
+                  return (
+                    <button
+                      onClick={() => setFiltroCanal(filtroCanal === 'sin-canal' ? 'todos' : 'sin-canal')}
+                      style={{
+                        padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none',
+                        background: filtroCanal === 'sin-canal' ? '#6B7280' : 'rgba(107,114,128,.08)',
+                        color: filtroCanal === 'sin-canal' ? '#fff' : '#6B7280',
+                        transition: 'all .13s'
+                      }}
+                    >
+                      Sin canal ({count})
+                    </button>
+                  )
+                })()}
+              </div>
+            )}
           </div>
 
           {/* Pestañas */}
@@ -288,8 +361,8 @@ const Facturacion = ({
                       {/* Fecha */}
                       <div style={{ fontSize: 11, fontWeight: 500, color: ct2 }}>{fFec(factura.fecha)}</div>
 
-                      {/* Origen */}
-                      <div>
+                      {/* Origen + Canal */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {factura.pedido_id ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 7px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: accentL, color: accent }}>
                             <Package size={9} strokeWidth={2.5} />
@@ -297,6 +370,11 @@ const Facturacion = ({
                           </span>
                         ) : (
                           <span style={{ fontSize: 10, fontWeight: 600, color: ct3 }}>Directa</span>
+                        )}
+                        {factura.canal_venta && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: 'rgba(99,102,241,.08)', color: '#4338CA', border: '1px solid rgba(99,102,241,.15)', width: 'fit-content' }}>
+                            {factura.canal_venta}
+                          </span>
                         )}
                       </div>
 
@@ -480,10 +558,17 @@ const Facturacion = ({
             </div>
             <div style={{ padding: 16, overflowY: 'auto', flex: 1 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                {[['Cliente', detalleFactura.cliente_nombre || detalleFactura.cliente], ['Fecha', fFec(detalleFactura.fecha)], ['Tipo', detalleFactura.tipo || 'Factura A'], ['Origen', detalleFactura.pedido_id ? (getCodigoPedido(detalleFactura.pedido_id) || 'Pedido') : 'Directa']].map(([k, v]) => (
+                {[
+                  ['Cliente', detalleFactura.cliente_nombre || detalleFactura.cliente],
+                  ['Fecha', fFec(detalleFactura.fecha)],
+                  ['Tipo', detalleFactura.tipo || 'Factura A'],
+                  ['Origen', detalleFactura.pedido_id ? (getCodigoPedido(detalleFactura.pedido_id) || 'Pedido') : 'Directa'],
+                  ...(detalleFactura.canal_venta ? [['Canal', detalleFactura.canal_venta]] : []),
+                  ['Método pago', detalleFactura.metodopago || detalleFactura.metodoPago || '—'],
+                ].map(([k, v]) => (
                   <div key={k} style={{ background: surface2, borderRadius: 8, padding: '8px 10px', border: `1px solid ${border}` }}>
-                    <p style={{ fontSize: 9, color: ct3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4 }}>{k}</p>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: ct1 }}>{v}</p>
+                    <p style={{ fontSize: 9, color: k === 'Canal' ? '#4338CA' : ct3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 4 }}>{k}</p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: k === 'Canal' ? '#4338CA' : ct1 }}>{v}</p>
                   </div>
                 ))}
               </div>

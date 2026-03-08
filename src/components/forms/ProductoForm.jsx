@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle } from 'lucide-react'
 
 /* ══════════════════════════════════════════════
@@ -164,7 +164,6 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
               <input
                 ref={categoriaRef}
                 type="text"
-                list="categorias-list"
                 value={data.categoria || ''}
                 onChange={e => handleChange('categoria', e.target.value)}
                 onKeyDown={e => handleKeyDown(e, precioRef)}
@@ -173,14 +172,38 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
                 placeholder="Ej: Indumentaria, Electrónica..."
                 style={{ ...inputBase, paddingLeft: 30 }}
               />
-              {categorias.length > 0 && (
-                <datalist id="categorias-list">
-                  {categorias.map(c => (
-                    <option key={c.nombre || c} value={c.nombre || c} />
-                  ))}
-                </datalist>
-              )}
             </div>
+            {/* Chips de categorías existentes */}
+            {categorias.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+                {categorias
+                  .filter(c => {
+                    const nombre = c.nombre || c
+                    const q = (data.categoria || '').toLowerCase()
+                    return !q || nombre.toLowerCase().includes(q)
+                  })
+                  .map((c, i) => {
+                    const nombre = c.nombre || c
+                    const activo = (data.categoria || '').toLowerCase() === nombre.toLowerCase()
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onMouseDown={e => { e.preventDefault(); handleChange('categoria', activo ? '' : nombre) }}
+                        style={{
+                          padding: '3px 9px', borderRadius: 16, fontSize: 10, fontWeight: 700,
+                          border: activo ? 'none' : `1px solid ${border}`,
+                          background: activo ? accent : 'rgba(48,54,47,.05)',
+                          color: activo ? '#fff' : ct2,
+                          cursor: 'pointer', transition: 'all .12s',
+                        }}
+                      >
+                        {nombre}
+                      </button>
+                    )
+                  })}
+              </div>
+            )}
           </div>
         </div>
 

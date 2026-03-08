@@ -5,7 +5,7 @@ import {
   Plus, Search, Package, CheckCircle, Clock, XCircle,
   Truck, Edit, Eye, FileText, DollarSign, ChevronLeft,
   ChevronRight, List, CalendarDays, Calendar, CheckSquare,
-  Trash2, ChevronDown, AlertCircle, X
+  Trash2, ChevronDown, AlertCircle, X, Tag
   , Menu
 } from "lucide-react"
 import { useTheme } from '../../lib/ThemeContext'
@@ -34,6 +34,7 @@ const Pedidos = ({
   const D = darkMode // alias corto
 
   const [filtroEstado, setFiltroEstado] = useState("todos")
+  const [filtroCanal, setFiltroCanal] = useState("todos")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [filtroFacturacion, setFiltroFacturacion] = useState("todos")
@@ -43,6 +44,12 @@ const Pedidos = ({
   const [pedidosSeleccionados, setPedidosSeleccionados] = useState([])
   const [eliminandoMasivo, setEliminandoMasivo] = useState(false)
   const [dialogo, setDialogo] = useState({ open: false, type: 'alert', title: '', message: '', onConfirm: null, isDestructive: false })
+
+  // Canales configurados por el usuario
+  const canalesConfig = (() => {
+    try { const ls = localStorage.getItem('gestify_canales_venta'); if (ls) return JSON.parse(ls) } catch { }
+    return []
+  })()
 
   /* ── diálogos ── */
   const customAlert = (title, message) => setDialogo({ open: true, type: 'alert', title, message, onConfirm: null, isDestructive: false })
@@ -57,13 +64,14 @@ const Pedidos = ({
     const busq = String(p.codigo || "").toLowerCase().includes(q) || String(p.cliente_nombre || "").toLowerCase().includes(q)
     const estado = filtroEstado === "todos" || p.estado === filtroEstado
     const fact = filtroFacturacion === "todos" || (filtroFacturacion === "facturados" && p.factura_id) || (filtroFacturacion === "no-facturados" && !p.factura_id)
-    return busq && estado && fact
+    const canal = filtroCanal === "todos" || p.canal_venta === filtroCanal || (filtroCanal === "sin-canal" && !p.canal_venta)
+    return busq && estado && fact && canal
   }).sort((a, b) => new Date(b.fecha_pedido) - new Date(a.fecha_pedido))
 
   const totalPaginas = Math.ceil(filtrarPedidos.length / itemsPorPagina)
   const pedidosPaginados = filtrarPedidos.slice((paginaActual - 1) * itemsPorPagina, paginaActual * itemsPorPagina)
 
-  useEffect(() => { setPaginaActual(1) }, [filtroEstado, filtroFacturacion, searchTerm, itemsPorPagina])
+  useEffect(() => { setPaginaActual(1) }, [filtroEstado, filtroCanal, filtroFacturacion, searchTerm, itemsPorPagina])
 
   /* ── atajo de teclado (solo Ctrl) ── */
   useEffect(() => {
@@ -296,31 +304,70 @@ const Pedidos = ({
           <div className={cardCls} style={cardStyle}>
 
             {/* Filtros */}
-            <div style={{ padding: 'clamp(8px,2vw,12px) clamp(12px,3vw,16px)', borderBottom: `1px solid ${border}`, display: 'flex', gap: 8, flexWrap: 'wrap', background: surface2, alignItems: 'center' }}>
-              {/* Buscador */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '1 1 160px', minWidth: 140, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
-                <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
-                <input
-                  type="text" placeholder="Buscar…"
-                  value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'Inter,sans-serif', color: ct1, width: '100%' }}
-                />
+            <div style={{ padding: 'clamp(8px,2vw,12px) clamp(12px,3vw,16px)', borderBottom: `1px solid ${border}`, background: surface2 }}>
+              {/* Fila 1: Buscador + selects */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: canalesConfig.length > 0 ? 10 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '1 1 160px', minWidth: 140, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
+                  <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
+                  <input
+                    type="text" placeholder="Buscar…"
+                    value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)}
+                    style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'Inter,sans-serif', color: ct1, width: '100%' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ ...pillSelect, minWidth: 120 }}>
+                    <option value="todos">Todos los estados</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="preparando">Preparando</option>
+                    <option value="enviado">Enviado</option>
+                    <option value="entregado">Entregado</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                  <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} style={{ ...pillSelect, minWidth: 110 }}>
+                    <option value="todos">Toda facturación</option>
+                    <option value="facturados">Facturados</option>
+                    <option value="no-facturados">Sin facturar</option>
+                  </select>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ ...pillSelect, minWidth: 120 }}>
-                  <option value="todos">Todos los estados</option>
-                  <option value="pendiente">Pendiente</option>
-                  <option value="preparando">Preparando</option>
-                  <option value="enviado">Enviado</option>
-                  <option value="entregado">Entregado</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-                <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} style={{ ...pillSelect, minWidth: 110 }}>
-                  <option value="todos">Toda facturación</option>
-                  <option value="facturados">Facturados</option>
-                  <option value="no-facturados">Sin facturar</option>
-                </select>
-              </div>
+
+              {/* Fila 2: Filtro por canal (solo si hay canales configurados) */}
+              {canalesConfig.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 2 }}>
+                    <Tag size={10} strokeWidth={2} style={{ color: ct3 }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.07em' }}>Canal:</span>
+                  </div>
+                  <button onClick={() => setFiltroCanal('todos')} style={{
+                    padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none',
+                    background: filtroCanal === 'todos' ? accent : 'rgba(48,54,47,.07)',
+                    color: filtroCanal === 'todos' ? '#fff' : ct3, transition: 'all .13s'
+                  }}>Todos ({pedidosSeguros.length})</button>
+                  {canalesConfig.map(canal => {
+                    const count = pedidosSeguros.filter(p => p.canal_venta === canal).length
+                    const activo = filtroCanal === canal
+                    return (
+                      <button key={canal} onClick={() => setFiltroCanal(activo ? 'todos' : canal)} style={{
+                        padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none',
+                        background: activo ? '#4338CA' : 'rgba(99,102,241,.08)',
+                        color: activo ? '#fff' : '#4338CA', transition: 'all .13s'
+                      }}>{canal} ({count})</button>
+                    )
+                  })}
+                  {(() => {
+                    const count = pedidosSeguros.filter(p => !p.canal_venta).length
+                    if (count === 0) return null
+                    return (
+                      <button onClick={() => setFiltroCanal(filtroCanal === 'sin-canal' ? 'todos' : 'sin-canal')} style={{
+                        padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, cursor: 'pointer', border: 'none',
+                        background: filtroCanal === 'sin-canal' ? '#6B7280' : 'rgba(107,114,128,.08)',
+                        color: filtroCanal === 'sin-canal' ? '#fff' : '#6B7280', transition: 'all .13s'
+                      }}>Sin canal ({count})</button>
+                    )
+                  })()}
+                </div>
+              )}
             </div>
 
             {/* Cabecera tabla */}

@@ -2,6 +2,7 @@
 
 import { Package, Search, ChevronDown, Plus, Trash2, User, X } from "lucide-react"
 import { useState, useEffect, useRef, useMemo } from "react"
+import { useAuth } from "../../lib/AuthContext"
 
 const VentaForm = ({
   type,
@@ -39,7 +40,34 @@ const VentaForm = ({
     montoPagado: pedido?.montoPagado || 0,
     tipoFactura: pedido?.tipoFactura || "Factura A",
     estadoOperativo: pedido?.estado || "pendiente",
+    canalVenta: pedido?.canal_venta || "",
   })
+
+  const { user } = useAuth()
+
+  // Cargar canales configurados: localStorage primero, luego user_metadata como fallback
+  const [canalesDisponibles, setCanalesDisponibles] = useState(() => {
+    try {
+      const fromLS = localStorage.getItem('gestify_canales_venta')
+      if (fromLS) {
+        const parsed = JSON.parse(fromLS)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch { }
+    return []
+  })
+
+  useEffect(() => {
+    // Si localStorage estaba vacío, intentar desde user_metadata
+    if (canalesDisponibles.length === 0 && user?.user_metadata?.canales_venta) {
+      const fromMeta = user.user_metadata.canales_venta
+      if (Array.isArray(fromMeta) && fromMeta.length > 0) {
+        setCanalesDisponibles(fromMeta)
+        // Sincronizar localStorage
+        localStorage.setItem('gestify_canales_venta', JSON.stringify(fromMeta))
+      }
+    }
+  }, [user])
 
   const clientesMock = clientes.length > 0 ? clientes : [
     { id: 1, nombre: "Juan Perez", telefono: "351-1234567" },
@@ -191,6 +219,7 @@ const VentaForm = ({
       saldoPendiente: calcularSaldoPendiente(),
       tipoVenta: "factura",
       fechaRegistro: new Date().toISOString(),
+      canalVenta: ventaData.canalVenta || null,
       estadoOperativo: calcularSaldoPendiente() === 0 ? "entregado" :
         ventaData.fechaEntrega ? "pendiente" : "preparando"
     }
@@ -482,6 +511,43 @@ const VentaForm = ({
             </div>
           </div>
         </div>
+
+        {/* CANAL DE VENTA */}
+        {canalesDisponibles.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-0.5">
+              <label className="text-[11px] font-medium text-gray-700">
+                Canal de venta <span className="text-gray-400">(opcional)</span>
+              </label>
+              {ventaData.canalVenta && (
+                <button
+                  onClick={() => setVentaData({ ...ventaData, canalVenta: '' })}
+                  className="text-[9px] text-gray-400 hover:text-gray-600"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {canalesDisponibles.map((canal) => (
+                <button
+                  key={canal}
+                  type="button"
+                  onClick={() => setVentaData({
+                    ...ventaData,
+                    canalVenta: ventaData.canalVenta === canal ? '' : canal
+                  })}
+                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-full border transition-all ${ventaData.canalVenta === canal
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                    }`}
+                >
+                  {canal}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* NOTAS */}
         <div>

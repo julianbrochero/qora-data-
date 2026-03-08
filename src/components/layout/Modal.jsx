@@ -27,6 +27,15 @@ const Modal = ({
   if (!isOpen) return null;
 
   const renderModalContent = () => {
+    // Derivar categorías únicas de los productos existentes
+    const categoriasExistentes = (() => {
+      try {
+        const prods = formData.productos || []
+        const cats = [...new Set(prods.map(p => p.categoria).filter(Boolean))]
+        return cats.map(nombre => ({ nombre }))
+      } catch { return [] }
+    })()
+
     switch (modalType) {
       case 'nueva-factura':
         return (
@@ -113,12 +122,7 @@ const Modal = ({
             formData={formData}
             formActions={formActions}
             closeModal={onClose}
-            categorias={(() => {
-              const prods = formData.productos || []
-              const mapa = {}
-              prods.forEach(p => { const c = (p.categoria || '').trim(); if (c) mapa[c] = true })
-              return Object.keys(mapa).map(nombre => ({ nombre }))
-            })()}
+            categorias={categoriasExistentes}
           />
         );
 
@@ -153,15 +157,12 @@ const Modal = ({
         );
 
       case 'nuevo-presupuesto':
-      case 'editar-presupuesto':
         return (
           <PresupuestoForm
             clientes={formData.clientes || []}
             productos={formData.productos || []}
             formActions={formActions}
             closeModal={onClose}
-            openModal={openModal}
-            presupuestoEditar={modalType === 'editar-presupuesto' ? formData.selectedItem : null}
           />
         );
 
@@ -184,16 +185,15 @@ const Modal = ({
   const getModalWidth = () => {
     switch (modalType) {
       case 'nueva-factura':
+      case 'nueva-venta': // ✅ AÑADE ESTE
+      case 'editar-pedido': // ✅ AÑADE ESTE
       case 'ingreso-caja':
       case 'egreso-caja':
-      case 'ver-pedido':
         return 'max-w-md';
 
-      case 'nueva-venta':
-      case 'editar-pedido':
       case 'nuevo-pedido':
       case 'factura-directa':
-        return 'max-w-[480px]';
+        return 'max-w-[400px]'; // Reduced width for compact view
 
       case 'nuevo-cliente':
       case 'editar-cliente':
@@ -201,12 +201,18 @@ const Modal = ({
       case 'nuevo-producto':
       case 'editar-producto':
       case 'producto-rapido':
+        return 'max-w-lg';
+
+      case 'ver-pedido':
+        return 'max-w-md';
+
       case 'nuevo-proveedor':
       case 'editar-proveedor':
         return 'max-w-lg';
 
       case 'nuevo-presupuesto':
-      case 'editar-presupuesto':
+        return 'max-w-lg';
+
       case 'detalle-cierre':
         return 'max-w-4xl';
 

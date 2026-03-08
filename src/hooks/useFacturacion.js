@@ -505,6 +505,7 @@ export const useFacturacion = () => {
         items: JSON.stringify(pedidoData.items), total,
         productos_count: pedidoData.items.length, notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
+        canal_venta: pedidoData.canalVenta || null,
         monto_abonado: montoPagadoInicial, saldo_pendiente: saldoNuevoPedido,
         user_id: user.id, created_at: new Date().toISOString()
       }
@@ -535,6 +536,7 @@ export const useFacturacion = () => {
         items: JSON.stringify(pedidoData.items), total,
         productos_count: pedidoData.items.length, notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
+        canal_venta: pedidoData.canalVenta || null,
         monto_abonado: 0, saldo_pendiente: total,
         user_id: user.id, created_at: new Date().toISOString()
       }

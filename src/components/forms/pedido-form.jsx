@@ -58,8 +58,15 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
       notas: pedido?.notas || "",
       items: pedido?.items || [],
       montoPagado: pedido?.monto_abonado || "",
+      canalVenta: pedido?.canal_venta || "",
     }
   })
+
+  // Canales configurados por el usuario
+  const canalesDisponibles = (() => {
+    try { const ls = localStorage.getItem('gestify_canales_venta'); if (ls) return JSON.parse(ls) } catch { }
+    return []
+  })()
 
   const [busCliente, setBusCliente] = useState(pedido?.cliente_nombre || "")
   const [dropCliente, setDropCliente] = useState(false)
@@ -160,7 +167,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
 
   const handleGuardar = async () => {
     setIsProcessing(true)
-    const final = { ...pedidoData, total: calcTotal() }
+    const final = { ...pedidoData, total: calcTotal(), canal_venta: pedidoData.canalVenta || null }
     if (isEdit) {
       if (!formActions?.actualizarPedido) { setIsProcessing(false); return }
       try {
@@ -443,6 +450,44 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
             </div>
           )}
         </div>
+
+        {/* ── CANAL DE VENTA ── */}
+        {canalesDisponibles.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+              <label style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3 }}>
+                Canal de venta <span style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span>
+              </label>
+              {pedidoData.canalVenta && (
+                <button type="button" onClick={() => setPedidoData(d => ({ ...d, canalVenta: '' }))}
+                  style={{ fontSize: 9, color: ct3, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {canalesDisponibles.map(canal => {
+                const activo = pedidoData.canalVenta === canal
+                return (
+                  <button
+                    key={canal}
+                    type="button"
+                    onClick={() => setPedidoData(d => ({ ...d, canalVenta: activo ? '' : canal }))}
+                    style={{
+                      padding: '4px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                      border: activo ? 'none' : `1px solid ${border}`,
+                      background: activo ? '#4338CA' : surface,
+                      color: activo ? '#fff' : ct2,
+                      transition: 'all .13s',
+                    }}
+                  >
+                    {canal}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── NOTAS ── */}
         <input type="text" style={{ ...inp, marginBottom: 10 }}

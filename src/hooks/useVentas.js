@@ -85,6 +85,7 @@ export const useVentas = () => {
         productos_count: (ventaData.items || []).length,
         notas: ventaData.notas || '',
         estado: estadoPedido,
+        canal_venta: ventaData.canalVenta || null,
         user_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -128,6 +129,7 @@ export const useVentas = () => {
         montoPagado: montoPagado,
         saldoPendiente: saldoPendiente,
         estado: estadoFactura,
+        canal_venta: ventaData.canalVenta || null,
         user_id: user.id,
         created_at: new Date().toISOString()
       }
@@ -244,7 +246,8 @@ export const useVentas = () => {
         tieneFactura: true,
         factura_id: facturaGuardada[0].id,
         fecha_entrega: ventaData.fechaEntrega || null,
-        saldo_pendiente: saldoPendiente
+        saldo_pendiente: saldoPendiente,
+        canal_venta: ventaData.canalVenta || null
       }
 
       setVentas(prev => [nuevaVentaUnificada, ...prev])
@@ -486,7 +489,8 @@ export const useVentas = () => {
           factura_numero: facturaAsociada?.numero,
           estado_factura: facturaAsociada?.estado,
           fecha_entrega: pedido.fecha_entrega_estimada,
-          saldo_pendiente: facturaAsociada?.saldoPendiente || pedido.total
+          saldo_pendiente: facturaAsociada?.saldoPendiente || pedido.total,
+          canal_venta: pedido.canal_venta || null
         })
       })
 
