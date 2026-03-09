@@ -174,10 +174,10 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                     {/* ═══ COLUMNA 1 ═══ */}
                     <div className="config-col">
                         {/* MI PLAN */}
-                        <div style={{ background: '#fcfcfc', borderRadius: 14, border: planActivo ? `1px solid #DCED31` : `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: planActivo ? `1px solid #DCED31` : `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)', position: 'relative', overflow: 'hidden' }}>
                             {planActivo && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#DCED31' }} />}
                             <SectionTitle icon={CreditCard} title="Mi Suscripción" desc="Detalles de tu plan actual" />
-                            <div style={{ background: '#f4f4f4', borderRadius: 10, border: `1px solid ${border}`, padding: 'clamp(10px,2vw,16px)', marginBottom: 14 }}>
+                            <div style={{ background: '#DFDFDF', borderRadius: 10, border: `1px solid ${border}`, padding: 'clamp(10px,2vw,16px)', marginBottom: 14 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: planActivo ? '#DCED31' : planTrial ? '#FCD34D' : '#E53935', boxShadow: `0 0 0 2px ${planActivo ? 'rgba(220,237,49,.3)' : planTrial ? 'rgba(252,211,77,.3)' : 'rgba(229,57,53,.3)'}`, flexShrink: 0 }} />
@@ -215,7 +215,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                         </div>
 
                         {/* MI CUENTA */}
-                        <div style={{ background: '#fcfcfc', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={User} title="Mi Cuenta" desc="Información de tu perfil" />
                             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, flexWrap: 'wrap' }}>
                                 <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -232,9 +232,9 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 </div>
                             </div>
                             <button onClick={signOut}
-                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#f5f5f5', border: `1px solid ${border}`, color: '#E53935', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#DFDFDF', border: `1px solid ${border}`, color: '#E53935', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,.05)'}
-                                onMouseLeave={e => e.currentTarget.style.background = '#f5f5f5'}>
+                                onMouseLeave={e => e.currentTarget.style.background = '#DFDFDF'}>
                                 <LogOut size={14} /> Cerrar Sesión
                             </button>
                         </div>
@@ -243,7 +243,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                     {/* ═══ COLUMNA 2 ═══ */}
                     <div className="config-col">
                         {/* DATOS EMPRESA */}
-                        <div style={{ background: '#fcfcfc', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usan en PDFs de presupuestos y lista de precios" />
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 <div>
@@ -274,7 +274,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                     {/* ═══ COLUMNA 3 ═══ */}
                     <div className="config-col">
                         {/* CANALES DE VENTA */}
-                        <div style={{ background: '#fcfcfc', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={Tag} title="Canales de Venta" desc="Categorías para clasificar tus ventas" />
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12, minHeight: 32 }}>
                                 {canales.length === 0
@@ -307,7 +307,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                         </div>
 
                         {/* PREFERENCIAS */}
-                        <div style={{ background: '#fcfcfc', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={LayoutTemplate} title="Preferencias" desc="Ajustes del panel" />
                             <ConfigRow label="Vista Compacta" description="Reduce los márgenes">
                                 <ToggleSwitch enabled={false} onChange={() => { }} />
