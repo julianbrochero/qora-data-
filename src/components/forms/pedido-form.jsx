@@ -503,12 +503,29 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${border}` }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: ct2 }}>Pago / Adelanto inicial:</span>
-            <div style={{ position: 'relative', width: 120 }}>
-              <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, fontWeight: 500, color: ct3 }}>$</span>
-              <input type="number" placeholder="0.00" step="0.01"
-                style={{ ...inp, width: 120, paddingLeft: 20, textAlign: 'right', paddingRight: 8, fontSize: 12 }}
-                value={pedidoData.montoPagado}
-                onChange={e => setPedidoData(d => ({ ...d, montoPagado: e.target.value }))} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                title="Pagar total de la venta"
+                onClick={() => setPedidoData(d => ({ ...d, montoPagado: calcTotal() }))}
+                style={{
+                  background: accentL, color: accent, border: 'none',
+                  borderRadius: '50%', width: 24, height: 24,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', transition: 'all .15s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.15)'}
+                onMouseLeave={e => e.currentTarget.style.background = accentL}
+              >
+                <Check size={13} strokeWidth={2.5} />
+              </button>
+              <div style={{ position: 'relative', width: 120 }}>
+                <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', fontSize: 12, fontWeight: 500, color: ct3 }}>$</span>
+                <input type="number" placeholder="0.00" step="0.01"
+                  style={{ ...inp, width: 120, paddingLeft: 20, textAlign: 'right', paddingRight: 8, fontSize: 12 }}
+                  value={pedidoData.montoPagado}
+                  onChange={e => setPedidoData(d => ({ ...d, montoPagado: e.target.value }))} />
+              </div>
             </div>
           </div>
           {parseFloat(pedidoData.montoPagado) > 0 && (

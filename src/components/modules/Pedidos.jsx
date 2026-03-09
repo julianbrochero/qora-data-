@@ -113,11 +113,11 @@ const Pedidos = ({
 
   /* -- estados operativos (colores solidos, bien visibles) -- */
   const estadosCfg = {
-    pendiente: { label: 'Pendiente', Icon: Clock, bg: 'rgba(139,137,130,.12)', color: '#5a5753', border: 'rgba(139,137,130,.30)' },
-    preparando: { label: 'Preparando', Icon: Package, bg: 'rgba(55,63,71,.10)', color: '#373F47', border: 'rgba(55,63,71,.28)' },
-    enviado: { label: 'Enviado', Icon: Truck, bg: 'rgba(96,107,108,.12)', color: '#3d4d4f', border: 'rgba(96,107,108,.30)' },
-    entregado: { label: 'Entregado', Icon: CheckCircle, bg: 'rgba(48,54,47,.10)', color: '#30362F', border: 'rgba(48,54,47,.28)' },
-    cancelado: { label: 'Cancelado', Icon: XCircle, bg: 'rgba(139,137,130,.08)', color: '#8B8982', border: 'rgba(139,137,130,.20)' },
+    pendiente: { label: 'Pendiente', Icon: Clock, bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' },
+    preparando: { label: 'Preparando', Icon: Package, bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
+    enviado: { label: 'Enviado', Icon: Truck, bg: '#FAF5FF', color: '#9333EA', border: '#E9D5FF' },
+    entregado: { label: 'Entregado', Icon: CheckCircle, bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' },
+    cancelado: { label: 'Cancelado', Icon: XCircle, bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
   }
 
   /* -- estado de pago (solido y visible) -- */
@@ -125,9 +125,9 @@ const Pedidos = ({
     const total = parseFloat(p.total) || 0
     const abonado = parseFloat(p.monto_abonado) || 0
     const saldo = p.saldo_pendiente !== undefined ? parseFloat(p.saldo_pendiente) : total - abonado
-    if (saldo <= 0.01) return { label: 'Pagado', Icon: CheckCircle, bg: 'rgba(48,54,47,.10)', color: '#30362F', border: 'rgba(48,54,47,.25)' }
-    if (abonado > 0) return { label: 'Pago parcial', Icon: DollarSign, bg: 'rgba(96,107,108,.12)', color: '#3d4d4f', border: 'rgba(96,107,108,.28)' }
-    return { label: 'Sin pago', Icon: Clock, bg: 'rgba(139,137,130,.10)', color: '#6b6864', border: 'rgba(139,137,130,.25)' }
+    if (saldo <= 0.01) return { label: 'Pagado', Icon: CheckCircle, bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' }
+    if (abonado > 0) return { label: 'Pago parcial', Icon: DollarSign, bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' }
+    return { label: 'Sin pago', Icon: Clock, bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' }
   }
 
   /* ── resumen ── */
@@ -417,10 +417,10 @@ const Pedidos = ({
                         {/* Barra lateral de color por estado */}
                         <div style={{
                           position: 'absolute', left: 0, top: '18%', bottom: '18%', width: 3, background:
-                            pedido.estado === 'pendiente' ? '#334139' :
-                              pedido.estado === 'preparando' ? '#373F47' :
-                                pedido.estado === 'enviado' ? '#8B8982' :
-                                  pedido.estado === 'entregado' ? '#606B6C' : 'rgba(139,137,130,.3)', borderRadius: '0 2px 2px 0'
+                            pedido.estado === 'pendiente' ? '#F59E0B' :
+                              pedido.estado === 'preparando' ? '#3B82F6' :
+                                pedido.estado === 'enviado' ? '#A855F7' :
+                                  pedido.estado === 'entregado' ? '#10B981' : '#EF4444', borderRadius: '0 2px 2px 0'
                         }} />
 
                         {/* Checkbox Selección */}
@@ -583,7 +583,7 @@ const Pedidos = ({
           if (key) { if (!porFecha[key]) porFecha[key] = []; porFecha[key].push(p) }
         })
 
-        const estadoColor = { pendiente: '#8B8982', preparando: '#373F47', enviado: '#606B6C', entregado: '#334139', cancelado: '#b0aca8' }
+        const estadoColor = { pendiente: '#F59E0B', preparando: '#3B82F6', enviado: '#A855F7', entregado: '#10B981', cancelado: '#EF4444' }
 
         if (vistaActiva === 'mes') {
           // Primer día del mes y cantidad de días
