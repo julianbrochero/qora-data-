@@ -299,8 +299,8 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
         </div>
 
         {/* ── FECHAS Y ESTADO ── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-          <div style={{ flex: '1 1 110px', minWidth: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Fecha</label>
             <div style={{ position: 'relative' }}>
               <input type="date" className="gestify-date-input" style={{ ...inp, fontSize: 11, paddingRight: 30 }} value={pedidoData.fechaPedido}
@@ -310,7 +310,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
               </div>
             </div>
           </div>
-          <div style={{ flex: '1 1 110px', minWidth: 0 }}>
+          <div style={{ minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Entrega</label>
             <div style={{ position: 'relative' }}>
               <input type="date" className="gestify-date-input" style={{ ...inp, fontSize: 11, paddingRight: 30 }} value={pedidoData.fechaEntregaEstimada}
@@ -320,7 +320,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
               </div>
             </div>
           </div>
-          <div style={{ flex: '1 1 100px', minWidth: 0 }}>
+          <div style={{ gridColumn: '1 / -1', minWidth: 0 }}>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 5 }}>Estado</label>
             <select
               value={pedidoData.estado}
