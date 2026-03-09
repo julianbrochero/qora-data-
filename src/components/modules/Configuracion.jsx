@@ -166,20 +166,17 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
             </header>
 
             {/* CONTENIDO */}
-            <div style={{ padding: 'clamp(12px,3vw,24px)', maxWidth: 900, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ padding: 'clamp(12px,3vw,24px)', maxWidth: 1100, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
 
-                {/* Grid 2 columnas en desktop, 1 en mobile */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'clamp(12px,2vw,20px)', alignItems: 'start' }}>
+                {/* Grid con clases para responsive */}
+                <div className="config-grid">
 
-                    {/* ═══ COLUMNA IZQUIERDA ═══ */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(12px,2vw,20px)' }}>
-
+                    {/* ═══ COLUMNA 1 ═══ */}
+                    <div className="config-col">
                         {/* MI PLAN */}
                         <div style={{ background: surface, borderRadius: 14, border: planActivo ? `1px solid #DCED31` : `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)', position: 'relative', overflow: 'hidden' }}>
                             {planActivo && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#DCED31' }} />}
-
                             <SectionTitle icon={CreditCard} title="Mi Suscripción" desc="Detalles de tu plan actual" />
-
                             <div style={{ background: surface2, borderRadius: 10, border: `1px solid ${border}`, padding: 'clamp(10px,2vw,16px)', marginBottom: 14 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -191,14 +188,12 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     </div>
                                     <span style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'rgba(48,54,47,.05)', padding: '2px 8px', borderRadius: 4, whiteSpace: 'nowrap' }}>$14.999 / mes</span>
                                 </div>
-
                                 <p style={{ fontSize: 12, color: ct2, lineHeight: 1.5, margin: 0, marginBottom: planActivo ? 12 : 0 }}>
                                     {planActivo && `Tu plan PRO está activo. Se renueva en ${daysRemaining} días.`}
                                     {planTrial && `Estás en período de prueba. Te quedan ${daysRemaining} días.`}
                                     {planGrace && `Tu plan venció. Tenés ${daysRemaining} días para renovar.`}
                                     {planVencido && `Tu plan ha expirado. Aboná para reactivar tu cuenta.`}
                                 </p>
-
                                 {planActivo && (
                                     <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -211,7 +206,6 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     </div>
                                 )}
                             </div>
-
                             {!planActivo && (
                                 <button onClick={handleSubscribe} disabled={loadingSub}
                                     style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', opacity: loadingSub ? .7 : 1 }}>
@@ -223,7 +217,6 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                         {/* MI CUENTA */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={User} title="Mi Cuenta" desc="Información de tu perfil" />
-
                             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, flexWrap: 'wrap' }}>
                                 <div style={{ position: 'relative', flexShrink: 0 }}>
                                     <div style={{ width: 46, height: 46, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: accent, border: planActivo ? '2px solid #DCED31' : `1px solid rgba(51,65,57,.15)` }}>
@@ -238,7 +231,6 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     <p style={{ fontSize: 12, color: ct3, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
                                 </div>
                             </div>
-
                             <button onClick={signOut}
                                 style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: surface2, border: `1px solid ${border}`, color: '#E53935', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(229,57,53,.05)'}
@@ -246,16 +238,13 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 <LogOut size={14} /> Cerrar Sesión
                             </button>
                         </div>
-
                     </div>
 
-                    {/* ═══ COLUMNA DERECHA ═══ */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(12px,2vw,20px)' }}>
-
+                    {/* ═══ COLUMNA 2 ═══ */}
+                    <div className="config-col">
                         {/* DATOS EMPRESA */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usan en PDFs de presupuestos y lista de precios" />
-
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                 <div>
                                     <label style={{ fontSize: 11, fontWeight: 600, color: ct2, display: 'block', marginBottom: 5 }}>
@@ -275,21 +264,21 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     </label>
                                     <Inp value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Av. Corrientes 1234, CABA" />
                                 </div>
-
-                                <SaveBtn onClick={guardarEmpresa} disabled={savingEmpresa} ok={savedOk} okLabel="¡Guardado en tu cuenta!" label="Guardar datos" icon={Zap} />
+                                <SaveBtn onClick={guardarEmpresa} disabled={savingEmpresa} ok={savedOk} okLabel="¡Guardado!" label="Guardar datos" icon={Save} />
                                 {saveError && <p style={{ fontSize: 11, color: '#DC2626', textAlign: 'center', margin: 0 }}>{saveError}</p>}
-                                <p style={{ fontSize: 10, color: ct3, textAlign: 'center', margin: 0 }}>💾 Se guarda en tu cuenta — disponible en cualquier dispositivo.</p>
+                                <p style={{ fontSize: 10, color: ct3, textAlign: 'center', margin: 0 }}>💾 Se guarda en tu cuenta.</p>
                             </div>
                         </div>
+                    </div>
 
+                    {/* ═══ COLUMNA 3 ═══ */}
+                    <div className="config-col">
                         {/* CANALES DE VENTA */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
-                            <SectionTitle icon={Tag} title="Canales de Venta" desc="Creá categorías para clasificar tus ventas (ej: Local, Web, WhatsApp)" />
-
-                            {/* Chips existentes */}
+                            <SectionTitle icon={Tag} title="Canales de Venta" desc="Categorías para clasificar tus ventas" />
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12, minHeight: 32 }}>
                                 {canales.length === 0
-                                    ? <p style={{ fontSize: 11, color: ct3, fontStyle: 'italic', margin: 0 }}>Aún no agregaste canales. Son opcionales al registrar una venta.</p>
+                                    ? <p style={{ fontSize: 11, color: ct3, fontStyle: 'italic', margin: 0 }}>Aún no agregaste canales.</p>
                                     : canales.map((canal, idx) => (
                                         <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: accentL, border: `1px solid rgba(51,65,57,.18)`, fontSize: 11, fontWeight: 600, color: accent }}>
                                             <span>{canal}</span>
@@ -300,17 +289,13 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     ))
                                 }
                             </div>
-
-                            {/* Input agregar */}
                             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                                 <input
                                     type="text"
                                     value={nuevoCanal}
                                     onChange={e => setNuevoCanal(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && agregarCanal()}
-                                    placeholder="Ej: Local, Web, WhatsApp..."
-                                    onFocus={e => e.target.style.borderColor = accent}
-                                    onBlur={e => e.target.style.borderColor = border}
+                                    placeholder="Local, Web..."
                                     style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter',sans-serif" }}
                                 />
                                 <button onClick={agregarCanal} disabled={!nuevoCanal.trim()}
@@ -318,21 +303,19 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     <Plus size={15} strokeWidth={2.5} />
                                 </button>
                             </div>
-
-                            <SaveBtn onClick={guardarCanales} disabled={savingCanales} ok={canalesSavedOk} okLabel="¡Canales guardados!" label="Guardar canales" icon={Zap} />
+                            <SaveBtn onClick={guardarCanales} disabled={savingCanales} ok={canalesSavedOk} okLabel="¡Guardado!" label="Guardar canales" icon={Save} />
                         </div>
 
                         {/* PREFERENCIAS */}
                         <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
-                            <SectionTitle icon={LayoutTemplate} title="Preferencias" desc="Ajustes de comportamiento del panel" />
-                            <ConfigRow label="Vista Compacta" description="Reduce los márgenes (Próximamente)">
+                            <SectionTitle icon={LayoutTemplate} title="Preferencias" desc="Ajustes del panel" />
+                            <ConfigRow label="Vista Compacta" description="Reduce los márgenes">
                                 <ToggleSwitch enabled={false} onChange={() => { }} />
                             </ConfigRow>
-                            <ConfigRow label="Animaciones Reales" description="Transiciones suaves en el sistema" noBorder>
+                            <ConfigRow label="Animaciones Reales" description="Transiciones suaves" noBorder>
                                 <ToggleSwitch enabled={true} onChange={() => { }} />
                             </ConfigRow>
                         </div>
-
                     </div>
                 </div>
 
@@ -352,6 +335,32 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
             <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         @keyframes kpiIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+        
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (min-width: 768px) {
+            .config-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .config-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 24px;
+            }
+        }
+
+        .config-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
       `}</style>
         </div>
     )
