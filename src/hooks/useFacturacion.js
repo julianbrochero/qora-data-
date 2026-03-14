@@ -562,7 +562,8 @@ export const useFacturacion = () => {
         // ── BACKGROUND: cobro y stock sin bloquear el return
         ; (async () => {
           if (montoPagadoInicial > 0) {
-            await registrarCobro(nuevaVenta.id, montoPagadoInicial, `Seña Pedido ${codigoPedido}`)
+            const descCobro = montoPagadoInicial >= total ? `Pago Total Pedido ${codigoPedido}` : `Seña Pedido ${codigoPedido}`
+            await registrarCobro(nuevaVenta.id, montoPagadoInicial, descCobro)
           }
           // Actualizar todos los stocks en paralelo
           await Promise.all(

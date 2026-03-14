@@ -81,7 +81,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
       clienteNombre: pedido?.cliente_nombre || "",
       fechaPedido: pedido?.fecha_pedido?.slice(0, 10) || new Date().toISOString().slice(0, 10),
       fechaEntregaEstimada: pedido?.fecha_entrega_estimada?.slice(0, 10) || "",
-      estado: pedido?.estado || "pendiente",
+      estado: pedido?.estado || (() => { try { return localStorage.getItem('gestify_pedido_estado') || 'pendiente' } catch { return 'pendiente' } })(),
       notas: pedido?.notas || "",
       items: pedido?.items || [],
       montoPagado: pedido?.monto_abonado || "",
@@ -407,7 +407,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
           {/* ESTADO */}
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 4 }}>Estado</label>
-            <select value={pedidoData.estado} onChange={e => setPedidoData(d => ({ ...d, estado: e.target.value }))}
+            <select value={pedidoData.estado} onChange={e => { const v = e.target.value; setPedidoData(d => ({ ...d, estado: v })); try { localStorage.setItem('gestify_pedido_estado', v) } catch {} }}
               style={{ ...inp, appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1px solid ${eCfg.border}`, fontWeight: 700 }}>
               {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>

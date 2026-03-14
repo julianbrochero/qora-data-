@@ -139,9 +139,8 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
     const planVencido = status === 'expired' || status === 'suspended'
     const progreso = planActivo ? Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100)) : 0
 
-    const handleSubscribe = async () => {
-        if (loadingSub) return; setLoadingSub(true)
-        try { await createSubscription() } catch (e) { console.error(e) } finally { setLoadingSub(false) }
+    const handleSubscribe = () => {
+        window.location.href = 'https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=b658460a7699475eb06b492b25e0160a'
     }
     const handleAbonar = async () => {
         if (loadingSub) return; setLoadingSub(true)
@@ -304,17 +303,6 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 </button>
                             </div>
                             <SaveBtn onClick={guardarCanales} disabled={savingCanales} ok={canalesSavedOk} okLabel="¡Guardado!" label="Guardar canales" icon={Save} />
-                        </div>
-
-                        {/* PREFERENCIAS */}
-                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
-                            <SectionTitle icon={LayoutTemplate} title="Preferencias" desc="Ajustes del panel" />
-                            <ConfigRow label="Vista Compacta" description="Reduce los márgenes">
-                                <ToggleSwitch enabled={false} onChange={() => { }} />
-                            </ConfigRow>
-                            <ConfigRow label="Animaciones Reales" description="Transiciones suaves" noBorder>
-                                <ToggleSwitch enabled={true} onChange={() => { }} />
-                            </ConfigRow>
                         </div>
                     </div>
                 </div>

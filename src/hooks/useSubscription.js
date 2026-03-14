@@ -172,19 +172,19 @@ export const useSubscription = () => {
             title = `Prueba gratuita: ${daysLeft} días restantes.`
         }
         // 3. ¿Grace period tras vencer el pago?
-        else if (paidUntilDt && now <= new Date(paidUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+        else if (paidUntilDt && now <= new Date(paidUntilDt.getTime() + 1 * 24 * 60 * 60 * 1000)) {
             estado = 'grace'
             isPro = true // Fue PRO, está en gracia
-            const limit = new Date(paidUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)
+            const limit = new Date(paidUntilDt.getTime() + 1 * 24 * 60 * 60 * 1000)
             daysLeft = Math.ceil((limit - now) / (1000 * 60 * 60 * 24))
-            title = `Tu plan PRO venció. Tenés ${daysLeft} días de tolerancia para pagar.`
+            title = `Tu plan PRO venció. Se agrega 1 día más antes de bloquearse — renovalo ahora.`
         }
         // 4. ¿Grace period tras terminar la prueba sin pagar?
-        else if (!paidUntilDt && now <= new Date(trialUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+        else if (!paidUntilDt && now <= new Date(trialUntilDt.getTime() + 1 * 24 * 60 * 60 * 1000)) {
             estado = 'grace'
-            const limit = new Date(trialUntilDt.getTime() + 7 * 24 * 60 * 60 * 1000)
+            const limit = new Date(trialUntilDt.getTime() + 1 * 24 * 60 * 60 * 1000)
             daysLeft = Math.ceil((limit - now) / (1000 * 60 * 60 * 24))
-            title = `Tu prueba venció. Tenés ${daysLeft} días para activar tu suscripción.`
+            title = `Tu prueba venció. Se agrega 1 día más antes de bloquearse — activá tu suscripción ahora.`
         }
         // 5. Suspendido
         else {

@@ -33,7 +33,7 @@ const Pedidos = ({
   const { darkMode } = useTheme()
   const D = darkMode // alias corto
 
-  const [filtroEstado, setFiltroEstado] = useState("todos")
+  const [filtroEstado, setFiltroEstado] = useState(() => { try { return localStorage.getItem('gestify_filtro_estado') || 'todos' } catch { return 'todos' } })
   const [filtroCanal, setFiltroCanal] = useState("todos")
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
@@ -316,7 +316,7 @@ const Pedidos = ({
                   />
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ ...pillSelect, minWidth: 120 }}>
+                  <select value={filtroEstado} onChange={e => { const v = e.target.value; setFiltroEstado(v); try { localStorage.setItem('gestify_filtro_estado', v) } catch {} }} style={{ ...pillSelect, minWidth: 120 }}>
                     <option value="todos">Todos los estados</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="preparando">Preparando</option>
@@ -385,7 +385,7 @@ const Pedidos = ({
                         onChange={toggleTodos} />
                     </div>
                   )}
-                  {[['Código', 'left'], ['Cliente', 'left'], ['Fecha', 'center'], ['Total', 'center'], ['Estado', 'left'], ['Acciones', 'right']].map(([col, align], i) => (
+                  {[['Código', 'left'], ['Productos', 'left'], ['Fecha', 'center'], ['Total', 'center'], ['Estado', 'left'], ['Acciones', 'right']].map(([col, align], i) => (
                     <div key={i} className={i === 2 ? 'ventas-col-fecha' : i === 4 ? 'ventas-col-estado-pago' : i === 3 ? 'ventas-col-total' : ''}
                       style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: ct3, textAlign: align }}>{col}</div>
                   ))}
@@ -444,22 +444,22 @@ const Pedidos = ({
 
                         {/* Cliente y Productos */}
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: ct1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{pedido.cliente_nombre || '—'}</div>
                           {(() => {
                             try {
                               const stItems = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || []);
-                              if (stItems.length === 0) return cliente?.telefono ? <div style={{ fontSize: 11, color: ct3, marginTop: 1 }}>{cliente.telefono}</div> : null;
-                              const summary = stItems.map(i => `${i.cantidad}x ${i.producto}`).join(', ');
-                              return (
-                                <div style={{ fontSize: 10, color: ct3, marginTop: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={summary}>
-                                  <span style={{ color: accent, fontWeight: 700, marginRight: 4 }}>📦</span>
-                                  {summary}
-                                </div>
-                              );
-                            } catch {
-                              return cliente?.telefono ? <div style={{ fontSize: 11, color: ct3, marginTop: 1 }}>{cliente.telefono}</div> : null;
-                            }
+                              if (stItems.length > 0) {
+                                const summary = stItems.map(i => `${i.cantidad}x ${i.producto || i.nombre || '—'}`).join(', ');
+                                return (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={summary}>
+                                    <Package size={11} strokeWidth={2.2} style={{ color: accent, flexShrink: 0 }} />
+                                    <span style={{ fontSize: 13, fontWeight: 600, color: ct1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{summary}</span>
+                                  </div>
+                                );
+                              }
+                            } catch { /* noop */ }
+                            return null;
                           })()}
+                          <div style={{ fontSize: 11, fontWeight: 400, color: ct3, marginTop: 2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{pedido.cliente_nombre || '—'}</div>
                         </div>
 
                         {/* Fecha */}
