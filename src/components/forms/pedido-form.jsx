@@ -42,7 +42,7 @@ const ToggleSwitch = ({ active, onToggle, label }) => (
 )
 
 /* ─────────────────────────────────────────────────────────────────── */
-const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, closeModal, openModal }) => {
+const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, closeModal, openModal, autoFocusProducto = false }) => {
   const isEdit = type === "editar-pedido"
 
   // ── preferencia cliente persistida ──
@@ -214,6 +214,30 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
     return () => window.removeEventListener("keydown", h)
   }, [handleEnterKey])
 
+  // Shift solo → pagar total (solo en módulo Agregar Venta)
+  useEffect(() => {
+    if (!autoFocusProducto) return
+    let shiftDown = false
+    let otherKey = false
+    const onDown = e => {
+      if (e.key === 'Shift') { shiftDown = true; otherKey = false }
+      else if (shiftDown) otherKey = true
+    }
+    const onUp = e => {
+      if (e.key === 'Shift') {
+        if (shiftDown && !otherKey) {
+          const active = document.activeElement
+          const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+          if (!isInput) setPedidoData(d => ({ ...d, montoPagado: calcTotal() }))
+        }
+        shiftDown = false; otherKey = false
+      }
+    }
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup', onUp)
+    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp) }
+  }, [autoFocusProducto, calcTotal])
+
   // estilos base
   const inp = { width: '100%', height: 32, padding: '0 10px', borderRadius: 8, border: `1px solid ${border}`, background: surface, outline: 'none', fontSize: 12, fontWeight: 500, color: ct1, fontFamily: 'Inter,sans-serif' }
 
@@ -300,6 +324,7 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
               <input style={{ ...inp, paddingLeft: 28, paddingRight: 34 }}
                 placeholder="Buscar y agregar producto..."
                 value={busProducto}
+                autoFocus={autoFocusProducto}
                 onChange={e => { setBusProducto(e.target.value); setDropProducto(true) }}
                 onFocus={() => setDropProducto(true)} />
               <button type="button" onClick={handleNuevoProducto}

@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   TrendingUp,
   X,
+  PlusCircle,
 } from "lucide-react"
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse, pedidos = [] }) => {
@@ -47,6 +48,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
     {
       title: "Comercial",
       items: [
+        { id: "agregar-venta", icon: PlusCircle, label: "Agregar Venta" },
         { id: "pedidos", icon: TrendingUp, label: "Ventas", badge: badgeVentas },
         { id: "presupuestos", icon: ClipboardList, label: "Presupuestos" },
         { id: "facturacion", icon: FileText, label: "Facturación" },

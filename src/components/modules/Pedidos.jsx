@@ -28,8 +28,9 @@ const Pedidos = ({
   actualizarEstadoPedido,
   eliminarPedido,
   facturarPedido,
-  recargarDatos
-  , onOpenMobileSidebar }) => {
+  recargarDatos,
+  onNuevaVenta,
+  onOpenMobileSidebar }) => {
   const { darkMode } = useTheme()
   const D = darkMode // alias corto
 
@@ -95,7 +96,8 @@ const Pedidos = ({
           const active = document.activeElement
           const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
           if (!isInput) {
-            openModal('nuevo-pedido')
+            if (onNuevaVenta) onNuevaVenta()
+            else openModal?.('nuevo-pedido')
           }
         }
         ctrlPressed = false
@@ -241,7 +243,7 @@ const Pedidos = ({
 
 
           {/* Nuevo */}
-          <button onClick={() => openModal && openModal("nuevo-pedido")} style={{
+          <button onClick={() => onNuevaVenta ? onNuevaVenta() : openModal?.("nuevo-pedido")} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
             fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
             background: '#DCED31', color: '#282A28',

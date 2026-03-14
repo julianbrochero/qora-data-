@@ -18,6 +18,7 @@ import Proveedores from './components/modules/Proveedores';
 import Pedidos from './components/modules/Pedidos';
 import Configuracion from './components/modules/Configuracion';
 import Presupuestos from './components/modules/Presupuestos';
+import AgregarVenta from './components/modules/AgregarVenta';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
 import SubscriptionGate from './components/subscription/SubscriptionGate';
@@ -295,6 +296,7 @@ const SistemaFacturacion = () => {
           onViewAllClientes={() => setActiveModule('clientes')}
           onViewAllCaja={() => setActiveModule('caja')}
           onViewReportes={() => setActiveModule('reportes')}
+          onNuevaVenta={() => setActiveModule('agregar-venta')}
         />
       ),
       facturacion: (
@@ -360,6 +362,19 @@ const SistemaFacturacion = () => {
           eliminarPedido={eliminarPedido}
           facturarPedido={handleFacturarPedido}
           recargarDatos={recargarTodosLosDatos}
+          onNuevaVenta={() => setActiveModule('agregar-venta')}
+        />
+      ),
+      'agregar-venta': (
+        <AgregarVenta
+          {...commonProps}
+          clientes={clientes}
+          productos={productos}
+          formActions={{
+            agregarPedidoSolo,
+            recargarTodosLosDatos,
+          }}
+          onVentaCreada={() => setActiveModule('pedidos')}
         />
       ),
       configuracion: <Configuracion {...commonProps} />,
