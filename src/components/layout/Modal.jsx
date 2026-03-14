@@ -185,17 +185,17 @@ const Modal = ({
   const getModalWidth = () => {
     switch (modalType) {
       case 'nueva-factura':
-      case 'nueva-venta': // ✅ AÑADE ESTE
-      case 'editar-pedido': // ✅ AÑADE ESTE
+      case 'nueva-venta':
+      case 'editar-pedido':
       case 'ingreso-caja':
       case 'egreso-caja':
-        return 'max-w-md';
+        return 'max-w-xl';
 
       case 'nuevo-pedido':
-        return 'max-w-2xl';   // wide 2-col layout
+        return 'max-w-3xl';
 
       case 'factura-directa':
-        return 'max-w-[400px]';
+        return 'max-w-lg';
 
       case 'nuevo-cliente':
       case 'editar-cliente':
@@ -203,28 +203,28 @@ const Modal = ({
       case 'nuevo-producto':
       case 'editar-producto':
       case 'producto-rapido':
-        return 'max-w-lg';
+        return 'max-w-xl';
 
       case 'ver-pedido':
-        return 'max-w-md';
+        return 'max-w-xl';
 
       case 'nuevo-proveedor':
       case 'editar-proveedor':
-        return 'max-w-lg';
+        return 'max-w-xl';
 
       case 'nuevo-presupuesto':
-        return 'max-w-lg';
+        return 'max-w-xl';
 
       case 'detalle-cierre':
         return 'max-w-4xl';
 
       default:
-        return 'max-w-md';
+        return 'max-w-xl';
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 sm:p-10">
       <div className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full max-h-[95vh] overflow-y-auto`}>
         <div className="p-4">
           {/* Contenido del modal */}
