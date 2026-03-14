@@ -192,8 +192,10 @@ const Modal = ({
         return 'max-w-md';
 
       case 'nuevo-pedido':
+        return 'max-w-2xl';   // wide 2-col layout
+
       case 'factura-directa':
-        return 'max-w-[400px]'; // Reduced width for compact view
+        return 'max-w-[400px]';
 
       case 'nuevo-cliente':
       case 'editar-cliente':
