@@ -387,18 +387,18 @@ const AgregarVenta = ({
             </div>
 
             {/* Card Carrito */}
-            <div className="av-card">
+            <div className="av-card av-card-carrito">
               <div className="av-card-hd">
                 <ShoppingCart size={16} className="av-ico" />
                 <span className="av-card-ttl">Productos en carrito ({carrito.length})</span>
               </div>
               {carrito.length === 0 ? (
-                <div className="av-empty">
+                <div className="av-empty av-carrito-body">
                   <ShoppingCart size={36} style={{ color: '#d1d5db', marginBottom: 8 }} />
                   <p>No hay productos en el carrito</p>
                 </div>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
+                <div className="av-carrito-body" style={{ overflowX: 'auto' }}>
                   <table className="av-table">
                     <thead>
                       <tr>
@@ -623,7 +623,7 @@ const AgregarVenta = ({
         .av-btn-header-save:disabled{opacity:.4;cursor:not-allowed;}
 
         /* ── main ── */
-        .av-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:clamp(10px,1.5vw,16px) clamp(16px,3vw,36px);}
+        .av-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:clamp(10px,1.5vw,16px) clamp(16px,3vw,36px);max-width:1500px;margin:0 auto;width:100%;box-sizing:border-box;}
         .av-success{display:flex;align-items:center;gap:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;flex-shrink:0;animation:av-in .3s ease;}
         .av-success-ico{width:30px;height:30px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
         .av-success-t{font-size:13px;font-weight:600;color:#166534;margin:0;}
