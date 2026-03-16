@@ -120,13 +120,6 @@ export default function Login() {
         <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] font-bold text-gray-500 mt-6">
           <span className="select-none">© {new Date().getFullYear()} Gestify. Todos los derechos reservados.</span>
           <div className="flex gap-4 sm:gap-5">
-            <a
-              href="#"
-              onClick={(e) => { e.preventDefault(); }}
-              className="hover:text-white transition-colors"
-            >
-              Términos
-            </a>
             <button
               onClick={handleWhatsApp}
               className="hover:text-[#25D366] transition-colors flex items-center gap-1.5"
