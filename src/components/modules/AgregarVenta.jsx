@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   CheckCircle, TrendingUp, ShoppingCart, User, Package,
   Search, Plus, Minus, Trash2, CreditCard, Banknote,
-  X, Save, ChevronDown, Calendar, Check, UserCheck
+  X, Save, ChevronDown, Calendar, Check, UserCheck, Menu
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 
@@ -236,6 +236,11 @@ const AgregarVenta = ({
       {/* ══ HEADER ══ */}
       <header className="av-header">
         <div className="av-header-l">
+          {onOpenMobileSidebar && (
+            <button onClick={onOpenMobileSidebar} className="av-menu-btn md:hidden">
+              <Menu size={16} strokeWidth={2} />
+            </button>
+          )}
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
             <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1, margin: 0 }}>
@@ -554,9 +559,13 @@ const AgregarVenta = ({
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                     <label className="av-lbl" style={{ marginBottom: 0 }}>Adelanto</label>
-                    <button title="Pagar total" onClick={() => setAdelanto(String(total))}
-                      style={{ width: 20, height: 20, background: 'rgba(51,65,57,.08)', color: '#334139', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <Check size={11} strokeWidth={2.5} />
+                    <button title="Pagar total (también podés presionar Shift)" onClick={() => setAdelanto(String(total))}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', background: 'rgba(51,65,57,.08)', color: '#334139', border: '1px solid rgba(51,65,57,.18)', borderRadius: 20, cursor: 'pointer', fontSize: 10, fontWeight: 700, letterSpacing: '.02em', transition: 'all .13s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(51,65,57,.15)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(51,65,57,.08)' }}>
+                      <Check size={10} strokeWidth={2.5} />
+                      Pagar total
+                      <kbd style={{ background: 'rgba(51,65,57,.15)', border: '1px solid rgba(51,65,57,.25)', borderRadius: 4, padding: '1px 4px', fontSize: 9, fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#334139' }}>Shift</kbd>
                     </button>
                   </div>
                   <div style={{ position: 'relative' }} className={shiftFlash ? 'av-shift-flash' : ''}>

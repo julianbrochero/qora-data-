@@ -541,7 +541,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                               onChange={e => setInlineEdit(p => ({ ...p, val: e.target.value }))}
                               onBlur={() => commitEdit(prod)}
                               onKeyDown={e => { if (e.key === 'Enter') commitEdit(prod); if (e.key === 'Escape') cancelEdit() }}
-                              style={{ width: 90, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: ct1, border: `1.5px solid ${accent}`, borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
+                              style={{ width: 90, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: ct1, background: '#fff', border: `1.5px solid ${accent}`, borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
                             />
                           </div>
                         ) : (
@@ -565,7 +565,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                               onChange={e => setInlineEdit(p => ({ ...p, val: e.target.value }))}
                               onBlur={() => commitEdit(prod)}
                               onKeyDown={e => { if (e.key === 'Enter') commitEdit(prod); if (e.key === 'Escape') cancelEdit() }}
-                              style={{ width: 90, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: '#059669', border: '1.5px solid #059669', borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
+                              style={{ width: 90, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: '#059669', background: '#f0fdf4', border: '1.5px solid #059669', borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
                             />
                           </div>
                         ) : (
@@ -577,7 +577,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                             {parseFloat(prod.costo) > 0 ? (
                               <>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#059669' }}>${fMonto(prod.costo)}</div>
-                                <div style={{ fontSize: 9, color: '#6ee7b7', marginTop: 1 }}>
+                                <div style={{ fontSize: 9, fontWeight: 700, color: '#047857', marginTop: 1 }}>
                                   {Math.round((1 - parseFloat(prod.costo) / parseFloat(prod.precio)) * 100)}% margen
                                 </div>
                               </>

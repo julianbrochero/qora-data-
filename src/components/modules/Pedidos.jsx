@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
 import {
@@ -467,10 +467,23 @@ const Pedidos = ({
                         {/* Fecha */}
                         <div className="ventas-col-fecha" style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: ct2 }}>{fFecha(pedido.fecha_pedido)}</div>
 
-                        {/* Total */}
+                        {/* Total + Ganancia */}
                         <div className="ventas-col-total" style={{ textAlign: 'center' }}>
                           <div style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-0.02em' }}>${fCorto(pedido.total)}</div>
                           {saldo > 0.01 && <div style={{ fontSize: 10, fontWeight: 600, color: accent, marginTop: 1 }}>Saldo: ${fCorto(saldo)}</div>}
+                          {(() => {
+                            try {
+                              const its = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || [])
+                              const gan = its.reduce((s, i) => s + (parseFloat(i.ganancia) || 0), 0)
+                              const hayGan = its.some(i => parseFloat(i.ganancia) > 0 || parseFloat(i.costo) > 0)
+                              if (!hayGan || gan === 0) return null
+                              return (
+                                <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', marginTop: 2 }}>
+                                  +${fCorto(gan)} gan.
+                                </div>
+                              )
+                            } catch { return null }
+                          })()}
                         </div>
 
                         {/* Estado */}
