@@ -42,6 +42,11 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
         ? JSON.parse(pedido.items || '[]')
         : (pedido?.items || [])
 
+    // Ganancia: solo items que tienen costo cargado
+    const itemsConGanancia = items.filter(i => parseFloat(i.costo) > 0)
+    const gananciaTotal = itemsConGanancia.reduce((s, i) => s + (parseFloat(i.ganancia) || 0), 0)
+    const hayGanancia = itemsConGanancia.length > 0
+
     const fFecha = (f) => {
         if (!f) return '—'
         try { return new Date(f).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) }
@@ -230,7 +235,10 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                     </span>
                 </div>
                 <div style={{ maxHeight: 130, overflowY: 'auto' }}>
-                    {items.length > 0 ? items.map((item, i) => (
+                    {items.length > 0 ? items.map((item, i) => {
+                        const costoItem = parseFloat(item.costo) || 0
+                        const ganItem = costoItem > 0 ? (parseFloat(item.ganancia) || 0) : null
+                        return (
                         <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderBottom: i < items.length - 1 ? `1px solid ${SYS.border}` : 'none' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <div style={{ width: 28, height: 28, borderRadius: 8, background: SYS.accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -238,20 +246,55 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                                 </div>
                                 <div>
                                     <p style={{ fontSize: 12, fontWeight: 700, color: SYS.ct1, margin: 0 }}>{item.producto || item.nombre || 'Producto'}</p>
-                                    <p style={{ fontSize: 10, color: SYS.ct3, margin: 0 }}>${fMonto(item.precio)} × {item.cantidad}</p>
+                                    <p style={{ fontSize: 10, color: SYS.ct3, margin: 0 }}>${fMonto(item.precio)} &times; {item.cantidad}</p>
                                 </div>
                             </div>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: SYS.ct1, letterSpacing: '-.01em' }}>
-                                ${fMonto((item.precio || 0) * (item.cantidad || 1))}
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                                <span style={{ fontSize: 13, fontWeight: 800, color: SYS.ct1, letterSpacing: '-.01em' }}>
+                                    ${fMonto((item.precio || 0) * (item.cantidad || 1))}
+                                </span>
+                                {ganItem !== null && (
+                                    <span style={{ fontSize: 10, fontWeight: 700, color: ganItem >= 0 ? '#059669' : '#dc2626' }}>
+                                        {ganItem >= 0 ? '+' : ''}${fMonto(ganItem)} gan.
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                    )) : (
+                    )}) : (
                         <div style={{ padding: '20px 0', textAlign: 'center' }}>
                             <p style={{ fontSize: 12, color: SYS.ct3, margin: 0 }}>No hay productos registrados</p>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* ══ GANANCIA (privada) ══ */}
+            {hayGanancia && (
+                <div style={{
+                    background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+                    border: '1px solid #86efac',
+                    borderRadius: 12, padding: '11px 14px', marginBottom: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: '#dcfce7', border: '1px solid #86efac', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
+                            🔒
+                        </div>
+                        <div>
+                            <p style={{ fontSize: 9, fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '.09em', margin: '0 0 1px' }}>
+                                Ganancia estimada · Privado
+                            </p>
+                            <p style={{ fontSize: 10, color: '#6ee7b7', margin: 0 }}>
+                                {itemsConGanancia.length}/{items.length} {items.length === 1 ? 'producto' : 'productos'} con costo
+                                {items.length > itemsConGanancia.length ? ' · cifra parcial' : ''}
+                            </p>
+                        </div>
+                    </div>
+                    <p style={{ fontSize: 19, fontWeight: 900, color: gananciaTotal >= 0 ? '#059669' : '#dc2626', letterSpacing: '-.03em', margin: 0 }}>
+                        {gananciaTotal >= 0 ? '+' : ''}${fMonto(gananciaTotal)}
+                    </p>
+                </div>
+            )}
 
             {/* ══ COBROS ══ */}
             <div style={{
