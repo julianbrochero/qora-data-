@@ -78,6 +78,11 @@ const AgregarVenta = ({
   const total       = subtotal
   const adelantoNum = parseFloat(adelanto) || 0
   const saldo       = Math.max(0, total - adelantoNum)
+  const gananciaTotal = carrito.reduce((s, i) => {
+    const c = parseFloat(i.costo) || 0
+    return s + (c > 0 ? (i.precio - c) * i.cantidad : 0)
+  }, 0)
+  const hayGanancia = carrito.some(i => parseFloat(i.costo) > 0)
 
   /* ── filtros ── */
   const clientesFilt  = clientes.filter(c =>
@@ -93,7 +98,7 @@ const AgregarVenta = ({
     setCarrito(prev => {
       const existe = prev.find(i => i.productoId === p.id)
       if (existe) return prev.map(i => i.productoId === p.id ? { ...i, cantidad: i.cantidad + 1 } : i)
-      return [...prev, { id: Date.now(), productoId: p.id, nombre: p.nombre, codigo: p.codigo, precio: p.precio, cantidad: 1 }]
+      return [...prev, { id: Date.now(), productoId: p.id, nombre: p.nombre, codigo: p.codigo, precio: p.precio, costo: p.costo ?? '', cantidad: 1 }]
     })
     setBusProducto(''); setDropProducto(false); setDropProductoIdx(-1)
     busProductoRef.current?.focus()
@@ -101,6 +106,7 @@ const AgregarVenta = ({
   const cambiarCantidad = (id, delta) => setCarrito(prev => prev.map(i => i.id === id ? { ...i, cantidad: Math.max(1, i.cantidad + delta) } : i))
   const setCantidad     = (id, val)   => setCarrito(prev => prev.map(i => i.id === id ? { ...i, cantidad: Math.max(1, parseFloat(val) || 1) } : i))
   const setPrecio       = (id, val)   => setCarrito(prev => prev.map(i => i.id === id ? { ...i, precio: parseFloat(val) || 0 } : i))
+  const setCosto        = (id, val)   => setCarrito(prev => prev.map(i => i.id === id ? { ...i, costo: val === '' ? '' : parseFloat(val) || 0 } : i))
   const quitarItem      = id          => setCarrito(prev => prev.filter(i => i.id !== id))
 
   const selCliente = c => { setClienteId(c.id); setClienteNombre(c.nombre); setBusCliente(c.nombre); setDropCliente(false); setDropClienteIdx(-1) }
@@ -123,7 +129,9 @@ const AgregarVenta = ({
     const montoFinal = overrideAdelanto !== null ? parseFloat(overrideAdelanto) || 0 : adelantoNum
     const items = carrito.map(i => ({
       id: i.id, productoId: i.productoId, producto: i.nombre,
-      precio: i.precio, cantidad: i.cantidad, subtotal: i.precio * i.cantidad
+      precio: i.precio, cantidad: i.cantidad, subtotal: i.precio * i.cantidad,
+      costo: parseFloat(i.costo) || null,
+      ganancia: parseFloat(i.costo) > 0 ? (i.precio - parseFloat(i.costo)) * i.cantidad : null,
     }))
     const final = {
       clienteId:            clienteActivo ? clienteId    : null,
@@ -343,13 +351,18 @@ const AgregarVenta = ({
                       <tr>
                         <th>PRODUCTO</th>
                         <th>PRECIO</th>
+                        <th style={{ color: '#6b7280' }}>COSTO <span style={{ fontSize: 9, fontWeight: 400, color: '#9ca3af' }}>(priv.)</span></th>
                         <th>CANTIDAD</th>
                         <th>SUBTOTAL</th>
+                        <th style={{ color: '#059669' }}>GANANCIA</th>
                         <th>ACCIONES</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {carrito.map(item => (
+                      {carrito.map(item => {
+                        const costoItem = parseFloat(item.costo) || 0
+                        const ganItem   = costoItem > 0 ? (item.precio - costoItem) * item.cantidad : null
+                        return (
                         <tr key={item.id}>
                           <td>
                             <div style={{ fontWeight: 500, color: '#111827' }}>{item.nombre}</div>
@@ -363,6 +376,13 @@ const AgregarVenta = ({
                             </div>
                           </td>
                           <td>
+                            <div style={{ position: 'relative', width: 90 }}>
+                              <span style={{ position: 'absolute', left: 7, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#9ca3af', pointerEvents: 'none' }}>$</span>
+                              <input type="number" value={item.costo ?? ''} placeholder="—" onChange={e => setCosto(item.id, e.target.value)}
+                                className="av-inline-inp av-costo-inp" style={{ paddingLeft: 18, textAlign: 'right' }} />
+                            </div>
+                          </td>
+                          <td>
                             <div className="av-qty">
                               <button className="av-qty-btn" onClick={() => cambiarCantidad(item.id, -1)}><Minus size={12} /></button>
                               <input type="number" value={item.cantidad} onChange={e => setCantidad(item.id, e.target.value)} className="av-qty-val" />
@@ -370,11 +390,14 @@ const AgregarVenta = ({
                             </div>
                           </td>
                           <td style={{ fontWeight: 600, color: '#111827' }}>{fNum(item.precio * item.cantidad)}</td>
+                          <td style={{ fontSize: 12, fontWeight: 700, color: ganItem !== null ? (ganItem >= 0 ? '#059669' : '#dc2626') : '#9ca3af', textAlign: 'right' }}>
+                            {ganItem !== null ? (ganItem >= 0 ? '+' : '') + fNum(ganItem) : '—'}
+                          </td>
                           <td>
                             <button className="av-del-btn" onClick={() => quitarItem(item.id)}><Trash2 size={15} /></button>
                           </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>
@@ -477,6 +500,14 @@ const AgregarVenta = ({
                     <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Total</span>
                     <span style={{ fontSize: 22, fontWeight: 700, color: '#16a34a' }}>{fMon(total)}</span>
                   </div>
+                  {hayGanancia && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: 8, background: gananciaTotal >= 0 ? '#f0fdf4' : '#fef2f2', border: `1px solid ${gananciaTotal >= 0 ? '#bbf7d0' : '#fecaca'}` }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: gananciaTotal >= 0 ? '#065f46' : '#991b1b' }}>Ganancia estimada</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: gananciaTotal >= 0 ? '#059669' : '#dc2626' }}>
+                        {gananciaTotal >= 0 ? '+' : ''}{fMon(gananciaTotal)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Adelanto */}
@@ -635,7 +666,8 @@ const AgregarVenta = ({
 
         @keyframes av-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
         @keyframes av-flash{0%{background:#ffffff}30%{background:#dcfce7}100%{background:#ffffff}}
-        .av-shift-flash .av-inp{animation:av-flash .7s ease forwards;border-color:#16a34a !important;}
+        .av-costo-inp{background:#fffbf0;border-color:#fde68a;}
+        .av-costo-inp:focus{border-color:#f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,.12) !important;}
 
         .gestify-date-input::-webkit-calendar-picker-indicator{position:absolute;top:0;left:0;right:0;bottom:0;width:auto;height:auto;color:transparent;background:transparent;cursor:pointer;z-index:10;}
         input[type="number"]::-webkit-inner-spin-button,

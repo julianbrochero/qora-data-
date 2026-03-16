@@ -330,6 +330,7 @@ const SistemaFacturacion = () => {
           caja={caja}
           movimientosCaja={movimientosCaja}
           cierresCaja={cierresCaja}
+          pedidos={pedidos}
           cerrarCaja={cerrarCaja}
           eliminarMovimientoCaja={eliminarMovimientoCaja}
           cargarMovimientosPorFecha={cargarMovimientosPorFecha}

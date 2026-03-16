@@ -34,6 +34,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
 
   const nombreRef = useRef(null)
   const precioRef = useRef(null)
+  const costoRef  = useRef(null)
   const stockRef = useRef(null)
   const codigoRef = useRef(null)
   const categoriaRef = useRef(null)
@@ -96,7 +97,6 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   }, [])
 
   // EDICIÓN: cargar TODOS los datos del producto directamente desde selectedItem
-  // (no depende de nuevoProducto global para evitar condiciones de carrera)
   useEffect(() => {
     if (isEdit && selectedItem?.id) {
       const cs = !!(selectedItem.controlaStock || selectedItem.controlastock)
@@ -104,6 +104,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
         nombre: selectedItem.nombre || '',
         codigo: selectedItem.codigo || '',
         precio: selectedItem.precio ?? 0,
+        costo: selectedItem.costo ?? '',
         stock: selectedItem.stock ?? 0,
         categoria: selectedItem.categoria || '',
         descripcion: selectedItem.descripcion || '',
@@ -113,6 +114,10 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   }, [selectedItem?.id])
 
   const fmtPrecio = (parseFloat(data.precio) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const precioNum = parseFloat(data.precio) || 0
+  const costoNum  = parseFloat(data.costo)  || 0
+  const margenPesos = precioNum - costoNum
+  const margenPorc  = precioNum > 0 && costoNum > 0 ? ((margenPesos / precioNum) * 100) : null
 
   const focusStyle = (e) => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
   const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
@@ -207,18 +212,33 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
           </div>
         </div>
 
-        {/* Precio + Stock */}
+        {/* Precio + Costo */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
-            <label style={labelBase}>Precio <span style={{ color: '#DC2626' }}>*</span></label>
+            <label style={labelBase}>Precio de venta <span style={{ color: '#DC2626' }}>*</span></label>
             <div style={{ position: 'relative' }}>
               <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
               <input ref={precioRef} type="number" required value={data.precio || ''} onChange={e => handleChange('precio', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
-                onKeyDown={e => handleKeyDown(e, null)}
+                onKeyDown={e => handleKeyDown(e, costoRef)}
                 onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0.01"
                 style={{ ...inputBase, paddingLeft: 30 }} />
             </div>
           </div>
+          <div>
+            <label style={labelBase}>Costo <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional, privado)</span></label>
+            <div style={{ position: 'relative' }}>
+              <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input ref={costoRef} type="number" value={data.costo ?? ''} onChange={e => handleChange('costo', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+                onKeyDown={e => handleKeyDown(e, stockRef)}
+                onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0"
+                style={{ ...inputBase, paddingLeft: 30 }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Stock */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div style={{ opacity: 0 }} />
           <div>
             <label style={labelBase}>Stock inicial</label>
             <div style={{ position: 'relative' }}>
@@ -272,6 +292,27 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
               <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Precio de venta</span>
               <span style={{ fontSize: 16, fontWeight: 800, color: accent, letterSpacing: '-.03em' }}>${fmtPrecio}</span>
             </div>
+            {costoNum > 0 && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: `1px solid rgba(51,65,57,.12)` }}>
+                  <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Costo</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>${costoNum.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                  <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Ganancia estimada</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: margenPesos >= 0 ? '#065F46' : '#991B1B' }}>
+                      {margenPesos >= 0 ? '+' : ''}${margenPesos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    {margenPorc !== null && (
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 5, background: margenPorc >= 0 ? '#D1FAE5' : '#FEE2E2', color: margenPorc >= 0 ? '#065F46' : '#991B1B' }}>
+                        {margenPorc.toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
             {csActivo && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: `1px solid rgba(51,65,57,.12)` }}>
                 <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Stock disponible</span>

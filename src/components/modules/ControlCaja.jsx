@@ -20,7 +20,7 @@ const cardShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)'
 const inputBase = { height: 32, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif" }
 const pillSel = { ...inputBase, cursor: 'pointer', appearance: 'none', paddingRight: 24, backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }
 
-const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openModal, cerrarCaja, eliminarMovimientoCaja, cargarMovimientosPorFecha, recargarDatos, onOpenMobileSidebar }) => {
+const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedidos = [], openModal, cerrarCaja, eliminarMovimientoCaja, cargarMovimientosPorFecha, recargarDatos, onOpenMobileSidebar }) => {
   const hoyStr = new Date().toISOString().split('T')[0]
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyStr)
   const [movimientosVista, setMovimientosVista] = useState(null)
@@ -96,6 +96,22 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
     total: movimientosSeguros.length,
     ultimoCierre: cierresSeguros.length > 0 ? new Date(cierresSeguros[0].fecha || cierresSeguros[0].fecha_cierre).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : "Sin cierres"
   }
+
+  // Ganancia estimada del día: suma ganancia de items en pedidos creados hoy
+  const gananciaEstimada = Array.isArray(pedidos) ? (() => {
+    let g = 0, hay = false
+    pedidos.forEach(p => {
+      const fechaPed = (p.created_at || p.fecha_pedido || '').split('T')[0]
+      if (fechaPed !== fechaSeleccionada) return
+      let items = []
+      try { items = typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []) } catch {}
+      items.forEach(i => {
+        const gan = parseFloat(i.ganancia)
+        if (!isNaN(gan)) { g += gan; hay = true }
+      })
+    })
+    return { valor: g, hay }
+  })() : { valor: 0, hay: false }
 
   const handleCerrarCaja = async () => {
     if (!cerrarCaja) return; setCerrando(true)
@@ -262,6 +278,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], openMo
           { label: 'Ingresos del día', val: `$${fMonto(resumen.ingresos)}`, icon: TrendingUp, clr: '#065F46', sub: `${movimientosSeguros.filter(m => m.tipo === 'ingreso').length} movimientos` },
           { label: 'Egresos del día', val: `$${fMonto(resumen.egresos)}`, icon: TrendingDown, clr: '#991B1B', sub: `${movimientosSeguros.filter(m => m.tipo === 'egreso').length} movimientos` },
           { label: 'Saldo actual', val: `$${fMonto(cajaSegura.saldo)}`, icon: DollarSign, clr: cajaSegura.saldo >= 0 ? '#1E40AF' : '#92400E', sub: 'Balance de caja en tiempo real' },
+          ...(gananciaEstimada.hay ? [{ label: 'Ganancia est. hoy', val: `+$${fMonto(gananciaEstimada.valor)}`, icon: TrendingUp, clr: '#059669', sub: 'Basado en costos cargados' }] : []),
           { label: 'Último cierre', val: resumen.ultimoCierre, icon: Calendar, clr: '#6B7280', sub: 'Fecha del cierre anterior' },
         ].map((s, i) => (
           <div key={i} style={{ background: '#E1E1E0', borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}

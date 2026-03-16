@@ -58,6 +58,7 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
   // Métricas
   const estadisticas = useMemo(() => {
     let ventasTotal = 0, cobradoTotal = 0, clientesActivos = new Set(), productosCount = 0
+    let costoTotal = 0, gananciaTotal = 0, itemsConCosto = 0
     facturasFiltradas.forEach(f => {
       if (f.estado !== 'anulada') {
         ventasTotal += (parseFloat(f.total) || 0)
@@ -66,10 +67,21 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
         if (nomCli) clientesActivos.add(nomCli)
         let itemsArr = []
         try { itemsArr = typeof f.items === 'string' ? JSON.parse(f.items) : (f.items || []) } catch (e) { }
-        itemsArr.forEach(i => { productosCount += (parseFloat(i.cantidad) || 0) })
+        itemsArr.forEach(i => {
+          productosCount += (parseFloat(i.cantidad) || 0)
+          const c = parseFloat(i.costo)
+          if (c > 0) {
+            const gan = parseFloat(i.ganancia)
+            costoTotal += isNaN(gan) ? c * (parseFloat(i.cantidad) || 1) : (parseFloat(i.subtotal) || 0) - (c * (parseFloat(i.cantidad) || 1))
+            gananciaTotal += isNaN(gan) ? 0 : gan
+            costoTotal    += isNaN(gan) ? 0 : c * (parseFloat(i.cantidad) || 1)
+            itemsConCosto++
+          }
+        })
       }
     })
-    return { ventasTotales: ventasTotal, cobradoTotal: cobradoTotal, clientesActivos: clientesActivos.size, productosVendidos: productosCount }
+    const margenPorc = gananciaTotal > 0 && (gananciaTotal + costoTotal) > 0 ? (gananciaTotal / (gananciaTotal + costoTotal)) * 100 : null
+    return { ventasTotales: ventasTotal, cobradoTotal, clientesActivos: clientesActivos.size, productosVendidos: productosCount, costoTotal, gananciaTotal, margenPorc, hayGanancias: itemsConCosto > 0 }
   }, [facturasFiltradas])
 
   // Gráfico semanal
@@ -114,12 +126,23 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
         const d = new Date((p.created_at || p.fecha || '').split('T')[0] + 'T00:00:00')
         return d.getFullYear() === anioSeleccionado && d.getMonth() === idx
       }) : []
+      // Calcular ganancia del mes desde items JSON
+      let gananciaMes = 0, hayGanMes = false
+      facturasDelMes.forEach(f => {
+        let items = []
+        try { items = typeof f.items === 'string' ? JSON.parse(f.items) : (f.items || []) } catch {}
+        items.forEach(i => {
+          const gan = parseFloat(i.ganancia)
+          if (!isNaN(gan)) { gananciaMes += gan; hayGanMes = true }
+        })
+      })
       return {
         nombre, idx,
         totalFacturado: facturasDelMes.reduce((s, f) => s + (parseFloat(f.total) || 0), 0),
         totalCobrado: facturasDelMes.reduce((s, f) => s + (parseFloat(f.montopagado) || 0), 0),
         cantFacturas: facturasDelMes.length,
-        cantPedidos: pedidosDelMes.length
+        cantPedidos: pedidosDelMes.length,
+        gananciaMes, hayGanMes,
       }
     })
   }, [facturasSafe, pedidos, anioSeleccionado])
@@ -132,6 +155,10 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
     { label: 'Total Cobrado', val: `$${fCorto(estadisticas.cobradoTotal)}`, icon: TrendingUp, color: '#065F46' },
     { label: 'Clientes Atendidos', val: estadisticas.clientesActivos, icon: Users, color: '#6D28D9' },
     { label: 'Unidades Vendidas', val: estadisticas.productosVendidos, icon: Package, color: '#92400E' },
+    ...(estadisticas.hayGanancias ? [
+      { label: 'Ganancia Bruta', val: `$${fCorto(estadisticas.gananciaTotal)}`, icon: TrendingUp, color: '#059669' },
+      { label: 'Margen promedio', val: estadisticas.margenPorc !== null ? `${estadisticas.margenPorc.toFixed(1)}%` : '—', icon: BarChart3, color: '#D97706' },
+    ] : [])
   ]
 
   return (
@@ -276,8 +303,8 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: surface2, borderBottom: `1px solid ${border}` }}>
                 <tr>
-                  {['Mes', 'Facturas', 'Pedidos', 'Facturado', 'Cobrado', 'Pendiente'].map((h, i) => (
-                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i === 0 ? 'left' : 'right' }}>{h}</th>
+                  {['Mes', 'Facturas', 'Pedidos', 'Facturado', 'Cobrado', 'Ganancia', 'Pendiente'].map((h, i) => (
+                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: i === 5 ? '#059669' : ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i === 0 ? 'left' : 'right' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -302,6 +329,9 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
                       <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 600, color: ct1 }}>{m.cantPedidos || '—'}</td>
                       <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: ct1 }}>{m.totalFacturado > 0 ? `$${fCorto(m.totalFacturado)}` : '—'}</td>
                       <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#065F46' }}>{m.totalCobrado > 0 ? `$${fCorto(m.totalCobrado)}` : '—'}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12, fontWeight: 700, color: '#059669' }}>
+                        {m.hayGanMes ? `+$${fCorto(m.gananciaMes)}` : <span style={{ color: ct3, fontWeight: 400, fontSize: 11 }}>sin datos</span>}
+                      </td>
                       <td style={{ padding: '12px 16px', textAlign: 'right', fontSize: 12 }}>
                         {pend > 0 ? <span style={{ fontWeight: 700, color: '#991B1B' }}>${fCorto(pend)}</span>
                           : m.totalFacturado > 0 ? <span style={{ fontWeight: 600, color: '#065F46' }}>✓ Saldado</span>
@@ -318,6 +348,11 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
                   <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 12, fontWeight: 800, color: ct1 }}>{resumenMensual.reduce((s, m) => s + m.cantPedidos, 0)}</td>
                   <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: ct1 }}>${fCorto(resumenMensual.reduce((s, m) => s + m.totalFacturado, 0))}</td>
                   <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: '#065F46' }}>${fCorto(resumenMensual.reduce((s, m) => s + m.totalCobrado, 0))}</td>
+                  <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: '#059669' }}>
+                    {resumenMensual.some(m => m.hayGanMes)
+                      ? `+$${fCorto(resumenMensual.reduce((s, m) => s + m.gananciaMes, 0))}`
+                      : <span style={{ color: ct3, fontWeight: 400, fontSize: 11 }}>sin datos</span>}
+                  </td>
                   <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: 13, fontWeight: 800, color: '#991B1B' }}>${fCorto(resumenMensual.reduce((s, m) => s + Math.max(0, m.totalFacturado - m.totalCobrado), 0))}</td>
                 </tr>
               </tfoot>
