@@ -153,6 +153,22 @@ const Presupuestos = ({
         .pres-row:hover { background: rgba(51,65,57,.035) !important; }
         .pres-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(48,54,47,.12); }
         .btn-action:hover { background: rgba(51,65,57,.12) !important; }
+        
+        /* ── Responsive Table ── */
+        .pres-grid { display: grid; grid-template-columns: 110px 1fr 110px 100px 90px 180px; gap: 0; align-items: center; }
+        .pres-col-label { display: none; font-size: 11px; font-weight: 600; color: #8B8982; text-transform: uppercase; letter-spacing: .05em; }
+        
+        @media (max-width: 800px) {
+            .pres-header-row { display: none !important; }
+            .pres-grid { display: flex !important; flex-direction: column; align-items: stretch !important; gap: 8px !important; padding: 16px 14px !important; }
+            .pres-grid > div { display: flex; justify-content: space-between; align-items: center; width: 100%; min-width: 0; }
+            .pres-col-label { display: block; }
+            
+            /* Specific column adjustments */
+            .pres-col-cliente { flex-direction: column; align-items: flex-end !important; text-align: right; }
+            .pres-col-cliente p { max-width: 100%; }
+            .pres-col-estado { border-top: 1px solid rgba(48,54,47,.08); padding-top: 12px; margin-top: 4px; }
+        }
       `}</style>
 
             {/* ═══════════ HEADER ═══════════ */}
@@ -248,7 +264,7 @@ const Presupuestos = ({
                 <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
 
                     {/* Header tabla */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px 100px 90px 180px', gap: 0, padding: '8px 14px', borderBottom: `1px solid ${border}`, background: '#EFEFED' }}>
+                    <div className="pres-header-row pres-grid" style={{ padding: '8px 14px', borderBottom: `1px solid ${border}`, background: '#EFEFED' }}>
                         {['Número', 'Cliente', 'Fecha', 'Válido', 'Total', 'Estado'].map(h => (
                             <span key={h} style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em' }}>{h}</span>
                         ))}
@@ -273,33 +289,46 @@ const Presupuestos = ({
                             const estado = calcEstado(pres)
                             const items = (() => { try { return JSON.parse(pres.items || '[]') } catch { return [] } })()
                             return (
-                                <div key={pres.id} className="pres-row"
-                                    style={{ display: 'grid', gridTemplateColumns: '110px 1fr 110px 100px 90px 180px', gap: 0, padding: '11px 14px', borderBottom: idx < filtrados.length - 1 ? `1px solid ${border}` : 'none', transition: 'background .13s', alignItems: 'center' }}>
+                                <div key={pres.id} className="pres-row pres-grid"
+                                    style={{ padding: '11px 14px', borderBottom: idx < filtrados.length - 1 ? `1px solid ${border}` : 'none', transition: 'background .13s' }}>
 
                                     {/* Número */}
                                     <div>
+                                        <span className="pres-col-label">Número</span>
                                         <span style={{ fontSize: 12, fontWeight: 700, color: ct1, fontVariantNumeric: 'tabular-nums' }}>{pres.numero}</span>
                                     </div>
 
                                     {/* Cliente */}
-                                    <div style={{ minWidth: 0 }}>
-                                        <p style={{ fontSize: 12, fontWeight: 600, color: ct1, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {pres.cliente || <span style={{ color: ct3, fontWeight: 400 }}>Sin cliente</span>}
-                                        </p>
-                                        <p style={{ fontSize: 10, color: ct3, margin: '2px 0 0' }}>{items.length} producto{items.length !== 1 ? 's' : ''}</p>
+                                    <div className="pres-col-cliente">
+                                        <span className="pres-col-label" style={{ alignSelf: 'flex-start' }}>Cliente</span>
+                                        <div>
+                                            <p style={{ fontSize: 12, fontWeight: 600, color: ct1, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {pres.cliente || <span style={{ color: ct3, fontWeight: 400 }}>Sin cliente</span>}
+                                            </p>
+                                            <p style={{ fontSize: 10, color: ct3, margin: '2px 0 0' }}>{items.length} producto{items.length !== 1 ? 's' : ''}</p>
+                                        </div>
                                     </div>
 
                                     {/* Fecha */}
-                                    <div style={{ fontSize: 11, color: ct2 }}>{fDate(pres.fecha)}</div>
+                                    <div>
+                                        <span className="pres-col-label">Fecha</span>
+                                        <div style={{ fontSize: 11, color: ct2 }}>{fDate(pres.fecha)}</div>
+                                    </div>
 
                                     {/* Validez */}
-                                    <div style={{ fontSize: 11, color: ct3 }}>{pres.validez ?? 7} días</div>
+                                    <div>
+                                        <span className="pres-col-label">Válido</span>
+                                        <div style={{ fontSize: 11, color: ct3 }}>{pres.validez ?? 7} días</div>
+                                    </div>
 
                                     {/* Total */}
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: accent }}>${fNum(pres.total)}</div>
+                                    <div>
+                                        <span className="pres-col-label">Total</span>
+                                        <div style={{ fontSize: 13, fontWeight: 700, color: accent }}>${fNum(pres.total)}</div>
+                                    </div>
 
                                     {/* Estado + Acciones */}
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                                    <div className="pres-col-estado" style={{ gap: 6 }}>
                                         <EstadoPill estado={estado} />
 
                                         <div style={{ display: 'flex', gap: 4 }}>
