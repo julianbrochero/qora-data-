@@ -46,38 +46,38 @@ export default function Login() {
       className="flex min-h-screen w-full bg-[#282A28]"
     >
       {/* ══════════════ IZQUIERDA — FORMULARIO ══════════════ */}
-      <div className="relative flex w-full flex-col justify-between py-8 px-6 sm:py-10 sm:px-8 md:w-[45%] lg:px-16 xl:px-24">
+      <div className="relative flex w-full flex-col justify-between py-6 px-6 sm:py-8 sm:px-8 md:w-[45%] lg:px-16 xl:px-24">
 
         {/* ── Contenido central */}
         <div className="mx-auto w-full max-w-[400px] flex flex-col items-center">
           
           {/* Logo centrado */}
-          <div className="mb-4 sm:mb-6 lg:mb-8 flex justify-center w-full">
-            <img src="/esquinader.png" alt="Gestify" className="h-[75px] sm:h-[95px] xl:h-[110px] w-auto object-contain drop-shadow-sm" />
+          <div className="mb-2 sm:mb-4 lg:mb-6 flex justify-center w-full">
+            <img src="/esquinader.png" alt="Gestify" className="h-[85px] sm:h-[110px] xl:h-[125px] w-auto object-contain drop-shadow-sm" />
           </div>
 
           {/* Tagline */}
-          <div className="mb-5 sm:mb-8 lg:mb-10 text-center">
-            <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
+          <div className="mb-4 sm:mb-5 lg:mb-8 text-center">
+            <p className="mb-2 md:mb-3 text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
               Sistema de Gestión Empresarial
             </p>
             <h1
               style={{ letterSpacing: "-0.05em" }}
-              className="text-[32px] sm:text-[40px] md:text-[48px] font-black leading-tight text-white"
+              className="text-[28px] sm:text-[36px] lg:text-[44px] font-black leading-tight text-white"
             >
               Iniciar Sesión
             </h1>
-            <p className="mt-2 text-[13px] sm:text-[16px] font-medium leading-relaxed text-gray-400">
+            <p className="mt-1 lg:mt-2 text-[12px] sm:text-[14px] lg:text-[15px] font-medium leading-relaxed text-gray-400">
               Accedé a tu panel de gestión de forma segura.
             </p>
           </div>
 
           {/* ── Feature pills ── */}
-          <div className="mb-5 sm:mb-8 lg:mb-10 grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 w-full">
+          <div className="mb-4 sm:mb-6 lg:mb-8 grid grid-cols-2 gap-2 lg:gap-3 xl:gap-4 w-full">
             {features.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 sm:gap-3 rounded-[14px] bg-white/5 p-2.5 sm:p-3 lg:p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/20 shadow-sm group"
+                className="flex items-center gap-2 sm:gap-3 rounded-[12px] sm:rounded-[14px] bg-white/5 p-2.5 sm:p-3 lg:p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/20 shadow-sm group"
               >
                 <div className="p-2 sm:p-2.5 bg-white/10 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
                   {f.icon}
@@ -112,14 +112,14 @@ export default function Login() {
           </button>
 
           {/* ── Aviso datos seguros */}
-          <div className="mt-5 sm:mt-6 lg:mt-8 flex items-center justify-center gap-2 text-[11px] sm:text-[12px] lg:text-[13px] font-semibold text-gray-500 text-center">
-            <ShieldCheck size={14} className="text-[#DCED31] flex-shrink-0 sm:w-4 sm:h-4" />
+          <div className="mt-4 sm:mt-5 lg:mt-8 flex items-center justify-center gap-2 text-[10px] sm:text-[12px] lg:text-[13px] font-semibold text-gray-500 text-center">
+            <ShieldCheck size={14} className="text-[#DCED31] flex-shrink-0" />
             <p>Tus datos están protegidos. No almacenamos contraseñas.</p>
           </div>
         </div>
 
         {/* ── Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] font-bold text-gray-500 mt-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] font-bold text-gray-500 mt-4 md:mt-auto pt-2">
           <span className="select-none">© {new Date().getFullYear()} Gestify. Todos los derechos reservados.</span>
           <div className="flex gap-4 sm:gap-5">
             <button
