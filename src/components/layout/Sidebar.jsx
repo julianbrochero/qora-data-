@@ -107,10 +107,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
         <div className="flex items-center overflow-hidden flex-shrink-0 relative"
           style={{ height: 84, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
 
-          {/* Botón cerrar móvil */}
-          <button onClick={onClose} className="md:hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
-            <X size={14} />
-          </button>
+
 
           <img
             src="/logogestify3.png"
