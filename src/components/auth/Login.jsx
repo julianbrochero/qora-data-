@@ -52,12 +52,12 @@ export default function Login() {
         <div className="mx-auto w-full max-w-[400px] flex flex-col items-center">
           
           {/* Logo centrado */}
-          <div className="mb-8 flex justify-center w-full">
-            <img src="/esquinader.png" alt="Gestify" className="h-[80px] sm:h-[110px] w-auto object-contain drop-shadow-sm" />
+          <div className="mb-4 sm:mb-6 lg:mb-8 flex justify-center w-full">
+            <img src="/esquinader.png" alt="Gestify" className="h-[75px] sm:h-[95px] xl:h-[110px] w-auto object-contain drop-shadow-sm" />
           </div>
 
           {/* Tagline */}
-          <div className="mb-6 sm:mb-10 text-center">
+          <div className="mb-5 sm:mb-8 lg:mb-10 text-center">
             <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
               Sistema de Gestión Empresarial
             </p>
@@ -73,11 +73,11 @@ export default function Login() {
           </div>
 
           {/* ── Feature pills ── */}
-          <div className="mb-6 sm:mb-10 grid grid-cols-2 gap-3 sm:gap-4 w-full">
+          <div className="mb-5 sm:mb-8 lg:mb-10 grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 w-full">
             {features.map((f, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 sm:gap-3 rounded-2xl bg-white/5 p-3 sm:p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/20 shadow-sm group"
+                className="flex items-center gap-2 sm:gap-3 rounded-[14px] bg-white/5 p-2.5 sm:p-3 lg:p-4 transition-all hover:bg-white/10 border border-white/5 hover:border-white/20 shadow-sm group"
               >
                 <div className="p-2 sm:p-2.5 bg-white/10 rounded-xl group-hover:scale-110 transition-transform flex-shrink-0">
                   {f.icon}
@@ -91,7 +91,7 @@ export default function Login() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="group relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-2xl border border-transparent bg-white py-5 text-[16px] font-bold text-[#1e2320] shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="group relative flex w-full items-center justify-center gap-3 sm:gap-4 overflow-hidden rounded-[14px] sm:rounded-2xl border border-transparent bg-white py-3.5 sm:py-4 lg:py-5 text-[14px] sm:text-[16px] font-bold text-[#1e2320] shadow-xl transition-all hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {/* Fondo hover sutil */}
             <span className="absolute inset-0 bg-black opacity-0 transition-opacity group-hover:opacity-[0.04]" />
@@ -112,8 +112,8 @@ export default function Login() {
           </button>
 
           {/* ── Aviso datos seguros */}
-          <div className="mt-6 sm:mt-8 flex items-center justify-center gap-2.5 text-[12px] sm:text-[13px] font-semibold text-gray-500 text-center">
-            <ShieldCheck size={16} className="text-[#DCED31] flex-shrink-0" />
+          <div className="mt-5 sm:mt-6 lg:mt-8 flex items-center justify-center gap-2 text-[11px] sm:text-[12px] lg:text-[13px] font-semibold text-gray-500 text-center">
+            <ShieldCheck size={14} className="text-[#DCED31] flex-shrink-0 sm:w-4 sm:h-4" />
             <p>Tus datos están protegidos. No almacenamos contraseñas.</p>
           </div>
         </div>
