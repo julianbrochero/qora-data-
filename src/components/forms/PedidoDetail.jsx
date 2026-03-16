@@ -170,14 +170,25 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                         </p>
                     </div>
                 </div>
-                <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '4px 10px', borderRadius: 999, fontSize: 10, fontWeight: 700,
-                    background: estadoActual.bg, color: estadoActual.color, border: `1px solid ${estadoActual.border}`,
-                }}>
-                    <EstadoIcon size={10} />
-                    {estadoActual.label}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {pedido?.canal_venta && (
+                        <span style={{
+                            display: 'inline-flex', alignItems: 'center',
+                            padding: '4px 8px', borderRadius: 999, fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                            background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.8)', border: '1px solid rgba(255,255,255,.15)',
+                        }}>
+                            {pedido.canal_venta}
+                        </span>
+                    )}
+                    <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        padding: '4px 10px', borderRadius: 999, fontSize: 10, fontWeight: 700,
+                        background: estadoActual.bg, color: estadoActual.color, border: `1px solid ${estadoActual.border}`,
+                    }}>
+                        <EstadoIcon size={10} />
+                        {estadoActual.label}
+                    </span>
+                </div>
             </div>
 
             {/* ══ INFO PRINCIPAL ══ */}
