@@ -48,12 +48,14 @@ export default function Login() {
       {/* ══════════════ IZQUIERDA — FORMULARIO ══════════════ */}
       <div className="relative flex w-full flex-col justify-between py-8 px-6 sm:py-10 sm:px-8 md:w-[45%] lg:px-16 xl:px-24">
 
-        <div className="flex items-center">
-          <img src="/esquina.png" alt="Gestify" className="h-[70px] sm:h-[100px] w-auto object-contain drop-shadow-sm" />
-        </div>
-
         {/* ── Contenido central */}
         <div className="mx-auto w-full max-w-[400px] flex flex-col items-center">
+          
+          {/* Logo centrado */}
+          <div className="mb-8 flex justify-center w-full">
+            <img src="/esquinader.png" alt="Gestify" className="h-[55px] sm:h-[75px] w-auto object-contain drop-shadow-sm" />
+          </div>
+
           {/* Tagline */}
           <div className="mb-6 sm:mb-10 text-center">
             <p className="mb-3 sm:mb-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
