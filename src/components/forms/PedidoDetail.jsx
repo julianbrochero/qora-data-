@@ -141,7 +141,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             <style>{`
                 .pd-root * { scrollbar-width: none; -ms-overflow-style: none; }
                 .pd-root *::-webkit-scrollbar { display: none; width: 0; height: 0; }
-                .pd-card { padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; }
+                .pd-card { padding: 6px 10px; border-radius: 8px; }
             `}</style>
 
             {/* ── Mensaje éxito ── */}
@@ -156,7 +156,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             )}
 
             {/* ══ HEADER ══ */}
-            <div style={{ background: SYS.header, borderRadius: 10, padding: '10px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ background: SYS.header, borderRadius: 10, padding: '8px 12px', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: SYS.accentL, border: `1px solid rgba(220,237,49,.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ShoppingBag size={15} color={SYS.lime} />
@@ -181,7 +181,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             </div>
 
             {/* ══ INFO PRINCIPAL ══ */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 6 }}>
                 {/* Cliente */}
                 <div className="pd-card" style={{ background: SYS.surface, border: `1px solid ${SYS.border}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
@@ -232,14 +232,14 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             </div>
 
             {/* ══ PRODUCTOS ══ */}
-            <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 8 }}>
+            <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 6 }}>
                 <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${SYS.border}`, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Package size={11} color={SYS.accent} />
                     <span style={{ fontSize: 10, fontWeight: 700, color: SYS.ct1, textTransform: 'uppercase', letterSpacing: '.06em' }}>
                         Productos ({items.length})
                     </span>
                 </div>
-                <div style={{ maxHeight: 'min(15vh, 100px)', overflowY: 'auto' }}>
+                <div style={{ maxHeight: 'min(12vh, 85px)', overflowY: 'auto' }}>
                     {items.length > 0 ? items.map((item, i) => {
                         const costoItem = parseFloat(item.costo) || 0
                         const ganItem = costoItem > 0 ? (parseFloat(item.ganancia) || 0) : null
@@ -278,7 +278,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                 <div style={{
                     background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
                     border: '1px solid #86efac',
-                    borderRadius: 10, padding: '8px 12px', marginBottom: 8,
+                    borderRadius: 10, padding: '6px 12px', marginBottom: 6,
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -304,7 +304,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             <div style={{
                 borderRadius: 10, border: `2px solid ${estaPagadoCompleto ? '#bbf7d0' : 'rgba(51,65,57,.2)'}`,
                 background: estaPagadoCompleto ? '#f0fdf4' : SYS.surface,
-                padding: '10px 12px', marginBottom: 8,
+                padding: '8px 12px', marginBottom: 6,
             }}>
                 {/* título */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
@@ -328,7 +328,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                 </div>
 
                 {/* montos */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 6 }}>
                     <div style={{ background: SYS.surface2, border: `1px solid ${SYS.border}`, borderRadius: 8, padding: '6px 0', textAlign: 'center' }}>
                         <p style={{ fontSize: 8, color: SYS.ct3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 2px' }}>Total</p>
                         <p style={{ fontSize: 11, fontWeight: 800, color: SYS.ct1, margin: 0 }}>${fMonto(total)}</p>
@@ -411,7 +411,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             </div>
 
             {/* ══ NOTAS ══ */}
-            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '6px 10px', marginBottom: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                     <Edit2 size={10} color="#92400e" />
                     <span style={{ fontSize: 9, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '.07em' }}>Notas</span>
@@ -427,7 +427,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             </div>
 
             {/* ══ ESTADO OPERATIVO ══ */}
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 6 }}>
                 <p style={{ fontSize: 8, fontWeight: 800, color: SYS.ct3, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 6 }}>
                     Estado Operativo
                 </p>

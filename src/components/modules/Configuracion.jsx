@@ -65,7 +65,7 @@ const SaveBtn = ({ onClick, disabled, ok, okLabel, label, icon: Icon }) => (
     <button
         onClick={onClick}
         disabled={disabled}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, width: '100%', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: disabled ? 'wait' : 'pointer', transition: 'all .15s', background: ok ? '#22C55E' : '#DCED31', color: ok ? '#fff' : '#282A28', fontFamily: "'Inter',sans-serif", opacity: disabled ? 0.7 : 1 }}>
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, width: '100%', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: disabled ? 'wait' : 'pointer', transition: 'all .15s', background: ok ? '#22C55E' : '#1e2320', color: ok ? '#fff' : '#DCED31', fontFamily: "'Inter',sans-serif", opacity: disabled ? 0.7 : 1 }}>
         {ok ? <><CheckCircle size={13} /> {okLabel}</> : disabled ? 'Guardando...' : <><Icon size={13} /> {label}</>}
     </button>
 )
@@ -207,7 +207,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                             </div>
                             {!planActivo && (
                                 <button onClick={handleSubscribe} disabled={loadingSub}
-                                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', opacity: loadingSub ? .7 : 1 }}>
+                                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#1e2320', color: '#DCED31', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', opacity: loadingSub ? .7 : 1 }}>
                                     <Zap size={14} strokeWidth={2.5} /> {loadingSub ? 'Cargando...' : 'Suscribirme Ahora'}
                                 </button>
                             )}
