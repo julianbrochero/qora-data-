@@ -53,7 +53,7 @@ export default function Login() {
           
           {/* Logo centrado */}
           <div className="mb-8 flex justify-center w-full">
-            <img src="/esquinader.png" alt="Gestify" className="h-[55px] sm:h-[75px] w-auto object-contain drop-shadow-sm" />
+            <img src="/esquinader.png" alt="Gestify" className="h-[80px] sm:h-[110px] w-auto object-contain drop-shadow-sm" />
           </div>
 
           {/* Tagline */}
