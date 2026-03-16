@@ -51,6 +51,7 @@ const SistemaFacturacion = () => {
   const [modalData, setModalData] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [pedidoAEditar, setPedidoAEditar] = useState(null);
 
   const {
     // Estados existentes
@@ -132,6 +133,13 @@ const SistemaFacturacion = () => {
     }
 
     console.log('🟢 Abriendo modal:', type, data);
+
+    // 🖊 'editar-pedido' → navega al módulo AgregarVenta con el pedido cargado
+    if (type === 'editar-pedido' && data) {
+      setPedidoAEditar(data)
+      setActiveModule('agregar-venta')
+      return
+    }
 
     setModalType(type);
     setModalData(data);
@@ -371,11 +379,13 @@ const SistemaFacturacion = () => {
           {...commonProps}
           clientes={clientes}
           productos={productos}
+          pedidoAEditar={pedidoAEditar}
           formActions={{
             agregarPedidoSolo,
+            actualizarPedido,
             recargarTodosLosDatos,
           }}
-          onVentaCreada={() => setActiveModule('pedidos')}
+          onVentaCreada={() => { setPedidoAEditar(null); setActiveModule('pedidos') }}
         />
       ),
       configuracion: <Configuracion {...commonProps} />,

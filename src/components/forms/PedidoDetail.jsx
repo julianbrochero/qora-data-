@@ -158,7 +158,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                     </div>
                     <div>
                         <p style={{ fontSize: 10, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600, marginBottom: 2 }}>
-                            Detalle de Venta
+                            Detalle Venta
                         </p>
                         <p style={{ fontSize: 15, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', lineHeight: 1 }}>
                             {pedido?.codigo || 'N/A'}
@@ -277,8 +277,8 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 8, background: '#dcfce7', border: '1px solid #86efac', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
-                            🔒
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: '#dcfce7', border: '1px solid #86efac', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#059669' }} />
                         </div>
                         <div>
                             <p style={{ fontSize: 9, fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '.09em', margin: '0 0 1px' }}>

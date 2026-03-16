@@ -29,6 +29,7 @@ const AgregarVenta = ({
   openModal,
   onOpenMobileSidebar,
   onVentaCreada,
+  pedidoAEditar = null,
 }) => {
 
   /* ── estado ── */
@@ -63,6 +64,33 @@ const AgregarVenta = ({
   const guardarRef     = useRef(null)
 
   useEffect(() => { setTimeout(() => busProductoRef.current?.focus(), 80) }, [])
+
+  // ━━ Precargar form cuando llega pedidoAEditar ━━
+  useEffect(() => {
+    if (!pedidoAEditar) return
+    // Cliente
+    if (pedidoAEditar.cliente_id) { setClienteId(pedidoAEditar.cliente_id); setClienteNombre(pedidoAEditar.cliente_nombre || ''); setBusCliente(pedidoAEditar.cliente_nombre || '') }
+    // Items del carrito
+    let itemsArr = []
+    try { itemsArr = typeof pedidoAEditar.items === 'string' ? JSON.parse(pedidoAEditar.items) : (pedidoAEditar.items || []) } catch {}
+    setCarrito(itemsArr.map((i, idx) => ({
+      id: Date.now() + idx,
+      productoId: i.productoId || i.producto_id || null,
+      nombre: i.producto || i.nombre || '',
+      codigo: i.codigo || '',
+      precio: parseFloat(i.precio) || 0,
+      costo: i.costo ?? '',
+      cantidad: parseFloat(i.cantidad) || 1,
+    })))
+    // Resto de campos
+    if (pedidoAEditar.fecha_pedido) setFechaPedido(pedidoAEditar.fecha_pedido.slice(0, 10))
+    if (pedidoAEditar.fecha_entrega_estimada) setFechaEntrega(pedidoAEditar.fecha_entrega_estimada.slice(0, 10))
+    if (pedidoAEditar.estado) setEstado(pedidoAEditar.estado)
+    if (pedidoAEditar.notas) setNotas(pedidoAEditar.notas)
+    if (pedidoAEditar.canal_venta) setCanalVenta(pedidoAEditar.canal_venta)
+    if (pedidoAEditar.monto_abonado) setAdelanto(String(pedidoAEditar.monto_abonado))
+    if (pedidoAEditar.metodo_pago) setMetodoPago(pedidoAEditar.metodo_pago)
+  }, [pedidoAEditar?.id])
 
   useEffect(() => {
     const fn = e => {
@@ -143,18 +171,36 @@ const AgregarVenta = ({
       canal_venta:  canalVenta || null,
     }
     try {
-      const r = await formActions?.agregarPedidoSolo?.(final)
+      let r
+      if (pedidoAEditar?.id) {
+        // Modo edición: actualizar pedido existente
+        r = await formActions?.actualizarPedido?.(pedidoAEditar.id, {
+          cliente_id: final.clienteId,
+          cliente_nombre: final.clienteNombre,
+          fecha_pedido: final.fechaPedido,
+          fecha_entrega_estimada: final.fechaEntregaEstimada || null,
+          estado: final.estado,
+          notas: final.notas,
+          items: JSON.stringify(final.items),
+          monto_abonado: final.montoPagado,
+          saldo_pendiente: Math.max(0, final.total - final.montoPagado),
+          total: final.total,
+          canal_venta: final.canal_venta,
+        })
+      } else {
+        r = await formActions?.agregarPedidoSolo?.(final)
+      }
       if (r?.success) {
         formActions?.recargarTodosLosDatos?.()
-        setExito(r.mensaje || '¡Venta creada exitosamente!')
-        setTimeout(() => { setExito(null); limpiarTodo() }, 2200)
+        setExito(pedidoAEditar?.id ? '✅ Venta actualizada exitosamente!' : r.mensaje || '¡Venta creada exitosamente!')
+        setTimeout(() => { setExito(null); limpiarTodo(); onVentaCreada?.() }, 2200)
       } else {
         toast.error('Error: ' + (r?.mensaje || 'Desconocido'))
       }
     } catch (e) { toast.error('Error: ' + e.message) }
     finally { setIsProcessing(false) }
   }, [carrito, clienteActivo, clienteId, clienteNombre, fechaPedido, fechaEntrega,
-      estado, notas, adelantoNum, total, canalVenta, puedeGuardar, formActions])
+      estado, notas, adelantoNum, total, canalVenta, puedeGuardar, formActions, pedidoAEditar])
 
   /* ── atajos ── */
   useEffect(() => {
@@ -192,7 +238,9 @@ const AgregarVenta = ({
         <div className="av-header-l">
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1, margin: 0 }}>Nueva Venta</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1, margin: 0 }}>
+              {pedidoAEditar ? `Editando · ${pedidoAEditar.codigo || 'Venta'}` : 'Nueva Venta'}
+            </h2>
           </div>
         </div>
         <div className="av-header-r">
