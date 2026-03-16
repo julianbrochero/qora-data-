@@ -237,7 +237,7 @@ const AgregarVenta = ({
       <header className="av-header">
         <div className="av-header-l">
           {onOpenMobileSidebar && (
-            <button onClick={onOpenMobileSidebar} className="av-menu-btn md:hidden">
+            <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
               <Menu size={16} strokeWidth={2} />
             </button>
           )}
@@ -598,13 +598,24 @@ const AgregarVenta = ({
 
       <style>{`
         /* ── base ── */
-        .av-root{height:100vh;display:flex;flex-direction:column;background:#F8F9FA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:hidden;}
+        .av-root{height:100vh;height:100dvh;display:flex;flex-direction:column;background:#F8F9FA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:hidden;}
+
+        /* Ocultar scrollbars globales */
+        .av-root * {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .av-root *::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+        }
 
         /* ── header oscuro (igual a otros módulos) ── */
-        .av-header{background:#282A28;border-bottom:1px solid rgba(255,255,255,.08);padding:0 clamp(16px,3vw,28px);height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:14px;z-index:50;}
+        .av-header{background:#282A28;border-bottom:1px solid rgba(255,255,255,.08);padding:0 clamp(16px,2vw,28px);height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:14px;z-index:50;}
         .av-header-l{display:flex;align-items:center;gap:12px;}
         .av-header-r{display:flex;align-items:center;gap:8px;}
-        .av-menu-btn{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
         .av-btn-header-ghost{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);transition:all .13s;}
         .av-btn-header-ghost:hover{color:#fff;border-color:rgba(255,255,255,.45);}
         .av-btn-header-save{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#DCED31;border:2px solid rgba(0,0,0,.15);color:#282A28;transition:opacity .13s;}
@@ -612,107 +623,89 @@ const AgregarVenta = ({
         .av-btn-header-save:disabled{opacity:.4;cursor:not-allowed;}
 
         /* ── main ── */
-        .av-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:clamp(14px,2vw,24px) clamp(32px,5vw,72px);}
-        .av-success{display:flex;align-items:center;gap:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:12px;flex-shrink:0;animation:av-in .3s ease;}
+        .av-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:clamp(10px,1.5vw,16px) clamp(16px,3vw,36px);}
+        .av-success{display:flex;align-items:center;gap:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:10px;flex-shrink:0;animation:av-in .3s ease;}
         .av-success-ico{width:30px;height:30px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
         .av-success-t{font-size:13px;font-weight:600;color:#166534;margin:0;}
         .av-success-m{font-size:12px;color:#15803d;margin:0;}
         .av-success-x{margin-left:auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#16a34a;cursor:pointer;border-radius:6px;flex-shrink:0;}
         .av-success-x:hover{background:#dcfce7;}
 
-        .av-layout{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr clamp(320px,32vw,460px);gap:clamp(14px,2vw,28px);}
-        .av-col{display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding-right:2px;padding-bottom:4px;}
-        .av-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-bottom:4px;}
+        .av-layout{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr clamp(280px,30vw,380px);gap:clamp(10px,2vw,20px);}
+        .av-col{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-right:2px;padding-bottom:2px;}
+        .av-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-bottom:2px;}
 
-        /* scrollbar fino */
-        .av-col::-webkit-scrollbar,.av-sidebar::-webkit-scrollbar{width:4px;}
-        .av-col::-webkit-scrollbar-track,.av-sidebar::-webkit-scrollbar-track{background:transparent;}
-        .av-col::-webkit-scrollbar-thumb,.av-sidebar::-webkit-scrollbar-thumb{background:rgba(48,54,47,.18);border-radius:4px;}
+        /* scrollbar fino (ya ocultamos con display none, pero esto es fallback si algo falla) */
+        .av-col::-webkit-scrollbar,.av-sidebar::-webkit-scrollbar{width:0px;}
 
         /* ── cards ── */
         .av-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;flex-shrink:0;}
-        .av-card-hd{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid #f3f4f6;border-radius:12px 12px 0 0;}
+        .av-card-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #f3f4f6;border-radius:12px 12px 0 0;}
         .av-ico{color:#334139;flex-shrink:0;}
-        .av-card-ttl{font-size:14px;font-weight:600;color:#111827;}
-        .av-card-bd{padding:16px 20px;}
+        .av-card-ttl{font-size:13px;font-weight:600;color:#111827;}
+        .av-card-bd{padding:12px 16px;}
 
         /* carrito crece para ocupar espacio disponible */
         .av-card-carrito{background:#fff;border:1px solid #e5e7eb;border-radius:12px;flex:1;min-height:0;display:flex;flex-direction:column;}
         .av-carrito-body{flex:1;overflow-y:auto;min-height:80px;}
-        .av-carrito-body::-webkit-scrollbar{width:3px;}
-        .av-carrito-body::-webkit-scrollbar-thumb{background:rgba(48,54,47,.15);border-radius:3px;}
 
         /* ── cliente ── */
         .av-cliente-row{display:flex;align-items:flex-end;gap:10px;}
         .av-lbl{display:block;font-size:11px;font-weight:500;color:#374151;margin-bottom:4px;}
-        .av-select{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;transition:border-color .13s;}
+        .av-select{width:100%;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;cursor:pointer;text-align:left;transition:border-color .13s;height:34px;}
         .av-select:hover{border-color:#d1d5db;}
-        .av-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 12px 30px -6px rgba(0,0,0,.15),0 4px 8px -2px rgba(0,0,0,.06);z-index:300;max-height:220px;overflow-y:auto;}
-        .av-drop-inp{width:100%;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;font-size:13px;outline:none;box-sizing:border-box;background:#fff;}
-        .av-drop-item{width:100%;display:flex;flex-direction:column;gap:1px;padding:10px 14px;text-align:left;font-size:13px;color:#374151;background:#ffffff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s;}
+        .av-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 12px 30px -6px rgba(0,0,0,.15),0 4px 8px -2px rgba(0,0,0,.06);z-index:300;max-height:200px;overflow-y:auto;}
+        .av-drop-inp{width:100%;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;box-sizing:border-box;background:#fff;}
+        .av-drop-item{width:100%;display:flex;flex-direction:column;gap:1px;padding:8px 12px;text-align:left;font-size:12px;color:#374151;background:#ffffff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s;}
         .av-drop-item:hover{background:#F1F5F9;color:#111827;}
-        .av-drop-item.av-drop-active{background:#E2E8F0;color:#111827;font-weight:600;border-left:3px solid #334139;padding-left:11px;}
+        .av-drop-item.av-drop-active{background:#E2E8F0;color:#111827;font-weight:600;border-left:3px solid #334139;padding-left:9px;}
 
         /* ── search productos ── */
-        .av-search-inp{width:100%;padding:10px 12px 10px 36px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff;}
+        .av-search-inp{width:100%;padding:8px 12px 8px 34px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;outline:none;box-sizing:border-box;background:#fff;height:34px;}
         .av-search-inp:focus{border-color:#334139;box-shadow:0 0 0 3px rgba(51,65,57,.08);}
-        .av-search-res{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#ffffff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;gap:8px;transition:background .1s;}
+        .av-search-res{width:100%;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#ffffff;border:none;border-bottom:1px solid #f3f4f6;cursor:pointer;text-align:left;gap:8px;transition:background .1s;}
         .av-search-res:hover{background:#F1F5F9;}
-        .av-search-res.av-drop-active{background:#E2E8F0;border-left:3px solid #334139;padding-left:11px;font-weight:600;}
+        .av-search-res.av-drop-active{background:#E2E8F0;border-left:3px solid #334139;padding-left:9px;font-weight:600;}
 
         /* ── tabla carrito ── */
         .av-table{width:100%;border-collapse:collapse;}
-        .av-table th{padding:10px 16px;text-align:left;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:1;}
-        .av-table td{padding:12px 16px;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+        .av-table th{padding:8px 12px;text-align:left;font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:1;}
+        .av-table td{padding:8px 12px;font-size:12px;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
         .av-table tr:last-child td{border-bottom:none;}
 
         /* cantidad — fondo blanco explícito */
         .av-qty{display:inline-flex;align-items:center;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;}
-        .av-qty-btn{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:#f5f5f3;border:none;cursor:pointer;color:#374151;flex-shrink:0;}
+        .av-qty-btn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:#f5f5f3;border:none;cursor:pointer;color:#374151;flex-shrink:0;}
         .av-qty-btn:hover{background:#ececea;}
-        .av-qty-val{width:36px;text-align:center;font-size:13px;font-weight:500;border:none;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;padding:0;height:26px;outline:none;background:#fff;color:#111827;}
+        .av-qty-val{width:30px;text-align:center;font-size:12px;font-weight:500;border:none;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;padding:0;height:24px;outline:none;background:#fff;color:#111827;}
 
-        .av-del-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#ef4444;cursor:pointer;border-radius:6px;}
+        .av-del-btn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#ef4444;cursor:pointer;border-radius:6px;}
         .av-del-btn:hover{background:#fef2f2;}
-        .av-inline-inp{width:88px;height:26px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;outline:none;box-sizing:border-box;padding:0 6px;background:#fff;color:#111827;}
+        .av-inline-inp{width:76px;height:24px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;outline:none;box-sizing:border-box;padding:0 6px;background:#fff;color:#111827;}
         .av-inline-inp:focus{border-color:#334139;}
-        .av-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;color:#9ca3af;text-align:center;}
-        .av-empty p{margin:0;font-size:13px;}
+        .av-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;color:#9ca3af;text-align:center;}
+        .av-empty p{margin:0;font-size:12px;}
 
         /* ── botones contenido ── */
-        .av-btn-outline{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:#fff;border:1px solid #e5e7eb;color:#374151;transition:background .13s;white-space:nowrap;}
+        .av-btn-outline{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;background:#fff;border:1px solid #e5e7eb;color:#374151;transition:background .13s;white-space:nowrap;height:34px;}
         .av-btn-outline:hover{background:#f5f5f3;}
-        .av-toggle-btn{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;border:1px solid #e5e7eb;color:#9ca3af;transition:all .13s;white-space:nowrap;}
+        .av-toggle-btn{padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:#fff;border:1px solid #e5e7eb;color:#9ca3af;transition:all .13s;white-space:nowrap;}
         .av-toggle-btn.active{border-color:#334139;color:#334139;}
 
-        /* ── pago ── */
-        .av-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-        .av-pay-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;font-weight:500;color:#374151;cursor:pointer;transition:all .13s;}
-        .av-pay-btn:hover{border-color:#d1d5db;background:#f5f5f3;}
-        .av-pay-btn.active{border-color:#334139;border-width:2px;color:#334139;font-weight:700;background:#f0f4f0;}
-
         /* ── inputs ── */
-        .av-inp{width:100%;height:40px;padding:0 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;color:#111827;outline:none;box-sizing:border-box;background:#fff;}
+        .av-inp{width:100%;height:34px;padding:0 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;color:#111827;outline:none;box-sizing:border-box;background:#fff;}
         .av-inp:focus{border-color:#334139;box-shadow:0 0 0 3px rgba(51,65,57,.08);}
         textarea.av-inp{height:auto;}
 
         /* ── confirmar ── */
-        .av-btn-confirm{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:#334139;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background .13s;}
+        .av-btn-confirm{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#334139;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .13s;}
         .av-btn-confirm:hover:not(:disabled){background:#2a3530;}
         .av-btn-confirm:disabled{background:rgba(51,65,57,.3);cursor:not-allowed;}
-
-        /* ── acciones ── */
-        .av-accion{width:100%;display:flex;align-items:center;gap:8px;padding:10px 12px;background:transparent;border:none;border-bottom:1px solid #f3f4f6;font-size:13px;color:#374151;cursor:pointer;transition:background .1s;text-align:left;}
-        .av-accion:last-child{border-bottom:none;}
-        .av-accion:hover{background:#f5f5f3;}
-        .av-accion-danger{color:#ef4444;}
-        .av-accion-danger:hover{background:#fef2f2;}
 
         /* ── kbd ── */
         .av-kbd{padding:1px 4px;background:#f3f4f6;border-radius:3px;font-family:monospace;font-size:9px;}
 
         @keyframes av-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-        @keyframes av-flash{0%{background:#ffffff}30%{background:#dcfce7}100%{background:#ffffff}}
         .av-costo-inp{background:#fffbf0;border-color:#fde68a;}
         .av-costo-inp:focus{border-color:#f59e0b !important;box-shadow:0 0 0 3px rgba(245,158,11,.12) !important;}
 
@@ -722,35 +715,35 @@ const AgregarVenta = ({
         input[type="number"]{-moz-appearance:textfield}
 
         /* ── responsive notebook grande ── */
-        @media(max-width:1400px){.av-layout{grid-template-columns:1fr clamp(280px,28vw,380px);}}
-        @media(max-width:1100px){.av-layout{grid-template-columns:1fr 300px;}
-          .av-main{padding:clamp(12px,2vw,20px) clamp(16px,3vw,36px);}}
-        @media(max-width:900px){.av-layout{grid-template-columns:1fr 268px;}}
+        @media(max-width:1400px){
+          .av-layout{grid-template-columns:1fr clamp(260px,28vw,330px);}
+          .av-main{padding: 8px 12px;}
+        }
 
-        /* ── responsive tablet ── */
+        /* ── responsive tablet y mobil hibrido ── */
         @media(max-width:820px){
-          .av-root{height:auto;overflow:auto;}
-          .av-main{overflow:visible;flex:none;padding:16px 20px;}
-          .av-layout{grid-template-columns:1fr;height:auto;overflow:visible;}
-          .av-col,.av-sidebar{overflow:visible;}
-          .av-card-carrito{flex:none;}
-          .av-sidebar{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-        }
-        @media(max-width:600px){
-          .av-sidebar{grid-template-columns:1fr;}
+          .av-root{height:100vh;height:100dvh;overflow:hidden;}
+          .av-header{padding:0 12px;}
+          .av-main{padding:8px;}
+          /* Cambio a display flex col. La izquierda toma el espacio restante, el sidebar (total) queda abajo */
+          .av-layout{display:flex;flex-direction:column;grid-template-columns:none;gap:8px;}
+          .av-col{flex:1;overflow-y:auto;}
+          /* Sidebar abajo fijo pero side-by-side en grids */
+          .av-sidebar{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow-y:visible;}
+          .av-card-bd{padding:10px 12px;}
+          .av-card-hd{padding:10px 12px;}
         }
 
-        /* ── responsive móvil ── */
-        @media(max-width:520px){
-          .av-main{padding:10px 12px;}
-          .av-layout{gap:10px;}
+        /* ── responsive móvil stretcho ── */
+        @media(max-width:640px){
+          .av-sidebar{grid-template-columns:1fr;}
           .av-cliente-row{flex-direction:column;align-items:stretch;}
           .av-btn-outline{width:100%;justify-content:center;}
           .av-header-r .av-btn-header-ghost{display:none;}
+          /* Ocultar columnas menos críticas en mobile para no requerir scroll horizontal */
           .av-table th:nth-child(2),.av-table td:nth-child(2){display:none;}
-          .av-table th,.av-table td{padding:8px 10px;}
-          .av-card-hd{padding:12px 14px;}
-          .av-card-bd{padding:12px 14px;}
+          .av-table th:nth-child(3),.av-table td:nth-child(3){display:none;}
+          .av-table th,.av-table td{padding:6px 8px;}
         }
       `}</style>
     </div>
