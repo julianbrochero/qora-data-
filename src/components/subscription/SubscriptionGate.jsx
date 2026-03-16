@@ -3,7 +3,8 @@ import { useSubscriptionContext } from '../../lib/SubscriptionContext'
 import TrialBanner from './TrialBanner'
 import WelcomeTrialModal from './WelcomeTrialModal'
 import { supabase } from '../../lib/supabaseClient'
-import { AlertTriangle, AlertCircle, Crown, Shield, Copy, CheckCircle, MessageCircle, Lock, Mail, CreditCard, Key } from 'lucide-react'
+import { useAuth } from '../../lib/AuthContext'
+import { AlertTriangle, AlertCircle, Crown, Shield, Copy, CheckCircle, MessageCircle, Lock, Mail, CreditCard, Key, LogOut } from 'lucide-react'
 
 const SUPPORT_EMAIL = 'brocherojulian72@gmail.com'
 
@@ -64,9 +65,8 @@ const SuspendedBlockingModal = ({ email }) => {
 
 const SubscriptionGate = ({ children }) => {
     const { status, loading, daysRemaining, email, isPro, userId, manuallySuspended, checkStatus } = useSubscriptionContext()
+    const { logout } = useAuth()
     const [mpLoading, setMpLoading] = useState(false)
-    const [couponCode, setCouponCode] = useState('')
-    const [couponStatus, setCouponStatus] = useState(null)
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) return
@@ -129,27 +129,18 @@ const SubscriptionGate = ({ children }) => {
                             </div>
                         </div>
 
-                        {/* Input Cupón */}
-                        <div style={{ marginBottom: 18 }}>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                                <input type="text" placeholder="¿Tenés un cupón?" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} disabled={couponStatus === 'loading' || couponStatus === 'success'} style={{ flex: 1, height: 42, borderRadius: 8, border: '1px solid #E5E7EB', padding: '0 14px', fontSize: 13, background: '#F9FAFB', outline: 'none' }} />
-                                <button onClick={handleApplyCoupon} disabled={!couponCode.trim() || couponStatus === 'loading' || couponStatus === 'success'} style={{ height: 42, padding: '0 16px', borderRadius: 8, background: couponCode.trim() ? '#374151' : '#E5E7EB', color: couponCode.trim() ? '#fff' : '#9CA3AF', border: 'none', fontSize: 12, fontWeight: 600, cursor: couponCode.trim() ? 'pointer' : 'not-allowed', transition: 'all .15s' }}>
-                                    {couponStatus === 'loading' ? 'Verificando...' : 'Aplicar'}
-                                </button>
-                            </div>
-                            {couponStatus === 'error' && <p style={{ color: '#DC2626', fontSize: 11, margin: '6px 0 0', fontWeight: 500 }}>Cupón inválido o expirado.</p>}
-                            {couponStatus === 'success' && <p style={{ color: '#059669', fontSize: 11, margin: '6px 0 0', fontWeight: 600 }}>¡Cupón aplicado! Activando cuenta...</p>}
+                        {/* Botones de acción principal */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                            <button onClick={handleMercadoPago} disabled={mpLoading} style={{ width: '100%', minHeight: 48, borderRadius: 12, background: '#009EE3', color: '#fff', border: 'none', fontSize: 13, fontWeight: 800, cursor: mpLoading ? 'wait' : 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all .15s', flexWrap: 'wrap', boxShadow: '0 4px 12px rgba(0, 158, 227, .25)' }} onMouseEnter={e => { if (!mpLoading) e.currentTarget.style.filter = 'brightness(1.1)' }} onMouseLeave={e => { if (!mpLoading) e.currentTarget.style.filter = 'none' }}>
+                                <CreditCard size={18} /> {mpLoading ? 'Cargando Mercado Pago...' : 'Suscribirme con Mercado Pago'}
+                            </button>
+                            
+                            <button onClick={logout} disabled={mpLoading} style={{ width: '100%', minHeight: 44, borderRadius: 10, background: 'transparent', color: '#6B7280', border: '1.5px solid #E5E7EB', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .13s' }} onMouseEnter={e => { e.currentTarget.style.color = '#374151'; e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.background = '#F9FAFB' }} onMouseLeave={e => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = 'transparent' }}>
+                                <LogOut size={16} /> Cerrar Sesión
+                            </button>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                            <div style={{ flex: 1, height: 1, background: '#E5E7EB' }}></div>
-                            <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' }}>Pago Oficial</span>
-                            <div style={{ flex: 1, height: 1, background: '#E5E7EB' }}></div>
-                        </div>
 
-                        <button onClick={handleMercadoPago} disabled={mpLoading || couponStatus === 'success'} style={{ width: '100%', minHeight: 48, borderRadius: 12, background: '#009EE3', color: '#fff', border: 'none', fontSize: 13, fontWeight: 800, cursor: (mpLoading || couponStatus === 'success') ? 'wait' : 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all .15s', flexWrap: 'wrap', boxShadow: '0 4px 12px rgba(0, 158, 227, .25)', marginBottom: 12 }} onMouseEnter={e => { if (!mpLoading) e.currentTarget.style.filter = 'brightness(1.1)' }} onMouseLeave={e => { if (!mpLoading) e.currentTarget.style.filter = 'none' }}>
-                            <CreditCard size={18} /> {mpLoading ? 'Cargando Mercado Pago...' : 'Suscribirme con Mercado Pago'}
-                        </button>
                         <p style={{ fontSize: 10, color: '#9CA3AF', textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
                             <strong>Plan Gestify PRO · $14.999/mes</strong><br />Acceso completo a todas las funciones sin límites y soporte incluido.
                         </p>
