@@ -188,6 +188,20 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const [itemsPorPagina, setItemsPorPagina] = useState(10)
   const [modalCats, setModalCats] = useState(false)
   const [dialogo, setDialogo] = useState({ open: false, title: '', message: '', onConfirm: null })
+  // inline edit
+  const [inlineEdit, setInlineEdit] = useState({ prodId: null, field: null, val: '' })
+
+  const startEdit = (prodId, field, currentVal) => setInlineEdit({ prodId, field, val: String(parseFloat(currentVal) || 0) })
+  const cancelEdit = () => setInlineEdit({ prodId: null, field: null, val: '' })
+  const commitEdit = async (prod) => {
+    const { prodId, field, val } = inlineEdit
+    if (!prodId || !field || !editarProducto) { cancelEdit(); return }
+    const numVal = parseFloat(val)
+    if (isNaN(numVal) || numVal < 0) { cancelEdit(); return }
+    const valActual = field === 'precio' ? parseFloat(prod.precio) : parseFloat(prod.costo)
+    if (numVal !== valActual) await editarProducto(prodId, { [field]: numVal })
+    cancelEdit()
+  }
 
   const productosSeguros = Array.isArray(productos) ? productos : []
 
@@ -483,8 +497,8 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
                 <tr>
-                  {['CÓDIGO', 'NOMBRE Y CATEGORÍA', 'PRECIO', 'STOCK', 'CONTROL', 'ACCIONES'].map((col, i) => (
-                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i >= 2 ? 'right' : 'left', whiteSpace: 'nowrap' }}>{col}</th>
+                  {['CÓDIGO', 'NOMBRE Y CATEGORÍA', 'PRECIO', 'COSTO', 'STOCK', 'CONTROL', 'ACCIONES'].map((col, i) => (
+                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: col === 'COSTO' ? '#059669' : ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i >= 2 ? 'right' : 'left', whiteSpace: 'nowrap' }}>{col}</th>
                   ))}
                 </tr>
               </thead>
@@ -517,10 +531,61 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                         </span>
                       </td>
 
-                      {/* precio */}
+                      {/* precio — editable inline */}
                       <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>${fMonto(prod.precio)}</div>
-                        <div style={{ fontSize: 10, color: ct3, marginTop: 2 }}>Neto: ${fMonto(precioNeto)}</div>
+                        {inlineEdit.prodId === prod.id && inlineEdit.field === 'precio' ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                            <span style={{ fontSize: 12, color: ct3 }}>$</span>
+                            <input
+                              type="number" value={inlineEdit.val} min="0" step="0.01" autoFocus
+                              onChange={e => setInlineEdit(p => ({ ...p, val: e.target.value }))}
+                              onBlur={() => commitEdit(prod)}
+                              onKeyDown={e => { if (e.key === 'Enter') commitEdit(prod); if (e.key === 'Escape') cancelEdit() }}
+                              style={{ width: 90, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: ct1, border: `1.5px solid ${accent}`, borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
+                            />
+                          </div>
+                        ) : (
+                          <button onClick={() => startEdit(prod.id, 'precio', prod.precio)}
+                            title="Click para editar"
+                            style={{ background: 'none', border: 'none', cursor: 'text', padding: '4px 6px', borderRadius: 6, transition: 'background .12s', textAlign: 'right', display: 'block', marginLeft: 'auto' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.06)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>${fMonto(prod.precio)}</div>
+                          </button>
+                        )}
+                      </td>
+
+                      {/* costo — editable inline */}
+                      <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                        {inlineEdit.prodId === prod.id && inlineEdit.field === 'costo' ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                            <span style={{ fontSize: 12, color: '#059669' }}>$</span>
+                            <input
+                              type="number" value={inlineEdit.val} min="0" step="0.01" autoFocus
+                              onChange={e => setInlineEdit(p => ({ ...p, val: e.target.value }))}
+                              onBlur={() => commitEdit(prod)}
+                              onKeyDown={e => { if (e.key === 'Enter') commitEdit(prod); if (e.key === 'Escape') cancelEdit() }}
+                              style={{ width: 90, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: '#059669', border: '1.5px solid #059669', borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
+                            />
+                          </div>
+                        ) : (
+                          <button onClick={() => startEdit(prod.id, 'costo', prod.costo || 0)}
+                            title="Click para editar costo"
+                            style={{ background: 'none', border: 'none', cursor: 'text', padding: '4px 6px', borderRadius: 6, transition: 'background .12s', textAlign: 'right', display: 'block', marginLeft: 'auto' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(5,150,105,.06)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                            {parseFloat(prod.costo) > 0 ? (
+                              <>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#059669' }}>${fMonto(prod.costo)}</div>
+                                <div style={{ fontSize: 9, color: '#6ee7b7', marginTop: 1 }}>
+                                  {Math.round((1 - parseFloat(prod.costo) / parseFloat(prod.precio)) * 100)}% margen
+                                </div>
+                              </>
+                            ) : (
+                              <span style={{ fontSize: 11, color: 'rgba(0,0,0,.18)', fontStyle: 'italic' }}>— agregar</span>
+                            )}
+                          </button>
+                        )}
                       </td>
 
                       {/* stock */}

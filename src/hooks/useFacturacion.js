@@ -1375,6 +1375,7 @@ export const useFacturacion = () => {
         nombre: nuevoProducto.nombre.trim(),
         codigo,
         precio: parseFloat(nuevoProducto.precio) || 0,
+        costo: nuevoProducto.costo ? (parseFloat(nuevoProducto.costo) || null) : null,
         stock: parseInt(nuevoProducto.stock) || 0,
         categoria: nuevoProducto.categoria || '',
         descripcion: nuevoProducto.descripcion || '',
@@ -1411,6 +1412,7 @@ export const useFacturacion = () => {
       if (datosActualizados.nombre !== undefined) payload.nombre = datosActualizados.nombre.trim()
       if (datosActualizados.codigo !== undefined) payload.codigo = datosActualizados.codigo
       if (datosActualizados.precio !== undefined) payload.precio = parseFloat(datosActualizados.precio) || 0
+      if (datosActualizados.costo !== undefined) payload.costo = datosActualizados.costo === null ? null : (parseFloat(datosActualizados.costo) || null)
       if (datosActualizados.stock !== undefined) payload.stock = parseInt(datosActualizados.stock) || 0
       if (datosActualizados.categoria !== undefined) payload.categoria = datosActualizados.categoria
       if (datosActualizados.descripcion !== undefined) payload.descripcion = datosActualizados.descripcion
