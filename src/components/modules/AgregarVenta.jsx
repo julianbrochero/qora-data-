@@ -408,43 +408,35 @@ const AgregarVenta = ({
           {/* ── SIDEBAR DERECHA ── */}
           <div className="av-sidebar">
 
-            {/* Método de pago */}
+            {/* Detalles + método de pago compacto */}
             <div className="av-card">
-              <div className="av-card-hd">
-                <CreditCard size={16} className="av-ico" />
-                <span className="av-card-ttl">Método de pago</span>
-              </div>
-              <div className="av-card-bd">
-                <div className="av-pay-grid">
-                  {[['efectivo', Banknote, 'Efectivo'], ['tarjeta', CreditCard, 'Tarjeta']].map(([val, Icon, lbl]) => (
+              <div className="av-card-hd" style={{ flexWrap: 'wrap', gap: 10 }}>
+                <Calendar size={15} className="av-ico" />
+                <span className="av-card-ttl">Detalles</span>
+                {/* Método de pago — chips compactos */}
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500 }}>Pago:</span>
+                  {[['efectivo', 'Efectivo'], ['transferencia', 'Transf.']].map(([val, lbl]) => (
                     <button key={val} onClick={() => setMetodoPago(val)}
-                      className={`av-pay-btn${metodoPago === val ? ' active' : ''}`}>
-                      <Icon size={15} /> {lbl}
+                      style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: metodoPago === val ? '1.5px solid #334139' : '1px solid #e5e7eb', background: metodoPago === val ? '#334139' : '#fff', color: metodoPago === val ? '#fff' : '#374151', transition: 'all .12s' }}>
+                      {lbl}
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
-
-            {/* Fechas + Estado */}
-            <div className="av-card">
-              <div className="av-card-hd">
-                <Calendar size={16} className="av-ico" />
-                <span className="av-card-ttl">Detalles</span>
-              </div>
-              <div className="av-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="av-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: 9, padding: '12px 16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <div>
                     <label className="av-lbl">Fecha</label>
                     <div style={{ position: 'relative' }}>
-                      <input type="date" className="av-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} style={{ paddingRight: 28 }} />
+                      <input type="date" className="av-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} style={{ paddingRight: 28, height: 34 }} />
                       <Calendar size={11} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af' }} />
                     </div>
                   </div>
                   <div>
                     <label className="av-lbl">Entrega <span style={{ fontWeight: 400 }}>(opc.)</span></label>
                     <div style={{ position: 'relative' }}>
-                      <input type="date" className="av-inp gestify-date-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} style={{ paddingRight: 28 }} />
+                      <input type="date" className="av-inp gestify-date-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} style={{ paddingRight: 28, height: 34 }} />
                       <Calendar size={11} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af' }} />
                     </div>
                   </div>
@@ -455,7 +447,7 @@ const AgregarVenta = ({
                   <div style={{ position: 'relative' }}>
                     <select className="av-inp" value={estado}
                       onChange={e => { setEstado(e.target.value); try { localStorage.setItem('gestify_pedido_estado', e.target.value) } catch {} }}
-                      style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 28 }}>
+                      style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 28, height: 34 }}>
                       {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                     <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: eCfg.color }} />
@@ -464,14 +456,14 @@ const AgregarVenta = ({
 
                 {canales.length > 0 && (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <label className="av-lbl" style={{ marginBottom: 0 }}>Canal <span style={{ fontWeight: 400 }}>(opc.)</span></label>
                       {canalVenta && <button onClick={() => setCanalVenta('')} style={{ fontSize: 10, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>Limpiar</button>}
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {canales.map(c => (
                         <button key={c} onClick={() => setCanalVenta(canalVenta === c ? '' : c)}
-                          style={{ padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: canalVenta === c ? 'none' : '1px solid #e5e7eb', background: canalVenta === c ? '#334139' : '#fff', color: canalVenta === c ? '#fff' : '#374151', transition: 'all .12s' }}>
+                          style={{ padding: '2px 9px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: canalVenta === c ? 'none' : '1px solid #e5e7eb', background: canalVenta === c ? '#334139' : '#fff', color: canalVenta === c ? '#fff' : '#374151', transition: 'all .12s' }}>
                           {c}
                         </button>
                       ))}
@@ -482,28 +474,28 @@ const AgregarVenta = ({
                 <div>
                   <label className="av-lbl">Notas <span style={{ fontWeight: 400 }}>(opc.)</span></label>
                   <textarea className="av-inp" value={notas} onChange={e => setNotas(e.target.value)}
-                    placeholder="Observaciones..." style={{ height: 60, padding: '8px 10px', resize: 'none', lineHeight: 1.5 }} />
+                    placeholder="Observaciones..." style={{ height: 46, padding: '6px 10px', resize: 'none', lineHeight: 1.5 }} />
                 </div>
               </div>
             </div>
 
             {/* Resumen */}
             <div className="av-card">
-              <div className="av-card-bd">
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: '#111827', margin: '0 0 14px' }}>Resumen</h3>
+              <div className="av-card-bd" style={{ padding: '14px 16px' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 10px' }}>Resumen</h3>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14, paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10, paddingBottom: 10, borderBottom: '1px solid #f3f4f6' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280' }}>
                     <span>Subtotal</span><span>{fMon(subtotal)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Total</span>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: '#16a34a' }}>{fMon(total)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Total</span>
+                    <span style={{ fontSize: 20, fontWeight: 700, color: '#16a34a' }}>{fMon(total)}</span>
                   </div>
                   {hayGanancia && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: 8, background: gananciaTotal >= 0 ? '#f0fdf4' : '#fef2f2', border: `1px solid ${gananciaTotal >= 0 ? '#bbf7d0' : '#fecaca'}` }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: gananciaTotal >= 0 ? '#065f46' : '#991b1b' }}>Ganancia estimada</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: gananciaTotal >= 0 ? '#059669' : '#dc2626' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 9px', borderRadius: 7, background: gananciaTotal >= 0 ? '#f0fdf4' : '#fef2f2', border: `1px solid ${gananciaTotal >= 0 ? '#bbf7d0' : '#fecaca'}` }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: gananciaTotal >= 0 ? '#065f46' : '#991b1b' }}>Ganancia est.</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: gananciaTotal >= 0 ? '#059669' : '#dc2626' }}>
                         {gananciaTotal >= 0 ? '+' : ''}{fMon(gananciaTotal)}
                       </span>
                     </div>
@@ -511,39 +503,37 @@ const AgregarVenta = ({
                 </div>
 
                 {/* Adelanto */}
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                     <label className="av-lbl" style={{ marginBottom: 0 }}>Adelanto</label>
                     <button title="Pagar total" onClick={() => setAdelanto(String(total))}
-                      style={{ width: 22, height: 22, background: 'rgba(51,65,57,.08)', color: '#334139', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <Check size={12} strokeWidth={2.5} />
+                      style={{ width: 20, height: 20, background: 'rgba(51,65,57,.08)', color: '#334139', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                      <Check size={11} strokeWidth={2.5} />
                     </button>
                   </div>
                   <div style={{ position: 'relative' }} className={shiftFlash ? 'av-shift-flash' : ''}>
                     <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#9ca3af', pointerEvents: 'none' }}>$</span>
                     <input type="number" placeholder="0.00" step="0.01" className="av-inp"
                       value={adelanto} onChange={e => setAdelanto(e.target.value)}
-                      style={{ paddingLeft: 22, textAlign: 'right' }} />
+                      style={{ paddingLeft: 22, textAlign: 'right', height: 36 }} />
                   </div>
                   {adelantoNum > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px solid #f3f4f6' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: saldo > 0 ? '#92400E' : '#065F46' }}>Saldo pendiente</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: saldo > 0 ? '#92400E' : '#065F46' }}>{fMon(saldo)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 7, paddingTop: 7, borderTop: '1px solid #f3f4f6' }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: saldo > 0 ? '#92400E' : '#065F46' }}>Saldo pendiente</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: saldo > 0 ? '#92400E' : '#065F46' }}>{fMon(saldo)}</span>
                     </div>
                   )}
                 </div>
 
                 <button onClick={handleGuardar} disabled={!puedeGuardar} className="av-btn-confirm">
-                  <ShoppingCart size={15} />
+                  <ShoppingCart size={14} />
                   {isProcessing ? 'Guardando...' : 'Confirmar venta'}
                 </button>
-                <p style={{ textAlign: 'center', margin: '8px 0 0', fontSize: 10, color: '#9ca3af' }}>
+                <p style={{ textAlign: 'center', margin: '6px 0 0', fontSize: 10, color: '#9ca3af' }}>
                   <kbd className="av-kbd">Ctrl+↵</kbd> guardar · <kbd className="av-kbd">Shift</kbd> pagar total
                 </p>
               </div>
             </div>
-
-
 
           </div>
         </div>
@@ -565,7 +555,7 @@ const AgregarVenta = ({
         .av-btn-header-save:disabled{opacity:.4;cursor:not-allowed;}
 
         /* ── main ── */
-        .av-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:clamp(16px,2vw,28px) clamp(24px,4vw,56px);}
+        .av-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:clamp(14px,2vw,24px) clamp(32px,5vw,72px);}
         .av-success{display:flex;align-items:center;gap:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:12px;flex-shrink:0;animation:av-in .3s ease;}
         .av-success-ico{width:30px;height:30px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
         .av-success-t{font-size:13px;font-weight:600;color:#166534;margin:0;}
@@ -573,9 +563,9 @@ const AgregarVenta = ({
         .av-success-x{margin-left:auto;width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#16a34a;cursor:pointer;border-radius:6px;flex-shrink:0;}
         .av-success-x:hover{background:#dcfce7;}
 
-        .av-layout{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr clamp(300px,30vw,420px);gap:clamp(14px,2vw,28px);}
+        .av-layout{flex:1;overflow:hidden;display:grid;grid-template-columns:1fr clamp(320px,32vw,460px);gap:clamp(14px,2vw,28px);}
         .av-col{display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding-right:2px;padding-bottom:4px;}
-        .av-sidebar{display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding-bottom:4px;}
+        .av-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-bottom:4px;}
 
         /* scrollbar fino */
         .av-col::-webkit-scrollbar,.av-sidebar::-webkit-scrollbar{width:4px;}
