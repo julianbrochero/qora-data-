@@ -10,6 +10,15 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeModule, setActiveModule] = useState('facturacion');
+  const [demoTab, setDemoTab] = useState('dashboard');
+
+  const sidebarActive = (item) => {
+    if (demoTab === 'dashboard'  && item === 'dashboard')  return true;
+    if (demoTab === 'venta'      && item === 'venta')      return true;
+    if (demoTab === 'ventas'     && item === 'ventas')     return true;
+    if (demoTab === 'productos'  && item === 'productos')  return true;
+    return false;
+  };
 
   useEffect(() => {
     const onScroll = () => {
@@ -90,6 +99,19 @@ export default function Landing() {
 
         {/* Dashboard Mockup */}
         <div className="hero-mockup-wrap reveal" id="demo">
+          {/* Demo tab nav */}
+          <div className="demo-nav">
+            {[
+              { id:'dashboard', label:'Dashboard', icon:<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
+              { id:'venta',     label:'Agregar Venta', icon:<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+              { id:'ventas',    label:'Ventas', icon:<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+              { id:'productos', label:'Productos', icon:<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
+            ].map(t => (
+              <button key={t.id} className={`demo-nav-tab${demoTab===t.id?' active':''}`} onClick={() => setDemoTab(t.id)}>
+                <span className="demo-nav-dot"></span>{t.icon}{t.label}
+              </button>
+            ))}
+          </div>
           <div className="browser-frame">
             <div className="browser-bar">
               <div className="browser-dots">
@@ -109,16 +131,16 @@ export default function Landing() {
                 </div>
                 <div className="msb-nav">
                   <div className="msb-sec-label">Inicio</div>
-                  <div className="msb-item active">
+                  <div className={`msb-item${sidebarActive('dashboard')?' active':''}`}>
                     <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                     <span>Dashboard</span>
                   </div>
                   <div className="msb-sec-label">Comercial</div>
-                  <div className="msb-item">
+                  <div className={`msb-item${sidebarActive('venta')?' active':''}`}>
                     <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                     <span>Agregar Venta</span>
                   </div>
-                  <div className="msb-item">
+                  <div className={`msb-item${sidebarActive('ventas')?' active':''}`}>
                     <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
                     <span>Ventas</span>
                     <span className="msb-badge">3</span>
@@ -141,7 +163,7 @@ export default function Landing() {
                     <span>Proveedores</span>
                   </div>
                   <div className="msb-sec-label">Inventario &amp; Finanzas</div>
-                  <div className="msb-item">
+                  <div className={`msb-item${sidebarActive('productos')?' active':''}`}>
                     <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
                     <span>Productos</span>
                   </div>
@@ -184,125 +206,249 @@ export default function Landing() {
                   <div className="mmain-avatar">A</div>
                 </div>
                 <div className="mmain-body">
-                  <div className="mmain-title-row">
-                    <div>
-                      <div className="mmain-page-title">Dashboard</div>
-                      <div className="mmain-page-sub">Resumen del negocio al día de hoy</div>
-                    </div>
-                    <div style={{display:'flex',gap:'6px'}}>
-                      <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>+ Nueva Venta</div>
-                      <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Factura</div>
-                    </div>
-                  </div>
 
-                  {/* KPI Cards */}
-                  <div className="kpi-row">
-                    <div className="kpi g">
-                      <div className="kpi-top">
-                        <div className="kpi-icon-wrap g">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#606B6C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        </div>
-                        <div className="kpi-trend up">
-                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                          +18%
-                        </div>
-                      </div>
-                      <div className="kpi-value">$847.200</div>
-                      <div className="kpi-label">Ventas del Mes</div>
-                      <div className="kpi-sub">vs. $718.000 mes anterior</div>
-                      <div className="kpi-prog">
-                        <div className="kpi-prog-row"><span className="kpi-prog-label">Meta mensual</span><span className="kpi-prog-pct">85%</span></div>
-                        <div className="kpi-prog-track"><div className="kpi-prog-fill" style={{width:'85%'}}></div></div>
+                  {/* ── DASHBOARD ── */}
+                  {demoTab === 'dashboard' && <>
+                    <div className="mmain-title-row">
+                      <div><div className="mmain-page-title">Dashboard</div><div className="mmain-page-sub">Resumen del negocio al día de hoy</div></div>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>+ Nueva Venta</div>
+                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Factura</div>
                       </div>
                     </div>
-                    <div className="kpi a">
-                      <div className="kpi-top">
-                        <div className="kpi-icon-wrap a">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+                    <div className="kpi-row">
+                      {[
+                        {cls:'g',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#606B6C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,trend:'+18%',trendCls:'up',val:'$847.200',label:'Ventas del Mes',sub:'vs. $718.000 mes anterior',pct:85,pctLabel:'Meta mensual'},
+                        {cls:'a',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>,trend:'7 abiertas',trendCls:'nt',val:'$124.500',label:'Facturas Pendientes',sub:'Cobro promedio: $17.785',pct:73,pctLabel:'Cobradas'},
+                        {cls:'b',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#373F47" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,trend:'14 activos',trendCls:'nt',val:'14',label:'Pedidos Activos',sub:'3 creados hoy',pct:62,pctLabel:'Completados'},
+                        {cls:'n',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,trend:'+$12k hoy',trendCls:'up',val:'$38.750',label:'Caja del Día',sub:'Actualizado ahora',pct:94,pctLabel:'Vs. ayer'},
+                      ].map(k => (
+                        <div className={`kpi ${k.cls}`} key={k.label}>
+                          <div className="kpi-top"><div className={`kpi-icon-wrap ${k.cls}`}>{k.icon}</div><div className={`kpi-trend ${k.trendCls}`}>{k.trend}</div></div>
+                          <div className="kpi-value">{k.val}</div>
+                          <div className="kpi-label">{k.label}</div>
+                          <div className="kpi-sub">{k.sub}</div>
+                          <div className="kpi-prog"><div className="kpi-prog-row"><span className="kpi-prog-label">{k.pctLabel}</span><span className="kpi-prog-pct">{k.pct}%</span></div><div className="kpi-prog-track"><div className="kpi-prog-fill" style={{width:`${k.pct}%`}}></div></div></div>
                         </div>
-                        <div className="kpi-trend nt">7 abiertas</div>
+                      ))}
+                    </div>
+                    <div className="panels-row">
+                      <div className="card-shell">
+                        <div className="card-shell-hd"><span className="card-shell-title">Últimas Facturas <span className="card-shell-count">12</span></span><span className="card-shell-action">Ver todas →</span></div>
+                        <div className="card-shell-body">
+                          <table className="ft">
+                            <thead><tr><th>Factura</th><th>Cliente</th><th>Estado</th><th>Total</th></tr></thead>
+                            <tbody>
+                              <tr><td>FA-000089</td><td>Comercial López</td><td><span className="pill pagada"><span className="pill-dot"></span>Pagada</span></td><td>$18.400</td></tr>
+                              <tr><td>FA-000088</td><td>Distribuidora Sur</td><td><span className="pill pendiente"><span className="pill-dot"></span>Pendiente</span></td><td>$32.000</td></tr>
+                              <tr><td>FA-000087</td><td>Ferretería Central</td><td><span className="pill pagada"><span className="pill-dot"></span>Pagada</span></td><td>$9.750</td></tr>
+                              <tr><td>FA-000086</td><td>Panadería Norte</td><td><span className="pill pendiente"><span className="pill-dot"></span>Pendiente</span></td><td>$14.200</td></tr>
+                              <tr><td>FA-000085</td><td>Almacén El Sol</td><td><span className="pill parcial"><span className="pill-dot"></span>Parcial</span></td><td>$22.600</td></tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                      <div className="kpi-value">$124.500</div>
-                      <div className="kpi-label">Facturas Pendientes</div>
-                      <div className="kpi-sub">Cobro promedio: $17.785</div>
-                      <div className="kpi-prog">
-                        <div className="kpi-prog-row"><span className="kpi-prog-label">Cobradas</span><span className="kpi-prog-pct">73%</span></div>
-                        <div className="kpi-prog-track"><div className="kpi-prog-fill" style={{width:'73%'}}></div></div>
+                      <div className="card-shell">
+                        <div className="card-shell-hd"><span className="card-shell-title">Pedidos Pendientes <span className="card-shell-count">4</span></span><span className="card-shell-action">Ver todos →</span></div>
+                        <div className="card-shell-body">
+                          {[{name:'Comercial López',code:'PED-000041'},{name:'Panadería Norte',code:'PED-000040'},{name:'Ferretería Central',code:'PED-000039'},{name:'Almacén El Sol',code:'PED-000038'}].map(p => (
+                            <div className="pd-item" key={p.code}>
+                              <div className="pd-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#606B6C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+                              <div><div className="pd-name">{p.name}</div><div className="pd-code">{p.code}</div></div>
+                              <div className="pd-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendiente</div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    <div className="kpi b">
-                      <div className="kpi-top">
-                        <div className="kpi-icon-wrap b">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#373F47" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                        </div>
-                        <div className="kpi-trend nt">14 activos</div>
-                      </div>
-                      <div className="kpi-value">14</div>
-                      <div className="kpi-label">Pedidos Activos</div>
-                      <div className="kpi-sub">3 creados hoy</div>
-                      <div className="kpi-prog">
-                        <div className="kpi-prog-row"><span className="kpi-prog-label">Completados</span><span className="kpi-prog-pct">62%</span></div>
-                        <div className="kpi-prog-track"><div className="kpi-prog-fill" style={{width:'62%'}}></div></div>
-                      </div>
-                    </div>
-                    <div className="kpi n">
-                      <div className="kpi-top">
-                        <div className="kpi-icon-wrap n">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                        </div>
-                        <div className="kpi-trend up">+$12k hoy</div>
-                      </div>
-                      <div className="kpi-value">$38.750</div>
-                      <div className="kpi-label">Caja del Día</div>
-                      <div className="kpi-sub">Actualizado ahora</div>
-                      <div className="kpi-prog">
-                        <div className="kpi-prog-row"><span className="kpi-prog-label">Vs. ayer</span><span className="kpi-prog-pct">94%</span></div>
-                        <div className="kpi-prog-track"><div className="kpi-prog-fill" style={{width:'94%'}}></div></div>
-                      </div>
-                    </div>
-                  </div>
+                  </>}
 
-                  {/* Panels row */}
-                  <div className="panels-row">
-                    <div className="card-shell">
+                  {/* ── AGREGAR VENTA ── */}
+                  {demoTab === 'venta' && <>
+                    <div className="mmain-title-row">
+                      <div><div className="mmain-page-title">Nueva Venta</div><div className="mmain-page-sub">Completá los datos del pedido</div></div>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>Cancelar</div>
+                        <div style={{background:'#DCED31',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'800',color:'#141A16',cursor:'default'}}>Guardar Pedido</div>
+                      </div>
+                    </div>
+                    <div className="av-cols">
+                      {/* Left */}
+                      <div className="av-left">
+                        {/* Cliente */}
+                        <div className="av-card">
+                          <div className="av-card-hd">Cliente</div>
+                          <div style={{padding:'8px 10px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(51,65,57,.06)',border:'1px solid rgba(51,65,57,.2)',borderRadius:'7px',padding:'7px 10px'}}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#334139" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                              <span style={{fontSize:'11px',fontWeight:'700',color:'#1e2320',flex:1}}>Comercial López</span>
+                              <span style={{fontSize:'8.5px',color:'#8B8982',fontFamily:'monospace'}}>20-12345678-9</span>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </div>
+                          </div>
+                        </div>
+                        {/* Carrito */}
+                        <div className="av-card" style={{flex:1}}>
+                          <div className="av-card-hd">
+                            <span>Carrito <span className="card-shell-count">3</span></span>
+                            <div className="av-search-light">
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                              <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar producto...</span>
+                            </div>
+                          </div>
+                          <table className="av-cart-table">
+                            <thead><tr><th>Producto</th><th style={{textAlign:'center'}}>Cant.</th><th style={{textAlign:'right'}}>Precio</th><th style={{textAlign:'right'}}>Subtotal</th><th></th></tr></thead>
+                            <tbody>
+                              {[
+                                {nombre:'Empanadas x12',code:'EMP-012',qty:2,precio:'$2.400',sub:'$4.800'},
+                                {nombre:'Medialunas x6',code:'MED-006',qty:3,precio:'$1.200',sub:'$3.600'},
+                                {nombre:'Facturas surtidas',code:'FAC-MIX',qty:1,precio:'$3.500',sub:'$3.500'},
+                              ].map(item => (
+                                <tr key={item.code}>
+                                  <td><div style={{fontSize:'10.5px',fontWeight:'600',color:'#1e2320'}}>{item.nombre}</div><div style={{fontSize:'8px',color:'#8B8982',fontFamily:'monospace'}}>{item.code}</div></td>
+                                  <td style={{textAlign:'center'}}><div className="av-qty"><span className="av-qty-btn">−</span><span className="av-qty-val">{item.qty}</span><span className="av-qty-btn">+</span></div></td>
+                                  <td style={{textAlign:'right',fontSize:'10px',color:'#373F47'}}>{item.precio}</td>
+                                  <td style={{textAlign:'right',fontSize:'10px',fontWeight:'700',color:'#1e2320',fontFamily:'monospace'}}>{item.sub}</td>
+                                  <td style={{textAlign:'center',color:'rgba(139,137,130,.4)',fontSize:'11px',cursor:'default'}}>×</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      {/* Right */}
+                      <div className="av-right">
+                        <div className="av-summary">
+                          <div style={{fontSize:'7.5px',fontWeight:'700',color:'rgba(255,255,255,.3)',textTransform:'uppercase',letterSpacing:'.07em',marginBottom:'8px'}}>Resumen del pedido</div>
+                          <div className="av-summary-row"><span className="av-summary-label">Subtotal</span><span className="av-summary-val">$11.900</span></div>
+                          <div className="av-summary-row"><span className="av-summary-label">Adelanto</span><span style={{color:'rgba(255,255,255,.45)',fontWeight:'600',fontSize:'10px'}}>$5.000</span></div>
+                          <div className="av-summary-total"><span className="av-summary-total-label">Saldo</span><span className="av-summary-total-val">$6.900</span></div>
+                        </div>
+                        <div className="av-mini-card">
+                          <div className="av-mini-label">Estado</div>
+                          <div className="av-estado-pill">Pendiente <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+                        </div>
+                        <div className="av-mini-card">
+                          <div className="av-mini-label">Método de pago</div>
+                          <div className="av-metodos">
+                            <div className="av-metodo on">Efectivo</div>
+                            <div className="av-metodo off">Transfer.</div>
+                            <div className="av-metodo off">Mercado P.</div>
+                          </div>
+                        </div>
+                        <div className="av-mini-card" style={{flex:1}}>
+                          <div className="av-mini-label">Fecha entrega</div>
+                          <div style={{background:'#fff',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'5px 8px',fontSize:'9.5px',fontWeight:'600',color:'#373F47'}}>28/03/2026</div>
+                        </div>
+                        <div className="av-mini-card" style={{flex:1}}>
+                          <div className="av-mini-label">Notas</div>
+                          <div style={{background:'#fff',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'5px 8px',fontSize:'9px',color:'rgba(139,137,130,.6)',fontStyle:'italic',minHeight:'32px'}}>Entregar antes de las 18hs...</div>
+                        </div>
+                        <div className="av-save-btn">Guardar Pedido ↵</div>
+                      </div>
+                    </div>
+                  </>}
+
+                  {/* ── VENTAS ── */}
+                  {demoTab === 'ventas' && <>
+                    <div className="mmain-title-row">
+                      <div><div className="mmain-page-title">Ventas</div><div className="mmain-page-sub">14 pedidos activos este mes</div></div>
+                      <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:'5px',background:'#fff',border:'1px solid rgba(48,54,47,.12)',borderRadius:'6px',padding:'4px 9px'}}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                          <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar cliente...</span>
+                        </div>
+                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Nueva Venta</div>
+                      </div>
+                    </div>
+                    <div className="filter-chips">
+                      {['Todos','Pendiente','Preparando','Enviado','Entregado','Cancelado'].map((f,i) => (
+                        <div key={f} className={`fchip ${i===0?'on':'off'}`}>{f}</div>
+                      ))}
+                    </div>
+                    <div className="card-shell" style={{flex:1}}>
                       <div className="card-shell-hd">
-                        <span className="card-shell-title">Últimas Facturas <span className="card-shell-count">12</span></span>
-                        <span className="card-shell-action">Ver todas →</span>
+                        <span className="card-shell-title">Pedidos <span className="card-shell-count">14</span></span>
+                        <span className="card-shell-action">Exportar →</span>
                       </div>
                       <div className="card-shell-body">
                         <table className="ft">
-                          <thead><tr><th>Factura</th><th>Cliente</th><th>Estado</th><th>Total</th></tr></thead>
+                          <thead><tr><th>Nº Pedido</th><th>Cliente</th><th>Estado</th><th>Método</th><th>Total</th><th>Fecha</th></tr></thead>
                           <tbody>
-                            <tr><td>FA-000089</td><td>Comercial López</td><td><span className="pill pagada"><span className="pill-dot"></span>Pagada</span></td><td>$18.400</td></tr>
-                            <tr><td>FA-000088</td><td>Distribuidora Sur</td><td><span className="pill pendiente"><span className="pill-dot"></span>Pendiente</span></td><td>$32.000</td></tr>
-                            <tr><td>FA-000087</td><td>Ferretería Central</td><td><span className="pill pagada"><span className="pill-dot"></span>Pagada</span></td><td>$9.750</td></tr>
-                            <tr><td>FA-000086</td><td>Panadería Norte</td><td><span className="pill pendiente"><span className="pill-dot"></span>Pendiente</span></td><td>$14.200</td></tr>
-                            <tr><td>FA-000085</td><td>Almacén El Sol</td><td><span className="pill parcial"><span className="pill-dot"></span>Parcial</span></td><td>$22.600</td></tr>
+                            {[
+                              {id:'PED-000041',cli:'Comercial López',   estado:'Pendiente', estadoCls:'pendiente',met:'Efectivo',  total:'$18.400',fecha:'25/03'},
+                              {id:'PED-000040',cli:'Panadería Norte',   estado:'Preparando',estadoCls:'preparando',met:'Transfer.',total:'$9.200', fecha:'25/03'},
+                              {id:'PED-000039',cli:'Ferretería Central',estado:'Enviado',   estadoCls:'enviado',   met:'Mercado P.',total:'$32.000',fecha:'24/03'},
+                              {id:'PED-000038',cli:'Almacén El Sol',    estado:'Entregado', estadoCls:'entregado', met:'Efectivo', total:'$14.750',fecha:'24/03'},
+                              {id:'PED-000037',cli:'Distribuidora Sur', estado:'Pendiente', estadoCls:'pendiente',met:'Transfer.',total:'$22.600',fecha:'23/03'},
+                            ].map(p => {
+                              const colors = {pendiente:{bg:'#FEF3C7',color:'#92400E'},preparando:{bg:'#DBEAFE',color:'#1E40AF'},enviado:{bg:'#E0E7FF',color:'#3730A3'},entregado:{bg:'#D1FAE5',color:'#065F46'},cancelado:{bg:'#FEE2E2',color:'#991B1B'}};
+                              const c = colors[p.estadoCls] || colors.pendiente;
+                              return (
+                                <tr key={p.id}>
+                                  <td style={{fontFamily:'monospace',fontSize:'9px',fontWeight:'700',color:'#30362F'}}>{p.id}</td>
+                                  <td style={{fontSize:'10.5px',color:'#1e2320',fontFamily:'inherit',fontWeight:'500'}}>{p.cli}</td>
+                                  <td><span style={{display:'inline-flex',alignItems:'center',gap:'4px',padding:'2px 7px',borderRadius:'5px',fontSize:'8.5px',fontWeight:'700',background:c.bg,color:c.color}}><span style={{width:'4px',height:'4px',borderRadius:'50%',background:c.color,flexShrink:0}}></span>{p.estado}</span></td>
+                                  <td style={{fontSize:'9.5px',color:'#8B8982'}}>{p.met}</td>
+                                  <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:'700',color:'#1e2320',fontSize:'10px'}}>{p.total}</td>
+                                  <td style={{fontSize:'9px',color:'#8B8982'}}>{p.fecha}</td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
                     </div>
-                    <div className="card-shell">
-                      <div className="card-shell-hd">
-                        <span className="card-shell-title">Pedidos Pendientes <span className="card-shell-count">4</span></span>
-                        <span className="card-shell-action">Ver todos →</span>
-                      </div>
-                      <div className="card-shell-body">
-                        {[
-                          {name:'Comercial López', code:'PED-000041'},
-                          {name:'Panadería Norte', code:'PED-000040'},
-                          {name:'Ferretería Central', code:'PED-000039'},
-                          {name:'Almacén El Sol', code:'PED-000038'},
-                        ].map(p => (
-                          <div className="pd-item" key={p.code}>
-                            <div className="pd-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#606B6C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
-                            <div><div className="pd-name">{p.name}</div><div className="pd-code">{p.code}</div></div>
-                            <div className="pd-badge"><svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pendiente</div>
-                          </div>
-                        ))}
+                  </>}
+
+                  {/* ── PRODUCTOS ── */}
+                  {demoTab === 'productos' && <>
+                    <div className="mmain-title-row">
+                      <div><div className="mmain-page-title">Productos</div><div className="mmain-page-sub">48 productos en inventario</div></div>
+                      <div style={{display:'flex',gap:'6px',alignItems:'center'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:'5px',background:'#fff',border:'1px solid rgba(48,54,47,.12)',borderRadius:'6px',padding:'4px 9px'}}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                          <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar producto...</span>
+                        </div>
+                        <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>Categorías</div>
+                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Nuevo</div>
                       </div>
                     </div>
-                  </div>
+                    <div className="filter-chips">
+                      {['Todos','Panificados','Bebidas','Lácteos','Fiambres','Sin stock'].map((f,i) => (
+                        <div key={f} className={`fchip ${i===0?'on':'off'}`}>{f}</div>
+                      ))}
+                    </div>
+                    <div className="card-shell" style={{flex:1}}>
+                      <div className="card-shell-hd">
+                        <span className="card-shell-title">Inventario <span className="card-shell-count">48</span></span>
+                        <span className="card-shell-action">Exportar →</span>
+                      </div>
+                      <div className="card-shell-body">
+                        <table className="ft">
+                          <thead><tr><th>Código</th><th>Nombre</th><th>Categoría</th><th>Precio venta</th><th>Costo</th><th>Stock</th></tr></thead>
+                          <tbody>
+                            {[
+                              {code:'EMP-012',name:'Empanadas x12',  cat:'Panificados',precio:'$2.400',costo:'$1.600',stock:42,  stockCls:'ok'},
+                              {code:'MED-006',name:'Medialunas x6',  cat:'Panificados',precio:'$1.200',costo:'$750',  stock:28,  stockCls:'ok'},
+                              {code:'FAC-MIX',name:'Facturas surtidas',cat:'Panificados',precio:'$3.500',costo:'$2.100',stock:5,   stockCls:'low'},
+                              {code:'LEC-001',name:'Leche entera 1L',cat:'Lácteos',    precio:'$890',  costo:'$620',  stock:0,   stockCls:'out'},
+                              {code:'JAM-400',name:'Jamón cocido 400g',cat:'Fiambres',  precio:'$2.800',costo:'$1.900',stock:15,  stockCls:'ok'},
+                            ].map(p => (
+                              <tr key={p.code}>
+                                <td style={{fontFamily:'monospace',fontSize:'9px'}}>{p.code}</td>
+                                <td style={{fontSize:'10.5px',fontWeight:'600',color:'#1e2320',fontFamily:'inherit'}}>{p.name}</td>
+                                <td><span style={{fontSize:'9px',background:'rgba(48,54,47,.07)',color:'#606B6C',padding:'2px 7px',borderRadius:'4px',fontWeight:'600'}}>{p.cat}</span></td>
+                                <td style={{textAlign:'right',fontFamily:'monospace',fontWeight:'700',color:'#1e2320',fontSize:'10px'}}>{p.precio}</td>
+                                <td style={{textAlign:'right',fontSize:'9.5px',color:'#8B8982',fontFamily:'monospace'}}>{p.costo}</td>
+                                <td style={{textAlign:'right'}}><span className={`stock-badge ${p.stockCls}`}>{p.stockCls==='out'?'Sin stock':p.stock+' u.'}</span></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>}
 
                 </div>
               </div>
