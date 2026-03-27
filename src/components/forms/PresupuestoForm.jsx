@@ -18,7 +18,7 @@ const ct2 = '#30362F'
 const ct3 = '#8B8982'
 const accent = '#334139'
 const accentL = 'rgba(51,65,57,.08)'
-const lime = '#DCED31'
+const lime = '#4ADE80'
 
 const fNum = (n) => (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -213,7 +213,7 @@ const PresupuestoForm = ({
             {/* ═══ HEADER ═══ */}
             <div style={{ background: '#282A28', margin: '-16px -16px 0', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(220,237,49,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(74,222,128,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <FileText size={15} style={{ color: lime }} />
                     </div>
                     <div>

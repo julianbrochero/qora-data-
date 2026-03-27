@@ -173,10 +173,10 @@ const Facturacion = ({
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button onClick={toggleModoSeleccion} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: modoSeleccion ? '1px solid #DCED31' : '1px solid rgba(255,255,255,.2)', background: 'transparent', color: modoSeleccion ? '#DCED31' : 'rgba(255,255,255,.6)', cursor: 'pointer' }}>
+          <button onClick={toggleModoSeleccion} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: modoSeleccion ? '1px solid #4ADE80' : '1px solid rgba(255,255,255,.2)', background: 'transparent', color: modoSeleccion ? '#4ADE80' : 'rgba(255,255,255,.6)', cursor: 'pointer' }}>
             <CheckSquare size={12} strokeWidth={2} /> {modoSeleccion ? 'Cancelar' : 'Selección'}
           </button>
-          <button onClick={() => onNuevaFactura?.()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', background: '#DCED31', color: '#282A28' }}>
+          <button onClick={() => onNuevaFactura?.()} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', background: '#4ADE80', color: '#0A1A0E' }}>
             <Plus size={12} strokeWidth={2.5} /> Factura Directa
           </button>
         </div>

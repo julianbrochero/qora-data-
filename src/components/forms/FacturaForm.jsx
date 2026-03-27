@@ -574,7 +574,7 @@ const FacturaForm = ({ formData, formActions, closeModal, openModal, onClienteAg
             tabIndex={0}
             style={{
               flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700,
-              color: '#282A28', background: '#DCED31', border: '1px solid #DCED31',
+              color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80',
               cursor: (items.length === 0 || !nuevaFactura?.cliente || isProcessing) ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               fontFamily: "'Inter', sans-serif", transition: 'all .13s',

@@ -214,7 +214,7 @@ const MovimientoCajaForm = ({ type, formData, formActions, closeModal }) => {
             Cancelar
           </button>
           <button type="submit" disabled={cargando || !monto || parseFloat(monto) <= 0 || (!esIngreso && categoria === "proveedor" && !proveedorSeleccionado)}
-            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: '1px solid #DCED31', cursor: (cargando || !monto || parseFloat(monto) <= 0) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .13s', opacity: (cargando || !monto || parseFloat(monto) <= 0) ? .5 : 1 }}
+            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: (cargando || !monto || parseFloat(monto) <= 0) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .13s', opacity: (cargando || !monto || parseFloat(monto) <= 0) ? .5 : 1 }}
             onMouseEnter={e => { if (!cargando && monto && parseFloat(monto) > 0) e.currentTarget.style.opacity = '.9' }} onMouseLeave={e => { if (!cargando && monto && parseFloat(monto) > 0) e.currentTarget.style.opacity = '1' }}>
             {cargando ? 'Registrando...' : <><CheckCircle size={13} strokeWidth={2.5} /> {esIngreso ? 'Registrar ingreso' : 'Registrar egreso'}</>}
             <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>

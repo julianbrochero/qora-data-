@@ -34,10 +34,10 @@ export default function Login() {
   };
 
   const features = [
-    { icon: <BarChart3 className="w-5 h-5 text-[#DCED31]" />, label: "Reportes en tiempo real" },
-    { icon: <Package className="w-5 h-5 text-[#DCED31]" />, label: "Gestión de ventas" },
-    { icon: <FileText className="w-5 h-5 text-[#DCED31]" />, label: "Facturación profesional" },
-    { icon: <Wallet className="w-5 h-5 text-[#DCED31]" />, label: "Control de caja" },
+    { icon: <BarChart3 className="w-5 h-5 text-[#4ADE80]" />, label: "Reportes en tiempo real" },
+    { icon: <Package className="w-5 h-5 text-[#4ADE80]" />, label: "Gestión de ventas" },
+    { icon: <FileText className="w-5 h-5 text-[#4ADE80]" />, label: "Facturación profesional" },
+    { icon: <Wallet className="w-5 h-5 text-[#4ADE80]" />, label: "Control de caja" },
   ];
 
   return (
@@ -52,13 +52,13 @@ export default function Login() {
         <div className="mx-auto w-full max-w-[400px] flex flex-col items-center">
           
           {/* Logo centrado */}
-          <div className="mb-2 sm:mb-4 lg:mb-6 flex justify-center w-full">
-            <img src="/esquinader.png" alt="Gestify" className="h-[85px] sm:h-[110px] xl:h-[125px] w-auto object-contain drop-shadow-sm" />
+          <div className="mb-1 flex justify-center w-full">
+            <img src="/newlogo.png" alt="Gestify" className="h-[70px] sm:h-[85px] xl:h-[95px] w-auto object-contain drop-shadow-sm" />
           </div>
 
           {/* Tagline */}
           <div className="mb-4 sm:mb-5 lg:mb-8 text-center">
-            <p className="mb-2 md:mb-3 text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#DCED31] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
+            <p className="mb-2 md:mb-3 text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-[#282A28] bg-[#4ADE80] rounded-full px-3 sm:px-4 py-1.5 inline-block shadow-md">
               Sistema de Gestión Empresarial
             </p>
             <h1
@@ -113,9 +113,20 @@ export default function Login() {
 
           {/* ── Aviso datos seguros */}
           <div className="mt-4 sm:mt-5 lg:mt-8 flex items-center justify-center gap-2 text-[10px] sm:text-[12px] lg:text-[13px] font-semibold text-gray-500 text-center">
-            <ShieldCheck size={14} className="text-[#DCED31] flex-shrink-0" />
+            <ShieldCheck size={14} className="text-[#4ADE80] flex-shrink-0" />
             <p>Tus datos están protegidos. No almacenamos contraseñas.</p>
           </div>
+
+          {/* ── Ir a la landing */}
+          <a
+            href="/"
+            className="mt-3 flex items-center gap-1.5 text-[11px] sm:text-[12px] font-medium text-gray-500 hover:text-[#4ADE80] transition-colors"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            Volver al sitio
+          </a>
         </div>
 
         {/* ── Footer */}

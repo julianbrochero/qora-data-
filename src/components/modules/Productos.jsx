@@ -13,7 +13,7 @@ import {
    #FAFAFA  surface
    #282A28  header
    #334139  acento verde
-   #DCED31  Primary Action Lima
+   #4ADE80  Primary Action Lima
    #8B8982  ct3 suave
 ══════════════════════════════════════════════ */
 
@@ -146,7 +146,7 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
                     <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                       {/* nuevo producto en esta categoría */}
                       <button onClick={() => crearProductoConCategoria(cat.nombre)} title="Nuevo producto en esta categoría"
-                        style={{ height: 26, padding: '0 8px', borderRadius: 6, background: '#DCED31', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#282A28' }}>
+                        style={{ height: 26, padding: '0 8px', borderRadius: 6, background: '#4ADE80', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#282A28' }}>
                         <Plus size={10} strokeWidth={2.5} /> Producto
                       </button>
                       <button onClick={() => iniciarEdicion(cat)} title="Renombrar" style={{ width: 26, height: 26, borderRadius: 6, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
@@ -412,13 +412,13 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
           <button onClick={descargarListaPrecios}
             title="Descargar lista de precios en PDF"
             style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.07)'; e.currentTarget.style.color = '#DCED31' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.07)'; e.currentTarget.style.color = '#4ADE80' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,.7)' }}>
             <Download size={12} strokeWidth={2} />
             <span className="hidden sm:inline">Lista de precios</span>
           </button>
 
-          <button onClick={() => openModal && openModal("nuevo-producto")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s', background: '#DCED31', color: '#282A28' }}>
+          <button onClick={() => openModal && openModal("nuevo-producto")} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', transition: 'all .13s', background: '#4ADE80', color: '#0A1A0E' }}>
             <Plus size={12} strokeWidth={2.5} /> Nuevo <span className="hidden sm:inline">Producto</span>
             <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
           </button>

@@ -12,7 +12,7 @@
 
 .landing-root :root,
 .landing-root {
-  --brand-dark:    #141A16;
+  --brand-dark:    #0A1A0E;
   --brand-deep:    #1E2921;
   --brand-sb:      #282A28;
   --brand-green:   #334139;
@@ -21,7 +21,7 @@
   --accent-hover:  #22C55E;
   --accent-muted:  rgba(74,222,128,.12);
   --accent-border: rgba(74,222,128,.25);
-  --lime:          #DCED31;
+  --lime:          #4ADE80;
   --white:         #FFFFFF;
   --surface-alt:   #F4F7F5;
   --border:        #E4EAE7;
@@ -81,8 +81,8 @@
 }
 .landing-root .l-navbar.scrolled { box-shadow: var(--shadow-md); }
 .landing-root .l-navbar .container { height: 100%; display: flex; align-items: center; justify-content: space-between; }
-.landing-root .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.landing-root .nav-logo img { height: 38px; object-fit: contain; }
+.landing-root .nav-logo { display: flex; align-items: center; gap: 5px; text-decoration: none; }
+.landing-root .nav-logo img { height: 36px; object-fit: contain; }
 .landing-root .nav-logo-text { font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -.4px; }
 .landing-root .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
 .landing-root .nav-links a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; padding: 6px 14px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
@@ -128,15 +128,15 @@
 .landing-root .msb-sec-label { font-size: 7px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.25); padding: 0 8px; margin: 8px 0 2px; }
 .landing-root .msb-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 500; color: rgba(255,255,255,.65); position: relative; margin-bottom: 1px; }
 .landing-root .msb-item.active { background: rgba(255,255,255,.06); color: #fff; font-weight: 600; }
-.landing-root .msb-item.active::before { content:''; position:absolute; left:0; top:20%; bottom:20%; width:2.5px; background:#DCED31; border-radius:0 2px 2px 0; }
+.landing-root .msb-item.active::before { content:''; position:absolute; left:0; top:20%; bottom:20%; width:2.5px; background:#4ADE80; border-radius:0 2px 2px 0; }
 .landing-root .msb-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: .75; }
 .landing-root .msb-item.active .msb-icon { opacity: 1; }
 .landing-root .msb-badge { margin-left: auto; background: rgba(255,255,255,.15); color: #fff; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 4px; }
 .landing-root .msb-bottom { border-top: 1px solid rgba(139,137,130,.2); padding: 6px; }
-.landing-root .msb-pro { border-radius: 8px; padding: 1.5px; background: linear-gradient(135deg, rgba(220,237,49,.4), #DCED31 50%, rgba(220,237,49,.3)); margin-bottom: 4px; }
+.landing-root .msb-pro { border-radius: 8px; padding: 1.5px; background: linear-gradient(135deg, rgba(74,222,128,.4), #4ADE80 50%, rgba(74,222,128,.3)); margin-bottom: 4px; }
 .landing-root .msb-pro-inner { border-radius: 7px; background: #2b2d28; padding: 6px 10px; display: flex; align-items: center; gap: 6px; }
-.landing-root .msb-pro-dot { width: 5px; height: 5px; border-radius: 50%; background: #DCED31; box-shadow: 0 0 5px rgba(220,237,49,.6); }
-.landing-root .msb-pro-label { font-size: 10px; font-weight: 700; color: #DCED31; letter-spacing: .04em; }
+.landing-root .msb-pro-dot { width: 5px; height: 5px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 5px rgba(74,222,128,.6); }
+.landing-root .msb-pro-label { font-size: 10px; font-weight: 700; color: #4ADE80; letter-spacing: .04em; }
 .landing-root .msb-user { display: flex; align-items: center; gap: 8px; padding: 5px 8px; }
 .landing-root .msb-avatar { width: 22px; height: 22px; border-radius: 50%; background: #1f211f; border: 1.5px solid rgba(139,137,130,.25); font-size: 9px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .landing-root .msb-uname { font-size: 10px; font-weight: 600; color: #fff; }
@@ -151,7 +151,7 @@
 .landing-root .mmain-spacer { flex: 1; }
 .landing-root .mmain-date { font-size: 10px; color: rgba(255,255,255,.35); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); padding: 3px 8px; border-radius: 5px; }
 .landing-root .mmain-bell { width: 26px; height: 26px; background: rgba(255,255,255,.05); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-.landing-root .mmain-avatar { width: 26px; height: 26px; border-radius: 50%; background: #334139; border: 1.5px solid rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #DCED31; }
+.landing-root .mmain-avatar { width: 26px; height: 26px; border-radius: 50%; background: #334139; border: 1.5px solid rgba(255,255,255,.15); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #4ADE80; }
 .landing-root .mmain-body { flex: 1; padding: 14px 16px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
 .landing-root .mmain-title-row { display: flex; align-items: center; justify-content: space-between; }
 .landing-root .mmain-page-title { font-size: 14px; font-weight: 700; color: #1e2320; }
@@ -268,7 +268,7 @@
 .landing-root .mf-shell { background: #FAFAFA; border: 1px solid rgba(48,54,47,.09); border-radius: 10px; height: 100%; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(48,54,47,.06),0 4px 14px rgba(48,54,47,.05); }
 .landing-root .mf-hd { background: #E0E1DD; padding: 8px 12px; border-bottom: 1px solid rgba(48,54,47,.08); display: flex; align-items: center; justify-content: space-between; }
 .landing-root .mf-hd-title { font-size: 11px; font-weight: 700; color: #30362F; }
-.landing-root .mf-hd-btn { font-size: 9px; font-weight: 700; background: #282A28; color: #DCED31; padding: 4px 9px; border-radius: 5px; }
+.landing-root .mf-hd-btn { font-size: 9px; font-weight: 700; background: #282A28; color: #4ADE80; padding: 4px 9px; border-radius: 5px; }
 .landing-root .mf-table { width: 100%; border-collapse: collapse; }
 .landing-root .mf-table th { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #8B8982; padding: 5px 10px; background: #E0E1DD; border-bottom: 1px solid rgba(48,54,47,.08); text-align: left; }
 .landing-root .mf-table th:last-child { text-align: right; }
@@ -282,7 +282,7 @@
 .landing-root .caja-balance { background: #282A28; border-radius: 8px; padding: 12px 14px; }
 .landing-root .caja-balance-label { font-size: 9px; color: rgba(255,255,255,.4); margin-bottom: 3px; }
 .landing-root .caja-balance-val { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -1px; }
-.landing-root .caja-balance-sub { font-size: 9px; color: #DCED31; margin-top: 2px; font-weight: 600; }
+.landing-root .caja-balance-sub { font-size: 9px; color: #4ADE80; margin-top: 2px; font-weight: 600; }
 .landing-root .caja-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .landing-root .caja-mini { background: #FAFAFA; border: 1px solid rgba(48,54,47,.09); border-radius: 8px; padding: 10px; box-shadow: 0 1px 3px rgba(48,54,47,.04); }
 .landing-root .caja-mini-lbl { font-size: 8.5px; color: #8B8982; margin-bottom: 3px; }
@@ -405,15 +405,15 @@
 .landing-root .av-summary-val { color: rgba(255,255,255,.7); font-weight: 600; }
 .landing-root .av-summary-total { border-top: 1px solid rgba(255,255,255,.08); margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; align-items: baseline; }
 .landing-root .av-summary-total-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.6); }
-.landing-root .av-summary-total-val { font-size: 16px; font-weight: 800; color: #DCED31; letter-spacing: -.5px; }
+.landing-root .av-summary-total-val { font-size: 16px; font-weight: 800; color: #4ADE80; letter-spacing: -.5px; }
 .landing-root .av-mini-card { background: #FAFAFA; border: 1px solid rgba(48,54,47,.09); border-radius: 8px; padding: 9px 10px; box-shadow: 0 1px 3px rgba(48,54,47,.04); flex-shrink: 0; }
 .landing-root .av-mini-label { font-size: 8px; font-weight: 700; color: #8B8982; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
 .landing-root .av-metodos { display: flex; gap: 4px; }
 .landing-root .av-metodo { flex: 1; text-align: center; padding: 5px 4px; border-radius: 6px; font-size: 8.5px; font-weight: 600; cursor: default; border: 1px solid transparent; }
-.landing-root .av-metodo.on { background: #282A28; color: #DCED31; }
+.landing-root .av-metodo.on { background: #282A28; color: #4ADE80; }
 .landing-root .av-metodo.off { background: rgba(48,54,47,.06); color: #8B8982; border-color: rgba(48,54,47,.1); }
 .landing-root .av-estado-pill { background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 6px; padding: 5px 9px; font-size: 9.5px; font-weight: 700; color: #92400E; display: flex; align-items: center; justify-content: space-between; }
-.landing-root .av-save-btn { background: #DCED31; border-radius: 8px; padding: 9px 12px; font-size: 10.5px; font-weight: 800; color: #141A16; text-align: center; cursor: default; letter-spacing: -.2px; flex-shrink: 0; }
+.landing-root .av-save-btn { background: #4ADE80; border-radius: 8px; padding: 9px 12px; font-size: 10.5px; font-weight: 800; color: #0A1A0E; text-align: center; cursor: default; letter-spacing: -.2px; flex-shrink: 0; }
 .landing-root .av-search { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); border-radius: 6px; padding: 4px 9px; }
 .landing-root .av-search-light { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid rgba(48,54,47,.12); border-radius: 6px; padding: 4px 9px; }
 
@@ -426,7 +426,7 @@
 /* Productos extra */
 .landing-root .stock-badge { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 5px; font-size: 8.5px; font-weight: 700; }
 .landing-root .stock-badge.ok { background: rgba(96,107,108,.1); color: #606B6C; }
-.landing-root .stock-badge.low { background: rgba(220,237,49,.12); color: #7A8000; }
+.landing-root .stock-badge.low { background: rgba(74,222,128,.12); color: #166534; }
 .landing-root .stock-badge.out { background: rgba(139,137,130,.1); color: #8B8982; }
 
 @media (max-width: 1100px) {
@@ -447,8 +447,9 @@
   /* Navbar */
   .landing-root .l-navbar .container { padding: 0 20px; }
   .landing-root .nav-links { display: none; }
+  .landing-root .nav-logo { gap: 4px; }
   .landing-root .nav-logo-text { font-size: 14px; }
-  .landing-root .nav-logo img { height: 30px; }
+  .landing-root .nav-logo img { height: 28px; }
   .landing-root .nav-login { display: none; }
   .landing-root .btn-primary { font-size: 12px; padding: 8px 14px; }
 

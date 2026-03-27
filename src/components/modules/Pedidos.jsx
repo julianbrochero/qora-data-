@@ -232,9 +232,9 @@ const Pedidos = ({
           <button onClick={toggleModoSeleccion} className="hidden sm:flex" style={{
             alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 8,
             fontSize: 11, fontWeight: 600,
-            border: modoSeleccion ? '1px solid #DCED31' : '1px solid rgba(255,255,255,.2)',
+            border: modoSeleccion ? '1px solid #4ADE80' : '1px solid rgba(255,255,255,.2)',
             background: 'transparent',
-            color: modoSeleccion ? '#DCED31' : 'rgba(255,255,255,.6)',
+            color: modoSeleccion ? '#4ADE80' : 'rgba(255,255,255,.6)',
             cursor: 'pointer', transition: 'all .13s',
           }}>
             <CheckSquare size={12} strokeWidth={2} /> {modoSeleccion ? 'Cancelar' : 'Selección'}
@@ -245,8 +245,8 @@ const Pedidos = ({
           {/* Nuevo */}
           <button onClick={() => onNuevaVenta ? onNuevaVenta() : openModal?.("nuevo-pedido")} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
-            fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
-            background: '#DCED31', color: '#282A28',
+            fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', transition: 'all .13s',
+            background: '#4ADE80', color: '#0A1A0E',
           }}>
             <Plus size={12} strokeWidth={2.5} /> <span className="hidden sm:inline">Nueva Venta</span>
             <span className="hidden md:inline" style={{ marginLeft: 2, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>

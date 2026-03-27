@@ -618,7 +618,7 @@ const AgregarVenta = ({
 
         .av-btn-header-ghost{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);transition:all .13s;}
         .av-btn-header-ghost:hover{color:#fff;border-color:rgba(255,255,255,.45);}
-        .av-btn-header-save{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#DCED31;border:2px solid rgba(0,0,0,.15);color:#282A28;transition:opacity .13s;}
+        .av-btn-header-save{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#4ADE80;border:2px solid rgba(0,0,0,.15);color:#0A1A0E;transition:opacity .13s;}
         .av-btn-header-save:hover:not(:disabled){opacity:.88;}
         .av-btn-header-save:disabled{opacity:.4;cursor:not-allowed;}
 

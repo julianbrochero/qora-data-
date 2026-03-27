@@ -49,7 +49,7 @@ export default function Landing() {
       <nav className={`l-navbar${scrolled ? ' scrolled' : ''}`}>
         <div className="container">
           <a href="#" className="nav-logo">
-            <img src="/esquina.png" alt="Gestify" />
+            <img src="/newlogo.png" alt="Gestify" />
             <span className="nav-logo-text">gestify</span>
           </a>
           <ul className="nav-links">
@@ -127,7 +127,7 @@ export default function Landing() {
               {/* SIDEBAR */}
               <div className="msb">
                 <div className="msb-logo">
-                  <img src="/logogestify3.png" alt="Gestify" />
+                  <img src="/newlogo.png" alt="Gestify" />
                 </div>
                 <div className="msb-nav">
                   <div className="msb-sec-label">Inicio</div>
@@ -213,7 +213,7 @@ export default function Landing() {
                       <div><div className="mmain-page-title">Dashboard</div><div className="mmain-page-sub">Resumen del negocio al día de hoy</div></div>
                       <div style={{display:'flex',gap:'6px'}}>
                         <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>+ Nueva Venta</div>
-                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Factura</div>
+                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#4ADE80',cursor:'default'}}>+ Factura</div>
                       </div>
                     </div>
                     <div className="kpi-row">
@@ -269,7 +269,7 @@ export default function Landing() {
                       <div><div className="mmain-page-title">Nueva Venta</div><div className="mmain-page-sub">Completá los datos del pedido</div></div>
                       <div style={{display:'flex',gap:'6px'}}>
                         <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>Cancelar</div>
-                        <div style={{background:'#DCED31',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'800',color:'#141A16',cursor:'default'}}>Guardar Pedido</div>
+                        <div style={{background:'#4ADE80',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'800',color:'#0A1A0E',cursor:'default'}}>Guardar Pedido</div>
                       </div>
                     </div>
                     <div className="av-cols">
@@ -358,7 +358,7 @@ export default function Landing() {
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                           <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar cliente...</span>
                         </div>
-                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Nueva Venta</div>
+                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#4ADE80',cursor:'default'}}>+ Nueva Venta</div>
                       </div>
                     </div>
                     <div className="filter-chips">
@@ -411,7 +411,7 @@ export default function Landing() {
                           <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar producto...</span>
                         </div>
                         <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>Categorías</div>
-                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#DCED31',cursor:'default'}}>+ Nuevo</div>
+                        <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#4ADE80',cursor:'default'}}>+ Nuevo</div>
                       </div>
                     </div>
                     <div className="filter-chips">
@@ -748,7 +748,7 @@ export default function Landing() {
           <div className="footer-grid">
             <div>
               <a href="#" className="footer-logo">
-                <img src="/logofavicon.png" alt="Gestify" style={{height:'72px',objectFit:'contain',filter:'brightness(10)'}} />
+                <img src="/newlogo.png" alt="Gestify" style={{height:'72px',objectFit:'contain'}} />
                 <span className="footer-logo-text">Gestify</span>
               </a>
               <p className="footer-desc">Sistema de gestión integral para PyMEs argentinas. Facturación, inventario, caja y más en una sola plataforma.</p>

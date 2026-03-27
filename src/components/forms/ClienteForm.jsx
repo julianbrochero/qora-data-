@@ -194,7 +194,7 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
             Cancelar
           </button>
           <button type="submit"
-            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: '1px solid #DCED31', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
             onMouseEnter={e => e.currentTarget.style.opacity = '.9'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
             {isRapido ? '⚡ Agregar rápido' : isEdit

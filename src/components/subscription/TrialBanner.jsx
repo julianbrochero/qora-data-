@@ -50,21 +50,21 @@ const ProActivatedToast = ({ onClose }) => {
             }}>
                 <div style={{
                     background: '#111713',
-                    border: '1px solid rgba(220,237,49,.2)',
+                    border: '1px solid rgba(74,222,128,.2)',
                     borderRadius: 16,
                     padding: '14px 18px',
                     display: 'flex', alignItems: 'center', gap: 14,
-                    boxShadow: '0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(220,237,49,.08)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,.5), 0 0 0 1px rgba(74,222,128,.08)',
                     minWidth: 280, maxWidth: 340,
                     position: 'relative',
                 }}>
                     {/* Ícono */}
                     <div style={{
                         width: 40, height: 40, borderRadius: 10,
-                        background: 'linear-gradient(135deg, #DCED31 0%, #c8d828 100%)',
+                        background: 'linear-gradient(135deg, #4ADE80 0%, #c8d828 100%)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexShrink: 0,
-                        boxShadow: '0 4px 14px rgba(220,237,49,.35)',
+                        boxShadow: '0 4px 14px rgba(74,222,128,.35)',
                     }}>
                         <Crown size={20} color="#1a2218" strokeWidth={2.2} />
                     </div>
@@ -77,7 +77,7 @@ const ProActivatedToast = ({ onClose }) => {
                         }}>
                             ¡Plan PRO activado!{' '}
                             <span style={{
-                                background: 'linear-gradient(90deg, #DCED31, #c8d828, #DCED31)',
+                                background: 'linear-gradient(90deg, #4ADE80, #c8d828, #4ADE80)',
                                 backgroundSize: '200% auto',
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
@@ -114,7 +114,7 @@ const ProActivatedToast = ({ onClose }) => {
                     }}>
                         <div style={{
                             height: '100%',
-                            background: '#DCED31',
+                            background: '#4ADE80',
                             borderRadius: 1,
                             animation: 'pro-shrink 5s linear forwards',
                         }} />
@@ -181,7 +181,7 @@ const TrialBanner = ({ daysRemaining }) => {
 
             <div style={{
                 background: isCritical ? '#1a100a' : '#1a1f18',
-                borderBottom: `1px solid ${isCritical ? 'rgba(251,113,0,.18)' : 'rgba(220,237,49,.1)'}`,
+                borderBottom: `1px solid ${isCritical ? 'rgba(251,113,0,.18)' : 'rgba(74,222,128,.1)'}`,
                 padding: '6px 16px',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 gap: 10,
@@ -192,10 +192,10 @@ const TrialBanner = ({ daysRemaining }) => {
                 {/* Punto de estado */}
                 <div style={{
                     width: 6, height: 6, borderRadius: '50%',
-                    background: isCritical ? '#f97316' : '#DCED31',
+                    background: isCritical ? '#f97316' : '#4ADE80',
                     boxShadow: isCritical
                         ? '0 0 6px rgba(249,115,22,.6)'
-                        : '0 0 6px rgba(220,237,49,.5)',
+                        : '0 0 6px rgba(74,222,128,.5)',
                     flexShrink: 0,
                 }} />
 
@@ -215,7 +215,7 @@ const TrialBanner = ({ daysRemaining }) => {
                     style={{
                         padding: '3px 11px', borderRadius: 5, border: 'none',
                         cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                        background: isCritical ? '#f97316' : '#DCED31',
+                        background: isCritical ? '#f97316' : '#4ADE80',
                         color: isCritical ? '#fff' : '#1a2218',
                         fontFamily: "'Inter', sans-serif",
                         display: 'flex', alignItems: 'center', gap: 4,

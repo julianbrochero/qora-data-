@@ -375,7 +375,7 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
                         disabled={!puedeGuardar || guardando}
                         style={{
                             flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700,
-                            color: '#282A28', background: '#DCED31', border: '1px solid #DCED31',
+                            color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80',
                             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s',
                             opacity: (!puedeGuardar || guardando) ? .5 : 1,

@@ -118,7 +118,7 @@ const Proveedores = ({ proveedores = [], searchTerm = "", setSearchTerm, openMod
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={() => openModal && openModal("nuevo-proveedor")} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 32, borderRadius: 8, background: '#DCED31', color: '#1e2320', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .13s', boxShadow: '0 2px 8px rgba(220,237,49,.2)' }}
+          <button onClick={() => openModal && openModal("nuevo-proveedor")} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', height: 32, borderRadius: 8, background: '#4ADE80', color: '#1e2320', fontSize: 11, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all .13s', boxShadow: '0 2px 8px rgba(74,222,128,.2)' }}
             onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = ''}>
             <Plus size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Nuevo Proveedor</span>
             <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>

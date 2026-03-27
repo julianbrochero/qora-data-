@@ -65,7 +65,7 @@ const SaveBtn = ({ onClick, disabled, ok, okLabel, label, icon: Icon }) => (
     <button
         onClick={onClick}
         disabled={disabled}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, width: '100%', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: disabled ? 'wait' : 'pointer', transition: 'all .15s', background: ok ? '#22C55E' : '#1e2320', color: ok ? '#fff' : '#DCED31', fontFamily: "'Inter',sans-serif", opacity: disabled ? 0.7 : 1 }}>
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 36, width: '100%', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: disabled ? 'wait' : 'pointer', transition: 'all .15s', background: ok ? '#22C55E' : '#1e2320', color: ok ? '#fff' : '#4ADE80', fontFamily: "'Inter',sans-serif", opacity: disabled ? 0.7 : 1 }}>
         {ok ? <><CheckCircle size={13} /> {okLabel}</> : disabled ? 'Guardando...' : <><Icon size={13} /> {label}</>}
     </button>
 )
@@ -157,6 +157,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                     <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
                         <Menu size={16} strokeWidth={2} />
                     </button>
+                    <img src="/newlogo.png" alt="Gestify" style={{ height: 32, objectFit: 'contain' }} />
                     <div>
                         <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Sistema</p>
                         <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1, margin: 0 }}>Configuración</h2>
@@ -173,17 +174,17 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                     {/* ═══ COLUMNA 1 ═══ */}
                     <div className="config-col">
                         {/* MI PLAN */}
-                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: planActivo ? `1px solid #DCED31` : `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)', position: 'relative', overflow: 'hidden' }}>
-                            {planActivo && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#DCED31' }} />}
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: planActivo ? `1px solid #4ADE80` : `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)', position: 'relative', overflow: 'hidden' }}>
+                            {planActivo && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#4ADE80' }} />}
                             <SectionTitle icon={CreditCard} title="Mi Suscripción" desc="Detalles de tu plan actual" />
                             <div style={{ background: '#DFDFDF', borderRadius: 10, border: `1px solid ${border}`, padding: 'clamp(10px,2vw,16px)', marginBottom: 14 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: planActivo ? '#DCED31' : planTrial ? '#FCD34D' : '#E53935', boxShadow: `0 0 0 2px ${planActivo ? 'rgba(220,237,49,.3)' : planTrial ? 'rgba(252,211,77,.3)' : 'rgba(229,57,53,.3)'}`, flexShrink: 0 }} />
+                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: planActivo ? '#4ADE80' : planTrial ? '#FCD34D' : '#E53935', boxShadow: `0 0 0 2px ${planActivo ? 'rgba(74,222,128,.3)' : planTrial ? 'rgba(252,211,77,.3)' : 'rgba(229,57,53,.3)'}`, flexShrink: 0 }} />
                                         <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>
                                             {planActivo ? 'Gestify PRO' : planTrial ? 'Prueba Gratuita' : planGrace ? 'Período de Gracia' : 'Suscripción Vencida'}
                                         </span>
-                                        {planActivo && <span style={{ fontSize: 9, fontWeight: 900, color: '#282A28', background: '#DCED31', padding: '1px 6px', borderRadius: 3, letterSpacing: '.04em', flexShrink: 0 }}>PRO</span>}
+                                        {planActivo && <span style={{ fontSize: 9, fontWeight: 900, color: '#0A1A0E', background: '#4ADE80', padding: '1px 6px', borderRadius: 3, letterSpacing: '.04em', flexShrink: 0 }}>PRO</span>}
                                     </div>
                                     <span style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'rgba(48,54,47,.05)', padding: '2px 8px', borderRadius: 4, whiteSpace: 'nowrap' }}>$14.999 / mes</span>
                                 </div>
@@ -200,14 +201,14 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                             <span style={{ fontSize: 10, color: ct3, fontWeight: 600 }}>{daysRemaining} días restantes</span>
                                         </div>
                                         <div style={{ height: 5, background: 'rgba(48,54,47,.08)', borderRadius: 10, overflow: 'hidden' }}>
-                                            <div style={{ height: '100%', borderRadius: 10, background: progreso > 80 ? '#E53935' : progreso > 50 ? '#FCD34D' : '#DCED31', width: `${progreso}%`, transition: 'width .5s ease' }} />
+                                            <div style={{ height: '100%', borderRadius: 10, background: progreso > 80 ? '#E53935' : progreso > 50 ? '#FCD34D' : '#4ADE80', width: `${progreso}%`, transition: 'width .5s ease' }} />
                                         </div>
                                     </div>
                                 )}
                             </div>
                             {!planActivo && (
                                 <button onClick={handleSubscribe} disabled={loadingSub}
-                                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#1e2320', color: '#DCED31', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', opacity: loadingSub ? .7 : 1 }}>
+                                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#1e2320', color: '#4ADE80', fontSize: 12, fontWeight: 700, border: 'none', cursor: loadingSub ? 'default' : 'pointer', opacity: loadingSub ? .7 : 1 }}>
                                     <Zap size={14} strokeWidth={2.5} /> {loadingSub ? 'Cargando...' : 'Suscribirme Ahora'}
                                 </button>
                             )}
@@ -218,11 +219,11 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                             <SectionTitle icon={User} title="Mi Cuenta" desc="Información de tu perfil" />
                             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20, flexWrap: 'wrap' }}>
                                 <div style={{ position: 'relative', flexShrink: 0 }}>
-                                    <div style={{ width: 46, height: 46, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: accent, border: planActivo ? '2px solid #DCED31' : `1px solid rgba(51,65,57,.15)` }}>
+                                    <div style={{ width: 46, height: 46, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: accent, border: planActivo ? '2px solid #4ADE80' : `1px solid rgba(51,65,57,.15)` }}>
                                         {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
                                     </div>
                                     {planActivo && (
-                                        <div style={{ position: 'absolute', bottom: -2, right: -4, fontSize: 7, fontWeight: 900, color: '#282A28', background: '#DCED31', padding: '1px 4px', borderRadius: 3, border: '1.5px solid #fff' }}>PRO</div>
+                                        <div style={{ position: 'absolute', bottom: -2, right: -4, fontSize: 7, fontWeight: 900, color: '#0A1A0E', background: '#4ADE80', padding: '1px 4px', borderRadius: 3, border: '1.5px solid #fff' }}>PRO</div>
                                     )}
                                 </div>
                                 <div style={{ minWidth: 0 }}>

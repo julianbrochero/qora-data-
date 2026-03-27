@@ -5,7 +5,7 @@ import { Plus, Search, DollarSign, CreditCard, Calendar, TrendingUp, TrendingDow
    PALETA GESTIFY
    #F5F5F5  fondo app        #FAFAFA  surface
    #282A28  header           #334139  acento verde
-   #DCED31  lima primary     #8B8982  ct3 suave
+   #4ADE80  lima primary     #8B8982  ct3 suave
 ══════════════════════════════════════════════ */
 const bg = '#F5F5F5'
 const surface = '#FAFAFA'
@@ -151,8 +151,8 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
           <button onClick={irAdelante} disabled={fechaSeleccionada >= hoyStr} style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'transparent', border: 'none', color: fechaSeleccionada >= hoyStr ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.5)', cursor: fechaSeleccionada >= hoyStr ? 'default' : 'pointer' }}>
             <ChevronRight size={13} />
           </button>
-          {!esHoy && <button onClick={() => cambiarFecha(hoyStr)} style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: '#DCED31', color: '#282A28', border: 'none', cursor: 'pointer' }}>Hoy</button>}
-          {cargandoFecha && <div style={{ width: 12, height: 12, border: '2px solid #DCED31', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />}
+          {!esHoy && <button onClick={() => cambiarFecha(hoyStr)} style={{ padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: '#4ADE80', color: '#0A1A0E', border: 'none', cursor: 'pointer' }}>Hoy</button>}
+          {cargandoFecha && <div style={{ width: 12, height: 12, border: '2px solid #4ADE80', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin .6s linear infinite' }} />}
         </div>
 
         {/* BOTONES ACCIÓN */}
@@ -165,7 +165,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
               <button onClick={() => openModal && openModal("egreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #F87171', background: 'transparent', color: '#F87171', cursor: 'pointer' }} title="Atajo: Ctrl">
                 <TrendingDown size={11} strokeWidth={2.5} /> <span className="hidden xs:inline">Egreso</span>
               </button>
-              <button onClick={() => setMostrarConfirmCierre(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', background: '#DCED31', color: '#282A28' }}>
+              <button onClick={() => setMostrarConfirmCierre(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', background: '#4ADE80', color: '#0A1A0E' }}>
                 <CreditCard size={11} strokeWidth={2.5} /> Cerrar
               </button>
             </>
@@ -185,8 +185,8 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
         <div style={{ margin: 'clamp(10px, 2vw, 14px) clamp(12px, 3vw, 24px) 0', background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden', fontFamily: "'Inter', sans-serif" }}>
           <div style={{ background: '#282A28', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(220,237,49,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCard size={14} style={{ color: '#DCED31' }} />
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(74,222,128,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CreditCard size={14} style={{ color: '#4ADE80' }} />
               </div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Confirmar cierre de caja</div>
@@ -264,7 +264,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
                 Cancelar
               </button>
               <button onClick={handleCerrarCaja} disabled={cerrando}
-                style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: cerrando ? .6 : 1 }}>
+                style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, opacity: cerrando ? .6 : 1 }}>
                 <CheckCircle size={13} strokeWidth={2.5} /> {cerrando ? "Cerrando..." : "Confirmar cierre"}
               </button>
             </div>

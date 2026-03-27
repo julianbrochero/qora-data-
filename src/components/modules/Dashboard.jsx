@@ -159,8 +159,8 @@ const SearchSpotlight = ({ clientes = [], facturas = [], pedidos = [], onViewAll
   return (
     <div ref={ref} style={{ position: 'relative', flex: 1, maxWidth: 300 }}>
       <div className="flex items-center gap-2 rounded-lg border px-2.5"
-        style={{ height: 30, background: q ? 'rgba(220,237,49,.08)' : 'rgba(255,255,255,.05)', borderColor: q ? 'rgba(220,237,49,.35)' : 'rgba(255,255,255,.12)', transition: 'all .2s' }}>
-        <Search size={11} strokeWidth={2} style={{ color: q ? '#DCED31' : 'rgba(255,255,255,.4)', flexShrink: 0, transition: 'color .2s' }} />
+        style={{ height: 30, background: q ? 'rgba(74,222,128,.08)' : 'rgba(255,255,255,.05)', borderColor: q ? 'rgba(74,222,128,.35)' : 'rgba(255,255,255,.12)', transition: 'all .2s' }}>
+        <Search size={11} strokeWidth={2} style={{ color: q ? '#4ADE80' : 'rgba(255,255,255,.4)', flexShrink: 0, transition: 'color .2s' }} />
         <input
           type="text"
           placeholder="Buscar cliente, factura, venta..."
@@ -676,11 +676,11 @@ const Dashboard = ({
               className={`${cls} items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer transition-all`}
               style={{
                 fontSize: 11, fontFamily: 'Inter,sans-serif', fontWeight: primary ? 700 : 500,
-                background: primary ? '#DCED31' : 'transparent',
-                color: primary ? '#282A28' : '#DCED31',
-                border: '1px solid #DCED31',
+                background: primary ? '#4ADE80' : 'transparent',
+                color: primary ? '#0A1A0E' : '#4ADE80',
+                border: '1px solid #4ADE80',
               }}
-              onMouseEnter={e => !primary && (e.currentTarget.style.background = 'rgba(220,237,49,.1)')}
+              onMouseEnter={e => !primary && (e.currentTarget.style.background = 'rgba(74,222,128,.1)')}
               onMouseLeave={e => !primary && (e.currentTarget.style.background = 'transparent')}>
               {icon} {label}
             </button>
@@ -689,14 +689,14 @@ const Dashboard = ({
           <div className="w-px h-4 mx-1 hidden md:block" style={{ background: 'rgba(255,255,255,.12)' }} />
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
             <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[11px] font-bold text-white cursor-pointer overflow-hidden border flex-shrink-0"
-              style={{ background: '#606B6C', borderColor: isPro ? '#DCED31' : 'rgba(255,255,255,.2)', borderWidth: isPro ? 2 : 1 }}>
+              style={{ background: '#606B6C', borderColor: isPro ? '#4ADE80' : 'rgba(255,255,255,.2)', borderWidth: isPro ? 2 : 1 }}>
               {user?.user_metadata?.avatar_url
                 ? <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
                 : (user?.email ? user.email.charAt(0).toUpperCase() : 'A')}
             </div>
             {isPro && (
               <span style={{
-                fontSize: 8, fontWeight: 900, color: '#282A28', background: '#DCED31',
+                fontSize: 8, fontWeight: 900, color: '#0A1A0E', background: '#4ADE80',
                 padding: '1px 5px', borderRadius: 3, letterSpacing: '.04em',
                 lineHeight: '14px',
               }}>PRO</span>
@@ -718,9 +718,9 @@ const Dashboard = ({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap flex-shrink-0"
             style={{
               fontSize: 11, fontFamily: 'Inter,sans-serif', fontWeight: primary ? 700 : 500,
-              background: primary ? '#DCED31' : 'transparent',
-              color: primary ? '#282A28' : '#DCED31',
-              border: '1px solid #DCED31',
+              background: primary ? '#4ADE80' : 'transparent',
+              color: primary ? '#0A1A0E' : '#4ADE80',
+              border: '1px solid #4ADE80',
             }}>
             {label}
           </button>
@@ -874,7 +874,7 @@ const Dashboard = ({
                       <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 16px' }}>
                         <svg width="88" height="88" viewBox="0 0 88 88" style={{ transform: 'rotate(-90deg)' }}>
                           <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(48,54,47,.07)" strokeWidth="10" />
-                          <circle cx="44" cy="44" r={r} fill="none" stroke="#DCED31" strokeWidth="10"
+                          <circle cx="44" cy="44" r={r} fill="none" stroke="#4ADE80" strokeWidth="10"
                             strokeDasharray={`${cobradoArc} ${circ}`} strokeDashoffset="0" opacity="1" />
                           <circle cx="44" cy="44" r={r} fill="none" stroke="#373F47" strokeWidth="10"
                             strokeDasharray={`${sinArc} ${circ}`} strokeDashoffset={-cobradoArc} opacity=".7" />
@@ -888,7 +888,7 @@ const Dashboard = ({
                       </div>
                       {/* funnel rows */}
                       {[
-                        { label: 'Cobrado', amount: cobrado, pct: pctCobrado, color: '#DCED31' },
+                        { label: 'Cobrado', amount: cobrado, pct: pctCobrado, color: '#4ADE80' },
                         { label: 'Sin cobrar', amount: sinCobrar, pct: pctSin, color: '#373F47' },
                         { label: 'Parcial', amount: parcial, pct: pctParcial, color: '#8B8982' },
                       ].map(({ label, amount, pct, color }) => (

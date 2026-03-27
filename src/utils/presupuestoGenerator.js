@@ -14,7 +14,7 @@ export const generarPDFPresupuesto = (presupuesto) => {
         // ── Paleta ──────────────────────────────
         const DARK = [40, 42, 40]    // #282A28
         const ACCENT = [51, 65, 57]    // #334139
-        const LIME = [220, 237, 49]    // #DCED31
+        const LIME = [220, 237, 49]    // #4ADE80
         const LIGHT = [245, 245, 245]   // #F5F5F5
         const BORDER = [220, 220, 220]
         const CT1 = [30, 35, 32]

@@ -10,7 +10,7 @@ import { Plus, Search, User, FileText, Mail, Phone, Edit, Trash2, Copy, Check, A
    #334139  acento verde musgo
    #30362F  texto oscuro (ct1/ct2)
    #8B8982  piedra / texto suave (ct3)
-   #DCED31  Primary Action (Lima Dashboard)
+   #4ADE80  Primary Action (Lima Dashboard)
 ══════════════════════════════════════════════ */
 
 const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, eliminarCliente, onOpenMobileSidebar }) => {
@@ -134,8 +134,8 @@ const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, el
           {/* Nuevo Cliente */}
           <button onClick={() => openModal && openModal("nuevo-cliente")} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
-            fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
-            background: '#DCED31', color: '#282A28',
+            fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', transition: 'all .13s',
+            background: '#4ADE80', color: '#0A1A0E',
           }}>
             <Plus size={12} strokeWidth={2.5} /> Nuevo Cliente
             <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>

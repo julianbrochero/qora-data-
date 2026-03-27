@@ -328,7 +328,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             Cancelar
           </button>
-          <button type="submit" style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#282A28', background: '#DCED31', border: '1px solid #DCED31', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+          <button type="submit" style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
             onMouseEnter={e => e.currentTarget.style.opacity = '.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
             {isRapido ? '⚡ Agregar rápido' : isEdit ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</> : <><Package size={13} strokeWidth={2.5} /> Crear producto</>}
             {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}

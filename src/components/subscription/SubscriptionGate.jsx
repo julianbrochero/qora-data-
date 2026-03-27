@@ -112,9 +112,9 @@ const SubscriptionGate = ({ children }) => {
             <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)', fontFamily: "'Inter', -apple-system, sans-serif", padding: 20 }}>
                 <div style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 24, boxShadow: '0 32px 100px rgba(0,0,0,.3)', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto', animation: 'sbmSlideUp .3s ease' }}>
                     <div style={{ background: 'linear-gradient(135deg, #1e2320 0%, #334139 50%, #1e2320 100%)', padding: '28px 28px 22px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(220,237,49,.06)' }} />
-                        <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(220,237,49,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', border: '2px solid rgba(220,237,49,.2)' }}>
-                            <AlertCircle size={26} color="#DCED31" />
+                        <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(74,222,128,.06)' }} />
+                        <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(74,222,128,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', border: '2px solid rgba(74,222,128,.2)' }}>
+                            <AlertCircle size={26} color="#4ADE80" />
                         </div>
                         <h1 style={{ fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-.03em', margin: '0 0 6px' }}>Suscripción expirada</h1>
                         <p style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', margin: 0, lineHeight: 1.5 }}>Tu período de prueba o plan PRO ha finalizado.</p>

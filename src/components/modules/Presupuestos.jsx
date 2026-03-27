@@ -17,7 +17,7 @@ const ct2 = '#30362F'
 const ct3 = '#8B8982'
 const accent = '#334139'
 const accentL = 'rgba(51,65,57,.08)'
-const lime = '#DCED31'
+const lime = '#4ADE80'
 const cardShadow = '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)'
 
 const fNum = (n) => (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -187,8 +187,8 @@ const Presupuestos = ({
                     {/* Nuevo Presupuesto */}
                     <button onClick={() => openModal && openModal("nuevo-presupuesto")} style={{
                         display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
-                        fontSize: 11, fontWeight: 700, border: '1px solid #DCED31', cursor: 'pointer', transition: 'all .13s',
-                        background: '#DCED31', color: '#282A28',
+                        fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', transition: 'all .13s',
+                        background: '#4ADE80', color: '#0A1A0E',
                     }}>
                         <Plus size={12} strokeWidth={2.5} /> Nuevo Presupuesto
                         <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>

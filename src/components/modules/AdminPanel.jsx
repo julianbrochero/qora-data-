@@ -130,7 +130,7 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                     <div style={{ background: '#1e2320', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Zap size={18} color="#DCED31" fill="#DCED31" />
+                                <Zap size={18} color="#4ADE80" fill="#4ADE80" />
                             </div>
                             <div>
                                 <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-.02em' }}>Activar / Extender Plan</h3>
@@ -165,7 +165,7 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                                     flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
                                     border: months === m ? '2px solid #1e2320' : '1px solid #E5E7EB',
                                     background: months === m ? '#1e2320' : '#fff',
-                                    color: months === m ? '#DCED31' : '#4B5563',
+                                    color: months === m ? '#4ADE80' : '#4B5563',
                                     fontSize: 13, fontWeight: 700,
                                     transition: 'all .15s',
                                 }}>
@@ -210,7 +210,7 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                             disabled={loading}
                             style={{
                                 width: '100%', height: 48, borderRadius: 10,
-                                background: loading ? '#9CA3AF' : '#1e2320', color: '#DCED31', border: 'none',
+                                background: loading ? '#9CA3AF' : '#1e2320', color: '#4ADE80', border: 'none',
                                 fontSize: 14, fontWeight: 800, cursor: loading ? 'wait' : 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                                 transition: 'all .15s', boxShadow: loading ? 'none' : '0 4px 12px rgba(30,35,32,.2)',
@@ -218,7 +218,7 @@ const ActivateModal = ({ user, onClose, onSuccess }) => {
                             onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = 'translateY(-1px)' }}
                             onMouseLeave={e => { if (!loading) e.currentTarget.style.transform = 'none' }}
                         >
-                            <Zap size={16} fill="#DCED31" />
+                            <Zap size={16} fill="#4ADE80" />
                             {loading ? 'Procesando...' : `Confirmar activación de ${months} mes${months > 1 ? 'es' : ''}`}
                         </button>
                     </div>
@@ -311,7 +311,7 @@ const AdminPanel = () => {
                 <div>
                     <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-.03em', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ width: 36, height: 36, borderRadius: 10, background: '#1e2320', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Shield size={18} color="#DCED31" />
+                            <Shield size={18} color="#4ADE80" />
                         </div>
                         Panel de Administración
                     </h1>
@@ -392,7 +392,7 @@ const AdminPanel = () => {
                     }}
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <User size={16} color={filterStatus === 'all' ? '#DCED31' : '#9CA3AF'} />
+                        <User size={16} color={filterStatus === 'all' ? '#4ADE80' : '#9CA3AF'} />
                         <span style={{ fontSize: 24, fontWeight: 900, color: filterStatus === 'all' ? '#fff' : '#111827', lineHeight: 1 }}>
                             {rows.length}
                         </span>
@@ -536,7 +536,7 @@ const AdminPanel = () => {
                                                     onMouseEnter={e => { if (status !== 'active') e.currentTarget.style.background = '#282A28' }}
                                                     onMouseLeave={e => { if (status !== 'active') e.currentTarget.style.background = '#1e2320' }}
                                                 >
-                                                    <Zap size={12} fill={status !== 'active' ? '#DCED31' : 'none'} color={status !== 'active' ? '#DCED31' : 'currentColor'} />
+                                                    <Zap size={12} fill={status !== 'active' ? '#4ADE80' : 'none'} color={status !== 'active' ? '#4ADE80' : 'currentColor'} />
                                                     {status === 'active' ? 'Extender' : 'Activar PRO'}
                                                 </button>
                                                 {status === 'active' && (

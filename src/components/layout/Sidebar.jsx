@@ -104,28 +104,23 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
         style={{ background: SB_BG, borderRight: `1px solid ${LINE}` }}>
 
         {/* Logo */}
-        <div className="flex items-center overflow-hidden flex-shrink-0 relative"
-          style={{ height: 84, padding: 0, borderBottom: `1px solid ${LINE}`, justifyContent: 'center' }}>
+        <div className="flex items-center justify-center flex-shrink-0"
+          style={{ height: 64, borderBottom: `1px solid ${LINE}` }}>
 
-
-
-          <img
-            src="/logogestify3.png"
-            alt="Gestify"
-            className="transition-all duration-200 object-contain"
-            style={{
-              height: 64,
-              opacity: isCollapsed ? 0 : 1,
-              transform: isCollapsed ? 'scale(0.8)' : 'scale(1.85)',
-              width: isCollapsed ? 0 : 'auto',
-            }}
-          />
-
-          {isCollapsed && (
-            <div className="flex items-center justify-center font-black flex-shrink-0 w-7 h-7 rounded-lg absolute inset-auto"
-              style={{ background: SB_BG3, fontSize: 13, color: T1, border: `1px solid rgba(139,137,130,0.2)` }}>
-              G
-            </div>
+          {isCollapsed ? (
+            <img
+              src="/newlogo.png"
+              alt="Gestify"
+              className="object-contain"
+              style={{ height: 32, width: 32, borderRadius: 8 }}
+            />
+          ) : (
+            <img
+              src="/newlogo.png"
+              alt="Gestify"
+              className="object-contain"
+              style={{ height: 52 }}
+            />
           )}
         </div>
 
@@ -171,7 +166,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                       {/* Active indicator */}
                       {isActive && (
                         <div className="absolute left-0 rounded-r"
-                          style={{ top: '20%', bottom: '20%', width: 2.5, background: '#DCED31' }} />
+                          style={{ top: '20%', bottom: '20%', width: 2.5, background: '#4ADE80' }} />
                       )}
 
                       {/* Icon */}
@@ -229,9 +224,9 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                 background: conic-gradient(
                   from var(--sb-beam-angle),
                   transparent 40deg,
-                  rgba(220,237,49,0.2) 80deg,
-                  #DCED31 120deg,
-                  rgba(220,237,49,0.2) 160deg,
+                  rgba(74,222,128,0.2) 80deg,
+                  #4ADE80 120deg,
+                  rgba(74,222,128,0.2) 160deg,
                   transparent 200deg
                 );
                 animation: sb-beam-spin 12s linear infinite;
@@ -266,11 +261,11 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                 }}>
                   <div style={{
                     width: 6, height: 6, borderRadius: '50%',
-                    background: '#DCED31',
-                    boxShadow: '0 0 6px rgba(220,237,49,.7)',
+                    background: '#4ADE80',
+                    boxShadow: '0 0 6px rgba(74,222,128,.7)',
                     flexShrink: 0,
                   }} />
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(220,237,49,.85)', letterSpacing: '.06em' }}>PLAN PRO ACTIVO</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(74,222,128,.9)', letterSpacing: '.06em' }}>PLAN PRO ACTIVO</span>
                 </div>
               </div>
             ) : (
@@ -283,11 +278,11 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
                 >
                   <div style={{
                     width: 5, height: 5, borderRadius: '50%',
-                    background: '#DCED31',
-                    boxShadow: '0 0 4px rgba(220,237,49,.6)',
+                    background: '#4ADE80',
+                    boxShadow: '0 0 4px rgba(74,222,128,.6)',
                     flexShrink: 0,
                   }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#DCED31', letterSpacing: '.04em' }}>Activar Plan PRO</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#4ADE80', letterSpacing: '.04em' }}>Activar Plan PRO</span>
                 </button>
               </div>
             )}

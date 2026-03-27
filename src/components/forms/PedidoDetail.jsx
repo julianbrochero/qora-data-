@@ -18,7 +18,7 @@ const SYS = {
     ct3: '#8B8982',
     accent: '#334139',
     accentL: 'rgba(51,65,57,.08)',
-    lime: '#DCED31',
+    lime: '#4ADE80',
     header: '#282A28',
 }
 
@@ -158,7 +158,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             {/* ══ HEADER ══ */}
             <div style={{ background: SYS.header, borderRadius: 10, padding: '8px 12px', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: SYS.accentL, border: `1px solid rgba(220,237,49,.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: SYS.accentL, border: `1px solid rgba(74,222,128,.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <ShoppingBag size={15} color={SYS.lime} />
                     </div>
                     <div>

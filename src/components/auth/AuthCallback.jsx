@@ -55,7 +55,7 @@ export default function AuthCallback() {
         {/* Logo */}
         <div style={{ marginBottom: 28 }}>
           <img
-            src="/logogestify3.png"
+            src="/newlogo.png"
             alt="Gestify"
             style={{ height: 48, objectFit: 'contain' }}
           />
@@ -66,8 +66,8 @@ export default function AuthCallback() {
           width: 52,
           height: 52,
           borderRadius: '50%',
-          border: '3px solid rgba(220,237,49,.15)',
-          borderTop: '3px solid #DCED31',
+          border: '3px solid rgba(74,222,128,.15)',
+          borderTop: '3px solid #4ADE80',
           animation: 'spin-accent .85s linear infinite',
           marginBottom: 28,
         }} />
@@ -102,7 +102,7 @@ export default function AuthCallback() {
         }}>
           <div style={{
             height: '100%',
-            background: 'linear-gradient(90deg, #DCED31, #b5c926)',
+            background: 'linear-gradient(90deg, #4ADE80, #b5c926)',
             borderRadius: 99,
             animation: 'progress-fill 1.5s ease forwards',
           }} />
@@ -120,7 +120,7 @@ export default function AuthCallback() {
         <button
           onClick={() => navigate('/')}
           style={{
-            color: '#DCED31',
+            color: '#4ADE80',
             background: 'none',
             border: 'none',
             cursor: 'pointer',

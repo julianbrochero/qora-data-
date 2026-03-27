@@ -13,7 +13,7 @@ const ct2      = '#30362F'
 const ct3      = '#8B8982'
 const accent   = '#334139'
 const accentL  = 'rgba(51,65,57,.08)'
-const lime     = '#DCED31'
+const lime     = '#4ADE80'
 
 const PREF_KEY    = 'gestify_pedido_cliente_activo'
 const ITEMS_PER_PAGE = 3

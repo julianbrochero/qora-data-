@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
-const ACCENT = '#DCED31'
+const ACCENT = '#4ADE80'
 const BG_DARK = '#1a1c1a'
 const BG_CARD = '#222422'
 const BG_ROW = '#2a2c2a'
@@ -201,7 +201,7 @@ const ModalProductoNuevo = ({ datos, onGuardar, onCancelar, cargando }) => {
                 </div>
 
                 {/* Badge API */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18, padding: '7px 11px', background: hayAPI ? 'rgba(220,237,49,.07)' : 'rgba(255,255,255,.04)', borderRadius: 8, border: `1px solid ${hayAPI ? 'rgba(220,237,49,.2)' : BORDER}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18, padding: '7px 11px', background: hayAPI ? 'rgba(74,222,128,.07)' : 'rgba(255,255,255,.04)', borderRadius: 8, border: `1px solid ${hayAPI ? 'rgba(74,222,128,.2)' : BORDER}` }}>
                     {hayAPI ? <Zap size={12} color={ACCENT} /> : <Package size={12} color="rgba(255,255,255,.4)" />}
                     <span style={{ fontSize: 11, color: hayAPI ? ACCENT : 'rgba(255,255,255,.4)' }}>
                         {hayAPI ? `Auto-completado: ${datos?.datosAPI?.nombre}` : `Código: ${datos?.codigoBarras || 'sin código'}`}
@@ -269,7 +269,7 @@ const ModalLibre = ({ onAgregar, onCerrar }) => {
             <div style={{ background: BG_CARD, borderRadius: 18, border: `1px solid ${BORDER}`, boxShadow: '0 32px 80px rgba(0,0,0,.6)', width: '100%', maxWidth: 380, padding: 28, animation: 'fadeUp .2s ease both' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(220,237,49,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(74,222,128,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Tag size={15} color={ACCENT} />
                         </div>
                         <h2 style={{ color: '#fff', fontWeight: 800, fontSize: 17, margin: 0 }}>Producto Libre</h2>
@@ -538,7 +538,7 @@ const POS = ({ onVolver, embebido = false }) => {
                     {/* Scanner + botón producto libre */}
                     <div style={{ padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0, position: 'relative' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, height: 50, background: '#0e100e', borderRadius: 13, border: `2px solid rgba(220,237,49,.35)`, padding: '0 15px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, height: 50, background: '#0e100e', borderRadius: 13, border: `2px solid rgba(74,222,128,.35)`, padding: '0 15px' }}>
                                 {buscando
                                     ? <Loader2 size={18} color={ACCENT} style={{ animation: 'spin .8s linear infinite', flexShrink: 0 }} />
                                     : <Search size={18} color={ACCENT} style={{ flexShrink: 0 }} />
@@ -560,9 +560,9 @@ const POS = ({ onVolver, embebido = false }) => {
                             {/* Botón producto libre */}
                             <button onClick={() => setShowModalLibre(true)}
                                 title="Agregar producto libre (sin código)"
-                                style={{ height: 50, padding: '0 14px', borderRadius: 12, border: `1px solid rgba(220,237,49,.25)`, background: 'rgba(220,237,49,.07)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, flexShrink: 0 }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(220,237,49,.15)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(220,237,49,.07)'}>
+                                style={{ height: 50, padding: '0 14px', borderRadius: 12, border: `1px solid rgba(74,222,128,.25)`, background: 'rgba(74,222,128,.07)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, flexShrink: 0 }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(74,222,128,.15)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(74,222,128,.07)'}>
                                 <Tag size={15} color={ACCENT} />
                                 <span style={{ fontSize: 8, color: ACCENT, fontWeight: 700, fontFamily: FONT, letterSpacing: '.05em' }}>LIBRE</span>
                             </button>
@@ -572,7 +572,7 @@ const POS = ({ onVolver, embebido = false }) => {
                         {showResultados && resultados.length > 0 && (
                             <div style={{ position: 'absolute', top: 68, left: 14, right: 14, zIndex: 100, background: '#181a18', borderRadius: 13, border: `1px solid ${BORDER}`, boxShadow: '0 16px 48px rgba(0,0,0,.65)', overflow: 'hidden' }}>
                                 {/* Pista de navegación */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(220,237,49,.04)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(74,222,128,.04)' }}>
                                     <span style={{ fontSize: 9, color: 'rgba(255,255,255,.3)' }}>↑↓ navegar</span>
                                     <span style={{ fontSize: 9, color: 'rgba(255,255,255,.15)' }}>·</span>
                                     <span style={{ fontSize: 9, color: 'rgba(255,255,255,.3)' }}>Enter agregar</span>
@@ -584,12 +584,12 @@ const POS = ({ onVolver, embebido = false }) => {
                                     <button key={p.id}
                                         onClick={() => { agregarAlCarrito(p); setInputVal(''); setResultados([]); setShowResultados(false); setResIdx(-1); inputRef.current?.focus() }}
                                         style={{
-                                            width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '10px 14px', background: resIdx === i ? 'rgba(220,237,49,.08)' : 'none', border: 'none', borderTop: i > 0 ? `1px solid ${BORDER}` : 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FONT, transition: 'background .1s',
+                                            width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '10px 14px', background: resIdx === i ? 'rgba(74,222,128,.08)' : 'none', border: 'none', borderTop: i > 0 ? `1px solid ${BORDER}` : 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FONT, transition: 'background .1s',
                                             borderLeft: resIdx === i ? `2px solid ${ACCENT}` : '2px solid transparent'
                                         }}
-                                        onMouseEnter={e => { setResIdx(i); e.currentTarget.style.background = 'rgba(220,237,49,.06)' }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = resIdx === i ? 'rgba(220,237,49,.08)' : 'none' }}>
-                                        <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(220,237,49,.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        onMouseEnter={e => { setResIdx(i); e.currentTarget.style.background = 'rgba(74,222,128,.06)' }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = resIdx === i ? 'rgba(74,222,128,.08)' : 'none' }}>
+                                        <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(74,222,128,.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                             <Package size={15} color={ACCENT} />
                                         </div>
                                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -643,7 +643,7 @@ const POS = ({ onVolver, embebido = false }) => {
                                         <div style={{ minWidth: 0 }}>
                                             <p style={{ color: '#fff', fontWeight: 600, fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {item.nombre}
-                                                {item.esLibre && <span style={{ marginLeft: 5, fontSize: 8, fontWeight: 700, background: 'rgba(220,237,49,.15)', color: ACCENT, padding: '1px 4px', borderRadius: 3, verticalAlign: 'middle' }}>LIBRE</span>}
+                                                {item.esLibre && <span style={{ marginLeft: 5, fontSize: 8, fontWeight: 700, background: 'rgba(74,222,128,.15)', color: ACCENT, padding: '1px 4px', borderRadius: 3, verticalAlign: 'middle' }}>LIBRE</span>}
                                             </p>
                                             {/* Precio editable al hacer click */}
                                             {editandoPrecio?.idx === idx ? (
@@ -656,7 +656,7 @@ const POS = ({ onVolver, embebido = false }) => {
                                                         if (e.key === 'Escape') setEditandoPrecio(null)
                                                     }}
                                                     onClick={e => e.stopPropagation()}
-                                                    style={{ width: 80, background: 'rgba(220,237,49,.1)', border: `1px solid ${ACCENT}`, borderRadius: 5, padding: '2px 6px', color: ACCENT, fontSize: 11, fontWeight: 700, outline: 'none', fontFamily: "'DM Mono',monospace" }}
+                                                    style={{ width: 80, background: 'rgba(74,222,128,.1)', border: `1px solid ${ACCENT}`, borderRadius: 5, padding: '2px 6px', color: ACCENT, fontSize: 11, fontWeight: 700, outline: 'none', fontFamily: "'DM Mono',monospace" }}
                                                 />
                                             ) : (
                                                 <p

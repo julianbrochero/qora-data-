@@ -151,6 +151,7 @@ const Modal = ({
       case 'detalle-cierre':
         return (
           <DetalleCierreForm
+            selectedItem={formData.selectedItem}
             closeModal={onClose}
             openModal={openModal}
           />

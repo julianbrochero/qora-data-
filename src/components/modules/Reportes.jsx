@@ -294,7 +294,7 @@ const Reportes = ({ facturas = [], pedidos = [], clientes = [], productos = [], 
                 <ChevronRight size={14} strokeWidth={2.5} />
               </button>
               {anioSeleccionado !== anioActualReal && (
-                <button onClick={() => setAnioSeleccionado(anioActualReal)} style={{ marginLeft: 6, padding: '2px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: '#DCED31', border: 'none', color: '#1e2320', cursor: 'pointer' }}>Hoy</button>
+                <button onClick={() => setAnioSeleccionado(anioActualReal)} style={{ marginLeft: 6, padding: '2px 8px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: '#4ADE80', border: 'none', color: '#1e2320', cursor: 'pointer' }}>Hoy</button>
               )}
             </div>
           </div>

@@ -89,14 +89,14 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                 }
                 .wtm-btn:hover:not(:disabled) {
                     transform: translateY(-1px);
-                    box-shadow: 0 10px 36px rgba(220,237,49,.35) !important;
+                    box-shadow: 0 10px 36px rgba(74,222,128,.35) !important;
                 }
                 .wtm-btn:active:not(:disabled) {
                     transform: translateY(0);
                 }
                 .wtm-feature-row:hover .wtm-feature-icon {
-                    background: rgba(220,237,49,.18) !important;
-                    border-color: rgba(220,237,49,.35) !important;
+                    background: rgba(74,222,128,.18) !important;
+                    border-color: rgba(74,222,128,.35) !important;
                 }
 
                 /* ── Responsive móvil ── */
@@ -200,7 +200,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                     width: '100%', maxWidth: 460,
                     background: '#111713',
                     borderRadius: 28,
-                    boxShadow: '0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(220,237,49,.12)',
+                    boxShadow: '0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(74,222,128,.12)',
                     overflow: 'hidden',
                     animation: visible ? 'wtm-card-in .35s cubic-bezier(.22,1,.36,1)' : 'none',
                     maxHeight: '90vh',
@@ -214,19 +214,19 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                         textAlign: 'center',
                         position: 'relative',
                         overflow: 'hidden',
-                        borderBottom: '1px solid rgba(220,237,49,.08)',
+                        borderBottom: '1px solid rgba(74,222,128,.08)',
                     }}>
                         {/* BG decorative blobs */}
                         <div style={{
                             position: 'absolute', top: -60, right: -60,
                             width: 180, height: 180, borderRadius: '50%',
-                            background: 'radial-gradient(circle, rgba(220,237,49,.07) 0%, transparent 70%)',
+                            background: 'radial-gradient(circle, rgba(74,222,128,.07) 0%, transparent 70%)',
                             pointerEvents: 'none',
                         }} />
                         <div style={{
                             position: 'absolute', bottom: -40, left: -40,
                             width: 140, height: 140, borderRadius: '50%',
-                            background: 'radial-gradient(circle, rgba(220,237,49,.04) 0%, transparent 70%)',
+                            background: 'radial-gradient(circle, rgba(74,222,128,.04) 0%, transparent 70%)',
                             pointerEvents: 'none',
                         }} />
 
@@ -234,15 +234,15 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                         <div style={{ position: 'relative', display: 'inline-flex', marginBottom: 18 }}>
                             <div style={{
                                 position: 'absolute', inset: 0, borderRadius: '50%',
-                                background: 'rgba(220,237,49,.3)',
+                                background: 'rgba(74,222,128,.3)',
                                 animation: 'wtm-pulse-ring 2s ease-out infinite',
                                 transformOrigin: 'center',
                             }} />
                             <div className="wtm-header-icon" style={{
                                 width: 64, height: 64, borderRadius: 18,
-                                background: 'linear-gradient(135deg, #DCED31 0%, #c8d828 100%)',
+                                background: 'linear-gradient(135deg, #4ADE80 0%, #c8d828 100%)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                boxShadow: '0 8px 28px rgba(220,237,49,.4)',
+                                boxShadow: '0 8px 28px rgba(74,222,128,.4)',
                                 animation: 'wtm-float 3s ease-in-out infinite',
                                 position: 'relative',
                             }}>
@@ -257,7 +257,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                         }}>
                             ¡Bienvenido a{' '}
                             <span style={{
-                                background: 'linear-gradient(90deg, #DCED31, #b8d400, #DCED31)',
+                                background: 'linear-gradient(90deg, #4ADE80, #b8d400, #4ADE80)',
                                 backgroundSize: '200% auto',
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
@@ -279,24 +279,24 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
 
                         {/* Trial pill */}
                         <div className="wtm-pill" style={{
-                            background: 'linear-gradient(135deg, rgba(220,237,49,.10) 0%, rgba(220,237,49,.05) 100%)',
+                            background: 'linear-gradient(135deg, rgba(74,222,128,.10) 0%, rgba(74,222,128,.05) 100%)',
                             borderRadius: 14,
                             padding: '16px 18px',
                             marginBottom: 22,
-                            border: '1px solid rgba(220,237,49,.18)',
+                            border: '1px solid rgba(74,222,128,.18)',
                             display: 'flex', alignItems: 'center', gap: 14,
                         }}>
                             <div className="wtm-pill-icon" style={{
                                 width: 44, height: 44, borderRadius: 12,
-                                background: 'rgba(220,237,49,.15)',
-                                border: '1px solid rgba(220,237,49,.25)',
+                                background: 'rgba(74,222,128,.15)',
+                                border: '1px solid rgba(74,222,128,.25)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 flexShrink: 0,
                                 fontSize: 22,
                             }}>🎁</div>
                             <div>
                                 <p className="wtm-pill-title" style={{
-                                    fontSize: 15, fontWeight: 800, color: '#DCED31',
+                                    fontSize: 15, fontWeight: 800, color: '#4ADE80',
                                     margin: '0 0 3px', letterSpacing: '-.02em',
                                 }}>
                                     7 días gratis — Sin tarjeta de crédito
@@ -345,7 +345,7 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                                     <span className="wtm-feature-text" style={{ fontSize: 13, color: 'rgba(255,255,255,.7)', fontWeight: 500, flex: 1 }}>
                                         {f.text}
                                     </span>
-                                    <Check size={15} color="#DCED31" strokeWidth={2.5} />
+                                    <Check size={15} color="#4ADE80" strokeWidth={2.5} />
                                 </div>
                             ))}
                         </div>
@@ -359,14 +359,14 @@ const WelcomeTrialModal = ({ userId, onTrialStarted }) => {
                                 width: '100%', height: 54, borderRadius: 14,
                                 background: loading
                                     ? 'rgba(255,255,255,.08)'
-                                    : 'linear-gradient(135deg, #DCED31 0%, #c8d828 100%)',
+                                    : 'linear-gradient(135deg, #4ADE80 0%, #c8d828 100%)',
                                 color: loading ? 'rgba(255,255,255,.4)' : '#1a2218',
                                 border: 'none',
                                 fontSize: 15, fontWeight: 900,
                                 cursor: loading ? 'wait' : 'pointer',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                                 transition: 'all .2s cubic-bezier(.22,1,.36,1)',
-                                boxShadow: loading ? 'none' : '0 6px 24px rgba(220,237,49,.3)',
+                                boxShadow: loading ? 'none' : '0 6px 24px rgba(74,222,128,.3)',
                                 letterSpacing: '-.02em',
                                 marginBottom: 0,
                             }}
