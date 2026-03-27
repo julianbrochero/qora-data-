@@ -537,7 +537,7 @@ export const useFacturacion = () => {
         productos_count: pedidoData.items.length, notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
         canal_venta: pedidoData.canalVenta || null,
-        monto_abonado: 0, saldo_pendiente: total,
+        monto_abonado: montoPagadoInicial, saldo_pendiente: total - montoPagadoInicial,
         user_id: user.id, created_at: new Date().toISOString()
       }
       const { data: pedidoRes, error: pErr } = await supabase.from('pedidos').insert([pedidoDB]).select()
@@ -548,8 +548,8 @@ export const useFacturacion = () => {
         tipo: 'Factura A', numero: numeroFactura, fecha: hoy,
         cliente: pedidoData.clienteNombre, pedido_id: nuevoPedido.id,
         metodopago: 'Efectivo', items: JSON.stringify(pedidoData.items),
-        total, montopagado: 0, saldopendiente: total,
-        estado: 'pendiente', user_id: user.id
+        total, montopagado: montoPagadoInicial, saldopendiente: total - montoPagadoInicial,
+        estado: estadoVentaOpt, user_id: user.id
       }
       const { data: ventaRes, error: vErr } = await supabase.from('facturas').insert([ventaDB]).select()
       if (vErr) throw vErr
