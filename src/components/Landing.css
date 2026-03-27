@@ -449,7 +449,7 @@
   .landing-root .nav-links { display: none; }
   .landing-root .nav-logo { gap: 4px; }
   .landing-root .nav-logo-text { font-size: 14px; }
-  .landing-root .nav-logo img { height: 28px; }
+  .landing-root .nav-logo img { height: 40px; }
   .landing-root .nav-login { display: none; }
   .landing-root .btn-primary { font-size: 12px; padding: 8px 14px; }
 

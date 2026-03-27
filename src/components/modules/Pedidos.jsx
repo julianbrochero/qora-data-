@@ -373,9 +373,9 @@ const Pedidos = ({
             </div>
 
             {/* Cabecera tabla */}
-            <div className="ventas-table-wrapper" style={{ overflowX: 'auto' }}>
-              <div style={{ minWidth: 600 }}>
-                <div className="ventas-row-grid" style={{
+            <div className="ventas-table-wrapper">
+              <div>
+                <div className="ventas-row-grid ventas-table-header-row" style={{
                   display: 'grid',
                   gridTemplateColumns: modoSeleccion ? '32px 1.1fr 1.6fr .8fr .9fr 1.2fr 240px' : '1.1fr 1.6fr .8fr .9fr 1.2fr 240px',
                   gap: 14, padding: '10px 16px', borderBottom: `1px solid ${border}`, background: surface2
@@ -434,60 +434,70 @@ const Pedidos = ({
                         )}
 
                         {/* Código */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(51,65,57,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Package size={13} strokeWidth={2} style={{ color: accent }} />
-                          </div>
-                          <div>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: ct1, letterSpacing: '-0.01em' }}>{pedido.codigo || 'N/A'}</div>
-                            {pedido.factura_id && <div style={{ fontSize: 10, fontWeight: 600, color: '#606B6C', marginTop: 1 }}>✓ Facturado</div>}
+                        <div className="ventas-cell">
+                          <span className="ventas-col-label">Código</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(51,65,57,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Package size={13} strokeWidth={2} style={{ color: accent }} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: ct1, letterSpacing: '-0.01em' }}>{pedido.codigo || 'N/A'}</div>
+                              {pedido.factura_id && <div style={{ fontSize: 10, fontWeight: 600, color: '#606B6C', marginTop: 1 }}>✓ Facturado</div>}
+                            </div>
                           </div>
                         </div>
 
                         {/* Cliente y Productos */}
-                        <div style={{ minWidth: 0 }}>
-                          {(() => {
-                            try {
-                              const stItems = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || []);
-                              if (stItems.length > 0) {
-                                const summary = stItems.map(i => `${i.cantidad}x ${i.producto || i.nombre || '—'}`).join(', ');
-                                return (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={summary}>
-                                    <Package size={11} strokeWidth={2.2} style={{ color: accent, flexShrink: 0 }} />
-                                    <span style={{ fontSize: 13, fontWeight: 600, color: ct1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{summary}</span>
-                                  </div>
-                                );
-                              }
-                            } catch { /* noop */ }
-                            return null;
-                          })()}
-                          <div style={{ fontSize: 11, fontWeight: 400, color: ct3, marginTop: 2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{pedido.cliente_nombre || '—'}</div>
+                        <div className="ventas-cell" style={{ minWidth: 0 }}>
+                          <span className="ventas-col-label">Producto</span>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            {(() => {
+                              try {
+                                const stItems = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || []);
+                                if (stItems.length > 0) {
+                                  const summary = stItems.map(i => `${i.cantidad}x ${i.producto || i.nombre || '—'}`).join(', ');
+                                  return (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={summary}>
+                                      <Package size={11} strokeWidth={2.2} style={{ color: accent, flexShrink: 0 }} />
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: ct1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{summary}</span>
+                                    </div>
+                                  );
+                                }
+                              } catch { /* noop */ }
+                              return null;
+                            })()}
+                            <div style={{ fontSize: 11, fontWeight: 400, color: ct3, marginTop: 2, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{pedido.cliente_nombre || '—'}</div>
+                          </div>
                         </div>
 
                         {/* Fecha */}
-                        <div className="ventas-col-fecha" style={{ textAlign: 'center', fontSize: 12, fontWeight: 500, color: ct2 }}>{fFecha(pedido.fecha_pedido)}</div>
+                        <div className="ventas-cell ventas-col-fecha">
+                          <span className="ventas-col-label">Fecha</span>
+                          <span style={{ fontSize: 12, fontWeight: 500, color: ct2 }}>{fFecha(pedido.fecha_pedido)}</span>
+                        </div>
 
                         {/* Total + Ganancia */}
-                        <div className="ventas-col-total" style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-0.02em' }}>${fCorto(pedido.total)}</div>
-                          {saldo > 0.01 && <div style={{ fontSize: 10, fontWeight: 600, color: accent, marginTop: 1 }}>Saldo: ${fCorto(saldo)}</div>}
-                          {(() => {
-                            try {
-                              const its = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || [])
-                              const gan = its.reduce((s, i) => s + (parseFloat(i.ganancia) || 0), 0)
-                              const hayGan = its.some(i => parseFloat(i.ganancia) > 0 || parseFloat(i.costo) > 0)
-                              if (!hayGan || gan === 0) return null
-                              return (
-                                <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', marginTop: 2 }}>
-                                  +${fCorto(gan)} gan.
-                                </div>
-                              )
-                            } catch { return null }
-                          })()}
+                        <div className="ventas-cell ventas-col-total">
+                          <span className="ventas-col-label">Total</span>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: ct1, letterSpacing: '-0.02em' }}>${fCorto(pedido.total)}</div>
+                            {saldo > 0.01 && <div style={{ fontSize: 10, fontWeight: 600, color: accent, marginTop: 1 }}>Saldo: ${fCorto(saldo)}</div>}
+                            {(() => {
+                              try {
+                                const its = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || [])
+                                const gan = its.reduce((s, i) => s + (parseFloat(i.ganancia) || 0), 0)
+                                const hayGan = its.some(i => parseFloat(i.ganancia) > 0 || parseFloat(i.costo) > 0)
+                                if (!hayGan || gan === 0) return null
+                                return <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', marginTop: 2 }}>+${fCorto(gan)} gan.</div>
+                              } catch { return null }
+                            })()}
+                          </div>
                         </div>
 
                         {/* Estado */}
-                        <div className="ventas-col-estado-pago" style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-start', minWidth: 100 }}>
+                        <div className="ventas-cell ventas-col-estado-pago">
+                          <span className="ventas-col-label">Estado</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-end' }}>
                           <select
                             value={pedido.estado}
                             onClick={e => e.stopPropagation()}
@@ -514,13 +524,14 @@ const Pedidos = ({
                             <pago.Icon size={10} strokeWidth={2.5} />
                             {pago.label}
                           </span>
+                          </div>
                         </div>
 
                         {/* Acciones */}
                         {modoSeleccion ? (
                           <div />
                         ) : (
-                          <div className="ventas-col-acciones" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
+                          <div className="ventas-cell ventas-col-acciones" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
                             <ActionBtn text="Ver" onClick={e => { e.stopPropagation(); openModal && openModal('ver-pedido', pedido) }} title="Ver detalles" D={D}>
                               <Eye size={12} strokeWidth={2.2} />
                             </ActionBtn>
@@ -832,6 +843,8 @@ const Pedidos = ({
         select option { background: ${surface}; color: ${ct1}; }
 
         /* ═ Tabla de ventas: responsive ═ */
+        .ventas-col-label { display: none; font-size: 10px; font-weight: 700; color: #8B8982; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; flex-shrink: 0; }
+        .ventas-cell { overflow: hidden; min-width: 0; }
 
         /* Tablet (641-900px): ocultar columna fecha */
         @media (max-width: 900px) {
@@ -839,13 +852,32 @@ const Pedidos = ({
           .ventas-col-fecha { display: none !important; }
         }
 
-        /* Mobile (≤640px): mostrar solo código/cliente y acciones */
+        /* Mobile (≤640px): layout tipo card, igual que Presupuestos */
         @media (max-width: 640px) {
-          .ventas-row-grid { grid-template-columns: 1fr auto !important; gap: 8px !important; padding: 10px 12px !important; }
-          .ventas-col-fecha,
-          .ventas-col-estado-pago,
-          .ventas-col-total { display: none !important; }
-          .ventas-col-acciones { justify-content: flex-end !important; }
+          .ventas-table-wrapper { overflow-x: hidden; }
+          .ventas-table-header-row { display: none !important; }
+          .ventas-row-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0 !important;
+            padding: 10px 14px !important;
+            min-width: 0 !important;
+          }
+          .ventas-cell {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 5px 0 !important;
+            border-bottom: 1px solid rgba(48,54,47,.07) !important;
+          }
+          .ventas-cell:last-of-type { border-bottom: none !important; }
+          .ventas-col-label { display: inline-block !important; }
+          .ventas-col-fecha { display: flex !important; }
+          .ventas-col-total { display: flex !important; }
+          .ventas-col-estado-pago { display: flex !important; }
+          .ventas-col-acciones { justify-content: flex-end !important; border-top: 1px solid rgba(48,54,47,.07) !important; padding-top: 8px !important; margin-top: 2px !important; }
         }
       `}</style>
     </div>
