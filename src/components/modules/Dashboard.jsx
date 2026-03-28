@@ -35,7 +35,7 @@ const MetricCard = ({ title, value, subtitle, icon: Icon, trend, trendType, acce
   const trendBg = trendUp ? 'rgba(96,107,108,.1)' : trendDown ? 'rgba(139,137,130,.1)' : 'rgba(139,137,130,.08)'
   const trendColor = trendUp ? '#606B6C' : trendDown ? '#8B8982' : '#8B8982'
   const TrendIcon = trendUp ? TrendingUp : trendDown ? TrendingDown : Activity
-  const pct = Math.min(100, Math.max(0, progress))
+  const pct = Math.min(100, Math.max(0, progress))                    
 
   const cardInner = (
     <div className="relative rounded-xl overflow-hidden transition-all duration-200"
@@ -677,7 +677,7 @@ const Dashboard = ({
               style={{
                 fontSize: 11, fontFamily: 'Inter,sans-serif', fontWeight: primary ? 700 : 500,
                 background: primary ? '#4ADE80' : 'transparent',
-                color: primary ? '#0A1A0E' : '#4ADE80',
+                color: primary ? '#282A28' : '#4ADE80',
                 border: '1px solid #4ADE80',
               }}
               onMouseEnter={e => !primary && (e.currentTarget.style.background = 'rgba(74,222,128,.1)')}
@@ -696,7 +696,7 @@ const Dashboard = ({
             </div>
             {isPro && (
               <span style={{
-                fontSize: 8, fontWeight: 900, color: '#0A1A0E', background: '#4ADE80',
+                fontSize: 8, fontWeight: 900, color: '#282A28', background: '#4ADE80',
                 padding: '1px 5px', borderRadius: 3, letterSpacing: '.04em',
                 lineHeight: '14px',
               }}>PRO</span>
@@ -719,7 +719,7 @@ const Dashboard = ({
             style={{
               fontSize: 11, fontFamily: 'Inter,sans-serif', fontWeight: primary ? 700 : 500,
               background: primary ? '#4ADE80' : 'transparent',
-              color: primary ? '#0A1A0E' : '#4ADE80',
+              color: primary ? '#282A28' : '#4ADE80',
               border: '1px solid #4ADE80',
             }}>
             {label}

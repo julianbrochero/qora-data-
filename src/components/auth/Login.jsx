@@ -147,7 +147,7 @@ export default function Login() {
       {/* ══════════════ DERECHA — IMAGEN MAC ══════════════ */}
       <div className="hidden md:flex md:w-[55%] relative items-center justify-center bg-[#F5F5F5] rounded-l-[40px] shadow-[-10px_0_30px_rgba(0,0,0,0.15)] z-10 transition-transform duration-500 overflow-hidden">
         <img
-          src="/mac.png"
+          src="/mac2.jpg"
           alt="Gestify System en Mac"
           className="absolute inset-0 w-full h-full object-cover transition-transform hover:scale-105 duration-700 select-none"
         />

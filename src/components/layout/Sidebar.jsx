@@ -19,11 +19,14 @@ import {
   TrendingUp,
   X,
   PlusCircle,
+  ShieldCheck,
 } from "lucide-react"
+import { ADMIN_EMAILS } from "../modules/AdminPanel"
 
 const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, onToggleCollapse, pedidos = [] }) => {
   const { user, logout } = useAuth()
   const { isPro } = useSubscriptionContext()
+  const isAdmin = ADMIN_EMAILS.includes(user?.email)
 
   // Calcular ventas creadas hoy
   const hoy = new Date().toISOString().split('T')[0]
@@ -73,6 +76,7 @@ const Sidebar = ({ activeModule, setActiveModule, isOpen, onClose, isCollapsed, 
       title: "Sistema",
       items: [
         { id: "configuracion", icon: Settings, label: "Configuración" },
+        ...(isAdmin ? [{ id: "admin", icon: ShieldCheck, label: "Admin" }] : []),
       ]
     }
   ]

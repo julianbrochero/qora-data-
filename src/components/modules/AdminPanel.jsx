@@ -1,625 +1,625 @@
-/**
- * Gestify — Panel Admin
- * Gestión de suscripciones de todos los usuarios.
- * Permite ver el estado de cada cuenta y activar/extender planes manualmente.
- *
- * ⚠️ SOLO ACCESIBLE POR EL ADMINISTRADOR (protegido por email en constante ADMIN_EMAIL).
- */
-
 import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { useAuth } from '../../lib/AuthContext'
+import * as XLSX from 'xlsx'
 import {
-    Shield, RefreshCw, CheckCircle, AlertTriangle, AlertCircle, Clock,
-    Calendar, User, Search, ChevronDown, X, Zap, Trash2
+  Users, TrendingUp, DollarSign, Clock,
+  Download, RefreshCw, Shield, Search, X,
+  Pencil, Check, Ban, AlertCircle, Zap,
+  EyeOff, Eye, ArrowUpDown, ArrowUp, ArrowDown, Copy, CheckCheck
 } from 'lucide-react'
 
-// ─── ¡CAMBIA ESTO POR TU EMAIL DE ADMINISTRADOR! ──────────────────────────────
-const ADMIN_EMAIL = 'brocherojulian72@gmail.com'
-// ─────────────────────────────────────────────────────────────────────────────
+export const ADMIN_EMAILS = ['brocherojulian72@gmail.com', 'nicoflucia1@gmail.com']
 
-const GRACE_DAYS = 7
+/* ── helpers ── */
+const fDate = iso => {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+const toInputDate = iso => iso ? new Date(iso).toISOString().slice(0, 10) : ''
+const fMoney = n => n ? '$' + parseFloat(n).toLocaleString('es-AR', { minimumFractionDigits: 0 }) : '—'
 
-const getStatus = (row) => {
-    if (!row) return 'sin_datos'
-    const now = new Date()
-    const trialUntil = row.trial_until ? new Date(row.trial_until) : new Date(0)
-    const paidUntil = row.paid_until ? new Date(row.paid_until) : null
-
-    // PRO tiene prioridad sobre trial
-    if (paidUntil && now <= paidUntil) return 'active'
-    if (now <= trialUntil) return 'trial'
-    if (paidUntil && now <= new Date(paidUntil.getTime() + GRACE_DAYS * 86400000)) return 'grace'
-    if (!paidUntil && now <= new Date(trialUntil.getTime() + GRACE_DAYS * 86400000)) return 'grace'
-    return 'suspended'
+const getStatus = row => {
+  const now = new Date()
+  if (row.is_exempt)          return { label: 'Exento',         color: '#fff',    bg: '#7c3aed', border: '#6d28d9' }
+  if (row.manually_suspended) return { label: 'Suspendido',     color: '#fff',    bg: '#dc2626', border: '#b91c1c' }
+  if (!row.trial_until && !row.paid_until) return { label: 'Nuevo',  color: '#374151', bg: '#f3f4f6', border: '#d1d5db' }
+  const paidOk  = row.paid_until  && new Date(row.paid_until)  >= now
+  const trialOk = row.trial_until && new Date(row.trial_until) >= now
+  if (paidOk)  return { label: 'PRO Activo',     color: '#fff',    bg: '#059669', border: '#047857' }
+  if (trialOk) return { label: 'Trial activo',   color: '#fff',    bg: '#d97706', border: '#b45309' }
+  if (row.paid_until) return { label: 'PRO Expirado',  color: '#fff',    bg: '#ea580c', border: '#c2410c' }
+  return { label: 'Trial expirado',              color: '#fff',    bg: '#6b7280', border: '#4b5563' }
 }
 
-const STATUS_CONFIG = {
-    trial: { label: 'Trial', color: '#1D4ED8', bg: '#EFF6FF', icon: Clock },
-    active: { label: 'PRO', color: '#15803D', bg: '#F0FDF4', icon: CheckCircle },
-    grace: { label: 'Gracia', color: '#B45309', bg: '#FEF3C7', icon: AlertTriangle },
-    suspended: { label: 'Suspendido', color: '#B91C1C', bg: '#FEF2F2', icon: AlertCircle },
-    sin_datos: { label: 'Sin datos', color: '#6B7280', bg: '#F9FAFB', icon: User },
-}
+const FILTROS = [
+  { id: 'todos',    label: 'Todos',           color: '#282A28' },
+  { id: 'nuevo',   label: 'Nuevos',          color: '#6b7280' },
+  { id: 'trial',   label: 'Trial activo',    color: '#d97706' },
+  { id: 'pro',     label: 'PRO activo',      color: '#059669' },
+  { id: 'expirado',label: 'Expirados',       color: '#dc2626' },
+]
 
-const fmtDate = (iso) => {
-    if (!iso) return '—'
-    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
+/* ═══════════════════════ MODAL EDICIÓN ═══════════════════════ */
+const EditModal = ({ row, onClose, onSaved }) => {
+  const st = getStatus(row)
+  const [trialUntil,  setTrialUntil]  = useState(toInputDate(row.trial_until))
+  const [paidUntil,   setPaidUntil]   = useState(toInputDate(row.paid_until))
+  const [isSuspended, setIsSuspended] = useState(!!row.manually_suspended)
+  const [saving,      setSaving]      = useState(false)
+  const [saveError,   setSaveError]   = useState(null)
 
-// ─── Componentes pequeños ─────────────────────────────────────────────────────
+  const addDays = (base, days) => {
+    const d = base ? new Date(base) : new Date()
+    if (isNaN(d)) { const n = new Date(); n.setDate(n.getDate() + days); return n.toISOString().slice(0, 10) }
+    d.setDate(d.getDate() + days)
+    return d.toISOString().slice(0, 10)
+  }
 
-const StatusBadge = ({ status }) => {
-    const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.sin_datos
-    const Icon = cfg.icon
-    return (
-        <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '3px 8px', borderRadius: 6,
-            background: cfg.bg,
-            border: `1px solid ${cfg.color}25`,
-            fontSize: 11, fontWeight: 700, color: cfg.color,
-        }}>
-            <Icon size={11} />
-            {cfg.label}
-        </span>
-    )
-}
+  const handleSave = async () => {
+    setSaving(true); setSaveError(null)
+    const { error } = await supabase
+      .from('subscriptions')
+      .update({
+        trial_until:        trialUntil || null,
+        paid_until:         paidUntil  || null,
+        manually_suspended: isSuspended,
+        updated_at:         new Date().toISOString(),
+      })
+      .eq('user_id', row.user_id)
+    if (error) { setSaveError(error.message); setSaving(false); return }
+    setSaving(false); onSaved(); onClose()
+  }
 
-// ─── Modal para activar/extender plan ────────────────────────────────────────
+  return (
+    <div className="em-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="em-panel">
 
-const ActivateModal = ({ user, onClose, onSuccess }) => {
-    const [months, setMonths] = useState(1)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+        {/* Header del modal */}
+        <div className="em-hd" style={{ background: st.bg }}>
+          <div>
+            <p className="em-hd-label">Editando usuario</p>
+            <p className="em-hd-email">{row.email}</p>
+            <span className="em-hd-badge">{st.label} · Registrado {fDate(row.created_at)}</span>
+          </div>
+          <button onClick={onClose} className="em-close"><X size={16} /></button>
+        </div>
 
-    if (!user) return null
+        <div className="em-body">
 
-    const handleActivate = async () => {
-        setLoading(true)
-        setError(null)
-        try {
-            // Si ya tiene paid_until vigente, extendemos desde ahí; si no, desde hoy
-            const base = (user.paid_until && new Date(user.paid_until) > new Date())
-                ? new Date(user.paid_until)
-                : new Date()
-
-            const newPaidUntil = new Date(base)
-            newPaidUntil.setMonth(newPaidUntil.getMonth() + months)
-
-            // Activar PRO: poner paid_until, pro_since, y terminar trial
-            const { error: upErr } = await supabase
-                .from('subscriptions')
-                .update({
-                    paid_until: newPaidUntil.toISOString(),
-                    pro_since: user.pro_since || new Date().toISOString(),
-                    trial_until: new Date().toISOString(),
-                    manually_suspended: false, // ← Desbloquear al activar
-                })
-                .eq('user_id', user.user_id)
-
-            if (upErr) throw upErr
-            onSuccess()
-        } catch (e) {
-            setError(e.message)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const currentStatus = getStatus(user)
-
-    return (
-        <>
-            <div onClick={onClose} style={{
-                position: 'fixed', inset: 0, zIndex: 9998,
-                background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(3px)',
-            }} />
-            <div style={{
-                position: 'fixed', inset: 0, zIndex: 9999,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-                pointerEvents: 'none',
-            }}>
-                <div style={{
-                    width: '100%', maxWidth: 440, background: '#fff',
-                    borderRadius: 20, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-                    overflow: 'hidden', pointerEvents: 'auto',
-                    fontFamily: "'Inter', sans-serif"
-                }}>
-                    {/* Header */}
-                    <div style={{ background: '#1e2320', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Zap size={18} color="#4ADE80" fill="#4ADE80" />
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0, letterSpacing: '-.02em' }}>Activar / Extender Plan</h3>
-                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', margin: '2px 0 0', fontWeight: 500 }}>{user.email}</p>
-                            </div>
-                        </div>
-                        <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .15s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.15)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.08)'}>
-                            <X size={16} />
-                        </button>
-                    </div>
-
-                    <div style={{ padding: '24px' }}>
-                        {/* Info actual */}
-                        <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between' }}>
-                            <div>
-                                <p style={{ fontSize: 11, color: '#6B7280', fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '.05em' }}>ESTADO ACTUAL</p>
-                                <StatusBadge status={currentStatus} />
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: 11, color: '#6B7280', fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '.05em' }}>VENCIMIENTO</p>
-                                <p style={{ fontSize: 13, fontWeight: 800, color: '#111827', margin: 0 }}>{fmtDate(user.paid_until)}</p>
-                            </div>
-                        </div>
-
-                        {/* Selector de meses */}
-                        <p style={{ fontSize: 13, color: '#374151', fontWeight: 700, margin: '0 0 12px 0' }}>
-                            ¿Cuántos meses querés otorgar?
-                        </p>
-                        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-                            {[1, 2, 3, 6, 12].map(m => (
-                                <button key={m} onClick={() => setMonths(m)} style={{
-                                    flex: 1, padding: '10px 0', borderRadius: 10, cursor: 'pointer',
-                                    border: months === m ? '2px solid #1e2320' : '1px solid #E5E7EB',
-                                    background: months === m ? '#1e2320' : '#fff',
-                                    color: months === m ? '#4ADE80' : '#4B5563',
-                                    fontSize: 13, fontWeight: 700,
-                                    transition: 'all .15s',
-                                }}>
-                                    {m === 12 ? '1 año' : `${m} mes`}{m > 1 && m < 12 ? 'es' : ''}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Nueva fecha calculada */}
-                        {(() => {
-                            const base = (user.paid_until && new Date(user.paid_until) > new Date())
-                                ? new Date(user.paid_until) : new Date()
-                            const newDate = new Date(base)
-                            newDate.setMonth(newDate.getMonth() + months)
-                            return (
-                                <div style={{
-                                    background: '#F0FDF4', borderRadius: 12, padding: '12px 16px',
-                                    border: '1px solid #BBF7D0', marginBottom: 24,
-                                    display: 'flex', alignItems: 'center', gap: 10
-                                }}>
-                                    <Calendar size={16} color="#15803D" />
-                                    <div>
-                                        <div style={{ fontSize: 11, color: '#15803D', fontWeight: 700, marginBottom: 2 }}>
-                                            NUEVO VENCIMIENTO
-                                        </div>
-                                        <div style={{ fontSize: 14, color: '#14532D', fontWeight: 800 }}>
-                                            {fmtDate(newDate.toISOString())}
-                                        </div>
-                                    </div>
-                                </div>
-                            )
-                        })()}
-
-                        {error && (
-                            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', marginBottom: 14 }}>
-                                <p style={{ fontSize: 12, color: '#DC2626', margin: 0 }}>Error: {error}</p>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={handleActivate}
-                            disabled={loading}
-                            style={{
-                                width: '100%', height: 48, borderRadius: 10,
-                                background: loading ? '#9CA3AF' : '#1e2320', color: '#4ADE80', border: 'none',
-                                fontSize: 14, fontWeight: 800, cursor: loading ? 'wait' : 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                transition: 'all .15s', boxShadow: loading ? 'none' : '0 4px 12px rgba(30,35,32,.2)',
-                            }}
-                            onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = 'translateY(-1px)' }}
-                            onMouseLeave={e => { if (!loading) e.currentTarget.style.transform = 'none' }}
-                        >
-                            <Zap size={16} fill="#4ADE80" />
-                            {loading ? 'Procesando...' : `Confirmar activación de ${months} mes${months > 1 ? 'es' : ''}`}
-                        </button>
-                    </div>
-                </div>
+          {/* ── Trial ── */}
+          <div className="em-block em-block-amber">
+            <div className="em-block-hd">
+              <Clock size={15} style={{ color: '#d97706' }} />
+              <span>Período de Trial</span>
             </div>
-        </>
-    )
+            <label className="em-lbl">Vence el</label>
+            <input type="date" className="em-inp gestify-date-input" value={trialUntil}
+              onChange={e => setTrialUntil(e.target.value)} />
+            <div className="em-quick-row">
+              <button className="em-q em-q-amber" onClick={() => setTrialUntil(addDays(trialUntil, 7))}>+ 7 días</button>
+              <button className="em-q em-q-amber" onClick={() => setTrialUntil(addDays(trialUntil, 14))}>+ 14 días</button>
+              <button className="em-q em-q-amber" onClick={() => setTrialUntil(addDays(new Date().toISOString(), 7))}>↺ Reiniciar 7d</button>
+              <button className="em-q em-q-gray"  onClick={() => setTrialUntil('')}>✕ Limpiar</button>
+            </div>
+          </div>
+
+          {/* ── PRO ── */}
+          <div className="em-block em-block-green">
+            <div className="em-block-hd">
+              <Zap size={15} style={{ color: '#059669' }} />
+              <span>Plan PRO</span>
+            </div>
+            <label className="em-lbl">Activo hasta</label>
+            <input type="date" className="em-inp gestify-date-input" value={paidUntil}
+              onChange={e => setPaidUntil(e.target.value)} />
+            <div className="em-quick-row">
+              <button className="em-q em-q-green" onClick={() => setPaidUntil(addDays(paidUntil || new Date().toISOString(), 30))}>+ 30 días</button>
+              <button className="em-q em-q-green" onClick={() => setPaidUntil(addDays(paidUntil || new Date().toISOString(), 365))}>+ 1 año</button>
+              <button className="em-q em-q-gray"  onClick={() => setPaidUntil('')}>✕ Limpiar</button>
+            </div>
+          </div>
+
+          {/* ── Toggles ── */}
+          <div className="em-toggles">
+            <button onClick={() => setIsSuspended(v => !v)}
+              className={`em-toggle${isSuspended ? ' em-toggle-on em-toggle-red' : ''}`}>
+              <div className="em-toggle-ico-wrap" style={{ background: isSuspended ? '#fee2e2' : '#f3f4f6' }}>
+                <Ban size={16} style={{ color: isSuspended ? '#dc2626' : '#9ca3af' }} />
+              </div>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <p className="em-toggle-t">Cuenta suspendida</p>
+                <p className="em-toggle-s">Bloquea el acceso manualmente</p>
+              </div>
+              <div className={`em-sw${isSuspended ? ' on' : ''}`} style={isSuspended ? { background: '#dc2626' } : {}}>
+                <div className="em-sw-thumb" />
+              </div>
+            </button>
+          </div>
+
+          {saveError && (
+            <div className="em-error">
+              <AlertCircle size={14} style={{ flexShrink: 0 }} />
+              {saveError}
+            </div>
+          )}
+        </div>
+
+        <div className="em-footer">
+          <button onClick={onClose} className="em-btn-cancel">Cancelar</button>
+          <button onClick={handleSave} disabled={saving} className="em-btn-save">
+            {saving
+              ? <><div className="em-mini-spin" /> Guardando...</>
+              : <><Check size={14} /> Guardar cambios</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-// ─── Panel Principal ──────────────────────────────────────────────────────────
-
+/* ═══════════════════════ PANEL PRINCIPAL ═══════════════════════ */
 const AdminPanel = () => {
-    const { user: authUser } = useAuth()
-    const [rows, setRows] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [search, setSearch] = useState('')
-    const [filterStatus, setFilter] = useState('all')
-    const [selected, setSelected] = useState(null)
-    const [lastRefresh, setLastRefresh] = useState(null)
-
-    // Bloqueo si no es admin
-    if (authUser?.email !== 'brocherojulian72@gmail.com') {
-        return (
-            <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Inter', sans-serif" }}>
-                <div style={{ textAlign: 'center' }}>
-                    <Shield size={48} color="#DC2626" style={{ margin: '0 auto 12px' }} />
-                    <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1e2320' }}>Acceso denegado</h2>
-                    <p style={{ fontSize: 13, color: '#6B7280' }}>No tenés permisos para ver esta sección.</p>
-                </div>
-            </div>
-        )
-    }
-
-    const fetchData = useCallback(async () => {
-        setLoading(true)
-        try {
-            // Intentar usar la función RPC que trae emails
-            const { data: rpcData, error: rpcError } = await supabase
-                .rpc('get_admin_subscriptions')
-
-            if (!rpcError && rpcData) {
-                setRows(rpcData)
-            } else {
-                // Fallback: leer tabla directa (sin emails)
-                console.warn('RPC no disponible, usando fallback:', rpcError?.message)
-                const { data: subs, error } = await supabase
-                    .from('subscriptions')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                if (error) throw error
-                setRows(subs || [])
-            }
-            setLastRefresh(new Date())
-        } catch (e) {
-            console.error('Admin panel error:', e)
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
-    useEffect(() => { fetchData() }, [fetchData])
-
-    const onActivated = () => {
-        setSelected(null)
-        fetchData()
-    }
-
-    // Filtrado
-    const filtered = rows.filter(r => {
-        const matchSearch = !search ||
-            (r.email || '').toLowerCase().includes(search.toLowerCase()) ||
-            (r.user_id || '').toLowerCase().includes(search.toLowerCase())
-        const status = getStatus(r)
-        const matchFilter = filterStatus === 'all' || status === filterStatus
-        return matchSearch && matchFilter
+  const [rows,       setRows]       = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [error,      setError]      = useState(null)
+  const [filtro,     setFiltro]     = useState('todos')
+  const [search,     setSearch]     = useState('')
+  const [editRow,    setEditRow]    = useState(null)
+  const [copiedId,   setCopiedId]   = useState(null)
+  const copyEmail = (email, id) => {
+    navigator.clipboard.writeText(email).then(() => {
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 1800)
     })
+  }
+  const [sortCol,    setSortCol]    = useState('created_at')
+  const [sortDir,    setSortDir]    = useState('desc')
+  const [showHidden, setShowHidden] = useState(false)
+  const [hiddenIds,  setHiddenIds]  = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('adm_hidden') || '[]')) } catch { return new Set() }
+  })
 
-    // Contadores
-    const counts = rows.reduce((acc, r) => {
-        const s = getStatus(r)
-        acc[s] = (acc[s] || 0) + 1
-        return acc
-    }, {})
+  const toggleHide = (userId) => {
+    setHiddenIds(prev => {
+      const next = new Set(prev)
+      if (next.has(userId)) next.delete(userId)
+      else next.add(userId)
+      localStorage.setItem('adm_hidden', JSON.stringify([...next]))
+      return next
+    })
+  }
 
-    return (
-        <div style={{ fontFamily: "'Inter', sans-serif", height: '100%', overflowY: 'auto', background: '#F5F5F3', padding: 'clamp(16px, 4vw, 32px)' }}>
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCol(col); setSortDir('asc') }
+  }
 
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
-                <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-.03em', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#1e2320', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Shield size={18} color="#4ADE80" />
-                        </div>
-                        Panel de Administración
-                    </h1>
-                    <p style={{ fontSize: 13, color: '#6B7280', margin: 0, fontWeight: 500 }}>
-                        Gestión centralizada de suscripciones · <strong style={{ color: '#111827' }}>{rows.length} usuarios totales</strong>
-                        {lastRefresh && ` · Ult. act: ${lastRefresh.toLocaleTimeString('es-AR')}`}
-                    </p>
-                </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <button
-                        onClick={async () => {
-                            if (!confirm('¿Estás SEGURO de que querés QUITAR EL ACCESO PRO a TODOS LOS USUARIOS?\n\nPasarán a su estado original (gratis o expirado). Esta acción no se puede deshacer.')) return;
-                            const password = prompt('Para confirmar esta acción masiva, escribí en mayúsculas: RESET');
-                            if (password !== 'RESET') { alert('Acción cancelada.'); return; }
+  const SortIcon = ({ col }) => {
+    if (sortCol !== col) return <ArrowUpDown size={10} style={{ opacity: .35, marginLeft: 3 }} />
+    return sortDir === 'asc'
+      ? <ArrowUp   size={10} style={{ marginLeft: 3, color: '#4ADE80' }} />
+      : <ArrowDown size={10} style={{ marginLeft: 3, color: '#4ADE80' }} />
+  }
 
-                            setLoading(true);
-                            try {
-                                const { error } = await supabase
-                                    .from('subscriptions')
-                                    .update({ paid_until: null })
-                                    .neq('user_id', '00000000-0000-0000-0000-000000000000'); // actualiza todo
+  const fetchData = useCallback(async () => {
+    setLoading(true); setError(null)
+    const { data, error: err } = await supabase
+      .from('subscriptions')
+      .select('user_id, email, created_at, trial_until, paid_until, plan_price, manually_suspended, is_exempt')
+      .order('created_at', { ascending: false })
+    if (err) { setError(err.message); setLoading(false); return }
+    setRows(data || [])
+    setLoading(false)
+  }, [])
 
-                                if (error) throw error;
-                                alert('Todos los usuarios han sido reseteados correctamente y perdieron el PRO.');
-                                fetchData();
-                            } catch (e) {
-                                alert('Hubo un error reseteando a todos: ' + e.message);
-                            } finally {
-                                setLoading(false);
-                            }
-                        }}
-                        disabled={loading}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            padding: '10px 18px', borderRadius: 10,
-                            background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA',
-                            fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                            boxShadow: '0 1px 2px rgba(0,0,0,.04)',
-                            opacity: loading ? .7 : 1, transition: 'all .15s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#FEE2E2'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#FEF2F2'}
-                    >
-                        <AlertTriangle size={14} />
-                        Resetear Todos a Gratis
-                    </button>
-                    <button
-                        onClick={fetchData}
-                        disabled={loading}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            padding: '10px 18px', borderRadius: 10,
-                            background: '#fff', color: '#374151', border: '1px solid #D1D5DB',
-                            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                            boxShadow: '0 1px 2px rgba(0,0,0,.04)',
-                            opacity: loading ? .7 : 1, transition: 'all .15s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                    >
-                        <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
-                        {loading ? 'Sincronizando...' : 'Sincronizar datos'}
-                    </button>
-                </div>
+  useEffect(() => { fetchData() }, [fetchData])
+
+  const now       = new Date()
+  const total     = rows.length
+  const enTrial   = rows.filter(r => r.trial_until && new Date(r.trial_until) >= now && !r.paid_until).length
+  const proActivo = rows.filter(r => r.paid_until  && new Date(r.paid_until)  >= now).length
+  const expirados = rows.filter(r => {
+    const st = getStatus(r).label
+    return st.includes('expirado') || st === 'Suspendido'
+  }).length
+  const ingresos  = rows.filter(r => r.paid_until && new Date(r.paid_until) >= now)
+                        .reduce((s, r) => s + (parseFloat(r.plan_price) || 0), 0)
+
+  const rowsFiltrados = [...rows
+    .filter(r => showHidden ? hiddenIds.has(r.user_id) : !hiddenIds.has(r.user_id))
+    .filter(r => {
+      const st = getStatus(r).label
+      if (filtro === 'nuevo')    return st === 'Nuevo'
+      if (filtro === 'trial')    return st === 'Trial activo'
+      if (filtro === 'pro')      return st === 'PRO Activo'
+      if (filtro === 'expirado') return st.includes('expirado') || st === 'Suspendido'
+      return true
+    })
+    .filter(r => !search || r.email?.toLowerCase().includes(search.toLowerCase()))
+  ].sort((a, b) => {
+    let va, vb
+    if (sortCol === 'email')       { va = a.email || '';        vb = b.email || '' }
+    else if (sortCol === 'trial')  { va = a.trial_until || '';  vb = b.trial_until || '' }
+    else if (sortCol === 'paid')   { va = a.paid_until || '';   vb = b.paid_until || '' }
+    else if (sortCol === 'status') { va = getStatus(a).label;   vb = getStatus(b).label }
+    else if (sortCol === 'monto')  { va = parseFloat(a.plan_price) || 0; vb = parseFloat(b.plan_price) || 0 }
+    else                           { va = a.created_at || '';   vb = b.created_at || '' }
+    if (typeof va === 'number') return sortDir === 'asc' ? va - vb : vb - va
+    return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va)
+  })
+
+  const exportExcel = () => {
+    const data = rowsFiltrados.map(r => ({
+      'Email':       r.email || '—',
+      'Registrado':  fDate(r.created_at),
+      'Trial hasta': fDate(r.trial_until),
+      'PRO hasta':   fDate(r.paid_until),
+      'Estado':      getStatus(r).label,
+      'Monto':       r.paid_until ? parseFloat(r.plan_price) || 0 : '',
+    }))
+    const ws = XLSX.utils.json_to_sheet(data)
+    ws['!cols'] = [{ wch:34 },{ wch:12 },{ wch:12 },{ wch:12 },{ wch:16 },{ wch:10 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Usuarios')
+    XLSX.writeFile(wb, `gestify_usuarios_${new Date().toISOString().slice(0,10)}.xlsx`)
+  }
+
+  return (
+    <div className="adm-root">
+      {editRow && (
+        <EditModal row={editRow} onClose={() => setEditRow(null)} onSaved={() => { setEditRow(null); fetchData() }} />
+      )}
+
+      {/* ══ HEADER ══ */}
+      <header className="adm-header">
+        <div className="adm-header-l">
+          <div className="adm-header-ico"><Shield size={18} strokeWidth={2.5} style={{ color: '#4ADE80' }} /></div>
+          <div>
+            <p className="adm-eyebrow">Panel de administración</p>
+            <h2 className="adm-title">Usuarios & Suscripciones</h2>
+          </div>
+        </div>
+        <div className="adm-header-r">
+          <button onClick={fetchData} className="adm-btn-refresh" disabled={loading}>
+            <RefreshCw size={13} style={{ animation: loading ? 'adm-spin 1s linear infinite' : 'none' }} />
+            Actualizar
+          </button>
+          <button onClick={exportExcel} className="adm-btn-export" disabled={!rowsFiltrados.length}>
+            <Download size={13} strokeWidth={2.5} />
+            Exportar Excel
+          </button>
+        </div>
+      </header>
+
+      <main className="adm-main">
+
+        {/* ══ STAT CARDS ══ */}
+        <div className="adm-stats">
+          {[
+            { icon: Users,      num: total,           lbl: 'Total registrados',  accent: '#3b82f6', light: '#dbeafe' },
+            { icon: Clock,      num: enTrial,         lbl: 'En trial ahora',     accent: '#f59e0b', light: '#fef3c7' },
+            { icon: TrendingUp, num: proActivo,       lbl: 'PRO activo',         accent: '#10b981', light: '#d1fae5' },
+            { icon: DollarSign, num: fMoney(ingresos),lbl: 'Ingresos mensuales', accent: '#6366f1', light: '#ede9fe' },
+          ].map(({ icon: Icon, num, lbl, accent, light }) => (
+            <div key={lbl} className="adm-stat-card">
+              <div className="adm-stat-ico-box" style={{ background: light }}>
+                <Icon size={20} strokeWidth={2} style={{ color: accent }} />
+              </div>
+              <div>
+                <p className="adm-stat-num" style={{ color: '#111827' }}>{num}</p>
+                <p className="adm-stat-lbl" style={{ color: '#6b7280' }}>{lbl}</p>
+              </div>
+              <div className="adm-stat-accent-bar" style={{ background: accent }} />
             </div>
+          ))}
+        </div>
 
-            {/* Stats cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14, marginBottom: 24 }}>
-                {/* Botón TODOS */}
-                <div
-                    onClick={() => setFilter('all')}
-                    style={{
-                        background: filterStatus === 'all' ? '#1e2320' : '#fff',
-                        border: filterStatus === 'all' ? '1px solid #1e2320' : '1px solid #E5E7EB',
-                        borderRadius: 14, padding: '16px 20px', cursor: 'pointer',
-                        boxShadow: filterStatus === 'all' ? '0 4px 12px rgba(30,35,32,.15)' : '0 1px 2px rgba(0,0,0,.03)',
-                        transition: 'all .2s ease-out', transform: filterStatus === 'all' ? 'translateY(-2px)' : 'none'
-                    }}
-                >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <User size={16} color={filterStatus === 'all' ? '#4ADE80' : '#9CA3AF'} />
-                        <span style={{ fontSize: 24, fontWeight: 900, color: filterStatus === 'all' ? '#fff' : '#111827', lineHeight: 1 }}>
-                            {rows.length}
-                        </span>
-                    </div>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: filterStatus === 'all' ? '#D1D5DB' : '#6B7280', margin: 0 }}>Todos</p>
-                </div>
-                {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'sin_datos').map(([key, cfg]) => {
-                    const Icon = cfg.icon
-                    const isActive = filterStatus === key
+        {/* ══ FILTROS + BÚSQUEDA ══ */}
+        <div className="adm-toolbar">
+          <div className="adm-filtros">
+            {FILTROS.map(f => {
+              const cnt = f.id === 'todos' ? total
+                : f.id === 'nuevo'    ? rows.filter(r => getStatus(r).label === 'Nuevo').length
+                : f.id === 'trial'    ? enTrial
+                : f.id === 'pro'      ? proActivo
+                : expirados
+              return (
+                <button key={f.id} onClick={() => setFiltro(f.id)}
+                  className={`adm-f-btn${filtro === f.id ? ' active' : ''}`}
+                  style={filtro === f.id ? { background: f.color, borderColor: f.color, color: '#fff' } : {}}>
+                  {f.label}
+                  <span className="adm-f-cnt"
+                    style={filtro === f.id ? { background: 'rgba(255,255,255,.2)', color: '#fff' } : {}}>
+                    {cnt}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={() => { setShowHidden(v => !v); setFiltro('todos') }}
+              className={`adm-hidden-btn${showHidden ? ' active' : ''}`}>
+              {showHidden ? <Eye size={13} /> : <EyeOff size={13} />}
+              {showHidden
+                ? `Mostrando ocultos (${hiddenIds.size})`
+                : hiddenIds.size > 0 ? `${hiddenIds.size} oculto${hiddenIds.size !== 1 ? 's' : ''}` : 'Ocultos'}
+            </button>
+            <div className="adm-search-wrap">
+              <Search size={13} className="adm-search-ico" />
+              <input className="adm-search" placeholder="Buscar por email..."
+                value={search} onChange={e => setSearch(e.target.value)} />
+              {search && <button onClick={() => setSearch('')} className="adm-search-x"><X size={12} /></button>}
+            </div>
+          </div>
+        </div>
+
+        {/* ══ TABLA ══ */}
+        <div className="adm-card">
+          <div className="adm-card-hd">
+            <span className="adm-card-ttl">
+              {rowsFiltrados.length} usuario{rowsFiltrados.length !== 1 ? 's' : ''}
+              {filtro !== 'todos' ? ` · ${FILTROS.find(f=>f.id===filtro)?.label}` : ''}
+              {showHidden ? ' · OCULTOS' : ''}
+            </span>
+            {showHidden && (
+              <span style={{ marginLeft: 'auto', fontSize: 10, color: '#fcd34d', fontWeight: 700, letterSpacing: '.06em' }}>
+                VISTA DE OCULTOS — estos usuarios no aparecen en la lista normal
+              </span>
+            )}
+          </div>
+
+          {error ? (
+            <div className="adm-state-box">
+              <AlertCircle size={32} style={{ color: '#fca5a5', marginBottom: 8 }} />
+              <p style={{ fontWeight: 700, color: '#dc2626', fontSize: 14, marginBottom: 4 }}>Error al cargar</p>
+              <p style={{ fontSize: 12, color: '#6b7280', maxWidth: 360, textAlign: 'center' }}>{error}</p>
+              <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 6, maxWidth: 360, textAlign: 'center' }}>
+                Corré el SQL de configuración en Supabase y verificá los permisos de admin.
+              </p>
+            </div>
+          ) : loading ? (
+            <div className="adm-state-box">
+              <div className="adm-spinner" />
+              <p style={{ color: '#6b7280', fontSize: 13, marginTop: 4 }}>Cargando usuarios...</p>
+            </div>
+          ) : rowsFiltrados.length === 0 ? (
+            <div className="adm-state-box">
+              <Users size={36} strokeWidth={1.2} style={{ color: '#d1d5db', marginBottom: 8 }} />
+              <p style={{ color: '#6b7280', fontSize: 13 }}>No hay usuarios en esta categoría</p>
+            </div>
+          ) : (
+            <div className="adm-table-wrap">
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '34%', cursor: 'pointer' }} onClick={() => handleSort('email')}>EMAIL <SortIcon col="email" /></th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => handleSort('created_at')}>REGISTRADO <SortIcon col="created_at" /></th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => handleSort('trial')}>TRIAL HASTA <SortIcon col="trial" /></th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => handleSort('paid')}>PRO HASTA <SortIcon col="paid" /></th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => handleSort('status')}>ESTADO <SortIcon col="status" /></th>
+                    <th style={{ cursor: 'pointer' }} onClick={() => handleSort('monto')}>MONTO <SortIcon col="monto" /></th>
+                    <th style={{ textAlign: 'center' }}>ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rowsFiltrados.map((r, idx) => {
+                    const st = getStatus(r)
                     return (
-                        <div
-                            key={key}
-                            onClick={() => setFilter(isActive ? 'all' : key)}
-                            style={{
-                                background: isActive ? cfg.bg : '#fff',
-                                border: `1px solid ${isActive ? cfg.color : '#E5E7EB'}`,
-                                borderRadius: 14, padding: '16px 20px', cursor: 'pointer',
-                                boxShadow: isActive ? `0 4px 12px ${cfg.color}15` : '0 1px 2px rgba(0,0,0,.03)',
-                                transition: 'all .2s ease-out', transform: isActive ? 'translateY(-2px)' : 'none'
-                            }}
-                        >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                <Icon size={16} color={cfg.color} />
-                                <span style={{ fontSize: 24, fontWeight: 900, color: isActive ? cfg.color : '#111827', lineHeight: 1 }}>
-                                    {counts[key] || 0}
-                                </span>
-                            </div>
-                            <p style={{ fontSize: 12, fontWeight: 700, color: isActive ? cfg.color : '#6B7280', margin: 0 }}>{cfg.label}</p>
-                        </div>
+                      <tr key={r.user_id} className={`adm-tr${idx % 2 === 1 ? ' adm-tr-alt' : ''}`}>
+                        <td className="adm-td-email">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span>{r.email || <span style={{ color: '#d1d5db' }}>Sin email</span>}</span>
+                            {r.email && (
+                              <button
+                                className={`adm-copy-btn${copiedId === r.user_id ? ' copied' : ''}`}
+                                onClick={() => copyEmail(r.email, r.user_id)}
+                                title="Copiar email">
+                                {copiedId === r.user_id
+                                  ? <CheckCheck size={11} />
+                                  : <Copy size={11} />}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="adm-td-fecha">{fDate(r.created_at)}</td>
+                        <td className="adm-td-fecha">
+                          {r.trial_until
+                            ? <span style={{ color: new Date(r.trial_until) >= now ? '#b45309' : '#9ca3af' }}>{fDate(r.trial_until)}</span>
+                            : <span style={{ color: '#d1d5db' }}>—</span>}
+                        </td>
+                        <td className="adm-td-fecha">
+                          {r.paid_until
+                            ? <span style={{ color: new Date(r.paid_until) >= now ? '#059669' : '#9a3412' }}>{fDate(r.paid_until)}</span>
+                            : <span style={{ color: '#d1d5db' }}>—</span>}
+                        </td>
+                        <td>
+                          <span className="adm-st-badge" style={{ background: st.bg, color: st.color, borderColor: st.border }}>
+                            {st.label}
+                          </span>
+                        </td>
+                        <td className="adm-td-monto">
+                          {r.paid_until
+                            ? <strong style={{ color: '#059669' }}>{fMoney(r.plan_price)}</strong>
+                            : <span style={{ color: '#d1d5db' }}>—</span>}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                            <button className="adm-edit-btn" onClick={() => setEditRow(r)}>
+                              <Pencil size={12} /> Editar
+                            </button>
+                            <button
+                              className={`adm-hide-btn${hiddenIds.has(r.user_id) ? ' is-hidden' : ''}`}
+                              onClick={() => toggleHide(r.user_id)}
+                              title={hiddenIds.has(r.user_id) ? 'Mostrar en lista' : 'Ocultar de la lista'}>
+                              {hiddenIds.has(r.user_id) ? <Eye size={13} /> : <EyeOff size={13} />}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
                     )
-                })}
+                  })}
+                </tbody>
+              </table>
             </div>
+          )}
+        </div>
 
-            {/* Buscador */}
-            <div style={{ position: 'relative', marginBottom: 20 }}>
-                <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
-                <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Buscar usuarios por email o ID..."
-                    style={{
-                        width: '100%', height: 44, paddingLeft: 40, paddingRight: 16,
-                        borderRadius: 12, border: '1px solid #D1D5DB', fontSize: 14, fontWeight: 500,
-                        fontFamily: "'Inter', sans-serif", outline: 'none',
-                        background: '#fff', color: '#111827', boxSizing: 'border-box',
-                        boxShadow: '0 1px 2px rgba(0,0,0,.02)', transition: 'border .2s'
-                    }}
-                    onFocus={e => e.target.style.borderColor = '#1e2320'}
-                    onBlur={e => e.target.style.borderColor = '#D1D5DB'}
-                />
-            </div>
+      </main>
 
-            {/* Tabla */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflowX: 'auto', overflowY: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,.03)' }}>
-                {loading ? (
-                    <div style={{ padding: 60, textAlign: 'center' }}>
-                        <RefreshCw size={28} color="#9CA3AF" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
-                        <p style={{ fontSize: 14, fontWeight: 500, color: '#6B7280', margin: 0 }}>Cargando usuarios del sistema...</p>
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <div style={{ padding: 60, textAlign: 'center' }}>
-                        <div style={{ width: 48, height: 48, borderRadius: 12, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                            <User size={24} color="#9CA3AF" />
-                        </div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#374151', margin: '0 0 4px 0' }}>Ningún usuario encontrado</p>
-                        <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>Intentá con otro filtro o término de búsqueda.</p>
-                    </div>
-                ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                                {['Email', 'Estado', 'Trial hasta', 'PRO desde', 'Plan hasta', 'Acción'].map(h => (
-                                    <th key={h} style={{
-                                        padding: '14px 20px', textAlign: 'left',
-                                        fontSize: 11, fontWeight: 700, color: '#6B7280',
-                                        textTransform: 'uppercase', letterSpacing: '.05em',
-                                        whiteSpace: 'nowrap',
-                                    }}>{h}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map((row, i) => {
-                                const status = getStatus(row)
-                                return (
-                                    <tr key={row.id || i} style={{
-                                        borderBottom: i < filtered.length - 1 ? '1px solid #F3F4F6' : 'none',
-                                        transition: 'background .15s',
-                                    }}
-                                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        <td style={{ padding: '14px 20px' }}>
-                                            <div>
-                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', margin: 0 }}>
-                                                    {row.email || 'Sin email'}
-                                                </p>
-                                                <p style={{ fontSize: 10, fontFamily: 'monospace', color: '#9CA3AF', margin: '3px 0 0' }}>
-                                                    {row.user_id ? row.user_id.slice(0, 12) + '...' : '—'}
-                                                </p>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '14px 20px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                                                <StatusBadge status={status} />
-                                                {row.manually_suspended && (
-                                                    <span style={{
-                                                        display: 'inline-flex', alignItems: 'center', gap: 3,
-                                                        padding: '3px 7px', borderRadius: 6,
-                                                        background: '#450a0a', border: '1px solid #7f1d1d',
-                                                        fontSize: 10, fontWeight: 700, color: '#fca5a5',
-                                                    }}>
-                                                        🔒 Bloqueado
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                                            {fmtDate(row.trial_until)}
-                                        </td>
-                                        <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                                            {fmtDate(row.pro_since)}
-                                        </td>
-                                        <td style={{ padding: '14px 20px', fontSize: 13, color: '#4B5563', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                                            {fmtDate(row.paid_until)}
-                                        </td>
-                                        <td style={{ padding: '14px 20px' }}>
-                                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                                <button
-                                                    onClick={() => setSelected(row)}
-                                                    style={{
-                                                        padding: '6px 14px', borderRadius: 8,
-                                                        background: status === 'active' ? '#F0FDF4' : '#1e2320',
-                                                        color: status === 'active' ? '#15803D' : '#fff',
-                                                        border: status === 'active' ? '1px solid #BBF7D0' : '1px solid #1e2320',
-                                                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', gap: 6,
-                                                        whiteSpace: 'nowrap', transition: 'all .15s',
-                                                        boxShadow: status !== 'active' ? '0 2px 4px rgba(30,35,32,.2)' : 'none'
-                                                    }}
-                                                    onMouseEnter={e => { if (status !== 'active') e.currentTarget.style.background = '#282A28' }}
-                                                    onMouseLeave={e => { if (status !== 'active') e.currentTarget.style.background = '#1e2320' }}
-                                                >
-                                                    <Zap size={12} fill={status !== 'active' ? '#4ADE80' : 'none'} color={status !== 'active' ? '#4ADE80' : 'currentColor'} />
-                                                    {status === 'active' ? 'Extender' : 'Activar PRO'}
-                                                </button>
-                                                {status === 'active' && (
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (!confirm(`¿Desactivar PRO de ${row.email}? Quedará suspendido inmediatamente.`)) return
-                                                            const pastDate = new Date(2020, 0, 1).toISOString()
-                                                            await supabase
-                                                                .from('subscriptions')
-                                                                .update({
-                                                                    paid_until: null,
-                                                                    pro_since: null,
-                                                                    trial_until: pastDate,
-                                                                    manually_suspended: true, // ← Bloquear al desactivar
-                                                                })
-                                                                .eq('user_id', row.user_id)
-                                                            fetchData()
-                                                        }}
-                                                        style={{
-                                                            padding: '6px 14px', borderRadius: 8,
-                                                            background: '#fff', color: '#EF4444',
-                                                            border: '1px solid #FECACA',
-                                                            fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                                                            display: 'flex', alignItems: 'center', gap: 6,
-                                                            whiteSpace: 'nowrap', transition: 'all .15s',
-                                                        }}
-                                                        onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
-                                                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                                                    >
-                                                        <AlertCircle size={12} />
-                                                        Desactivar
-                                                    </button>
-                                                )}
+      <style>{`
+        @keyframes adm-spin { to { transform:rotate(360deg) } }
+        @keyframes em-in    { from { opacity:0; transform:scale(.96) translateY(12px) } to { opacity:1; transform:none } }
 
-                                                <button
-                                                    onClick={async () => {
-                                                        if (!confirm(`¿Eliminar definitivamente a ${row.email || 'este usuario'} de tu lista?\n\nSi vuelve a iniciar sesión, se creará de nuevo como usuario gratis. Si querés que NO pueda entrar, mejor suspendelo manualmente.`)) return
-                                                        await supabase
-                                                            .from('subscriptions')
-                                                            .delete()
-                                                            .eq('user_id', row.user_id)
-                                                        fetchData()
-                                                    }}
-                                                    title="Eliminar de la lista"
-                                                    style={{
-                                                        padding: '6px', borderRadius: 8,
-                                                        background: '#fff', color: '#9CA3AF',
-                                                        border: '1px solid #E5E7EB',
-                                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        transition: 'all .15s',
-                                                    }}
-                                                    onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FECACA'; }}
-                                                    onMouseLeave={e => { e.currentTarget.style.color = '#9CA3AF'; e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#E5E7EB'; }}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )
-                            })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+        /* ── Root ── */
+        .adm-root { height:100vh; height:100dvh; display:flex; flex-direction:column; background:#eef0ef; font-family:'Inter',-apple-system,sans-serif; overflow:hidden; -webkit-font-smoothing:antialiased; }
 
-            {/* Modal de activación */}
-            {
-                selected && (
-                    <ActivateModal
-                        user={selected}
-                        onClose={() => setSelected(null)}
-                        onSuccess={onActivated}
-                    />
-                )
-            }
+        /* ── Header ── */
+        .adm-header { background:#1a1c1a; border-bottom:3px solid #4ADE80; padding:0 28px; height:58px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+        .adm-header-l { display:flex; align-items:center; gap:12px; }
+        .adm-header-r { display:flex; align-items:center; gap:10px; }
+        .adm-header-ico { width:36px; height:36px; border-radius:10px; background:rgba(74,222,128,.12); border:1.5px solid rgba(74,222,128,.3); display:flex; align-items:center; justify-content:center; }
+        .adm-eyebrow { font-size:10px; font-weight:700; color:rgba(255,255,255,.4); margin:0 0 1px; letter-spacing:.1em; text-transform:uppercase; }
+        .adm-title { font-size:18px; font-weight:800; color:#fff; margin:0; letter-spacing:-.02em; }
+        .adm-btn-refresh { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.15); color:rgba(255,255,255,.7); transition:all .13s; font-family:'Inter',sans-serif; }
+        .adm-btn-refresh:hover:not(:disabled) { background:rgba(255,255,255,.14); color:#fff; }
+        .adm-btn-refresh:disabled { opacity:.35; cursor:not-allowed; }
+        .adm-btn-export { display:inline-flex; align-items:center; gap:7px; padding:8px 18px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; background:#4ADE80; border:none; color:#0A1A0E; transition:all .13s; font-family:'Inter',sans-serif; letter-spacing:-.01em; }
+        .adm-btn-export:hover:not(:disabled) { background:#22c55e; box-shadow:0 4px 14px rgba(74,222,128,.35); }
+        .adm-btn-export:disabled { opacity:.35; cursor:not-allowed; }
 
-            <style>{`
-                @keyframes spin { to { transform: rotate(360deg) } }
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-            `}</style>
-        </div >
-    )
+        /* ── Main ── */
+        .adm-main { flex:1; overflow-y:auto; padding:22px 28px; display:flex; flex-direction:column; gap:18px; min-height:0; }
+        .adm-main::-webkit-scrollbar { width:5px; }
+        .adm-main::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:4px; }
+
+        /* ── Stat Cards ── */
+        .adm-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; flex-shrink:0; }
+        .adm-stat-card { background:#fff; border:2px solid #e5e7eb; border-radius:14px; padding:18px 20px; display:flex; align-items:center; gap:14px; box-shadow:0 2px 8px rgba(0,0,0,.05); position:relative; overflow:hidden; }
+        .adm-stat-ico-box { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .adm-stat-num { font-size:28px; font-weight:900; margin:0 0 3px; letter-spacing:-.04em; line-height:1; }
+        .adm-stat-lbl { font-size:12px; margin:0; font-weight:600; }
+        .adm-stat-accent-bar { position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:0 2px 2px 0; }
+
+        /* ── Toolbar ── */
+        .adm-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; flex-wrap:wrap; }
+        .adm-filtros { display:flex; gap:6px; flex-wrap:wrap; }
+        .adm-f-btn { display:inline-flex; align-items:center; gap:7px; padding:7px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; border:2px solid #e5e7eb; color:#374151; transition:all .13s; font-family:'Inter',sans-serif; }
+        .adm-f-btn:hover { border-color:#9ca3af; }
+        .adm-f-cnt { display:inline-flex; align-items:center; justify-content:center; min-width:19px; height:19px; padding:0 5px; border-radius:20px; font-size:10px; font-weight:800; background:#f3f4f6; color:#6b7280; }
+        .adm-search-wrap { position:relative; display:flex; align-items:center; }
+        .adm-search-ico { position:absolute; left:12px; color:#9ca3af; pointer-events:none; }
+        .adm-search { height:38px; padding:0 36px 0 36px; border:2px solid #e5e7eb; border-radius:10px; font-size:13px; color:#374151; outline:none; background:#fff; font-family:'Inter',sans-serif; width:250px; transition:all .12s; }
+        .adm-search:focus { border-color:#334139; box-shadow:0 0 0 3px rgba(51,65,57,.1); }
+        .adm-search::placeholder { color:#b0bab5; }
+        .adm-search-x { position:absolute; right:10px; display:flex; align-items:center; justify-content:center; width:20px; height:20px; background:#f3f4f6; border:none; cursor:pointer; color:#6b7280; border-radius:5px; }
+        .adm-search-x:hover { background:#e5e7eb; }
+
+        /* ── Card / Tabla ── */
+        .adm-card { background:#fff; border:2px solid #d1d5db; border-radius:14px; overflow:hidden; flex:1; min-height:0; display:flex; flex-direction:column; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+        .adm-card-hd { padding:12px 20px; background:#282A28; border-bottom:2px solid #4ADE80; flex-shrink:0; }
+        .adm-card-ttl { font-size:12px; font-weight:700; color:rgba(255,255,255,.7); letter-spacing:.04em; text-transform:uppercase; }
+        .adm-table-wrap { overflow-y:auto; overflow-x:auto; flex:1; }
+        .adm-table { width:100%; border-collapse:collapse; min-width:750px; }
+        .adm-table thead tr { background:#f1f5f3; border-bottom:2px solid #d1d5db; position:sticky; top:0; z-index:1; }
+        .adm-table th { padding:11px 16px; font-size:10px; font-weight:800; color:#374151; text-transform:uppercase; letter-spacing:.08em; text-align:left; white-space:nowrap; border-right:1px solid #e5e7eb; }
+        .adm-table th:last-child { border-right:none; }
+        .adm-tr td { padding:12px 16px; border-bottom:1px solid #e9ecea; border-right:1px solid #e9ecea; vertical-align:middle; }
+        .adm-tr td:last-child { border-right:none; }
+        .adm-tr-alt td { background:#f9fafb; }
+        .adm-tr:hover td { background:#eef5f1 !important; }
+        .adm-tr:last-child td { border-bottom:none; }
+
+        .adm-td-email { font-size:13px; font-weight:700; color:#111827; white-space:nowrap; }
+        .adm-td-fecha { font-size:12px; color:#374151; white-space:nowrap; font-weight:500; }
+        .adm-td-monto { font-size:13px; white-space:nowrap; }
+
+        .adm-st-badge { display:inline-flex; align-items:center; padding:4px 12px; border-radius:6px; font-size:11px; font-weight:800; border:2px solid; white-space:nowrap; letter-spacing:.02em; }
+
+        .adm-edit-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:7px; font-size:11px; font-weight:800; cursor:pointer; background:#3b82f6; border:none; color:#fff; transition:all .12s; font-family:'Inter',sans-serif; letter-spacing:.02em; }
+        .adm-edit-btn:hover { background:#2563eb; box-shadow:0 3px 10px rgba(59,130,246,.35); transform:translateY(-1px); }
+        .adm-hide-btn { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:7px; cursor:pointer; background:#f3f4f6; border:2px solid #e5e7eb; color:#6b7280; transition:all .12s; }
+        .adm-hide-btn:hover { background:#fef9c3; border-color:#fcd34d; color:#92400e; }
+        .adm-hide-btn.is-hidden { background:#dcfce7; border-color:#6ee7b7; color:#059669; }
+        .adm-copy-btn { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:5px; cursor:pointer; background:transparent; border:1.5px solid transparent; color:#9ca3af; transition:all .12s; flex-shrink:0; }
+        .adm-copy-btn:hover { background:#eff6ff; border-color:#bfdbfe; color:#3b82f6; }
+        .adm-copy-btn.copied { background:#dcfce7; border-color:#6ee7b7; color:#059669; }
+        .adm-hidden-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; border:2px solid #e5e7eb; color:#6b7280; transition:all .13s; font-family:'Inter',sans-serif; white-space:nowrap; }
+        .adm-hidden-btn:hover { border-color:#9ca3af; color:#374151; }
+        .adm-hidden-btn.active { background:#fef9c3; border-color:#fcd34d; color:#92400e; }
+
+        /* ── Estado ── */
+        .adm-state-box { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:6px; }
+        .adm-spinner { width:32px; height:32px; border:3px solid #e5e7eb; border-top-color:#4ADE80; border-radius:50%; animation:adm-spin .8s linear infinite; margin-bottom:8px; }
+
+        /* ═══════════ EDIT MODAL ═══════════ */
+        .em-overlay { position:fixed; inset:0; z-index:1000; background:rgba(10,20,14,.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; }
+        .em-panel { background:#fff; border-radius:18px; width:100%; max-width:500px; box-shadow:0 24px 70px rgba(0,0,0,.25); animation:em-in .22s ease; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; border:2px solid #e5e7eb; }
+
+        .em-hd { padding:20px 22px 16px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-shrink:0; }
+        .em-hd-label { font-size:10px; font-weight:700; color:rgba(255,255,255,.6); margin:0 0 4px; letter-spacing:.1em; text-transform:uppercase; }
+        .em-hd-email { font-size:16px; font-weight:800; color:#fff; margin:0 0 6px; word-break:break-all; letter-spacing:-.01em; }
+        .em-hd-badge { font-size:11px; font-weight:700; color:rgba(255,255,255,.85); background:rgba(255,255,255,.15); border-radius:20px; padding:3px 10px; }
+        .em-close { width:30px; height:30px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.15); border:none; border-radius:8px; cursor:pointer; color:#fff; flex-shrink:0; }
+        .em-close:hover { background:rgba(255,255,255,.25); }
+
+        .em-body { padding:18px 22px; overflow-y:auto; display:flex; flex-direction:column; gap:14px; flex:1; }
+
+        .em-block { border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; border:2px solid; }
+        .em-block-amber { background:#fffbeb; border-color:#fcd34d; }
+        .em-block-green  { background:#f0fdf4; border-color:#6ee7b7; }
+        .em-block-hd { display:flex; align-items:center; gap:7px; font-size:13px; font-weight:800; color:#1f2937; }
+        .em-lbl { font-size:11px; font-weight:700; color:#6b7280; margin:0; text-transform:uppercase; letter-spacing:.05em; }
+        .em-inp { width:100%; height:38px; padding:0 12px; border:2px solid #e5e7eb; border-radius:8px; font-size:13px; color:#374151; outline:none; box-sizing:border-box; background:#fff; font-family:'Inter',sans-serif; font-weight:600; transition:border-color .12s; }
+        .em-inp:focus { border-color:#334139; box-shadow:0 0 0 3px rgba(51,65,57,.1); }
+        .em-quick-row { display:flex; gap:6px; flex-wrap:wrap; }
+        .em-q { padding:5px 12px; border-radius:7px; font-size:11px; font-weight:800; cursor:pointer; border:2px solid; transition:all .11s; font-family:'Inter',sans-serif; }
+        .em-q-amber { background:#fef3c7; border-color:#fcd34d; color:#92400e; }
+        .em-q-amber:hover { background:#fde68a; }
+        .em-q-green  { background:#d1fae5; border-color:#6ee7b7; color:#065f46; }
+        .em-q-green:hover  { background:#a7f3d0; }
+        .em-q-gray   { background:#f3f4f6; border-color:#d1d5db; color:#4b5563; }
+        .em-q-gray:hover   { background:#e5e7eb; }
+
+        .em-toggles { display:flex; flex-direction:column; gap:8px; }
+        .em-toggle { width:100%; display:flex; align-items:center; gap:12px; padding:12px 14px; border:2px solid #e5e7eb; border-radius:12px; cursor:pointer; background:#fff; text-align:left; transition:all .13s; font-family:'Inter',sans-serif; }
+        .em-toggle:hover { border-color:#d1d5db; background:#fafafa; }
+        .em-toggle-on { box-shadow:0 2px 10px rgba(0,0,0,.08); }
+        .em-toggle-violet.em-toggle-on { border-color:#c4b5fd; background:#faf5ff; }
+        .em-toggle-red.em-toggle-on    { border-color:#fca5a5; background:#fff5f5; }
+        .em-toggle-ico-wrap { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background .13s; }
+        .em-toggle-t { font-size:13px; font-weight:800; margin:0 0 2px; color:#111827; }
+        .em-toggle-s { font-size:11px; color:#9ca3af; margin:0; }
+        .em-sw { width:38px; height:21px; border-radius:20px; background:#e5e7eb; position:relative; flex-shrink:0; transition:background .2s; }
+        .em-sw.on { background:#334139; }
+        .em-sw-thumb { position:absolute; top:2.5px; left:2.5px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+        .em-sw.on .em-sw-thumb { transform:translateX(17px); }
+
+        .em-error { display:flex; align-items:center; gap:8px; padding:10px 14px; background:#fee2e2; border:2px solid #fca5a5; border-radius:8px; font-size:12px; color:#dc2626; font-weight:700; }
+
+        .em-footer { padding:14px 22px; border-top:2px solid #f0f2f1; display:flex; justify-content:flex-end; gap:10px; flex-shrink:0; }
+        .em-btn-cancel { padding:9px 18px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; border:2px solid #e5e7eb; color:#6b7280; font-family:'Inter',sans-serif; transition:all .12s; }
+        .em-btn-cancel:hover { background:#f3f4f6; border-color:#d1d5db; }
+        .em-btn-save { display:inline-flex; align-items:center; gap:7px; padding:9px 22px; border-radius:8px; font-size:13px; font-weight:800; cursor:pointer; background:#059669; border:none; color:#fff; font-family:'Inter',sans-serif; transition:all .12s; }
+        .em-btn-save:hover:not(:disabled) { background:#047857; box-shadow:0 4px 14px rgba(5,150,105,.3); }
+        .em-btn-save:disabled { opacity:.45; cursor:not-allowed; }
+        .em-mini-spin { width:13px; height:13px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:adm-spin .7s linear infinite; }
+
+        /* ── Responsive ── */
+        @media(max-width:960px) {
+          .adm-stats { grid-template-columns:repeat(2,1fr); }
+          .adm-main { padding:14px 16px; }
+          .adm-header { padding:0 16px; }
+        }
+        @media(max-width:600px) {
+          .adm-stats { grid-template-columns:1fr 1fr; }
+          .adm-toolbar { flex-direction:column; align-items:stretch; }
+          .adm-search { width:100%; }
+          .adm-search-wrap { width:100%; }
+        }
+      `}</style>
+    </div>
+  )
 }
 
 export default AdminPanel

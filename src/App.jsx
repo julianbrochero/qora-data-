@@ -19,6 +19,7 @@ import Pedidos from './components/modules/Pedidos';
 import Configuracion from './components/modules/Configuracion';
 import Presupuestos from './components/modules/Presupuestos';
 import AgregarVenta from './components/modules/AgregarVenta';
+import AdminPanel from './components/modules/AdminPanel';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
 import SubscriptionGate from './components/subscription/SubscriptionGate';
@@ -334,6 +335,7 @@ const SistemaFacturacion = () => {
         <Clientes
           {...commonProps}
           clientes={filtrarClientes}
+          eliminarCliente={eliminarCliente}
         />
       ),
       productos: (
@@ -401,6 +403,7 @@ const SistemaFacturacion = () => {
         />
       ),
       configuracion: <Configuracion {...commonProps} />,
+      admin: <AdminPanel />,
       presupuestos: (
         <Presupuestos
           {...commonProps}
