@@ -76,20 +76,25 @@
 /* ── NAVBAR ── */
 .landing-root .l-navbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 64px;
-  background: rgba(255,255,255,.9); backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid var(--border); transition: box-shadow .3s;
+  background: rgba(30,62,38,0.82); backdrop-filter: blur(24px) saturate(160%);
+  border-bottom: 1px solid rgba(74,222,128,.15); transition: background .3s, box-shadow .3s;
 }
-.landing-root .l-navbar.scrolled { box-shadow: var(--shadow-md); }
+.landing-root .l-navbar.scrolled { background: rgba(20,45,26,0.96); box-shadow: 0 4px 32px rgba(0,0,0,.4); }
 .landing-root .l-navbar .container { height: 100%; display: flex; align-items: center; justify-content: space-between; }
-.landing-root .nav-logo { display: flex; align-items: center; gap: 5px; text-decoration: none; }
-.landing-root .nav-logo img { height: 36px; object-fit: contain; }
-.landing-root .nav-logo-text { font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -.4px; }
+.landing-root .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+.landing-root .nav-logo img { height: 32px; width: 32px; object-fit: contain; border-radius: 8px; }
+.landing-root .nav-logo-text {
+  font-size: 17px; font-weight: 800; letter-spacing: -.5px;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+}
+.landing-root .nav-logo-text span { color: var(--accent); }
 .landing-root .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
-.landing-root .nav-links a { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; padding: 6px 14px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
-.landing-root .nav-links a:hover { color: var(--text-primary); background: var(--surface-alt); }
+.landing-root .nav-links a { font-size: 13.5px; font-weight: 500; color: rgba(232,240,236,.65); text-decoration: none; padding: 6px 14px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
+.landing-root .nav-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
 .landing-root .nav-actions { display: flex; align-items: center; gap: 8px; }
-.landing-root .nav-login { font-size: 13.5px; font-weight: 500; color: var(--text-secondary); text-decoration: none; padding: 6px 14px; border-radius: var(--radius-sm); transition: color .15s; }
-.landing-root .nav-login:hover { color: var(--text-primary); }
+.landing-root .nav-login { font-size: 13.5px; font-weight: 500; color: rgba(232,240,236,.65); text-decoration: none; padding: 6px 14px; border-radius: var(--radius-sm); transition: color .15s; }
+.landing-root .nav-login:hover { color: #fff; }
 
 /* ── HERO ── */
 .landing-root .hero {
@@ -447,9 +452,9 @@
   /* Navbar */
   .landing-root .l-navbar .container { padding: 0 20px; }
   .landing-root .nav-links { display: none; }
-  .landing-root .nav-logo { gap: 4px; }
-  .landing-root .nav-logo-text { font-size: 14px; }
-  .landing-root .nav-logo img { height: 40px; }
+  .landing-root .nav-logo { gap: 6px; }
+  .landing-root .nav-logo-text { font-size: 15px; }
+  .landing-root .nav-logo img { height: 30px; width: 30px; }
   .landing-root .nav-login { display: none; }
   .landing-root .btn-primary { font-size: 12px; padding: 8px 14px; }
 
