@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { User, Phone, Mail, FileText, MapPin, Building2, CreditCard, CheckCircle } from 'lucide-react'
 
 /* ══════════════════════════════════════════════
@@ -35,6 +35,8 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
   const cuitRef = useRef(null)
   const direccionRef = useRef(null)
   const condicionIVARef = useRef(null)
+  const submittingRef = useRef(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isRapido = type === 'cliente-rapido'
   const isEdit = type === 'editar-cliente'
@@ -45,18 +47,25 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
+    if (submittingRef.current) return
     if (!data.nombre?.trim()) { alert('Por favor, ingrese el nombre del cliente'); nombreRef.current?.focus(); return }
-    const tel = data.telefono?.trim() || ''
 
-    let result
-    if (isRapido) result = await agregarClienteRapido()
-    else if (type === 'nuevo-cliente') result = await agregarCliente()
-    else if (isEdit) result = await editarCliente(data.id, data)
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      let result
+      if (isRapido) result = await agregarClienteRapido()
+      else if (type === 'nuevo-cliente') result = await agregarCliente()
+      else if (isEdit) result = await editarCliente(data.id, data)
 
-    if (result?.success) {
-      const cb = formData.selectedItem?.onSuccess || formData.onSuccess
-      if (cb) cb(result.cliente || result.data || result)
-      else closeModal()
+      if (result?.success) {
+        const cb = formData.selectedItem?.onSuccess || formData.onSuccess
+        if (cb) cb(result.cliente || result.data || result)
+        else closeModal()
+      }
+    } finally {
+      submittingRef.current = false
+      setIsSubmitting(false)
     }
   }
 
@@ -193,14 +202,14 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             Cancelar
           </button>
-          <button type="submit"
-            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '.9'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-            {isRapido ? '⚡ Agregar rápido' : isEdit
+          <button type="submit" disabled={isSubmitting}
+            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.opacity = '.9' }}
+            onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.opacity = '1' }}>
+            {isSubmitting ? 'Guardando...' : isRapido ? '⚡ Agregar rápido' : isEdit
               ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</>
               : <><User size={13} strokeWidth={2.5} /> Crear cliente</>}
-            {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
+            {!isRapido && !isSubmitting && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
           </button>
         </div>
       </form>

@@ -61,7 +61,7 @@ const PresupuestoForm = ({
     }
     const [items, setItems] = useState(getInitialItems)
     const [iva, setIva] = useState(presupuestoEditar?.iva ?? 21)
-    const [incluirIva, setIncluirIva] = useState(presupuestoEditar?.incluirIva ?? true)
+    const [incluirIva, setIncluirIva] = useState(presupuestoEditar?.incluirIva ?? false)
     const [observaciones, setObs] = useState(presupuestoEditar?.observaciones || '')
     const [condicionesPago, setCond] = useState(presupuestoEditar?.condicionesPago || '')
     const [nombreEmpresa, setNombreEmpresa] = useState(() => localStorage.getItem('gestify_empresa') || '')

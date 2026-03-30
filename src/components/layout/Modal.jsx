@@ -1,7 +1,7 @@
 // Modal.jsx CORREGIDO
 "use client"
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ClienteForm from '../forms/ClienteForm';
 import ProductoForm from '../forms/ProductoForm';
 import MovimientoCajaForm from '../forms/MovimientoCajaForm';
@@ -23,6 +23,13 @@ const Modal = ({
   openModal,
   ...props
 }) => {
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   // Si no está abierto, no renderizar
   if (!isOpen) return null;
 
@@ -225,8 +232,8 @@ const Modal = ({
   };
 
   return (
-    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${modalType === 'ver-pedido' ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
-      <div className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full ${modalType === 'ver-pedido' ? 'max-h-[98vh]' : 'max-h-[95vh]'} overflow-y-auto`}>
+    <div onClick={onClose} className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${modalType === 'ver-pedido' ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
+      <div onClick={e => e.stopPropagation()} className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full ${modalType === 'ver-pedido' ? 'max-h-[98vh]' : 'max-h-[95vh]'} overflow-y-auto`}>
         <div className={modalType === 'ver-pedido' ? 'p-3' : 'p-4'}>
           {/* Contenido del modal */}
           {renderModalContent()}

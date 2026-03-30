@@ -319,10 +319,10 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   const resumen = {
-    total: productosSeguros.length,
-    conStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > 0).length,
-    bajoStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= (p.stock_minimo ?? 10)).length,
-    sinControl: productosSeguros.filter(p => !(p.controlastock || p.controlaStock)).length,
+    total: filtrados.length,
+    conStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > 0).length,
+    bajoStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= (p.stock_minimo ?? 10)).length,
+    sinControl: filtrados.filter(p => !(p.controlastock || p.controlaStock)).length,
   }
 
   const customConfirm = (title, message, onConfirm) => setDialogo({ open: true, title, message, onConfirm })
@@ -651,7 +651,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
       {/* ══ CARDS RESUMEN ══ */}
       <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
         {[
-          { label: 'Total Productos', val: resumen.total, icon: Package, clr: '#373F47', sub: 'En catálogo' },
+          { label: 'Total Productos', val: resumen.total, icon: Package, clr: '#373F47', sub: filtroCategoria !== 'todas' ? filtroCategoria : 'En catálogo' },
           { label: 'Con Stock', val: resumen.conStock, icon: CheckCircle, clr: '#065F46', sub: `${resumen.total > 0 ? Math.round(resumen.conStock / resumen.total * 100) : 0}% disponibles` },
           { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: 'según mínimo por producto' },
           { label: 'Sin Control', val: resumen.sinControl, icon: Archive, clr: '#6B7280', sub: 'Stock ilimitado' },
