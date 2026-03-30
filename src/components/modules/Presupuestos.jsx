@@ -198,7 +198,7 @@ const Presupuestos = ({
             </header>
 
             {/* ═══ CONTENT ═══════════════════════════════ */}
-            <main style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <main style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 24px', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
                 {/* Toolbar & Controles Superiores */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
@@ -262,15 +262,16 @@ const Presupuestos = ({
                 </div>
 
                 {/* ── Tabla ──────────────────────────────── */}
-                <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden' }}>
+                <div style={{ background: surface, borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
                     {/* Header tabla */}
-                    <div className="pres-header-row pres-grid" style={{ padding: '8px 14px', borderBottom: `1px solid ${border}`, background: '#EFEFED' }}>
+                    <div className="pres-header-row pres-grid" style={{ padding: '8px 14px', borderBottom: `1px solid ${border}`, background: '#EFEFED', flexShrink: 0 }}>
                         {['Número', 'Cliente', 'Fecha', 'Válido', 'Total', 'Estado'].map(h => (
                             <span key={h} style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em' }}>{h}</span>
                         ))}
                     </div>
 
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
                     {filtrados.length === 0 ? (
                         <div style={{ padding: '60px 20px', textAlign: 'center' }}>
                             <FileText size={36} style={{ color: border, marginBottom: 12 }} />
@@ -349,7 +350,12 @@ const Presupuestos = ({
                                                         e.stopPropagation()
                                                         if (menuAbierto === pres.id) { setMenu(null); return }
                                                         const r = e.currentTarget.getBoundingClientRect()
-                                                        setMenuPos({ top: r.bottom + 4, left: r.right - 180 })
+                                                        const menuH = 200
+                                                        const abreArriba = r.bottom + menuH > window.innerHeight - 16
+                                                        setMenuPos({
+                                                            top: abreArriba ? r.top - menuH - 4 : r.bottom + 4,
+                                                            left: Math.min(r.right - 180, window.innerWidth - 196)
+                                                        })
                                                         setMenu(pres.id)
                                                     }}
                                                     style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}>
@@ -400,6 +406,7 @@ const Presupuestos = ({
                             )
                         })
                     )}
+                    </div>
                 </div>
 
 

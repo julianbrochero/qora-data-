@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import {
   Search, Eye, DollarSign, FileText, Users, CreditCard, CheckCircle,
   Clock, Trash2, CheckSquare, Banknote, XCircle, Plus, ChevronLeft,
-  ChevronRight, AlertCircle, Package, Printer, Tag
+  ChevronRight, AlertCircle, Package, Printer, Tag, Download
   , Menu
 } from "lucide-react"
+import { generarPDFComprobante } from "../../utils/comprobanteGenerator"
 
 /* ── PALETA (igual a Pedidos) ── */
 const bg = '#F5F5F5'
@@ -399,6 +400,7 @@ const Facturacion = ({
                       {!modoSeleccion && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
                           <FBtn text="Ver" title="Ver detalle" onClick={e => { e.stopPropagation(); setDetalle(factura) }}><Eye size={11} strokeWidth={2} /></FBtn>
+                          <FBtn text="PDF" title="Descargar comprobante" onClick={e => { e.stopPropagation(); generarPDFComprobante(factura) }}><Download size={11} strokeWidth={2} /></FBtn>
                           {saldo > 0.01 && estado !== 'anulada' && (
                             <FBtn text="Cobrar" title="Registrar pago" success onClick={e => { e.stopPropagation(); setFacturaSel(factura); setMostrarPago(true); setMontoPago((parseFloat(factura.saldopendiente) || parseFloat(factura.total) || 0).toString()) }}>
                               <DollarSign size={11} strokeWidth={2} />
@@ -600,8 +602,15 @@ const Facturacion = ({
                 ))}
               </div>
             </div>
-            <div style={{ padding: '10px 16px', borderTop: `1px solid ${border}`, background: surface2 }}>
-              <button onClick={() => setDetalle(null)} style={{ width: '100%', height: 32, borderRadius: 8, border: `1px solid ${border}`, background: surface, color: ct2, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Cerrar</button>
+            <div style={{ padding: '10px 16px', borderTop: `1px solid ${border}`, background: surface2, display: 'flex', gap: 8 }}>
+              <button onClick={() => generarPDFComprobante(detalleFactura)}
+                style={{ flex: 1, height: 32, borderRadius: 8, border: '1px solid #334139', background: '#334139', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Download size={12} strokeWidth={2.5} /> Descargar Comprobante
+              </button>
+              <button onClick={() => setDetalle(null)}
+                style={{ flex: 1, height: 32, borderRadius: 8, border: `1px solid ${border}`, background: surface, color: ct2, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
