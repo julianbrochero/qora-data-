@@ -157,6 +157,7 @@ const PresupuestoForm = ({
                 await guardarPresupuesto(buildData())
             }
             handlePDF()
+            closeModal?.()
         } finally {
             setSaving(false)
         }

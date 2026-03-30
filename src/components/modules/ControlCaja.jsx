@@ -159,11 +159,12 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
           {esHoy ? (
             <>
-              <button onClick={() => openModal && openModal("ingreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #4ADE80', background: 'transparent', color: '#4ADE80', cursor: 'pointer' }}>
-                <TrendingUp size={11} strokeWidth={2.5} /> <span className="hidden xs:inline">Ingreso</span>
+              <button onClick={() => openModal && openModal("ingreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #4ADE80', background: 'transparent', color: '#4ADE80', cursor: 'pointer' }}>
+                <TrendingUp size={11} strokeWidth={2.5} /> Ingreso
               </button>
-              <button onClick={() => openModal && openModal("egreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #F87171', background: 'transparent', color: '#F87171', cursor: 'pointer' }} title="Atajo: Ctrl">
-                <TrendingDown size={11} strokeWidth={2.5} /> <span className="hidden xs:inline">Egreso</span>
+              <button onClick={() => openModal && openModal("egreso-caja")} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #F87171', background: 'transparent', color: '#F87171', cursor: 'pointer' }} title="Atajo: Ctrl">
+                <TrendingDown size={11} strokeWidth={2.5} /> Egreso
+                <span style={{ padding: '1px 4px', background: 'rgba(248,113,113,.15)', borderRadius: 4, fontSize: 8, fontFamily: "'DM Mono', monospace", color: '#F87171' }}>Ctrl</span>
               </button>
               <button onClick={() => setMostrarConfirmCierre(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', background: '#4ADE80', color: '#0A1A0E' }}>
                 <CreditCard size={11} strokeWidth={2.5} /> Cerrar
