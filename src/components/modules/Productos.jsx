@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Plus, Search, Edit, Trash2, Tag, Package, X, ChevronLeft, ChevronRight,
   AlertTriangle, CheckCircle, BarChart2, Archive, Download, Upload
   , Menu
 } from "lucide-react"
+import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../lib/AuthContext'
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY
@@ -181,7 +183,8 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
 /* ══════════════════════════════════════════════
    MÓDULO PRINCIPAL PRODUCTOS
 ══════════════════════════════════════════════ */
-const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, editarProducto, onOpenMobileSidebar }) => {
+const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, editarProducto, onOpenMobileSidebar, recargarProductos }) => {
+  const { user } = useAuth()
   const [filtroStock, setFiltroStock] = useState("todos")
   const [filtroCategoria, setFiltroCategoria] = useState("todas")
   const [paginaActual, setPaginaActual] = useState(1)
@@ -190,6 +193,13 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const [dialogo, setDialogo] = useState({ open: false, title: '', message: '', onConfirm: null })
   // inline edit
   const [inlineEdit, setInlineEdit] = useState({ prodId: null, field: null, val: '' })
+  // csv
+  const [csvLoading, setCsvLoading] = useState(false)
+  const [csvResultado, setCsvResultado] = useState(null) // { tipo:'ok'|'error', msg }
+  const csvInputRef = useRef(null)
+  // selección múltiple
+  const [seleccionados, setSeleccionados] = useState(new Set())
+  const [orden, setOrden] = useState({ campo: null, dir: 'asc' })
 
   const startEdit = (prodId, field, currentVal) => setInlineEdit({ prodId, field, val: String(parseFloat(currentVal) || 0) })
   const cancelEdit = () => setInlineEdit({ prodId: null, field: null, val: '' })
@@ -257,27 +267,240 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     if (filtroCategoria !== "todas" && (p.categoria || '').trim() !== filtroCategoria) return false
     const cs = !!(p.controlastock || p.controlaStock)
     if (filtroStock === "en-stock") return match && cs && (p.stock || 0) > 0
-    if (filtroStock === "bajo-stock") return match && cs && (p.stock || 0) <= 10
+    if (filtroStock === "bajo-stock") return match && cs && (p.stock || 0) <= (p.stock_minimo ?? 10)
     return match
   })
 
-  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina)
+  const toggleOrden = (campo) => setOrden(prev =>
+    prev.campo === campo ? { campo, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { campo, dir: 'asc' }
+  )
+
+  const filtradosOrdenados = [...filtrados].sort((a, b) => {
+    if (!orden.campo) return 0
+    const mul = orden.dir === 'asc' ? 1 : -1
+    if (orden.campo === 'nombre') return mul * (a.nombre || '').localeCompare(b.nombre || '', 'es')
+    if (orden.campo === 'codigo') {
+      const na = parseInt((a.codigo || '').replace(/\D/g, '')) || 0
+      const nb = parseInt((b.codigo || '').replace(/\D/g, '')) || 0
+      return mul * (na - nb)
+    }
+    return 0
+  })
+
+  const totalPaginas = Math.ceil(filtradosOrdenados.length / itemsPorPagina)
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
-  const productosPag = filtrados.slice(indiceInicio, indiceInicio + itemsPorPagina)
+  const productosPag = filtradosOrdenados.slice(indiceInicio, indiceInicio + itemsPorPagina)
 
   useEffect(() => { setPaginaActual(1) }, [filtroStock, filtroCategoria, searchTerm, itemsPorPagina])
+  useEffect(() => { setSeleccionados(new Set()) }, [filtroStock, filtroCategoria, searchTerm])
+
+  const toggleSeleccion = (id) => setSeleccionados(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
+  const todosSeleccionados = filtrados.length > 0 && filtrados.every(p => seleccionados.has(p.id))
+  const algunoSeleccionado = filtrados.some(p => seleccionados.has(p.id))
+  const toggleTodos = () => setSeleccionados(prev => {
+    const s = new Set(prev)
+    if (todosSeleccionados) filtrados.forEach(p => s.delete(p.id))
+    else filtrados.forEach(p => s.add(p.id))
+    return s
+  })
+  const eliminarSeleccionados = () => {
+    const ids = [...seleccionados]
+    customConfirm(
+      `Eliminar ${ids.length} producto${ids.length !== 1 ? 's' : ''}`,
+      `¿Estás seguro? Se eliminarán ${ids.length} producto${ids.length !== 1 ? 's' : ''} permanentemente. Esta acción no se puede deshacer.`,
+      async () => {
+        await Promise.all(ids.map(id => eliminarProducto(id)))
+        setSeleccionados(new Set())
+        cerrarDialogo()
+      }
+    )
+  }
 
   const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   const resumen = {
     total: productosSeguros.length,
     conStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > 0).length,
-    bajoStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= 10).length,
+    bajoStock: productosSeguros.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= (p.stock_minimo ?? 10)).length,
     sinControl: productosSeguros.filter(p => !(p.controlastock || p.controlaStock)).length,
   }
 
   const customConfirm = (title, message, onConfirm) => setDialogo({ open: true, title, message, onConfirm })
   const cerrarDialogo = () => setDialogo(p => ({ ...p, open: false }))
+
+  /* ── CSV EXPORT ── */
+  const exportarCSV = () => {
+    const headers = ['Código', 'Nombre', 'Categoría', 'Precio', 'Costo', 'Stock', 'Stock Mínimo', 'Descripción', 'Controla Stock']
+    const rows = productosSeguros.map(p => [
+      p.codigo || '',
+      (p.nombre || '').replace(/;/g, ','),
+      (p.categoria || '').replace(/;/g, ','),
+      p.precio || 0,
+      p.costo != null ? p.costo : '',
+      p.stock || 0,
+      p.stock_minimo != null ? p.stock_minimo : '',
+      (p.descripcion || '').replace(/;/g, ',').replace(/\r?\n/g, ' '),
+      (p.controlastock || p.controlaStock) ? 'SI' : 'NO'
+    ])
+    const csv = [headers, ...rows].map(r => r.join(';')).join('\r\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `productos_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  /* ── CSV PARSE ── */
+  const parseLine = (line) => {
+    const result = []
+    let current = ''
+    let inQuotes = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
+        else inQuotes = !inQuotes
+      } else if (ch === ';' && !inQuotes) {
+        result.push(current); current = ''
+      } else {
+        current += ch
+      }
+    }
+    result.push(current)
+    return result
+  }
+
+  const parsearCSV = (text) => {
+    const content = text.startsWith('\uFEFF') ? text.slice(1) : text
+    const lines = content.split(/\r?\n/).filter(l => l.trim())
+    if (lines.length < 2) return []
+    const headers = parseLine(lines[0]).map(h => h.trim())
+    const col = (name) => headers.findIndex(h => h.toLowerCase() === name.toLowerCase())
+    const colContains = (substr) => headers.findIndex(h => h.toLowerCase().includes(substr.toLowerCase()))
+
+    // Detect Tienda Nube format by checking for 'Identificador de URL' header
+    const isTiendaNube = headers.some(h => h.toLowerCase().includes('identificador'))
+    const prods = []
+
+    if (isTiendaNube) {
+      const iNombre = col('Nombre')
+      const iSKU = col('SKU')
+      const iCategoria = colContains('Categoría')
+      const iPrecio = col('Precio')
+      const iStock = col('Stock')
+      const iDesc = colContains('Descripción')
+      const iCosto = col('Costo')
+      const iProp1Val = colContains('Valor de propiedad 1')
+      const iPropNom = colContains('Nombre de propiedad 1')
+      let lastNombre = ''
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseLine(lines[i])
+        const nombre = iNombre >= 0 ? (cols[iNombre] || '').trim() : ''
+        const prop1Val = iProp1Val >= 0 ? (cols[iProp1Val] || '').trim() : ''
+        const prop1Nom = iPropNom >= 0 ? (cols[iPropNom] || '').trim() : ''
+        if (nombre) lastNombre = nombre
+        if (!lastNombre) continue
+        // Fila sin nombre Y sin variante → saltar (fila vacía de continuación)
+        if (!nombre && !prop1Val) continue
+        let nombreFinal = nombre || lastNombre
+        if (prop1Val) nombreFinal = `${nombre || lastNombre} - ${prop1Val}`
+
+        const precioStr = iPrecio >= 0 ? (cols[iPrecio] || '').trim() : ''
+        const stockStr = iStock >= 0 ? (cols[iStock] || '').trim() : ''
+        const costoStr = iCosto >= 0 ? (cols[iCosto] || '').trim() : ''
+        const cat = iCategoria >= 0 ? (cols[iCategoria] || '').trim() : ''
+        const desc = iDesc >= 0 ? (cols[iDesc] || '').trim() : ''
+        const sku = iSKU >= 0 ? (cols[iSKU] || '').trim() : ''
+        const cleanNum = (s) => parseFloat(s.replace(/[^0-9,.-]/g, '').replace(/,/g, '')) || 0
+        const precio = cleanNum(precioStr)
+        const stock = parseInt(stockStr) || 0
+        const costo = costoStr ? (cleanNum(costoStr) || null) : null
+        const controlastock = stockStr !== ''
+
+        prods.push({ nombre: nombreFinal, codigo: sku || null, categoria: cat, precio, stock, costo, controlastock, descripcion: desc })
+      }
+    } else {
+      // Formato propio
+      const iCodigo = colContains('Código')
+      const iNombre = col('Nombre')
+      const iCategoria = colContains('Categoría')
+      const iPrecio = col('Precio')
+      const iCosto = col('Costo')
+      const iStock = col('Stock')
+      const iStockMin = colContains('Stock Mínimo')
+      const iDesc = colContains('Descripción')
+      const iCS = colContains('Controla')
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseLine(lines[i])
+        const nombre = iNombre >= 0 ? (cols[iNombre] || '').trim() : ''
+        if (!nombre) continue
+        const cleanNum = (s) => parseFloat((s || '').replace(/[^0-9,.-]/g, '').replace(',', '.')) || 0
+        const precio = cleanNum(cols[iPrecio])
+        const stock = parseInt(cols[iStock]) || 0
+        const costo = cols[iCosto] ? (cleanNum(cols[iCosto]) || null) : null
+        const stockMin = iStockMin >= 0 && cols[iStockMin] ? (parseInt(cols[iStockMin]) || null) : null
+        const cs = iCS >= 0 ? (cols[iCS] || '').trim().toUpperCase() === 'SI' : false
+
+        const prodObj = {
+          nombre,
+          codigo: iCodigo >= 0 ? (cols[iCodigo] || '').trim() || null : null,
+          categoria: iCategoria >= 0 ? (cols[iCategoria] || '').trim() : '',
+          precio,
+          stock,
+          costo,
+          controlastock: cs,
+          descripcion: iDesc >= 0 ? (cols[iDesc] || '').trim() : '',
+        }
+        if (stockMin !== null) prodObj.stock_minimo = stockMin
+        prods.push(prodObj)
+      }
+    }
+    return prods
+  }
+
+  /* ── CSV IMPORT ── */
+  const importarCSV = async (file) => {
+    if (!file || !user) return
+    setCsvLoading(true)
+    setCsvResultado(null)
+    try {
+      const text = await file.text()
+      const prods = parsearCSV(text)
+      if (prods.length === 0) {
+        setCsvResultado({ tipo: 'error', msg: 'No se encontraron productos válidos en el archivo.' })
+        return
+      }
+      // Auto-assign codes to products without one
+      const existingCodes = new Set(productosSeguros.map(p => p.codigo).filter(Boolean))
+      let codeIdx = productosSeguros.length + 1
+      const genCode = () => {
+        let c
+        do { c = 'PROD-' + String(codeIdx++).padStart(4, '0') } while (existingCodes.has(c))
+        existingCodes.add(c)
+        return c
+      }
+      const payload = prods.map(p => ({ ...p, codigo: p.codigo || genCode(), user_id: user.id, created_at: new Date().toISOString() }))
+      // Insert in batches of 50 to avoid request size limits
+      let insertados = 0
+      for (let i = 0; i < payload.length; i += 50) {
+        const batch = payload.slice(i, i + 50)
+        const { data, error } = await supabase.from('productos').insert(batch).select()
+        if (error) throw error
+        insertados += data.length
+      }
+      setCsvResultado({ tipo: 'ok', msg: `Se importaron ${insertados} producto${insertados !== 1 ? 's' : ''} correctamente.` })
+      recargarProductos?.()
+    } catch (err) {
+      setCsvResultado({ tipo: 'error', msg: err.message })
+    } finally {
+      setCsvLoading(false)
+      if (csvInputRef.current) csvInputRef.current.value = ''
+    }
+  }
 
   const handleEliminar = (id) => customConfirm('Eliminar Producto', '¿Estás seguro? Esta acción no se puede deshacer.', async () => { eliminarProducto && eliminarProducto(id); cerrarDialogo() })
 
@@ -430,7 +653,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
         {[
           { label: 'Total Productos', val: resumen.total, icon: Package, clr: '#373F47', sub: 'En catálogo' },
           { label: 'Con Stock', val: resumen.conStock, icon: CheckCircle, clr: '#065F46', sub: `${resumen.total > 0 ? Math.round(resumen.conStock / resumen.total * 100) : 0}% disponibles` },
-          { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: '≤10 unidades' },
+          { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: 'según mínimo por producto' },
           { label: 'Sin Control', val: resumen.sinControl, icon: Archive, clr: '#6B7280', sub: 'Stock ilimitado' },
         ].map((s, i) => (
           <div key={i} style={{ ...cardStyle, background: '#E1E1E0', borderRadius: 12, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
@@ -469,7 +692,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
             <select value={filtroStock} onChange={e => setFiltroStock(e.target.value)} style={pillSelect}>
               <option value="todos">Todos los productos</option>
               <option value="en-stock">Con stock disponible</option>
-              <option value="bajo-stock">Bajo stock (≤10)</option>
+              <option value="bajo-stock">Bajo stock</option>
             </select>
 
             {/* filtro categoria */}
@@ -480,38 +703,106 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
               ))}
             </select>
 
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <button
+                onClick={exportarCSV}
+                title="Exportar productos a CSV"
+                style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10 }}>
                 <Download size={11} /> CSV
               </button>
-              <button style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10 }}>
-                <Upload size={11} /> CSV
+              <button
+                onClick={() => csvInputRef.current?.click()}
+                disabled={csvLoading}
+                title="Importar productos desde CSV (Tienda Nube o propio)"
+                style={{ ...pillSelect, display: 'flex', alignItems: 'center', gap: 5, paddingRight: 10, opacity: csvLoading ? .6 : 1 }}>
+                <Upload size={11} /> {csvLoading ? 'Importando…' : 'CSV'}
               </button>
+              <input ref={csvInputRef} type="file" accept=".csv,text/csv" style={{ display: 'none' }}
+                onChange={e => { if (e.target.files?.[0]) importarCSV(e.target.files[0]) }} />
             </div>
 
             <span style={{ fontSize: 11, color: ct3, fontWeight: 500, marginLeft: 'auto' }}>{filtrados.length} productos</span>
           </div>
+
+          {/* csv result banner */}
+          {csvResultado && (
+            <div style={{ margin: '0 clamp(12px,3vw,24px)', marginTop: 8, padding: '9px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, background: csvResultado.tipo === 'ok' ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${csvResultado.tipo === 'ok' ? '#A7F3D0' : '#FECACA'}`, color: csvResultado.tipo === 'ok' ? '#065F46' : '#991B1B' }}>
+              {csvResultado.tipo === 'ok' ? <CheckCircle size={13} /> : <AlertTriangle size={13} />}
+              {csvResultado.msg}
+              <button onClick={() => setCsvResultado(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 2 }}><X size={13} /></button>
+            </div>
+          )}
+
+          {/* barra selección múltiple */}
+          {algunoSeleccionado && (
+            <div style={{ margin: '0 clamp(12px,3vw,24px)', marginTop: 8, padding: '8px 14px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, background: '#FFF7ED', border: '1px solid #FED7AA' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>{seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}</span>
+              <button onClick={toggleTodos} style={{ fontSize: 11, fontWeight: 600, color: '#92400E', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+                {todosSeleccionados ? 'Deseleccionar todos' : `Seleccionar todos (${filtrados.length})`}
+              </button>
+              <button onClick={() => setSeleccionados(new Set())} style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>Cancelar</button>
+              <button onClick={eliminarSeleccionados} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', background: '#DC2626', border: 'none', cursor: 'pointer' }}>
+                <Trash2 size={12} /> Eliminar {seleccionados.size}
+              </button>
+            </div>
+          )}
 
           {/* tabla scroll */}
           <div style={{ flex: 1, overflow: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
                 <tr>
-                  {['CÓDIGO', 'NOMBRE Y CATEGORÍA', 'PRECIO', 'COSTO', 'STOCK', 'CONTROL', 'ACCIONES'].map((col, i) => (
-                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: col === 'COSTO' ? '#059669' : ct3, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i >= 2 ? 'right' : 'left', whiteSpace: 'nowrap' }}>{col}</th>
-                  ))}
+                  <th style={{ padding: '10px 0 10px 16px', width: 36 }}>
+                    <input type="checkbox" checked={todosSeleccionados} onChange={toggleTodos}
+                      title={todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                      style={{ width: 15, height: 15, cursor: 'pointer', accentColor: accent }} />
+                  </th>
+                  {[
+                    { label: 'CÓDIGO', campo: 'codigo' },
+                    { label: 'NOMBRE Y CATEGORÍA', campo: 'nombre' },
+                    { label: 'PRECIO', campo: null },
+                    { label: 'COSTO', campo: null },
+                    { label: 'STOCK', campo: null },
+                    { label: 'CONTROL', campo: null },
+                    { label: 'ACCIONES', campo: null },
+                  ].map(({ label, campo }, i) => {
+                    const activo = orden.campo === campo
+                    const colColor = label === 'COSTO' ? '#059669' : activo ? accent : ct3
+                    return (
+                      <th key={i}
+                        onClick={campo ? () => toggleOrden(campo) : undefined}
+                        style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: colColor, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: i >= 2 ? 'right' : 'left', whiteSpace: 'nowrap', cursor: campo ? 'pointer' : 'default', userSelect: 'none' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'transparent' }}>
+                          {label}
+                          {campo && (
+                            <span style={{ display: 'inline-flex', flexDirection: 'column', gap: 1, opacity: activo ? 1 : 0.35, background: 'transparent' }}>
+                              <span style={{ display: 'block', width: 0, height: 0, background: 'transparent', borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderBottom: `3.5px solid ${colColor}`, opacity: activo && orden.dir === 'asc' ? 1 : activo ? 0.35 : 0.6 }} />
+                              <span style={{ display: 'block', width: 0, height: 0, background: 'transparent', borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderTop: `3.5px solid ${colColor}`, opacity: activo && orden.dir === 'desc' ? 1 : activo ? 0.35 : 0.6 }} />
+                            </span>
+                          )}
+                        </span>
+                      </th>
+                    )
+                  })}
                 </tr>
               </thead>
               <tbody>
                 {productosPag.length > 0 ? productosPag.map(prod => {
                   const precioNeto = (parseFloat(prod.precio) || 0) * 0.79
                   const csOk = !!(prod.controlastock || prod.controlaStock)
-                  const stockLow = csOk && (prod.stock || 0) <= 10 && (prod.stock || 0) >= 0
+                  const stockLow = csOk && (prod.stock || 0) <= (prod.stock_minimo ?? 10) && (prod.stock || 0) >= 0
 
+                  const estaSeleccionado = seleccionados.has(prod.id)
                   return (
-                    <tr key={prod.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: 'default' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <tr key={prod.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: 'default', background: estaSeleccionado ? 'rgba(220,38,38,.04)' : 'transparent' }}
+                      onMouseEnter={e => { if (!estaSeleccionado) e.currentTarget.style.background = 'rgba(51,65,57,.02)' }}
+                      onMouseLeave={e => { if (!estaSeleccionado) e.currentTarget.style.background = 'transparent' }}>
+
+                      {/* checkbox */}
+                      <td style={{ padding: '12px 0 12px 16px', verticalAlign: 'middle', width: 36 }}>
+                        <input type="checkbox" checked={estaSeleccionado} onChange={() => toggleSeleccion(prod.id)}
+                          style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#DC2626' }} />
+                      </td>
 
                       {/* código */}
                       <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
@@ -622,7 +913,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                   )
                 }) : (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={8}>
                       <div style={{ padding: '60px 20px', textAlign: 'center' }}>
                         <div style={{ width: 44, height: 44, borderRadius: '50%', background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                           <Package size={20} style={{ color: ct3 }} />
@@ -644,6 +935,8 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                 <option value="10">10 / pág</option>
                 <option value="25">25 / pág</option>
                 <option value="50">50 / pág</option>
+                <option value="100">100 / pág</option>
+                <option value="99999">Todos</option>
               </select>
               <span style={{ fontSize: 11, color: ct3, fontWeight: 500 }}>
                 {productosPag.length > 0 ? `${indiceInicio + 1} - ${indiceInicio + productosPag.length}` : '0'} de {filtrados.length}

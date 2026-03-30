@@ -65,6 +65,7 @@ const Presupuestos = ({
     const [search, setSearch] = useState('')
     const [filtroEstado, setFiltro] = useState('todos')
     const [menuAbierto, setMenu] = useState(null)
+    const [menuPos,     setMenuPos] = useState({ top: 0, left: 0 })
 
     /* ── Métricas ──────────────────────────────────── */
     const vigentes = presupuestos.filter(p => calcEstado(p) === 'vigente').length
@@ -344,14 +345,20 @@ const Presupuestos = ({
                                             <div style={{ position: 'relative' }}>
                                                 <button
                                                     className="btn-action"
-                                                    onClick={e => { e.stopPropagation(); setMenu(menuAbierto === pres.id ? null : pres.id) }}
+                                                    onClick={e => {
+                                                        e.stopPropagation()
+                                                        if (menuAbierto === pres.id) { setMenu(null); return }
+                                                        const r = e.currentTarget.getBoundingClientRect()
+                                                        setMenuPos({ top: r.bottom + 4, left: r.right - 180 })
+                                                        setMenu(pres.id)
+                                                    }}
                                                     style={{ width: 26, height: 26, borderRadius: 6, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct3, transition: 'all .13s' }}>
                                                     <MoreHorizontal size={13} strokeWidth={2} />
                                                 </button>
 
                                                 {menuAbierto === pres.id && (
                                                     <div onClick={e => e.stopPropagation()}
-                                                        style={{ position: 'absolute', right: 0, top: 30, width: 180, background: '#fff', borderRadius: 10, border: `1px solid ${border}`, boxShadow: '0 8px 28px rgba(0,0,0,.12)', zIndex: 100, overflow: 'hidden' }}>
+                                                        style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, width: 180, background: '#fff', borderRadius: 10, border: `1px solid ${border}`, boxShadow: '0 8px 28px rgba(0,0,0,.12)', zIndex: 9999, overflow: 'hidden' }}>
                                                         {[
                                                             {
                                                                 icon: ShoppingCart, label: 'Convertir en Venta', color: accent, fn: () => {

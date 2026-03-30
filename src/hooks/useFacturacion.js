@@ -1380,6 +1380,7 @@ export const useFacturacion = () => {
         categoria: nuevoProducto.categoria || '',
         descripcion: nuevoProducto.descripcion || '',
         controlastock: !!(nuevoProducto.controlaStock || nuevoProducto.controlastock),
+        stock_minimo: nuevoProducto.stock_minimo != null ? parseInt(nuevoProducto.stock_minimo) : null,
         user_id: user.id,
         created_at: new Date().toISOString()
       }
@@ -1421,6 +1422,7 @@ export const useFacturacion = () => {
         : datosActualizados.controlastock !== undefined ? datosActualizados.controlastock
           : undefined
       if (cs !== undefined) payload.controlastock = !!cs
+      if (datosActualizados.stock_minimo !== undefined) payload.stock_minimo = datosActualizados.stock_minimo != null ? parseInt(datosActualizados.stock_minimo) : null
 
       const { error } = await supabase
         .from('productos')

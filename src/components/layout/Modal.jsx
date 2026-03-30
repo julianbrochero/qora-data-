@@ -207,7 +207,7 @@ const Modal = ({
         return 'max-w-xl';
 
       case 'ver-pedido':
-        return 'max-w-xl';
+        return 'max-w-2xl';
 
       case 'nuevo-proveedor':
       case 'editar-proveedor':
@@ -225,9 +225,9 @@ const Modal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6 sm:p-10">
-      <div className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full max-h-[95vh] overflow-y-auto`}>
-        <div className="p-4">
+    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${modalType === 'ver-pedido' ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
+      <div className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full ${modalType === 'ver-pedido' ? 'max-h-[98vh]' : 'max-h-[95vh]'} overflow-y-auto`}>
+        <div className={modalType === 'ver-pedido' ? 'p-3' : 'p-4'}>
           {/* Contenido del modal */}
           {renderModalContent()}
         </div>

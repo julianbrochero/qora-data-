@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle } from 'lucide-react'
+import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle, AlertTriangle } from 'lucide-react'
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY - consistente con Pedidos / Clientes
@@ -82,7 +82,9 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   }
 
   useEffect(() => {
-    if (!isRapido && !csActivo && data.stock !== 0) handleChange('stock', 0)
+    if (!isRapido && !csActivo) {
+      if (data.stock !== 0) handleChange('stock', 0)
+    }
   }, [csActivo, isRapido])
 
   useEffect(() => {
@@ -106,6 +108,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
         precio: selectedItem.precio ?? 0,
         costo: selectedItem.costo ?? '',
         stock: selectedItem.stock ?? 0,
+        stock_minimo: selectedItem.stock_minimo ?? null,
         categoria: selectedItem.categoria || '',
         descripcion: selectedItem.descripcion || '',
         controlaStock: cs,
@@ -238,7 +241,22 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
 
         {/* Stock */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div style={{ opacity: 0 }} />
+          <div>
+            <label style={labelBase}>Stock mínimo {!csActivo && <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(activa inventario)</span>}</label>
+            <div style={{ position: 'relative' }}>
+              <AlertTriangle size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: csActivo ? '#D97706' : ct3 }} />
+              <input
+                type="number"
+                value={csActivo ? (data.stock_minimo ?? '') : ''}
+                onChange={e => handleChange('stock_minimo', e.target.value === '' ? null : parseInt(e.target.value) || 0)}
+                disabled={!csActivo}
+                onFocus={focusStyle} onBlur={blurStyle}
+                placeholder={csActivo ? 'Ej: 3' : '—'}
+                min="0"
+                style={{ ...inputBase, paddingLeft: 30, background: !csActivo ? 'rgba(0,0,0,.03)' : '#fff', color: !csActivo ? ct3 : ct1, cursor: !csActivo ? 'not-allowed' : 'text' }}
+              />
+            </div>
+          </div>
           <div>
             <label style={labelBase}>Stock inicial</label>
             <div style={{ position: 'relative' }}>

@@ -344,6 +344,7 @@ const SistemaFacturacion = () => {
           productos={filtrarProductos}
           eliminarProducto={eliminarProducto}
           editarProducto={editarProducto}
+          recargarProductos={recargarTodosLosDatos}
         />
       ),
       caja: (

@@ -261,6 +261,13 @@ body {
   color: #6366f1;
 }
 
+/* ── Checkbox reset (HeroUI dark mode sets color-scheme:dark on :root) ────── */
+input[type="checkbox"]:not([data-slot]) {
+  all: revert !important;
+  color-scheme: light !important;
+  cursor: pointer !important;
+}
+
 /* ── Input base ──────────────────────────────────────────────────────────── */
 .input-base {
   width: 100%;

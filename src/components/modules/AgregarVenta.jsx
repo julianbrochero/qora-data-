@@ -64,10 +64,21 @@ const AgregarVenta = ({
   const canales = useMemo(() => { try { const ls = localStorage.getItem('gestify_canales_venta'); if (ls) return JSON.parse(ls) } catch {} return [] }, [])
 
   const clienteRef      = useRef(null)
+  const cliSelectRef    = useRef(null)
   const productoRef     = useRef(null)
   const busProductoRef  = useRef(null)
   const guardarRef      = useRef(null)
   const skipDropOnFocus = useRef(false)
+  const [dropCliPos,    setDropCliPos] = useState(null)
+
+  const abrirDropCliente = () => {
+    if (cliSelectRef.current) {
+      const r = cliSelectRef.current.getBoundingClientRect()
+      setDropCliPos({ top: r.bottom + 4, left: r.left, width: r.width })
+    }
+    setDropCliente(v => !v)
+    setDropClienteIdx(-1)
+  }
 
   useEffect(() => { setTimeout(() => busProductoRef.current?.focus(), 80) }, [])
 
@@ -247,11 +258,12 @@ const AgregarVenta = ({
         </div>
       )}
 
+
       {/* ══ HEADER ══ */}
       <header className="av-header">
         <div className="av-header-l">
           {onOpenMobileSidebar && (
-            <button onClick={onOpenMobileSidebar} className="md:hidden av-menu-btn">
+            <button onClick={onOpenMobileSidebar} className="av-menu-btn">
               <Menu size={16} strokeWidth={2} />
             </button>
           )}
@@ -291,23 +303,20 @@ const AgregarVenta = ({
 
         <div className="av-layout">
 
-          {/* ══ COLUMNA IZQUIERDA ══ */}
+          {/* ══ COLUMNA IZQUIERDA: búsqueda + carrito ══ */}
           <div className="av-col">
 
-            {/* Card — Agregar productos */}
+            {/* Buscador */}
             <div className="av-card av-card-search" style={{ flexShrink: 0 }}>
-              <div className="av-card-hd av-hd-green">
-                <div className="av-hd-ico-wrap"><Package size={14} strokeWidth={2.5} style={{ color: '#1f4d2e' }} /></div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span className="av-card-ttl">Agregar productos</span>
-                  <span className="av-card-sub">Escribí el nombre o el código</span>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', height: 44, borderBottom: '1px solid #eef3f0' }}>
+                <Package size={14} strokeWidth={2.5} style={{ color: '#334139' }} />
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#1e2320', letterSpacing: '-.01em' }}>Agregar productos</span>
+                <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 2 }}>Escribí el nombre o el código</span>
                 <button onClick={() => openModal?.('nuevo-producto')} className="av-btn-nuevo">
                   <Plus size={11} strokeWidth={2.5} /> Nuevo producto
                 </button>
               </div>
-
-              <div className="av-card-bd" style={{ padding: '10px 14px' }}>
+              <div style={{ padding: '10px 14px' }}>
                 <div ref={productoRef} style={{ position: 'relative' }}>
                   <div className="av-search-row">
                     <Search size={13} className="av-search-ico" />
@@ -359,17 +368,13 @@ const AgregarVenta = ({
               </div>
             </div>
 
-            {/* Card — Productos en el pedido */}
+            {/* Carrito */}
             <div className="av-card av-card-carrito">
-              <div className="av-card-hd av-hd-green">
-                <div className="av-hd-ico-wrap"><ShoppingCart size={14} strokeWidth={2.5} style={{ color: '#1f4d2e' }} /></div>
-                <span className="av-card-ttl">Productos en el pedido</span>
-                {carrito.length > 0 && (
-                  <span className="av-badge-count">{carrito.length}</span>
-                )}
-                {carrito.length > 0 && (
-                  <span className="av-subtotal-label">{fMon(subtotal)}</span>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px', height: 38, background: '#eaf2ec', borderBottom: '1px solid rgba(0,0,0,.05)', flexShrink: 0 }}>
+                <ShoppingCart size={13} strokeWidth={2.5} style={{ color: '#334139' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#1e2320' }}>Productos en el pedido</span>
+                {carrito.length > 0 && <span className="av-badge-count">{carrito.length}</span>}
+                {carrito.length > 0 && <span className="av-subtotal-label">{fMon(subtotal)}</span>}
               </div>
 
               {carrito.length === 0 ? (
@@ -405,8 +410,7 @@ const AgregarVenta = ({
                             <td>
                               <div className="av-inp-prefix-wrap" style={{ width: 88 }}>
                                 <span className="av-inp-prefix">$</span>
-                                <input type="number" value={item.precio} onChange={e => setPrecio(item.id, e.target.value)}
-                                  className="av-inp-cell" />
+                                <input type="number" value={item.precio} onChange={e => setPrecio(item.id, e.target.value)} className="av-inp-cell" />
                               </div>
                             </td>
                             <td>
@@ -442,181 +446,193 @@ const AgregarVenta = ({
 
           </div>{/* fin av-col */}
 
-          {/* ══ SIDEBAR DERECHA ══ */}
+          {/* ══ PANEL DERECHO UNIFICADO ══ */}
           <div className="av-sidebar">
+            <div className="av-panel">
 
-            {/* Card — Cliente */}
-            <div className="av-card">
-              <div className="av-card-hd av-hd-sage">
-                <div className="av-hd-ico-wrap av-hd-ico-sage"><User size={14} strokeWidth={2.5} style={{ color: '#1f4d2e' }} /></div>
-                <span className="av-card-ttl">Cliente</span>
-                <span className="av-card-sub" style={{ marginLeft: 4 }}>¿A quién le vendés?</span>
-                <button
-                  onClick={() => setClienteActivo(v => { const n = !v; try { localStorage.setItem(PREF_KEY, String(n)) } catch {} return n })}
-                  className={`av-toggle-cli${clienteActivo ? ' on' : ''}`}>
-                  {clienteActivo ? 'Con cliente' : 'Sin cliente'}
-                </button>
-              </div>
+              {/* ── 1. CLIENTE ── */}
+              <div className="av-sec">
+                <div className="av-sec-row">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <User size={13} strokeWidth={2.5} style={{ color: '#334139' }} />
+                    <span className="av-sec-lbl">CLIENTE</span>
+                  </div>
+                  <button
+                    onClick={() => setClienteActivo(v => { const n = !v; try { localStorage.setItem(PREF_KEY, String(n)) } catch {} return n })}
+                    className={`av-toggle-cli${clienteActivo ? ' on' : ''}`}>
+                    {clienteActivo ? 'Con cliente' : 'Sin cliente'}
+                  </button>
+                </div>
 
-              <div className="av-card-bd" style={{ padding: '10px 14px' }}>
                 {clienteActivo ? (
-                  <>
-                    <label className="av-lbl">Seleccioná el cliente</label>
-                    <div ref={clienteRef} style={{ position: 'relative', marginBottom: 8 }}>
-                      <button
-                        className={`av-cli-select${clienteNombre ? ' has-value' : ''}`}
-                        onClick={() => { setDropCliente(v => !v); setDropClienteIdx(-1) }}>
-                        <Search size={12} style={{ color: clienteNombre ? '#334139' : '#9ca3af', flexShrink: 0 }} />
-                        <span style={{ flex: 1, textAlign: 'left', color: clienteNombre ? '#1e2320' : '#9ca3af', fontSize: 12 }}>
-                          {clienteNombre || 'Buscar por nombre o teléfono...'}
-                        </span>
-                        <ChevronDown size={13} style={{ color: '#9ca3af', flexShrink: 0 }} />
-                      </button>
+                  <div ref={clienteRef} style={{ marginTop: 8 }}>
+                    <button
+                      ref={cliSelectRef}
+                      className={`av-cli-select${clienteNombre ? ' has-value' : ''}`}
+                      onClick={abrirDropCliente}>
+                      <Search size={12} style={{ color: clienteNombre ? '#334139' : '#9ca3af', flexShrink: 0 }} />
+                      <span style={{ flex: 1, textAlign: 'left', color: clienteNombre ? '#1e2320' : '#9ca3af', fontSize: 12 }}>
+                        {clienteNombre || 'Buscar por nombre o teléfono...'}
+                      </span>
+                      <ChevronDown size={13} style={{ color: '#9ca3af', flexShrink: 0 }} />
+                    </button>
 
-                      {dropCliente && (
-                        <div className="av-drop">
-                          <div style={{ padding: '7px 10px', borderBottom: '1px solid #f0f4f2' }}>
-                            <input autoFocus className="av-drop-inp" placeholder="Buscar..."
-                              value={busCliente}
-                              onChange={e => { setBusCliente(e.target.value); setDropClienteIdx(-1) }}
-                              onClick={e => e.stopPropagation()}
-                              onKeyDown={e => {
-                                if (e.key === 'ArrowDown') { e.preventDefault(); setDropClienteIdx(i => Math.min(i + 1, clientesFilt.length - 1)) }
-                                else if (e.key === 'ArrowUp') { e.preventDefault(); setDropClienteIdx(i => Math.max(i - 1, 0)) }
-                                else if (e.key === 'Enter') { e.preventDefault(); if (dropClienteIdx >= 0 && clientesFilt[dropClienteIdx]) selCliente(clientesFilt[dropClienteIdx]) }
-                                else if (e.key === 'Escape') setDropCliente(false)
-                              }} />
-                          </div>
-                          {clientesFilt.length === 0
-                            ? <p style={{ padding: '10px 12px', fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Sin resultados</p>
-                            : clientesFilt.map((c, i) => (
-                              <button key={c.id} className={`av-drop-row${dropClienteIdx === i ? ' av-drop-active' : ''}`} onClick={() => selCliente(c)}>
-                                <div>
-                                  <div className="av-drop-nombre">{c.nombre}</div>
-                                  {c.telefono && <div className="av-drop-meta"><span>{c.telefono}</span></div>}
-                                </div>
-                              </button>
-                            ))}
+                    {dropCliente && dropCliPos && (
+                      <div className="av-drop" style={{ position: 'fixed', top: dropCliPos.top, left: dropCliPos.left, width: dropCliPos.width, zIndex: 9999 }}>
+                        <div style={{ padding: '7px 10px', borderBottom: '1px solid #f0f4f2' }}>
+                          <input autoFocus className="av-drop-inp" placeholder="Buscar..."
+                            value={busCliente}
+                            onChange={e => { setBusCliente(e.target.value); setDropClienteIdx(-1) }}
+                            onClick={e => e.stopPropagation()}
+                            onKeyDown={e => {
+                              if (e.key === 'ArrowDown') { e.preventDefault(); setDropClienteIdx(i => Math.min(i + 1, clientesFilt.length - 1)) }
+                              else if (e.key === 'ArrowUp') { e.preventDefault(); setDropClienteIdx(i => Math.max(i - 1, 0)) }
+                              else if (e.key === 'Enter') { e.preventDefault(); if (dropClienteIdx >= 0 && clientesFilt[dropClienteIdx]) selCliente(clientesFilt[dropClienteIdx]) }
+                              else if (e.key === 'Escape') setDropCliente(false)
+                            }} />
                         </div>
-                      )}
-                    </div>
+                        {clientesFilt.length === 0
+                          ? <p style={{ padding: '10px 12px', fontSize: 12, color: '#9ca3af', margin: 0, textAlign: 'center' }}>Sin resultados</p>
+                          : clientesFilt.map((c, i) => (
+                            <button key={c.id} className={`av-drop-row${dropClienteIdx === i ? ' av-drop-active' : ''}`} onClick={() => selCliente(c)}>
+                              <div>
+                                <div className="av-drop-nombre">{c.nombre}</div>
+                                {c.telefono && <div className="av-drop-meta"><span>{c.telefono}</span></div>}
+                              </div>
+                            </button>
+                          ))}
+                      </div>
+                    )}
 
-                    {clienteNombre ? (
-                      <div className="av-cli-selected">
+                    {clienteNombre && (
+                      <div className="av-cli-selected" style={{ marginTop: 6 }}>
                         <UserCheck size={11} style={{ color: '#334139', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, fontWeight: 600, color: '#1e2320', flex: 1 }}>{clienteNombre}</span>
                         <button onClick={limpiarCliente} className="av-cli-change">Cambiar</button>
                         <button onClick={limpiarCliente} className="av-cli-x"><X size={11} /></button>
                       </div>
-                    ) : (
-                      <button onClick={() => openModal?.('nuevo-cliente')} className="av-btn-nuevo" style={{ width: '100%', justifyContent: 'center' }}>
+                    )}
+                    {!clienteNombre && (
+                      <button onClick={() => openModal?.('nuevo-cliente')} className="av-btn-nuevo" style={{ width: '100%', justifyContent: 'center', marginTop: 6 }}>
                         <Plus size={11} strokeWidth={2.5} /> Nuevo cliente
                       </button>
                     )}
-                  </>
+                  </div>
                 ) : (
-                  <div className="av-sin-cliente">
+                  <div className="av-sin-cliente" style={{ marginTop: 8 }}>
                     <span className="av-sin-cliente-tag">Consumidor Final</span>
-                    <span style={{ fontSize: 11, color: '#8B8982' }}>La venta se registrará sin cliente asignado</span>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Card — Detalles del pedido */}
-            <div className="av-card">
-              <div className="av-card-hd av-hd-sage">
-                <div className="av-hd-ico-wrap av-hd-ico-sage"><Calendar size={14} strokeWidth={2.5} style={{ color: '#1f4d2e' }} /></div>
-                <div>
-                  <span className="av-card-ttl">Detalles del pedido</span>
-                  <span className="av-card-sub">Fechas, estado y canal</span>
+              <div className="av-divider" />
+
+              {/* ── 2. MÉTODO DE PAGO ── */}
+              <div className="av-sec">
+                <div className="av-sec-row" style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CreditCard size={13} strokeWidth={2.5} style={{ color: '#334139' }} />
+                    <span className="av-sec-lbl">MÉTODO DE PAGO</span>
+                  </div>
+                </div>
+                <div className="av-metodo-wrap">
+                  {[
+                    { val: 'efectivo',      lbl: 'Efectivo',      Icon: Banknote },
+                    { val: 'transferencia', lbl: 'Transferencia',  Icon: CreditCard },
+                  ].map(({ val, lbl, Icon }) => (
+                    <button key={val} onClick={() => setMetodoPago(val)}
+                      className={`av-metodo-btn${metodoPago === val ? ' active' : ''}`}>
+                      <Icon size={15} strokeWidth={1.8} />
+                      <span>{lbl}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="av-card-bd" style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="av-divider" />
 
-                {/* Método de pago */}
-                <div>
-                  <label className="av-lbl">Método de pago</label>
-                  <div className="av-metodo-wrap">
-                    {[
-                      { val: 'efectivo',      lbl: 'Efectivo',      Icon: Banknote },
-                      { val: 'transferencia', lbl: 'Transferencia',  Icon: CreditCard },
-                    ].map(({ val, lbl, Icon }) => (
-                      <button key={val} onClick={() => setMetodoPago(val)}
-                        className={`av-metodo-btn${metodoPago === val ? ' active' : ''}`}>
-                        <Icon size={15} strokeWidth={1.8} />
-                        <span>{lbl}</span>
-                      </button>
-                    ))}
+              {/* ── 3. DETALLES ── */}
+              <div className="av-sec">
+                <div className="av-sec-row" style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Calendar size={13} strokeWidth={2.5} style={{ color: '#334139' }} />
+                    <span className="av-sec-lbl">DETALLES</span>
                   </div>
                 </div>
 
                 {/* Fechas */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
                   <div>
-                    <label className="av-lbl">Fecha del pedido</label>
+                    <label className="av-lbl">Fecha</label>
                     <input type="date" className="av-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} />
                   </div>
                   <div>
-                    <label className="av-lbl">Fecha de entrega <span style={{ fontWeight: 400 }}>(opc.)</span></label>
+                    <label className="av-lbl">Entrega <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opc.)</span></label>
                     <input type="date" className="av-inp gestify-date-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} />
                   </div>
                 </div>
 
-                {/* Estado */}
-                <div>
-                  <label className="av-lbl">Estado del pedido</label>
-                  <div style={{ position: 'relative' }}>
-                    <select className="av-inp" value={estado}
-                      onChange={e => { setEstado(e.target.value); try { localStorage.setItem('gestify_pedido_estado', e.target.value) } catch {} }}
-                      style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 28 }}>
-                      {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                    </select>
-                    <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: eCfg.color }} />
-                  </div>
-                </div>
-
-                {/* Canal */}
-                {canales.length > 0 && (
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                      <label className="av-lbl" style={{ marginBottom: 0 }}>Canal <span style={{ fontWeight: 400 }}>(opc.)</span></label>
-                      {canalVenta && <button onClick={() => setCanalVenta('')} style={{ fontSize: 10, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}>Limpiar</button>}
+                {/* Estado + Canal en misma fila si hay canales */}
+                {canales.length > 0 ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                    <div>
+                      <label className="av-lbl">Estado</label>
+                      <div style={{ position: 'relative' }}>
+                        <select className="av-inp" value={estado}
+                          onChange={e => { setEstado(e.target.value); try { localStorage.setItem('gestify_pedido_estado', e.target.value) } catch {} }}
+                          style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 22, fontSize: 11 }}>
+                          {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                        </select>
+                        <ChevronDown size={11} style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: eCfg.color }} />
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {canales.map(c => (
-                        <button key={c} onClick={() => setCanalVenta(canalVenta === c ? '' : c)}
-                          className={`av-canal-chip${canalVenta === c ? ' active' : ''}`}>
-                          {c}
-                        </button>
-                      ))}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <label className="av-lbl">Canal</label>
+                        {canalVenta && <button onClick={() => setCanalVenta('')} style={{ fontSize: 10, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 4 }}>Limpiar</button>}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {canales.map(c => (
+                          <button key={c} onClick={() => setCanalVenta(canalVenta === c ? '' : c)}
+                            className={`av-canal-chip${canalVenta === c ? ' active' : ''}`} style={{ fontSize: 10, padding: '2px 8px' }}>
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: 8 }}>
+                    <label className="av-lbl">Estado</label>
+                    <div style={{ position: 'relative' }}>
+                      <select className="av-inp" value={estado}
+                        onChange={e => { setEstado(e.target.value); try { localStorage.setItem('gestify_pedido_estado', e.target.value) } catch {} }}
+                        style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 28 }}>
+                        {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </select>
+                      <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: eCfg.color }} />
                     </div>
                   </div>
                 )}
 
                 {/* Notas */}
                 <div>
-                  <label className="av-lbl">Notas internas <span style={{ fontWeight: 400 }}>(opc.)</span></label>
-                  <textarea className="av-inp" value={notas} onChange={e => setNotas(e.target.value)}
-                    placeholder="Ej: entregar antes del mediodía, sin cebolla..."
-                    style={{ height: 42, padding: '6px 10px', resize: 'none', lineHeight: 1.5 }} />
-                </div>
-
-              </div>
-            </div>
-
-            {/* Card — Resumen y pago */}
-            <div className="av-card">
-              <div className="av-card-hd av-hd-dark">
-                <div className="av-hd-ico-wrap" style={{ background: 'rgba(168,213,181,.15)' }}><CreditCard size={14} strokeWidth={2.5} style={{ color: '#a8d5b5' }} /></div>
-                <div>
-                  <span className="av-card-ttl" style={{ color: '#e8f5ee' }}>Resumen y pago</span>
-                  <span className="av-card-sub" style={{ color: 'rgba(168,213,181,.75)' }}>Totales y monto abonado</span>
+                  <label className="av-lbl">Notas <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opc.)</span></label>
+                  <textarea className="av-inp av-notes" value={notas} onChange={e => setNotas(e.target.value)}
+                    placeholder="Ej: entregar antes del mediodía, sin cebolla..." />
                 </div>
               </div>
 
-              <div className="av-card-bd" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="av-divider" />
+
+              {/* ── 4. RESUMEN Y PAGO ── */}
+              <div className="av-sec av-sec-pago">
+                <div className="av-sec-row" style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <ShoppingCart size={13} strokeWidth={2.5} style={{ color: '#334139' }} />
+                    <span className="av-sec-lbl">RESUMEN Y PAGO</span>
+                  </div>
+                </div>
 
                 {/* Totales */}
                 <div className="av-totales">
@@ -637,13 +653,10 @@ const AgregarVenta = ({
                 </div>
 
                 {/* Adelanto */}
-                <div>
+                <div style={{ marginTop: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                     <label className="av-lbl" style={{ marginBottom: 0 }}>¿Cuánto abona ahora?</label>
-                    <button
-                      title="Pagar total (también podés presionar Shift)"
-                      onClick={() => setAdelanto(String(total))}
-                      className="av-pagar-total-btn">
+                    <button title="Pagar total (también Shift)" onClick={() => setAdelanto(String(total))} className="av-pagar-total-btn">
                       <Check size={9} strokeWidth={2.5} /> Paga el total
                       <kbd className="av-kbd">Shift</kbd>
                     </button>
@@ -660,8 +673,10 @@ const AgregarVenta = ({
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Banner bloqueo o botón */}
+              {/* ── 5. CTA ── */}
+              <div className="av-cta">
                 {razonBloqueo ? (
                   <div className="av-bloqueo-banner">
                     <span style={{ fontSize: 10 }}>⚠</span>
@@ -673,14 +688,12 @@ const AgregarVenta = ({
                     {isProcessing ? 'Guardando...' : 'Confirmar y registrar venta'}
                   </button>
                 )}
-
                 <p className="av-kbd-hint">
                   <kbd className="av-kbd">Ctrl+↵</kbd> guardar rápido &nbsp;·&nbsp; <kbd className="av-kbd">Shift</kbd> pagar total
                 </p>
-
               </div>
-            </div>
 
+            </div>
           </div>{/* fin av-sidebar */}
         </div>
       </main>
@@ -712,7 +725,7 @@ const AgregarVenta = ({
         .av-btn-save:disabled { opacity:.4; cursor:not-allowed; }
 
         /* ── Main layout ── */
-        .av-main { flex:1; overflow:hidden; display:flex; flex-direction:column; padding:clamp(8px,1.2vw,14px) clamp(12px,2.5vw,28px); max-width:1600px; margin:0 auto; width:100%; box-sizing:border-box; gap:10px; }
+        .av-main { flex:1; overflow:hidden; display:flex; flex-direction:column; padding:clamp(8px,1.2vw,12px) clamp(12px,2.5vw,24px); max-width:1600px; margin:0 auto; width:100%; box-sizing:border-box; gap:8px; }
         .av-success { display:flex; align-items:center; gap:10px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:9px 14px; flex-shrink:0; animation:av-in .3s ease; }
         .av-success-ico { width:28px; height:28px; border-radius:50%; background:#16a34a; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
         .av-success-t { font-size:13px; font-weight:600; color:#166534; margin:0; }
@@ -720,32 +733,34 @@ const AgregarVenta = ({
         .av-success-x { margin-left:auto; width:24px; height:24px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; color:#16a34a; cursor:pointer; border-radius:6px; flex-shrink:0; }
         .av-success-x:hover { background:#dcfce7; }
 
-        .av-layout { flex:1; overflow:hidden; display:grid; grid-template-columns:1fr clamp(260px,27vw,340px); gap:clamp(10px,1.5vw,18px); }
-        .av-col { display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-bottom:2px; }
+        .av-layout { flex:1; overflow:hidden; display:grid; grid-template-columns:1fr clamp(270px,28vw,340px); gap:clamp(10px,1.5vw,16px); }
+        .av-col { display:flex; flex-direction:column; gap:8px; overflow-y:auto; padding-bottom:2px; }
         .av-col::-webkit-scrollbar { width:0; }
-        .av-sidebar { display:flex; flex-direction:column; gap:8px; overflow-y:auto; padding-bottom:2px; }
-        .av-sidebar::-webkit-scrollbar { width:0; }
 
-        /* ── Cards ── */
+        /* ── Sidebar = panel único ── */
+        .av-sidebar { display:flex; flex-direction:column; overflow:hidden; }
+        .av-panel { flex:1; background:#fff; border:1px solid #dde8e1; border-radius:12px; display:flex; flex-direction:column; overflow-y:auto; overflow-x:hidden; }
+        .av-panel::-webkit-scrollbar { width:3px; }
+        .av-panel::-webkit-scrollbar-thumb { background:rgba(51,65,57,.18); border-radius:3px; }
+
+        /* ── Secciones del panel ── */
+        .av-sec { padding:12px 14px; }
+        .av-sec-pago { background:linear-gradient(160deg,#f4faf6 0%,#eef6f1 100%); border-top:1px solid #ddeee4; }
+        .av-sec-row { display:flex; align-items:center; justify-content:space-between; }
+        .av-sec-lbl { font-size:9px; font-weight:800; color:#8B8982; letter-spacing:.1em; text-transform:uppercase; }
+        .av-divider { height:1px; background:#f0f4f2; margin:0; flex-shrink:0; }
+        .av-cta { padding:10px 14px 12px; flex-shrink:0; background:linear-gradient(160deg,#f4faf6 0%,#eef6f1 100%); }
+
+        /* ── Cards izq ── */
         .av-card { background:#fff; border:1px solid #dde8e1; border-radius:12px; overflow:hidden; }
         .av-card-search { overflow:visible; }
-        .av-card-search .av-card-hd { border-radius:12px 12px 0 0; }
         .av-card-carrito { flex:1; min-height:0; display:flex; flex-direction:column; }
-        .av-card-hd { display:flex; align-items:center; gap:8px; padding:8px 14px; border-bottom:1px solid rgba(0,0,0,.05); }
-        .av-hd-green { background:#eaf2ec; }
-        .av-hd-sage  { background:#d6e8db; }
-        .av-hd-dark  { background:#3d4d42; }
-        .av-hd-ico-wrap { width:26px; height:26px; border-radius:7px; background:rgba(31,77,46,.1); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .av-hd-ico-sage { background:rgba(31,77,46,.12); }
-        .av-card-ttl { font-size:12px; font-weight:700; color:#1e2320; letter-spacing:-.01em; }
-        .av-card-sub { font-size:10px; color:#8B8982; margin-left:2px; }
-        .av-card-bd  { padding:12px 14px; }
 
-        /* ── Botones de card ── */
+        /* ── Botón nuevo ── */
         .av-btn-nuevo { display:inline-flex; align-items:center; gap:5px; margin-left:auto; padding:4px 10px; border-radius:7px; font-size:10.5px; font-weight:700; cursor:pointer; background:#fff; border:1px solid #bdd9c5; color:#334139; transition:all .12s; white-space:nowrap; font-family:'Inter',sans-serif; flex-shrink:0; }
         .av-btn-nuevo:hover { background:#f0faf3; border-color:#334139; }
 
-        /* ── Badges header ── */
+        /* ── Badges ── */
         .av-badge-count { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:20px; background:#334139; color:#fff; font-size:10px; font-weight:700; }
         .av-subtotal-label { margin-left:auto; font-size:12px; font-weight:700; color:#334139; }
 
@@ -819,14 +834,14 @@ const AgregarVenta = ({
         .av-cli-change { font-size:10px; color:#334139; background:none; border:none; cursor:pointer; font-weight:600; margin-left:auto; text-decoration:underline; }
         .av-cli-x { width:18px; height:18px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:#9ca3af; border-radius:4px; }
         .av-cli-x:hover { background:#fee2e2; color:#ef4444; }
-        .av-toggle-cli { margin-left:auto; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; cursor:pointer; background:#fff; border:1px solid #bdd9c5; color:#8B8982; transition:all .13s; font-family:'Inter',sans-serif; }
+        .av-toggle-cli { padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; cursor:pointer; background:#f3f4f6; border:1px solid #e5e7eb; color:#8B8982; transition:all .13s; font-family:'Inter',sans-serif; }
         .av-toggle-cli.on { background:#334139; border-color:#334139; color:#fff; }
-        .av-sin-cliente { display:flex; flex-direction:column; gap:4px; padding:8px 10px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb; }
-        .av-sin-cliente-tag { display:inline-block; font-size:11px; font-weight:700; color:#374151; background:#e5e7eb; border-radius:4px; padding:1px 7px; width:fit-content; }
+        .av-sin-cliente { display:flex; align-items:center; gap:6px; padding:7px 10px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb; }
+        .av-sin-cliente-tag { font-size:11px; font-weight:700; color:#374151; background:#e5e7eb; border-radius:4px; padding:2px 8px; }
 
         /* ── Método de pago ── */
         .av-metodo-wrap { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
-        .av-metodo-btn { display:flex; flex-direction:column; align-items:center; gap:4px; padding:9px 6px; border-radius:9px; font-size:11px; font-weight:600; cursor:pointer; border:1.5px solid #dde8e1; background:#fafffe; color:#6b7280; transition:all .13s; font-family:'Inter',sans-serif; }
+        .av-metodo-btn { display:flex; align-items:center; justify-content:center; gap:7px; padding:8px 6px; border-radius:9px; font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid #dde8e1; background:#fafffe; color:#6b7280; transition:all .13s; font-family:'Inter',sans-serif; }
         .av-metodo-btn:hover { border-color:#bdd9c5; background:#f4fdf7; color:#334139; }
         .av-metodo-btn.active { background:linear-gradient(135deg,#eaf2ec,#d6e8db); border-color:#4ADE80; color:#1f4d2e; box-shadow:0 0 0 2px rgba(74,222,128,.15); }
 
@@ -836,27 +851,27 @@ const AgregarVenta = ({
         .av-canal-chip.active { background:#334139; border-color:#334139; color:#fff; }
 
         /* ── Inputs generales ── */
-        .av-inp { width:100%; height:34px; padding:0 10px; border:1px solid #dde8e1; border-radius:8px; font-size:12px; color:#1e2320; outline:none; box-sizing:border-box; background:#fff; font-family:'Inter',sans-serif; transition:border-color .12s; }
+        .av-inp { width:100%; height:32px; padding:0 10px; border:1px solid #dde8e1; border-radius:8px; font-size:12px; color:#1e2320; outline:none; box-sizing:border-box; background:#fff; font-family:'Inter',sans-serif; transition:border-color .12s; }
         .av-inp:focus { border-color:#334139; box-shadow:0 0 0 3px rgba(51,65,57,.07); }
-        textarea.av-inp { height:auto; }
+        .av-notes { height:38px; padding:6px 10px; resize:none; line-height:1.5; }
 
         /* ── Resumen ── */
-        .av-totales { display:flex; flex-direction:column; gap:6px; padding:10px 12px; background:#f8fdfb; border-radius:10px; border:1px solid #dde8e1; }
+        .av-totales { display:flex; flex-direction:column; gap:5px; padding:9px 12px; background:#f8fdfb; border-radius:10px; border:1px solid #dde8e1; }
         .av-total-row { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#6b7280; }
         .av-total-val { font-weight:500; }
-        .av-total-main { font-size:14px; font-weight:700; color:#1e2320; padding-top:6px; margin-top:2px; border-top:1px solid #dde8e1; }
-        .av-total-main-val { font-size:19px; font-weight:800; color:#16a34a; letter-spacing:-.03em; }
-        .av-gan-pill { display:flex; justify-content:space-between; align-items:center; padding:5px 9px; border-radius:7px; background:#f0fdf4; border:1px solid #bbf7d0; font-size:11px; color:#065f46; margin-top:2px; }
+        .av-total-main { font-size:14px; font-weight:700; color:#1e2320; padding-top:5px; margin-top:1px; border-top:1px solid #dde8e1; }
+        .av-total-main-val { font-size:18px; font-weight:800; color:#16a34a; letter-spacing:-.03em; }
+        .av-gan-pill { display:flex; justify-content:space-between; align-items:center; padding:4px 9px; border-radius:7px; background:#f0fdf4; border:1px solid #bbf7d0; font-size:11px; color:#065f46; margin-top:2px; }
         .av-gan-pill.neg { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
 
         /* ── Adelanto ── */
         .av-pagar-total-btn { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; background:rgba(51,65,57,.07); color:#334139; border:1px solid rgba(51,65,57,.18); border-radius:20px; cursor:pointer; font-size:10px; font-weight:700; letter-spacing:.02em; transition:all .13s; font-family:'Inter',sans-serif; }
         .av-pagar-total-btn:hover { background:rgba(51,65,57,.14); }
-        .av-adelanto-wrap { display:flex; align-items:center; height:40px; border:1.5px solid #dde8e1; border-radius:9px; overflow:hidden; background:#fff; transition:border-color .12s,box-shadow .12s; }
+        .av-adelanto-wrap { display:flex; align-items:center; height:38px; border:1.5px solid #dde8e1; border-radius:9px; overflow:hidden; background:#fff; transition:border-color .12s,box-shadow .12s; }
         .av-adelanto-wrap:focus-within { border-color:#334139; box-shadow:0 0 0 3px rgba(51,65,57,.08); }
         .av-adelanto-wrap.flash { animation:av-flash .7s ease; }
         .av-adelanto-prefix { padding:0 10px; font-size:14px; font-weight:600; color:#9ca3af; border-right:1px solid #eee; background:#f9fafb; height:100%; display:flex; align-items:center; flex-shrink:0; }
-        .av-adelanto-inp { flex:1; border:none; outline:none; font-size:15px; font-weight:600; color:#1e2320; padding:0 12px; text-align:right; font-family:'Inter',sans-serif; background:transparent; }
+        .av-adelanto-inp { flex:1; border:none; outline:none; font-size:14px; font-weight:600; color:#1e2320; padding:0 12px; text-align:right; font-family:'Inter',sans-serif; background:transparent; }
         .av-saldo-pill { display:flex; justify-content:space-between; align-items:center; padding:5px 10px; border-radius:7px; font-size:11px; margin-top:6px; }
         .av-saldo-pill.pending { background:#fffbf0; border:1px solid #fde68a; color:#92400E; }
         .av-saldo-pill.paid    { background:#f0fdf4; border:1px solid #bbf7d0; color:#065F46; }
@@ -868,50 +883,81 @@ const AgregarVenta = ({
         .av-btn-confirm { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; background:linear-gradient(135deg,#2d3d32,#1e2320); color:#4ADE80; border:none; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; transition:all .13s; font-family:'Inter',sans-serif; box-shadow:0 2px 8px rgba(30,35,32,.2); letter-spacing:-.01em; }
         .av-btn-confirm:hover:not(:disabled) { background:linear-gradient(135deg,#334139,#282A28); box-shadow:0 4px 14px rgba(30,35,32,.3); }
         .av-btn-confirm:disabled { opacity:.4; cursor:not-allowed; }
-        .av-kbd-hint { text-align:center; margin:2px 0 0; font-size:10px; color:#9ca3af; }
+        .av-kbd-hint { text-align:center; margin:6px 0 0; font-size:10px; color:#9ca3af; }
         .av-kbd { padding:1px 4px; background:#f3f4f6; border:1px solid #e5e7eb; border-radius:3px; font-family:'DM Mono',monospace; font-size:9px; font-weight:600; color:#6b7280; }
 
-        /* ── Responsive ── */
+        /* ── Desktop ancho ── */
         @media(max-width:1400px){
           .av-layout { grid-template-columns:1fr clamp(250px,26vw,310px); }
         }
-        /* Compact sidebar for short laptop screens (≤800px height) */
-        @media(max-height:800px){
+
+        /* ── Laptop pantalla corta (≤800px alto, solo desktop) ── */
+        @media(max-height:800px) and (min-width:768px){
           .av-header { height:44px; }
-          .av-main { padding:8px clamp(12px,2.5vw,24px); gap:7px; }
-          .av-layout { gap:10px; }
-          .av-card-hd { padding:5px 12px; }
-          .av-card-bd { padding:8px 12px !important; }
-          .av-sidebar { gap:6px; }
-          .av-col { gap:7px; }
-          .av-totales { padding:8px 10px; gap:4px; }
-          .av-total-main-val { font-size:17px; }
-          .av-metodo-btn { padding:6px 4px; font-size:10px; gap:3px; }
-          .av-adelanto-wrap { height:34px; }
+          .av-main { padding:6px clamp(12px,2.5vw,20px); gap:6px; }
+          .av-sec { padding:9px 12px; }
+          .av-cta { padding:8px 12px 10px; }
+          .av-totales { padding:7px 10px; gap:3px; }
+          .av-total-main-val { font-size:16px; }
+          .av-metodo-btn { padding:6px; font-size:11px; }
+          .av-adelanto-wrap { height:32px; }
           .av-adelanto-inp { font-size:13px; }
           .av-btn-confirm { padding:9px; font-size:12px; }
           .av-kbd-hint { display:none; }
-          textarea.av-inp { height:34px !important; }
+          .av-notes { height:30px !important; }
+          .av-inp { height:30px; }
         }
-        @media(max-width:820px){
-          .av-layout { display:flex; flex-direction:column; grid-template-columns:none; gap:8px; }
-          .av-col { flex:1; overflow-y:auto; }
-          .av-sidebar { flex-shrink:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; overflow-y:visible; }
-          .av-card-bd { padding:10px 12px; }
-          .av-card-hd { padding:8px 12px; }
-        }
-        @media(max-width:640px){
-          .av-sidebar { grid-template-columns:1fr; }
+
+        /* ── Mobile / Tablet (≤767px): scroll libre, todo apilado ── */
+        @media(max-width:767px){
+          /* La raíz pasa a ser scrollable */
+          .av-root { height:auto; min-height:100dvh; overflow-y:auto; overflow-x:hidden; }
+          .av-main { flex:none; overflow:visible; padding:10px 12px 24px; gap:10px; }
+          .av-layout { display:flex; flex-direction:column; overflow:visible; gap:10px; }
+          .av-col { overflow:visible; gap:10px; }
+          .av-sidebar { overflow:visible; }
+
+          /* El panel: columna simple, sin overflow hidden */
+          .av-panel { overflow:visible; display:flex; flex-direction:column; border-radius:12px; }
+          .av-divider { display:block; }
+
+          /* El carrito: altura máxima para no ocupar toda la pantalla */
+          .av-card-carrito { flex:none; }
+          .av-carrito-body { max-height:240px; overflow-y:auto; }
+
+          /* Inputs touch-friendly */
+          .av-inp { height:42px; font-size:14px; }
+          .av-notes { height:48px !important; padding:8px 10px; }
+          .av-cli-select { height:42px; }
+          .av-search-row { height:44px; }
+          .av-search-inp { font-size:14px; }
+          .av-adelanto-wrap { height:44px; }
+          .av-adelanto-inp { font-size:15px; }
+          .av-metodo-btn { padding:12px 8px; font-size:13px; gap:8px; }
+          .av-step-btn { width:30px; height:32px; }
+          .av-step-val { height:32px; width:40px; font-size:13px; }
+          .av-inp-cell { height:32px; }
+          .av-btn-confirm { padding:15px; font-size:14px; border-radius:10px; }
+          .av-btn-save { padding:8px 14px; }
+
+          /* Ocultar elementos no esenciales */
+          .av-search-hint { display:none; }
+          .av-kbd-hint { display:none; }
           .av-btn-ghost { display:none; }
-          /* tabla mobile: Producto + Cantidad + Acciones */
+          .av-header-eyebrow { display:none; }
+
+          /* Tabla simplificada: solo Producto, Cantidad y Eliminar */
           .av-table th:nth-child(2),.av-table td:nth-child(2) { display:none; }
           .av-table th:nth-child(3),.av-table td:nth-child(3) { display:none; }
           .av-table th:nth-child(5),.av-table td:nth-child(5) { display:none; }
           .av-table th:nth-child(6),.av-table td:nth-child(6) { display:none; }
-          .av-table th, .av-table td { padding:6px 8px; }
-          .av-carrito-body { overflow-x:hidden; }
           .av-table { table-layout:fixed; width:100%; }
-          .av-td-producto { padding-left:10px !important; }
+          .av-table th, .av-table td { padding:8px 8px; }
+          .av-td-producto { width:60%; padding-left:10px !important; }
+
+          /* Sec padding más amplio para touch */
+          .av-sec { padding:14px 14px; }
+          .av-cta { padding:12px 14px 16px; }
         }
       `}</style>
     </div>

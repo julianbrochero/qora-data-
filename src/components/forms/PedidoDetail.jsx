@@ -137,7 +137,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
 
     /* ─── render ─────────────────────────────────────────────── */
     return (
-        <div className="pd-root" style={{ width: '100%', maxWidth: 480, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+        <div className="pd-root" style={{ width: '100%', maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
             <style>{`
                 .pd-root * { scrollbar-width: none; -ms-overflow-style: none; }
                 .pd-root *::-webkit-scrollbar { display: none; width: 0; height: 0; }
@@ -242,54 +242,60 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                 </div>
             </div>
 
-            {/* ══ PRODUCTOS ══ */}
-            <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 10, overflow: 'hidden', marginBottom: 6 }}>
+            {/* ══ GRID PRINCIPAL: izquierda = productos, derecha = cobros+notas+estado ══ */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 6, alignItems: 'start' }}>
+
+              {/* ─ Columna izquierda: Productos ─ */}
+              <div style={{ background: SYS.surface, border: `1px solid ${SYS.border}`, borderRadius: 10, overflow: 'hidden' }}>
                 <div style={{ padding: '8px 12px 6px', borderBottom: `1px solid ${SYS.border}`, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Package size={11} color={SYS.accent} />
                     <span style={{ fontSize: 10, fontWeight: 700, color: SYS.ct1, textTransform: 'uppercase', letterSpacing: '.06em' }}>
                         Productos ({items.length})
                     </span>
                 </div>
-                <div style={{ maxHeight: 'min(12vh, 85px)', overflowY: 'auto' }}>
+                <div style={{ maxHeight: '45vh', overflowY: 'auto' }}>
                     {items.length > 0 ? items.map((item, i) => {
                         const costoItem = parseFloat(item.costo) || 0
                         const ganItem = costoItem > 0 ? (parseFloat(item.ganancia) || 0) : null
                         return (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', borderBottom: i < items.length - 1 ? `1px solid ${SYS.border}` : 'none' }}>
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', borderBottom: i < items.length - 1 ? `1px solid ${SYS.border}` : 'none' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 24, height: 24, borderRadius: 6, background: SYS.accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                    <Package size={10} color={SYS.accent} />
+                                <div style={{ width: 28, height: 28, borderRadius: 7, background: SYS.accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Package size={12} color={SYS.accent} />
                                 </div>
                                 <div>
-                                    <p style={{ fontSize: 11, fontWeight: 700, color: SYS.ct1, margin: 0 }}>{item.producto || item.nombre || 'Producto'}</p>
-                                    <p style={{ fontSize: 9, color: SYS.ct3, margin: 0 }}>${fMonto(item.precio)} &times; {item.cantidad}</p>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: SYS.ct1, margin: 0 }}>{item.producto || item.nombre || 'Producto'}</p>
+                                    <p style={{ fontSize: 10, color: SYS.ct3, margin: 0 }}>${fMonto(item.precio)} &times; {item.cantidad}</p>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                                <span style={{ fontSize: 11, fontWeight: 800, color: SYS.ct1, letterSpacing: '-.01em' }}>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: SYS.ct1, letterSpacing: '-.01em' }}>
                                     ${fMonto((item.precio || 0) * (item.cantidad || 1))}
                                 </span>
                                 {ganItem !== null && (
-                                    <span style={{ fontSize: 9, fontWeight: 700, color: ganItem >= 0 ? '#059669' : '#dc2626' }}>
+                                    <span style={{ fontSize: 10, fontWeight: 700, color: ganItem >= 0 ? '#059669' : '#dc2626' }}>
                                         {ganItem >= 0 ? '+' : ''}${fMonto(ganItem)} gan.
                                     </span>
                                 )}
                             </div>
                         </div>
                     )}) : (
-                        <div style={{ padding: '12px 0', textAlign: 'center' }}>
-                            <p style={{ fontSize: 10, color: SYS.ct3, margin: 0 }}>No hay productos registrados</p>
+                        <div style={{ padding: '16px 0', textAlign: 'center' }}>
+                            <p style={{ fontSize: 11, color: SYS.ct3, margin: 0 }}>No hay productos registrados</p>
                         </div>
                     )}
                 </div>
-            </div>
+              </div>
+
+              {/* ─ Columna derecha: Cobros + Notas + Estado ─ */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
 
             {/* ══ GANANCIA (privada) ══ */}
             {hayGanancia && (
                 <div style={{
                     background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
                     border: '1px solid #86efac',
-                    borderRadius: 10, padding: '6px 12px', marginBottom: 6,
+                    borderRadius: 10, padding: '6px 12px',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -315,7 +321,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             <div style={{
                 borderRadius: 10, border: `2px solid ${estaPagadoCompleto ? '#bbf7d0' : 'rgba(51,65,57,.2)'}`,
                 background: estaPagadoCompleto ? '#f0fdf4' : SYS.surface,
-                padding: '8px 12px', marginBottom: 6,
+                padding: '8px 12px',
             }}>
                 {/* título */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
@@ -422,7 +428,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             </div>
 
             {/* ══ NOTAS ══ */}
-            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '6px 10px', marginBottom: 6 }}>
+            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '6px 10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
                     <Edit2 size={10} color="#92400e" />
                     <span style={{ fontSize: 9, fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '.07em' }}>Notas</span>
@@ -438,7 +444,7 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
             </div>
 
             {/* ══ ESTADO OPERATIVO ══ */}
-            <div style={{ marginBottom: 6 }}>
+            <div>
                 <p style={{ fontSize: 8, fontWeight: 800, color: SYS.ct3, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 6 }}>
                     Estado Operativo
                 </p>
@@ -464,6 +470,9 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                     })}
                 </div>
             </div>
+
+              </div>{/* fin columna derecha */}
+            </div>{/* fin grid principal */}
 
             {/* ══ FOOTER ══ */}
             <button onClick={closeModal} disabled={cargando}
