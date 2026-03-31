@@ -134,6 +134,10 @@ const SistemaFacturacion = () => {
     guardarPresupuesto,
     eliminarPresupuesto,
     actualizarEstadoPresupuesto,
+    categorias,
+    agregarCategoria,
+    renombrarCategoria,
+    eliminarCategoria,
   } = useFacturacion();
 
   // ✅ FUNCIÓN CORREGIDA: openModal
@@ -345,6 +349,10 @@ const SistemaFacturacion = () => {
           eliminarProducto={eliminarProducto}
           editarProducto={editarProducto}
           recargarProductos={recargarTodosLosDatos}
+          categoriasDb={categorias}
+          agregarCategoria={agregarCategoria}
+          renombrarCategoria={renombrarCategoria}
+          eliminarCategoria={eliminarCategoria}
         />
       ),
       caja: (
@@ -474,6 +482,7 @@ const SistemaFacturacion = () => {
           facturas: facturas,   // ✅ AÑADIDO PARA PedidoDetail
           proveedores: filtrarProveedores,
           pedidos: filtrarPedidos,
+          categoriasDb: categorias,
           tipoOperacion,
           setTipoOperacion,
           selectedItem: modalData // Para pasar datos específicos

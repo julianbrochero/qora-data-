@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import {
   Plus, Search, Edit, Trash2, Tag, Package, X, ChevronLeft, ChevronRight,
-  AlertTriangle, CheckCircle, BarChart2, Archive, Download, Upload
-  , Menu
+  AlertTriangle, CheckCircle, BarChart2, Archive, Download, Upload,
+  Menu, CheckSquare
 } from "lucide-react"
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../lib/AuthContext'
@@ -37,7 +37,7 @@ const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4,
 /* ══════════════════════════════════════════════
    MODAL CATEGORÍAS
 ══════════════════════════════════════════════ */
-const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onEliminar, onNuevoProductoConCategoria }) => {
+const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onEliminar, onNuevoProductoConCategoria, onAgregarCategoria }) => {
   const [editNombre, setEditNombre] = useState('')
   const [editId, setEditId] = useState(null)
   const [filtro, setFiltro] = useState('')
@@ -58,122 +58,130 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(3px)' }}>
-      <div style={{ background: '#fff', width: '90%', maxWidth: 440, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,.12)', overflow: 'hidden', fontFamily: "'Inter', sans-serif", maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(3px)', padding: '12px' }}>
+      <div style={{ background: '#fff', width: '100%', maxWidth: 480, borderRadius: 16, boxShadow: '0 10px 40px rgba(0,0,0,.15)', overflow: 'hidden', fontFamily: "'Inter', sans-serif", maxHeight: 'calc(100vh - 24px)', display: 'flex', flexDirection: 'column' }}>
         {/* header */}
-        <div style={{ background: '#282A28', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.06em' }}>Inventario</p>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-.02em' }}>Gestionar Categorías</h3>
+        <div style={{ background: '#282A28', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(74,222,128,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Tag size={16} style={{ color: '#4ADE80' }} />
+            </div>
+            <div>
+              <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', letterSpacing: '.06em', margin: 0 }}>Inventario</p>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '-.02em', margin: 0 }}>Gestionar Categorías</h3>
+            </div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,.08)', border: 'none', borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,.6)' }}>
-            <X size={14} />
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,.08)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,.6)', flexShrink: 0 }}>
+            <X size={15} />
           </button>
         </div>
 
-        <div style={{ padding: 20, overflowY: 'auto', flex: 1 }}>
+        <div style={{ padding: '16px', overflowY: 'auto', flex: 1 }}>
 
           {/* ── Agregar nueva categoría ── */}
-          <div style={{ marginBottom: 18, padding: '14px 16px', borderRadius: 12, background: 'rgba(51,65,57,.05)', border: '1px solid rgba(51,65,57,.18)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: accent, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ marginBottom: 14, padding: '14px', borderRadius: 12, background: 'rgba(51,65,57,.05)', border: '1px solid rgba(51,65,57,.18)' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: accent, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 10px' }}>
               <Plus size={12} strokeWidth={2.5} /> Nueva categoría
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ position: 'relative', flex: 1 }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                 <Tag size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
                 <input
                   value={nuevaCat}
                   onChange={e => setNuevaCat(e.target.value)}
-                  onKeyDown={e => {
+                  onKeyDown={async e => {
                     if (e.key === 'Enter' && nuevaCat.trim()) {
-                      crearProductoConCategoria(nuevaCat.trim())
+                      const catName = nuevaCat.trim()
+                      if (onAgregarCategoria) await onAgregarCategoria(catName)
                       setNuevaCat('')
                     }
                   }}
                   placeholder="Ej: Electrónica, Ropa, Bebidas..."
-                  style={{ ...inputStyle, paddingLeft: 28, height: 34, fontSize: 12 }}
+                  style={{ ...inputStyle, paddingLeft: 28, height: 36, fontSize: 13 }}
                   onFocus={e => e.target.style.borderColor = accent}
                   onBlur={e => e.target.style.borderColor = border}
                 />
               </div>
               <button
-                onClick={() => { if (nuevaCat.trim()) { crearProductoConCategoria(nuevaCat.trim()); setNuevaCat('') } }}
+                onClick={async () => {
+                  if (nuevaCat.trim()) {
+                    const catName = nuevaCat.trim()
+                    if (onAgregarCategoria) await onAgregarCategoria(catName)
+                    setNuevaCat('')
+                  }
+                }}
                 disabled={!nuevaCat.trim()}
-                style={{ padding: '0 14px', height: 34, borderRadius: 8, fontSize: 12, fontWeight: 700, background: nuevaCat.trim() ? accent : 'rgba(0,0,0,.04)', color: nuevaCat.trim() ? '#fff' : ct3, border: 'none', cursor: nuevaCat.trim() ? 'pointer' : 'default', transition: 'all .15s', whiteSpace: 'nowrap' }}>
+                style={{ padding: '0 16px', height: 36, borderRadius: 8, fontSize: 13, fontWeight: 700, background: nuevaCat.trim() ? accent : 'rgba(0,0,0,.04)', color: nuevaCat.trim() ? '#fff' : ct3, border: 'none', cursor: nuevaCat.trim() ? 'pointer' : 'default', transition: 'all .15s', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 + Agregar
               </button>
             </div>
-            <p style={{ fontSize: 10, color: ct3, marginTop: 8 }}>
-              Se abrirá el formulario de nuevo producto con esta categoría prellenada.
-            </p>
           </div>
 
-          {/* buscador */}
-          <div style={{ position: 'relative', marginBottom: 10 }}>
-            <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-            <input style={{ ...inputStyle, paddingLeft: 30, height: 30 }} value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar categorías..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
+          {/* buscador + contador */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+              <input style={{ ...inputStyle, paddingLeft: 30, height: 32 }} value={filtro} onChange={e => setFiltro(e.target.value)} placeholder="Buscar categorías..." onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border} />
+            </div>
+            <span style={{ fontSize: 11, color: ct3, whiteSpace: 'nowrap', flexShrink: 0 }}>{filtradas.length} {filtradas.length === 1 ? 'categoría' : 'categorías'}</span>
           </div>
 
           {/* lista */}
-          <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filtradas.length > 0 ? filtradas.map(cat => (
-              <div key={cat.nombre} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 8, border: `1px solid ${border}`, marginBottom: 6, background: '#fff' }}>
+              <div key={cat.nombre} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 10, border: `1px solid ${border}`, background: '#fff', gap: 8 }}>
                 {editId === cat.nombre ? (
-                  <div style={{ display: 'flex', gap: 6, flex: 1, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 6, flex: 1, alignItems: 'center', minWidth: 0 }}>
                     <input
                       value={editNombre}
                       onChange={e => setEditNombre(e.target.value)}
-                      style={{ ...inputStyle, height: 28, flex: 1 }}
+                      style={{ ...inputStyle, height: 30, flex: 1, minWidth: 0 }}
                       onFocus={e => e.target.style.borderColor = accent}
                       onBlur={e => e.target.style.borderColor = border}
                       onKeyDown={e => { if (e.key === 'Enter' && editNombre.trim()) { onRenombrar(cat.nombre, editNombre.trim()); cancelar() } if (e.key === 'Escape') cancelar() }}
                       autoFocus
                     />
                     <button onClick={() => { if (editNombre.trim()) { onRenombrar(cat.nombre, editNombre.trim()); cancelar() } }}
-                      style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: accent, color: '#fff', border: 'none', cursor: 'pointer' }}>OK</button>
+                      style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: accent, color: '#fff', border: 'none', cursor: 'pointer', flexShrink: 0 }}>OK</button>
                     <button onClick={cancelar}
-                      style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: surface, color: ct2, border: `1px solid ${border}`, cursor: 'pointer' }}>Cancelar</button>
+                      style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: surface, color: ct2, border: `1px solid ${border}`, cursor: 'pointer', flexShrink: 0 }}>✕</button>
                   </div>
                 ) : (
                   <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Tag size={12} style={{ color: accent }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Tag size={13} style={{ color: accent }} />
                       </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: ct1 }}>{cat.nombre}</div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: ct1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat.nombre}</div>
                         <div style={{ fontSize: 10, color: ct3 }}>{cat.cantidad} producto{cat.cantidad !== 1 ? 's' : ''}</div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-                      {/* nuevo producto en esta categoría */}
-                      <button onClick={() => crearProductoConCategoria(cat.nombre)} title="Nuevo producto en esta categoría"
-                        style={{ height: 26, padding: '0 8px', borderRadius: 6, background: '#4ADE80', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: '#282A28' }}>
-                        <Plus size={10} strokeWidth={2.5} /> Producto
-                      </button>
-                      <button onClick={() => iniciarEdicion(cat)} title="Renombrar" style={{ width: 26, height: 26, borderRadius: 6, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
-                        <Edit size={11} />
+                    <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexShrink: 0 }}>
+                      <button onClick={() => iniciarEdicion(cat)} title="Renombrar" style={{ width: 28, height: 28, borderRadius: 7, background: surface, border: `1px solid ${border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ct2 }}>
+                        <Edit size={12} />
                       </button>
                       <button
                         onClick={() => { if (cat.cantidad > 0) { alert('No se puede eliminar una categoría con productos. Primero reasignálos.'); return } onEliminar(cat.nombre) }}
                         title={cat.cantidad > 0 ? 'Tiene productos asignados' : 'Eliminar'}
-                        style={{ width: 26, height: 26, borderRadius: 6, background: cat.cantidad > 0 ? 'transparent' : surface, border: `1px solid ${cat.cantidad > 0 ? 'transparent' : border}`, cursor: cat.cantidad > 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', opacity: cat.cantidad > 0 ? 0.3 : 1 }}>
-                        <Trash2 size={11} />
+                        style={{ width: 28, height: 28, borderRadius: 7, background: cat.cantidad > 0 ? 'transparent' : surface, border: `1px solid ${cat.cantidad > 0 ? 'transparent' : border}`, cursor: cat.cantidad > 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', opacity: cat.cantidad > 0 ? 0.3 : 1 }}>
+                        <Trash2 size={12} />
                       </button>
                     </div>
                   </>
                 )}
               </div>
             )) : (
-              <div style={{ textAlign: 'center', padding: '20px 0', color: ct3, fontSize: 12 }}>
-                {categorias.length === 0 ? 'Aún no hay categorías. Creá una arriba ↑' : 'Sin resultados.'}
+              <div style={{ textAlign: 'center', padding: '28px 0', color: ct3, fontSize: 13 }}>
+                <Tag size={28} style={{ color: border, display: 'block', margin: '0 auto 10px' }} />
+                {categorias.length === 0 ? 'Aún no hay categorías. Creá una arriba ↑' : 'Sin resultados para la búsqueda.'}
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ padding: '12px 20px', borderTop: `1px solid ${border}`, display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
-          <button onClick={onClose} style={{ padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: surface, border: `1px solid ${border}`, cursor: 'pointer' }}>Cerrar</button>
+        <div style={{ padding: '12px 16px', borderTop: `1px solid ${border}`, display: 'flex', justifyContent: 'flex-end', flexShrink: 0, background: surface }}>
+          <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 600, color: ct2, background: '#fff', border: `1px solid ${border}`, cursor: 'pointer' }}>Cerrar</button>
         </div>
       </div>
     </div>
@@ -183,7 +191,7 @@ const ModalCategorias = ({ isOpen, onClose, categorias = [], onRenombrar, onElim
 /* ══════════════════════════════════════════════
    MÓDULO PRINCIPAL PRODUCTOS
 ══════════════════════════════════════════════ */
-const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, editarProducto, onOpenMobileSidebar, recargarProductos }) => {
+const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarProducto, editarProducto, onOpenMobileSidebar, recargarProductos, categoriasDb, agregarCategoria, renombrarCategoria, eliminarCategoria }) => {
   const { user } = useAuth()
   const [filtroStock, setFiltroStock] = useState("todos")
   const [filtroCategoria, setFiltroCategoria] = useState("todas")
@@ -198,7 +206,14 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const [csvResultado, setCsvResultado] = useState(null) // { tipo:'ok'|'error', msg }
   const csvInputRef = useRef(null)
   // selección múltiple
+  const [modoSeleccion, setModoSeleccion] = useState(false)
   const [seleccionados, setSeleccionados] = useState(new Set())
+  const [bulkCatOpen, setBulkCatOpen] = useState(false)
+  const [bulkCatPos, setBulkCatPos] = useState({ top: 0, left: 0 })
+  const bulkCatBtnRef = useRef(null)
+  const [selCatOpen, setSelCatOpen] = useState(false)
+  const [selCatPos, setSelCatPos] = useState({ top: 0, left: 0 })
+  const selCatBtnRef = useRef(null)
   const [orden, setOrden] = useState({ campo: null, dir: 'asc' })
 
   const startEdit = (prodId, field, currentVal) => setInlineEdit({ prodId, field, val: String(parseFloat(currentVal) || 0) })
@@ -215,7 +230,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
   const productosSeguros = Array.isArray(productos) ? productos : []
 
-  // Categorías derivadas dinámicamente de los productos reales
+  // Categorías desde DB combinadas con cantidades para la UI
   const categorias = (() => {
     const mapa = {}
     productosSeguros.forEach(p => {
@@ -224,21 +239,25 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
       if (!mapa[cat]) mapa[cat] = 0
       mapa[cat]++
     })
-    return Object.entries(mapa).map(([nombre, cantidad]) => ({ nombre, cantidad }))
+    return (categoriasDb || []).map(cat => ({
+      nombre: cat.nombre,
+      cantidad: mapa[cat.nombre] || 0
+    }))
   })()
 
-  // Renombrar categoría en todos los productos que la tienen
   const handleRenombrarCategoria = async (nombreViejo, nombreNuevo) => {
-    if (!editarProducto) return
-    const prods = productosSeguros.filter(p => p.categoria === nombreViejo)
-    await Promise.all(prods.map(p => editarProducto(p.id, { categoria: nombreNuevo })))
+    if (renombrarCategoria) await renombrarCategoria(nombreViejo, nombreNuevo)
   }
 
-  // "Eliminar" categoría = limpiar el campo categoria en todos los productos que la tengan
   const handleEliminarCategoria = async (nombreCat) => {
-    if (!editarProducto) return
-    const prods = productosSeguros.filter(p => p.categoria === nombreCat)
-    await Promise.all(prods.map(p => editarProducto(p.id, { categoria: '' })))
+    if (eliminarCategoria) {
+      const res = await eliminarCategoria(nombreCat)
+      if (!res.success) alert(res.mensaje || 'Error al eliminar la categoría')
+    }
+  }
+
+  const handleAgregarCategoria = async (nombreCat) => {
+    if (agregarCategoria) await agregarCategoria(nombreCat)
   }
 
   /* ── atajo de teclado (solo Ctrl) ── */
@@ -294,15 +313,21 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   useEffect(() => { setPaginaActual(1) }, [filtroStock, filtroCategoria, searchTerm, itemsPorPagina])
   useEffect(() => { setSeleccionados(new Set()) }, [filtroStock, filtroCategoria, searchTerm])
 
+  const toggleModoSeleccion = () => { setModoSeleccion(v => !v); setSeleccionados(new Set()); setBulkCatOpen(false); setSelCatOpen(false) }
   const toggleSeleccion = (id) => setSeleccionados(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s })
   const todosSeleccionados = filtrados.length > 0 && filtrados.every(p => seleccionados.has(p.id))
-  const algunoSeleccionado = filtrados.some(p => seleccionados.has(p.id))
+  const algunoSeleccionado = seleccionados.size > 0
   const toggleTodos = () => setSeleccionados(prev => {
     const s = new Set(prev)
     if (todosSeleccionados) filtrados.forEach(p => s.delete(p.id))
     else filtrados.forEach(p => s.add(p.id))
     return s
   })
+  const seleccionarPorCategoria = (nombreCat) => {
+    const ids = productosSeguros.filter(p => (p.categoria || '').trim() === nombreCat).map(p => p.id)
+    setSeleccionados(prev => { const s = new Set(prev); ids.forEach(id => s.add(id)); return s })
+    setSelCatOpen(false)
+  }
   const eliminarSeleccionados = () => {
     const ids = [...seleccionados]
     customConfirm(
@@ -314,6 +339,13 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
         cerrarDialogo()
       }
     )
+  }
+
+  const asignarCategoriaSeleccionados = async (nombreCat) => {
+    const ids = [...seleccionados]
+    await Promise.all(ids.map(id => editarProducto && editarProducto(id, { categoria: nombreCat })))
+    setBulkCatOpen(false)
+    setSeleccionados(new Set())
   }
 
   const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -627,6 +659,10 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <button onClick={toggleModoSeleccion} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: modoSeleccion ? '1px solid #4ADE80' : '1px solid rgba(255,255,255,.18)', background: modoSeleccion ? 'rgba(74,222,128,.12)' : 'transparent', color: modoSeleccion ? '#4ADE80' : 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}>
+            <CheckSquare size={12} strokeWidth={2} /> {modoSeleccion ? 'Cancelar' : 'Selección'}
+          </button>
+
           <button onClick={() => setModalCats(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: '1px solid rgba(255,255,255,.18)', background: 'transparent', color: 'rgba(255,255,255,.7)', cursor: 'pointer', transition: 'all .13s' }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.07)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <Tag size={12} strokeWidth={2} /> Categorías
@@ -656,15 +692,16 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
           { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: 'según mínimo por producto' },
           { label: 'Sin Control', val: resumen.sinControl, icon: Archive, clr: '#6B7280', sub: 'Stock ilimitado' },
         ].map((s, i) => (
-          <div key={i} style={{ ...cardStyle, background: '#E1E1E0', borderRadius: 12, height: 76, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
+          <div key={i} style={{ ...cardStyle, background: '#E1E1E0', borderRadius: 12, height: 90, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)' }}
             onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = cardStyle.boxShadow }}>
             <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${s.clr}15, transparent 70%)` }} />
             <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: s.clr, borderRadius: '0 2px 2px 0' }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>
                 <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{s.label}</span>
-                <span style={{ fontSize: 22, fontWeight: 600, color: ct1, letterSpacing: '-.04em', lineHeight: 1 }}>{s.val}</span>
+                <span style={{ fontSize: 22, fontWeight: 600, color: ct1, letterSpacing: '-.04em', lineHeight: 1, display: 'block', marginBottom: 6 }}>{s.val}</span>
+                <span style={{ fontSize: 10, fontWeight: 500, color: '#63655f', display: 'block' }}>{s.sub}</span>
               </div>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${s.clr}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <s.icon size={15} strokeWidth={2.5} style={{ color: s.clr }} />
@@ -734,16 +771,123 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
           )}
 
           {/* barra selección múltiple */}
-          {algunoSeleccionado && (
-            <div style={{ margin: '0 clamp(12px,3vw,24px)', marginTop: 8, padding: '8px 14px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, background: '#FFF7ED', border: '1px solid #FED7AA' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>{seleccionados.size} seleccionado{seleccionados.size !== 1 ? 's' : ''}</span>
-              <button onClick={toggleTodos} style={{ fontSize: 11, fontWeight: 600, color: '#92400E', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
-                {todosSeleccionados ? 'Deseleccionar todos' : `Seleccionar todos (${filtrados.length})`}
-              </button>
-              <button onClick={() => setSeleccionados(new Set())} style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginLeft: 2 }}>Cancelar</button>
-              <button onClick={eliminarSeleccionados} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', background: '#DC2626', border: 'none', cursor: 'pointer' }}>
-                <Trash2 size={12} /> Eliminar {seleccionados.size}
-              </button>
+          {modoSeleccion && (
+            <div style={{ margin: '0 clamp(12px,3vw,24px)', marginTop: 8, padding: '8px 14px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 10, background: algunoSeleccionado ? '#FFF7ED' : 'rgba(51,65,57,.06)', border: `1px solid ${algunoSeleccionado ? '#FED7AA' : 'rgba(51,65,57,.18)'}`, flexWrap: 'wrap', transition: 'all .15s' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: algunoSeleccionado ? '#92400E' : ct2 }}>
+                {algunoSeleccionado ? `${seleccionados.size} seleccionado${seleccionados.size !== 1 ? 's' : ''}` : 'Modo selección activo'}
+              </span>
+              {algunoSeleccionado && (
+                <button onClick={toggleTodos} style={{ fontSize: 11, fontWeight: 600, color: '#92400E', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+                  {todosSeleccionados ? 'Deseleccionar todos' : `Seleccionar todos (${filtrados.length})`}
+                </button>
+              )}
+              {/* Seleccionar por categoría */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  ref={selCatBtnRef}
+                  onClick={() => {
+                    if (!selCatOpen && selCatBtnRef.current) {
+                      const r = selCatBtnRef.current.getBoundingClientRect()
+                      setSelCatPos({ top: r.bottom + 6, left: Math.min(r.left, window.innerWidth - 244) })
+                    }
+                    setSelCatOpen(v => !v)
+                  }}
+                  style={{ fontSize: 11, fontWeight: 600, color: accent, background: 'none', border: `1px solid rgba(51,65,57,.25)`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Tag size={11} /> Por categoría
+                </button>
+                {selCatOpen && (
+                  <>
+                    <div onClick={() => setSelCatOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
+                    <div style={{ position: 'fixed', top: selCatPos.top, left: selCatPos.left, zIndex: 9999, background: '#fff', borderRadius: 12, border: `1px solid ${border}`, boxShadow: '0 8px 32px rgba(0,0,0,.18)', width: 236, overflow: 'hidden' }}>
+                      <div style={{ padding: '10px 14px', borderBottom: `1px solid ${border}`, background: 'rgba(51,65,57,.04)' }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em', margin: 0 }}>Seleccionar todos de categoría</p>
+                      </div>
+                      <div style={{ maxHeight: 220, overflowY: 'auto', padding: '6px' }}>
+                        {categorias.length > 0 ? categorias.map(cat => {
+                          const cnt = productosSeguros.filter(p => (p.categoria || '').trim() === cat.nombre).length
+                          return (
+                            <button key={cat.nombre} onClick={() => seleccionarPorCategoria(cat.nombre)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: ct1, textAlign: 'left', fontFamily: "'Inter', sans-serif", justifyContent: 'space-between' }}
+                              onMouseEnter={e => e.currentTarget.style.background = accentL}
+                              onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ width: 26, height: 26, borderRadius: 7, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <Tag size={12} style={{ color: accent }} />
+                                </div>
+                                {cat.nombre}
+                              </div>
+                              <span style={{ fontSize: 10, fontWeight: 600, color: ct3, background: 'rgba(0,0,0,.05)', borderRadius: 10, padding: '2px 7px' }}>{cnt}</span>
+                            </button>
+                          )
+                        }) : (
+                          <div style={{ padding: '14px 12px', fontSize: 12, color: ct3, textAlign: 'center' }}>No hay categorías creadas aún</div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              {algunoSeleccionado && (
+                <button onClick={() => setSeleccionados(new Set())} style={{ fontSize: 11, fontWeight: 600, color: ct3, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Limpiar</button>
+              )}
+              {algunoSeleccionado && <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Asignar categoría */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    ref={bulkCatBtnRef}
+                    onClick={() => {
+                      if (!bulkCatOpen && bulkCatBtnRef.current) {
+                        const r = bulkCatBtnRef.current.getBoundingClientRect()
+                        setBulkCatPos({ top: r.bottom + 6, left: Math.min(r.left, window.innerWidth - 244) })
+                      }
+                      setBulkCatOpen(v => !v)
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: accent, background: 'rgba(51,65,57,.1)', border: `1px solid rgba(51,65,57,.2)`, cursor: 'pointer' }}>
+                    <Tag size={12} /> Asignar categoría
+                  </button>
+                  {bulkCatOpen && (
+                    <>
+                      {/* backdrop para cerrar al hacer click afuera */}
+                      <div onClick={() => setBulkCatOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
+                      <div style={{ position: 'fixed', top: bulkCatPos.top, left: bulkCatPos.left, zIndex: 9999, background: '#fff', borderRadius: 12, border: `1px solid ${border}`, boxShadow: '0 8px 32px rgba(0,0,0,.18)', width: 236, overflow: 'hidden' }}>
+                        <div style={{ padding: '10px 14px', borderBottom: `1px solid ${border}`, background: 'rgba(51,65,57,.04)' }}>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.06em', margin: 0 }}>
+                            Asignar categoría · {seleccionados.size} producto{seleccionados.size !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                        <div style={{ maxHeight: 220, overflowY: 'auto', padding: '6px' }}>
+                          {categorias.length > 0 ? categorias.map(cat => (
+                            <button key={cat.nombre} onClick={() => asignarCategoriaSeleccionados(cat.nombre)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: ct1, textAlign: 'left', fontFamily: "'Inter', sans-serif" }}
+                              onMouseEnter={e => e.currentTarget.style.background = accentL}
+                              onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                              <div style={{ width: 26, height: 26, borderRadius: 7, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <Tag size={12} style={{ color: accent }} />
+                              </div>
+                              {cat.nombre}
+                            </button>
+                          )) : (
+                            <div style={{ padding: '14px 12px', fontSize: 12, color: ct3, textAlign: 'center' }}>
+                              No hay categorías creadas aún
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ padding: '6px', borderTop: `1px solid ${border}`, background: 'rgba(0,0,0,.02)' }}>
+                          <button onClick={() => asignarCategoriaSeleccionados('')}
+                            style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 12px', borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#DC2626', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#FEE2E2'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                            <X size={12} style={{ flexShrink: 0 }} /> Quitar categoría
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <button onClick={eliminarSeleccionados} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', background: '#DC2626', border: 'none', cursor: 'pointer' }}>
+                  <Trash2 size={12} /> Eliminar {seleccionados.size}
+                </button>
+              </div>}
             </div>
           )}
 
@@ -752,11 +896,13 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
                 <tr>
-                  <th style={{ padding: '10px 0 10px 16px', width: 36 }}>
-                    <input type="checkbox" checked={todosSeleccionados} onChange={toggleTodos}
-                      title={todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
-                      style={{ width: 15, height: 15, cursor: 'pointer', accentColor: accent }} />
-                  </th>
+                  {modoSeleccion && (
+                    <th style={{ padding: '10px 0 10px 16px', width: 36 }}>
+                      <input type="checkbox" checked={todosSeleccionados} onChange={toggleTodos}
+                        title={todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: accent }} />
+                    </th>
+                  )}
                   {[
                     { label: 'CÓDIGO', campo: 'codigo' },
                     { label: 'NOMBRE Y CATEGORÍA', campo: 'nombre' },
@@ -794,15 +940,18 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
                   const estaSeleccionado = seleccionados.has(prod.id)
                   return (
-                    <tr key={prod.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: 'default', background: estaSeleccionado ? 'rgba(220,38,38,.04)' : 'transparent' }}
-                      onMouseEnter={e => { if (!estaSeleccionado) e.currentTarget.style.background = 'rgba(51,65,57,.02)' }}
-                      onMouseLeave={e => { if (!estaSeleccionado) e.currentTarget.style.background = 'transparent' }}>
+                    <tr key={prod.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .13s', cursor: modoSeleccion ? 'pointer' : 'default', background: modoSeleccion && estaSeleccionado ? 'rgba(51,65,57,.06)' : 'transparent' }}
+                      onClick={modoSeleccion ? () => toggleSeleccion(prod.id) : undefined}
+                      onMouseEnter={e => { if (!(modoSeleccion && estaSeleccionado)) e.currentTarget.style.background = 'rgba(51,65,57,.02)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = modoSeleccion && estaSeleccionado ? 'rgba(51,65,57,.06)' : 'transparent' }}>
 
                       {/* checkbox */}
-                      <td style={{ padding: '12px 0 12px 16px', verticalAlign: 'middle', width: 36 }}>
-                        <input type="checkbox" checked={estaSeleccionado} onChange={() => toggleSeleccion(prod.id)}
-                          style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#DC2626' }} />
-                      </td>
+                      {modoSeleccion && (
+                        <td style={{ padding: '12px 0 12px 16px', verticalAlign: 'middle', width: 36 }} onClick={e => { e.stopPropagation(); toggleSeleccion(prod.id) }}>
+                          <input type="checkbox" checked={estaSeleccionado} onChange={() => toggleSeleccion(prod.id)}
+                            style={{ width: 15, height: 15, cursor: 'pointer', accentColor: accent }} />
+                        </td>
+                      )}
 
                       {/* código */}
                       <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
@@ -962,6 +1111,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
         categorias={categorias}
         onRenombrar={handleRenombrarCategoria}
         onEliminar={handleEliminarCategoria}
+        onAgregarCategoria={handleAgregarCategoria}
         onNuevoProductoConCategoria={handleNuevoProductoConCategoria}
       />
 

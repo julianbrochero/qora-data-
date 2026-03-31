@@ -34,12 +34,14 @@ const Modal = ({
   if (!isOpen) return null;
 
   const renderModalContent = () => {
-    // Derivar categorías únicas de los productos existentes
+    // Combinar categorías de la tabla independiente + las que ya usan productos
     const categoriasExistentes = (() => {
       try {
+        const dbCats = (formData.categoriasDb || []).map(c => c.nombre || c).filter(Boolean)
         const prods = formData.productos || []
-        const cats = [...new Set(prods.map(p => p.categoria).filter(Boolean))]
-        return cats.map(nombre => ({ nombre }))
+        const prodCats = prods.map(p => p.categoria).filter(Boolean)
+        const merged = [...new Set([...dbCats, ...prodCats])]
+        return merged.map(nombre => ({ nombre }))
       } catch { return [] }
     })()
 

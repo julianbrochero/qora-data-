@@ -27,6 +27,7 @@ export const useFacturacion = () => {
   const [pedidos, setPedidos] = useState([])
   const [abonos, setAbonos] = useState([])
   const [presupuestos, setPresupuestos] = useState([])
+  const [categorias, setCategorias] = useState([])
 
   // Estados para modales
   const [nuevoCliente, setNuevoCliente] = useState({ nombre: '', telefono: '', cuit: '' })
@@ -224,6 +225,14 @@ export const useFacturacion = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       if (presupuestosData) setPresupuestos(presupuestosData)
+
+      // Cargar categorias
+      const { data: categoriasData } = await supabase
+        .from('categorias')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('nombre', { ascending: true })
+      if (categoriasData) setCategorias(categoriasData)
 
     } catch (error) {
       console.error('Error general cargando datos:', error)
@@ -626,6 +635,57 @@ export const useFacturacion = () => {
     } catch (error) {
       console.error('Error saldando pedido:', error)
       return { success: false, mensaje: error.message }
+    }
+  }
+
+  // ========== FUNCIONES CATEGORIAS ==========
+  const agregarCategoria = async (nombre) => {
+    try {
+      if (!nombre.trim()) return { success: false }
+      const nueva = { nombre: nombre.trim(), user_id: user.id }
+      const { data, error } = await supabase.from('categorias').insert([nueva]).select().single()
+      if (error) throw error
+      setCategorias(prev => [...prev, data])
+      return { success: true, data }
+    } catch (e) {
+      console.error('Error agregarCategoria', e)
+      return { success: false, mensaje: e.message }
+    }
+  }
+
+  const renombrarCategoria = async (nombreViejo, nombreNuevo) => {
+    try {
+      const { error } = await supabase.from('categorias').update({ nombre: nombreNuevo }).eq('nombre', nombreViejo).eq('user_id', user.id)
+      if (error) throw error
+      setCategorias(prev => prev.map(c => c.nombre === nombreViejo ? { ...c, nombre: nombreNuevo } : c))
+
+      // Actualizar todos los productos con esta categoria
+      const prodAActualizar = productos.filter(p => p.categoria === nombreViejo)
+      if (prodAActualizar.length > 0) {
+        await supabase.from('productos').update({ categoria: nombreNuevo }).eq('categoria', nombreViejo).eq('user_id', user.id)
+        setProductos(prev => prev.map(p => p.categoria === nombreViejo ? { ...p, categoria: nombreNuevo } : p))
+      }
+
+      return { success: true }
+    } catch (e) {
+      console.error('Error renombrarCategoria', e)
+      return { success: false, mensaje: e.message }
+    }
+  }
+
+  const eliminarCategoria = async (nombreCat) => {
+    try {
+      const prodsEnUso = productos.filter(p => p.categoria === nombreCat)
+      if (prodsEnUso.length > 0) {
+        return { success: false, mensaje: 'No se puede eliminar porque hay productos usándola' }
+      }
+      const { error } = await supabase.from('categorias').delete().eq('nombre', nombreCat).eq('user_id', user.id)
+      if (error) throw error
+      setCategorias(prev => prev.filter(c => c.nombre !== nombreCat))
+      return { success: true }
+    } catch (e) {
+      console.error('Error eliminarCategoria', e)
+      return { success: false, mensaje: e.message }
     }
   }
 
@@ -1968,6 +2028,12 @@ export const useFacturacion = () => {
     eliminarPresupuesto,
     actualizarEstadoPresupuesto,
     presupuestos,
+
+    // Categorias
+    categorias,
+    agregarCategoria,
+    renombrarCategoria,
+    eliminarCategoria,
 
     // Funciones para caja
     agregarMovimientoCaja,

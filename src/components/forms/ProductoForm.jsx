@@ -74,6 +74,8 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
       const cb = formData.selectedItem?.onSuccess || formData.onSuccess
       if (cb) cb(result.producto || result.data || result)
       else closeModal()
+    } else {
+      alert(result?.mensaje || 'Error al guardar el producto. Revisá los datos e intentá de nuevo.')
     }
   }
 
