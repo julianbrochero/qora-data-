@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle } from 'lucide-react'
 
 /* ══════════════════════════════════════════════
    PALETA GESTIFY - consistente con Pedidos / Clientes
@@ -46,16 +46,20 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   const csActivo = !!(data.controlaStock || data.controlastock)
 
   const handleChange = (campo, valor) => {
-    if (isRapido) setProductoRapido({ ...productoRapido, [campo]: valor })
-    else setNuevoProducto({ ...nuevoProducto, [campo]: valor })
+    if (isRapido) setProductoRapido(prev => ({ ...prev, [campo]: valor }))
+    else setNuevoProducto(prev => ({ ...prev, [campo]: valor }))
   }
 
   const toggleControlaStock = () => {
     const nov = !csActivo
-    handleChange('controlaStock', nov)
-    // limpiar variante minúsculas para no tener duplicado
-    if (isRapido) setProductoRapido(prev => { const n = { ...prev, controlaStock: nov }; delete n.controlastock; return n })
-    else setNuevoProducto(prev => { const n = { ...prev, controlaStock: nov }; delete n.controlastock; return n })
+    // Actualizar unificadamente para evitar carreras entre estados
+    const update = (prev) => {
+      const n = { ...prev, controlaStock: nov }
+      delete n.controlastock
+      return n
+    }
+    if (isRapido) setProductoRapido(update)
+    else setNuevoProducto(update)
   }
 
   const handleSubmit = async (e) => {
@@ -80,8 +84,24 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   }
 
   const handleKeyDown = (e, nextRef) => {
-    if (e.key === 'Enter') { e.preventDefault(); nextRef?.current ? nextRef.current.focus() : handleSubmit() }
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      // En modo edición, permitimos guardar directamente desde campos clave para agilizar
+      const camposQueGuardan = ['nombre', 'precio', 'categoria', 'codigo']
+      const campoActual = Object.keys(refs).find(k => refs[k].current === e.target)
+      
+      if (isEdit && camposQueGuardan.includes(campoActual)) {
+        handleSubmit()
+      } else if (nextRef?.current) {
+        nextRef.current.focus()
+      } else {
+        handleSubmit()
+      }
+    }
   }
+
+  // Mapa de refs para identificar el campo actual en handleKeyDown
+  const refs = { nombre: nombreRef, precio: precioRef, costo: costoRef, stock: stockRef, codigo: codigoRef, categoria: categoriaRef }
 
   useEffect(() => {
     if (!isRapido && !csActivo) {
@@ -110,7 +130,6 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
         precio: selectedItem.precio ?? 0,
         costo: selectedItem.costo ?? '',
         stock: selectedItem.stock ?? 0,
-        stock_minimo: selectedItem.stock_minimo ?? null,
         categoria: selectedItem.categoria || '',
         descripcion: selectedItem.descripcion || '',
         controlaStock: cs,
@@ -199,7 +218,9 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
                       <button
                         key={i}
                         type="button"
-                        onMouseDown={e => { e.preventDefault(); handleChange('categoria', activo ? '' : nombre) }}
+                        tabIndex={-1}
+                        onClick={e => { e.preventDefault(); handleChange('categoria', nombre) }}
+                        onMouseDown={e => e.preventDefault()} // Evitar pérdida de foco
                         style={{
                           padding: '3px 9px', borderRadius: 16, fontSize: 10, fontWeight: 700,
                           border: activo ? 'none' : `1px solid ${border}`,
@@ -242,32 +263,14 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
         </div>
 
         {/* Stock */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            <label style={labelBase}>Stock mínimo {!csActivo && <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(activa inventario)</span>}</label>
-            <div style={{ position: 'relative' }}>
-              <AlertTriangle size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: csActivo ? '#D97706' : ct3 }} />
-              <input
-                type="number"
-                value={csActivo ? (data.stock_minimo ?? '') : ''}
-                onChange={e => handleChange('stock_minimo', e.target.value === '' ? null : parseInt(e.target.value) || 0)}
-                disabled={!csActivo}
-                onFocus={focusStyle} onBlur={blurStyle}
-                placeholder={csActivo ? 'Ej: 3' : '—'}
-                min="0"
-                style={{ ...inputBase, paddingLeft: 30, background: !csActivo ? 'rgba(0,0,0,.03)' : '#fff', color: !csActivo ? ct3 : ct1, cursor: !csActivo ? 'not-allowed' : 'text' }}
-              />
-            </div>
-          </div>
-          <div>
-            <label style={labelBase}>Stock inicial</label>
-            <div style={{ position: 'relative' }}>
-              <Box size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-              <input ref={stockRef} type="number" value={data.stock ?? 0} onChange={e => handleChange('stock', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
-                disabled={!isRapido && !csActivo}
-                onFocus={focusStyle} onBlur={blurStyle} placeholder="0" min="0"
-                style={{ ...inputBase, paddingLeft: 30, background: (!isRapido && !csActivo) ? 'rgba(0,0,0,.03)' : '#fff', color: (!isRapido && !csActivo) ? ct3 : ct1, cursor: (!isRapido && !csActivo) ? 'not-allowed' : 'text' }} />
-            </div>
+        <div>
+          <label style={labelBase}>Stock {isEdit ? 'actual' : 'inicial'}</label>
+          <div style={{ position: 'relative' }}>
+            <Box size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
+            <input ref={stockRef} type="number" value={data.stock ?? 0} onChange={e => handleChange('stock', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
+              disabled={!isRapido && !csActivo}
+              onFocus={focusStyle} onBlur={blurStyle} placeholder="0" min="0"
+              style={{ ...inputBase, paddingLeft: 30, background: (!isRapido && !csActivo) ? 'rgba(0,0,0,.03)' : '#fff', color: (!isRapido && !csActivo) ? ct3 : ct1, cursor: (!isRapido && !csActivo) ? 'not-allowed' : 'text' }} />
           </div>
         </div>
 

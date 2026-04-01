@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
-import { Palette, User, Save, LayoutTemplate, Zap, LogOut, Menu, Building2, CheckCircle, Tag, Plus, X, CreditCard } from "lucide-react"
+import { Palette, User, Save, LayoutTemplate, Zap, LogOut, Menu, Building2, CheckCircle, Tag, Plus, X, CreditCard, AlertTriangle } from "lucide-react"
 import { useAuth } from "../../lib/AuthContext"
 
 /* ── Paleta ── */
@@ -130,6 +130,24 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
             setCanalesSavedOk(true); setTimeout(() => setCanalesSavedOk(false), 2500)
         } catch (e) { console.error('Error guardando canales:', e) }
         finally { setSavingCanales(false) }
+    }
+
+    /* ── Stock / Inventario ── */
+    const [bajoStockActivo, setBajoStockActivo] = useState(() => {
+        try { return localStorage.getItem('gestify_bajo_stock_activo') !== 'false' } catch { return true }
+    })
+    const [bajoStockUmbral, setBajoStockUmbral] = useState(() => {
+        try { return parseInt(localStorage.getItem('gestify_bajo_stock_umbral')) || 5 } catch { return 5 }
+    })
+    const [stockSavedOk, setStockSavedOk] = useState(false)
+
+    const guardarStock = () => {
+        try {
+            localStorage.setItem('gestify_bajo_stock_activo', String(bajoStockActivo))
+            localStorage.setItem('gestify_bajo_stock_umbral', String(bajoStockUmbral))
+        } catch { }
+        setStockSavedOk(true)
+        setTimeout(() => setStockSavedOk(false), 2500)
     }
 
     /* ── Suscripción ── */
@@ -273,6 +291,47 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
 
                     {/* ═══ COLUMNA 3 ═══ */}
                     <div className="config-col">
+                        {/* INVENTARIO / BAJO STOCK */}
+                        <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
+                            <SectionTitle icon={AlertTriangle} title="Bajo Stock" desc="Alerta cuando el stock de un producto es bajo" />
+
+                            <ConfigRow label="Alertas de bajo stock" description="Muestra indicadores de alerta en el módulo de productos">
+                                <ToggleSwitch enabled={bajoStockActivo} onChange={() => setBajoStockActivo(v => !v)} />
+                            </ConfigRow>
+
+                            <div style={{ padding: '13px 0', borderBottom: `1px solid ${border}`, opacity: bajoStockActivo ? 1 : 0.4, transition: 'opacity .2s' }}>
+                                <p style={{ fontSize: 13, fontWeight: 600, color: ct1, margin: '0 0 6px' }}>Umbral de bajo stock</p>
+                                <p style={{ fontSize: 11, color: ct3, margin: '0 0 10px', lineHeight: 1.4 }}>
+                                    Productos con stock <strong>igual o menor</strong> a este número se marcan como bajo stock.
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div style={{ position: 'relative', flex: 1 }}>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="9999"
+                                            value={bajoStockUmbral}
+                                            disabled={!bajoStockActivo}
+                                            onChange={e => setBajoStockUmbral(Math.max(0, parseInt(e.target.value) || 0))}
+                                            onFocus={e => e.target.style.borderColor = accent}
+                                            onBlur={e => e.target.style.borderColor = border}
+                                            style={{ width: '100%', height: 36, padding: '0 12px', fontSize: 13, fontWeight: 700, color: ct1, background: bajoStockActivo ? '#fff' : 'rgba(0,0,0,.03)', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter',sans-serif", boxSizing: 'border-box', cursor: bajoStockActivo ? 'text' : 'not-allowed' }}
+                                        />
+                                    </div>
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: ct3, whiteSpace: 'nowrap' }}>unidades</span>
+                                </div>
+                                {bajoStockActivo && (
+                                    <p style={{ fontSize: 10, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 6, padding: '5px 10px', marginTop: 8, marginBottom: 0, lineHeight: 1.4 }}>
+                                        ⚠ Productos con ≤ {bajoStockUmbral} unidades aparecerán como bajo stock
+                                    </p>
+                                )}
+                            </div>
+
+                            <div style={{ paddingTop: 14 }}>
+                                <SaveBtn onClick={guardarStock} disabled={false} ok={stockSavedOk} okLabel="¡Guardado!" label="Guardar configuración" icon={Save} />
+                            </div>
+                        </div>
+
                         {/* CANALES DE VENTA */}
                         <div style={{ background: '#EAEAEA', borderRadius: 14, border: `1px solid ${border}`, boxShadow: cardShadow, padding: 'clamp(14px,3vw,20px) clamp(14px,3vw,24px)' }}>
                             <SectionTitle icon={Tag} title="Canales de Venta" desc="Categorías para clasificar tus ventas" />

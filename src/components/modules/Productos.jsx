@@ -196,7 +196,9 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const [filtroStock, setFiltroStock] = useState("todos")
   const [filtroCategoria, setFiltroCategoria] = useState("todas")
   const [paginaActual, setPaginaActual] = useState(1)
-  const [itemsPorPagina, setItemsPorPagina] = useState(10)
+  const [itemsPorPagina, setItemsPorPagina] = useState(() => {
+    try { const v = parseInt(localStorage.getItem('gestify_items_por_pagina')); return v && [10,25,50,100,99999].includes(v) ? v : 10 } catch { return 10 }
+  })
   const [modalCats, setModalCats] = useState(false)
   const [dialogo, setDialogo] = useState({ open: false, title: '', message: '', onConfirm: null })
   // inline edit
@@ -206,6 +208,14 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const [csvResultado, setCsvResultado] = useState(null) // { tipo:'ok'|'error', msg }
   const csvInputRef = useRef(null)
   // selección múltiple
+  const [stockCfg] = useState(() => {
+    try {
+      return {
+        activo: localStorage.getItem('gestify_bajo_stock_activo') !== 'false',
+        umbral: parseInt(localStorage.getItem('gestify_bajo_stock_umbral')) || 5,
+      }
+    } catch { return { activo: true, umbral: 5 } }
+  })
   const [modoSeleccion, setModoSeleccion] = useState(false)
   const [seleccionados, setSeleccionados] = useState(new Set())
   const [bulkCatOpen, setBulkCatOpen] = useState(false)
@@ -221,6 +231,12 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const commitEdit = async (prod) => {
     const { prodId, field, val } = inlineEdit
     if (!prodId || !field || !editarProducto) { cancelEdit(); return }
+    // Costo vacío o cero → guardar null (muestra '— agregar')
+    if (field === 'costo' && (val === '' || val === '0' || parseFloat(val) === 0)) {
+      const costoActual = parseFloat(prod.costo)
+      if (costoActual > 0) await editarProducto(prodId, { costo: null })
+      cancelEdit(); return
+    }
     const numVal = parseFloat(val)
     if (isNaN(numVal) || numVal < 0) { cancelEdit(); return }
     const valActual = field === 'precio' ? parseFloat(prod.precio) : parseFloat(prod.costo)
@@ -285,8 +301,8 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     const match = (p.nombre || "").toLowerCase().includes(q) || (p.codigo || "").toLowerCase().includes(q)
     if (filtroCategoria !== "todas" && (p.categoria || '').trim() !== filtroCategoria) return false
     const cs = !!(p.controlastock || p.controlaStock)
-    if (filtroStock === "en-stock") return match && cs && (p.stock || 0) > 0
-    if (filtroStock === "bajo-stock") return match && cs && (p.stock || 0) <= (p.stock_minimo ?? 10)
+    if (filtroStock === "en-stock") return match && cs && (p.stock || 0) > stockCfg.umbral
+    if (filtroStock === "bajo-stock") return match && cs && stockCfg.activo && (p.stock || 0) <= stockCfg.umbral
     return match
   })
 
@@ -298,11 +314,10 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     if (!orden.campo) return 0
     const mul = orden.dir === 'asc' ? 1 : -1
     if (orden.campo === 'nombre') return mul * (a.nombre || '').localeCompare(b.nombre || '', 'es')
-    if (orden.campo === 'codigo') {
-      const na = parseInt((a.codigo || '').replace(/\D/g, '')) || 0
-      const nb = parseInt((b.codigo || '').replace(/\D/g, '')) || 0
-      return mul * (na - nb)
-    }
+    if (orden.campo === 'codigo') return mul * (a.codigo || '').localeCompare(b.codigo || '', undefined, { numeric: true, sensitivity: 'base' })
+    if (orden.campo === 'precio') return mul * ((parseFloat(a.precio) || 0) - (parseFloat(b.precio) || 0))
+    if (orden.campo === 'costo') return mul * ((parseFloat(a.costo) || 0) - (parseFloat(b.costo) || 0))
+    if (orden.campo === 'stock') return mul * ((parseInt(a.stock) || 0) - (parseInt(b.stock) || 0))
     return 0
   })
 
@@ -311,6 +326,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
   const productosPag = filtradosOrdenados.slice(indiceInicio, indiceInicio + itemsPorPagina)
 
   useEffect(() => { setPaginaActual(1) }, [filtroStock, filtroCategoria, searchTerm, itemsPorPagina])
+  useEffect(() => { try { localStorage.setItem('gestify_items_por_pagina', String(itemsPorPagina)) } catch {} }, [itemsPorPagina])
   useEffect(() => { setSeleccionados(new Set()) }, [filtroStock, filtroCategoria, searchTerm])
 
   const toggleModoSeleccion = () => { setModoSeleccion(v => !v); setSeleccionados(new Set()); setBulkCatOpen(false); setSelCatOpen(false) }
@@ -346,14 +362,16 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     await Promise.all(ids.map(id => editarProducto && editarProducto(id, { categoria: nombreCat })))
     setBulkCatOpen(false)
     setSeleccionados(new Set())
+    setModoSeleccion(false)
+    recargarProductos?.()
   }
 
   const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   const resumen = {
     total: filtrados.length,
-    conStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > 0).length,
-    bajoStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= (p.stock_minimo ?? 10)).length,
+    conStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > stockCfg.umbral).length,
+    bajoStock: stockCfg.activo ? filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= stockCfg.umbral).length : 0,
     sinControl: filtrados.filter(p => !(p.controlastock || p.controlaStock)).length,
   }
 
@@ -689,7 +707,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
         {[
           { label: 'Total Productos', val: resumen.total, icon: Package, clr: '#373F47', sub: filtroCategoria !== 'todas' ? filtroCategoria : 'En catálogo' },
           { label: 'Con Stock', val: resumen.conStock, icon: CheckCircle, clr: '#065F46', sub: `${resumen.total > 0 ? Math.round(resumen.conStock / resumen.total * 100) : 0}% disponibles` },
-          { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: 'según mínimo por producto' },
+          { label: 'Bajo Stock', val: resumen.bajoStock, icon: AlertTriangle, clr: '#92400E', sub: stockCfg.activo ? `stock ≤ ${stockCfg.umbral} unidades` : 'alertas desactivadas' },
           { label: 'Sin Control', val: resumen.sinControl, icon: Archive, clr: '#6B7280', sub: 'Stock ilimitado' },
         ].map((s, i) => (
           <div key={i} style={{ ...cardStyle, background: '#E1E1E0', borderRadius: 12, height: 90, padding: '0 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', overflow: 'hidden', cursor: 'default', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
@@ -906,9 +924,9 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                   {[
                     { label: 'CÓDIGO', campo: 'codigo' },
                     { label: 'NOMBRE Y CATEGORÍA', campo: 'nombre' },
-                    { label: 'PRECIO', campo: null },
-                    { label: 'COSTO', campo: null },
-                    { label: 'STOCK', campo: null },
+                    { label: 'PRECIO', campo: 'precio' },
+                    { label: 'COSTO', campo: 'costo' },
+                    { label: 'STOCK', campo: 'stock' },
                     { label: 'CONTROL', campo: null },
                     { label: 'ACCIONES', campo: null },
                   ].map(({ label, campo }, i) => {
@@ -936,7 +954,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                 {productosPag.length > 0 ? productosPag.map(prod => {
                   const precioNeto = (parseFloat(prod.precio) || 0) * 0.79
                   const csOk = !!(prod.controlastock || prod.controlaStock)
-                  const stockLow = csOk && (prod.stock || 0) <= (prod.stock_minimo ?? 10) && (prod.stock || 0) >= 0
+                  const stockLow = stockCfg.activo && csOk && (prod.stock || 0) <= stockCfg.umbral
 
                   const estaSeleccionado = seleccionados.has(prod.id)
                   return (
@@ -959,7 +977,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                           <div style={{ width: 28, height: 28, borderRadius: 7, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Package size={13} strokeWidth={2.5} style={{ color: accent }} />
                           </div>
-                          <span style={{ fontSize: 12, fontFamily: "'DM Mono', monospace", color: ct2, fontWeight: 600 }}>{prod.codigo || '—'}</span>
+                          <span style={{ fontSize: 12, fontFamily: "'Inter', -apple-system, sans-serif", color: ct2, fontWeight: 600, letterSpacing: '.01em', background: 'rgba(51,65,57,.06)', padding: '2px 7px', borderRadius: 5 }}>{prod.codigo || '—'}</span>
                         </div>
                       </td>
 

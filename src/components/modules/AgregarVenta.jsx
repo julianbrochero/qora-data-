@@ -448,7 +448,15 @@ const AgregarVenta = ({
 
           {/* ══ PANEL DERECHO UNIFICADO ══ */}
           <div className="av-sidebar">
-            <div className="av-panel">
+            <div className={`av-panel${clienteActivo && clienteNombre ? ' av-panel--con-cliente' : ''}`}>
+
+              {/* ── BANNER CLIENTE ACTIVO ── */}
+              {clienteActivo && clienteNombre && (
+                <div className="av-cliente-banner">
+                  <UserCheck size={13} strokeWidth={2.5} />
+                  <span>Venta con cliente · <strong>{clienteNombre}</strong></span>
+                </div>
+              )}
 
               {/* ── 1. CLIENTE ── */}
               <div className="av-sec">
@@ -561,7 +569,7 @@ const AgregarVenta = ({
                 </div>
 
                 {/* Fechas */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                <div className="av-dates-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
                   <div>
                     <label className="av-lbl">Fecha</label>
                     <input type="date" className="av-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} />
@@ -685,7 +693,7 @@ const AgregarVenta = ({
                 ) : (
                   <button ref={guardarRef} onClick={handleGuardar} disabled={isProcessing} className="av-btn-confirm">
                     <ShoppingCart size={14} />
-                    {isProcessing ? 'Guardando...' : 'Confirmar y registrar venta'}
+                    {isProcessing ? 'Guardando...' : <><span>Confirmar y registrar venta</span><kbd className="av-btn-kbd">Ctrl+↵</kbd></>}
                   </button>
                 )}
                 <p className="av-kbd-hint">
@@ -876,6 +884,14 @@ const AgregarVenta = ({
         .av-saldo-pill.pending { background:#fffbf0; border:1px solid #fde68a; color:#92400E; }
         .av-saldo-pill.paid    { background:#f0fdf4; border:1px solid #bbf7d0; color:#065F46; }
 
+        /* ── Banner cliente activo ── */
+        .av-panel--con-cliente { border-color:#4ADE80 !important; box-shadow:0 0 0 2px rgba(74,222,128,.12) !important; }
+        .av-cliente-banner { display:flex; align-items:center; gap:7px; padding:8px 14px; background:linear-gradient(135deg,#f0fdf4,#dcfce7); border-bottom:1px solid #bbf7d0; font-size:11px; font-weight:600; color:#166534; flex-shrink:0; }
+        .av-cliente-banner strong { color:#15803d; }
+
+        /* ── Ctrl+↵ en botón confirmar ── */
+        .av-btn-kbd { display:inline-flex; align-items:center; margin-left:8px; padding:2px 6px; background:rgba(74,222,128,.25); border:1px solid rgba(74,222,128,.4); border-radius:4px; font-family:'DM Mono',monospace; font-size:9px; font-weight:700; color:#fff; letter-spacing:.02em; }
+
         /* ── Banner bloqueo ── */
         .av-bloqueo-banner { display:flex; align-items:center; gap:7px; padding:9px 12px; border:1.5px dashed #d1ddd5; border-radius:9px; font-size:11px; color:#8B8982; font-weight:500; background:#f8fdfb; }
 
@@ -942,9 +958,11 @@ const AgregarVenta = ({
 
           /* Ocultar elementos no esenciales */
           .av-search-hint { display:none; }
-          .av-kbd-hint { display:none; }
           .av-btn-ghost { display:none; }
           .av-header-eyebrow { display:none; }
+
+          /* Fechas apiladas */
+          .av-dates-grid { grid-template-columns:1fr !important; }
 
           /* Tabla simplificada: solo Producto, Cantidad y Eliminar */
           .av-table th:nth-child(2),.av-table td:nth-child(2) { display:none; }
