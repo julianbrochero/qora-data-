@@ -129,9 +129,9 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
       {/* ══ HEADER ══ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '8px clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
+      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '8px clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+          <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)', display: 'flex' }}>
             <Menu size={16} strokeWidth={2} />
           </button>
           <div className="hidden sm:block">
@@ -201,7 +201,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
 
           <div style={{ padding: 18 }}>
             {/* mini cards resumen cierre */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
+            <div className="cc-cierre-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
               {[
                 { label: 'Ingresos', val: `+$${fMonto(resumen.ingresos)}`, clr: '#065F46', bg: '#F0FDF4', bd: '#6EE7B7' },
                 { label: 'Egresos', val: `-$${fMonto(resumen.egresos)}`, clr: '#991B1B', bg: '#FEF2F2', bd: '#FCA5A5' },
@@ -274,7 +274,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
       )}
 
       {/* ══ CARDS RESUMEN ══ */}
-      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 12 }}>
+      <div className="cc-cards-grid" style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 12 }}>
         {[
           { label: 'Ingresos del día', val: `$${fMonto(resumen.ingresos)}`, icon: TrendingUp, clr: '#065F46', sub: `${movimientosSeguros.filter(m => m.tipo === 'ingreso').length} movimientos` },
           { label: 'Egresos del día', val: `$${fMonto(resumen.egresos)}`, icon: TrendingDown, clr: '#991B1B', sub: `${movimientosSeguros.filter(m => m.tipo === 'egreso').length} movimientos` },
@@ -307,7 +307,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
         <div style={{ background: surface, borderRadius: 12, border: `1px solid ${border}`, boxShadow: cardShadow, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* toolbar */}
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, background: surface, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="cc-toolbar" style={{ padding: '12px 16px', borderBottom: `1px solid ${border}`, background: surface, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
             {/* search */}
             <div style={{ position: 'relative', flex: 1, minWidth: 200, maxWidth: 300 }}>
               <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
@@ -339,8 +339,8 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
           </div>
 
           {/* tabla */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="cc-table-wrap" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table className="cc-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
                 <tr>
                   {['TIPO', 'DESCRIPCIÓN', 'FECHA', 'MÉTODO', 'MONTO', ''].map((col, i) => (
@@ -485,7 +485,7 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
                   Ver detalles
                 </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+              <div className="cc-cierre-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
                 {[
                   { label: 'Ingresos', val: `+$${fMonto(c.ingresos)}`, clr: '#065F46' },
                   { label: 'Egresos', val: `-$${fMonto(c.egresos)}`, clr: '#991B1B' },
@@ -518,6 +518,37 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
         @keyframes kpiIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes spin{to{transform:rotate(360deg)}}
         tr:hover .group-hover-show{opacity:1!important}
+
+        /* ── Responsive Mobile (≤767px) ─────────────────── */
+        @media(max-width:767px){
+          /* Header: selector de fecha abajo en mobile */
+          .cc-header-fecha { order: 3; width: 100%; justify-content: center; }
+          .cc-header-acciones { order: 2; }
+
+          /* Cards resumen: 2 columnas en mobile */
+          .cc-cards-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+
+          /* Toolbar de tabla: apilado */
+          .cc-toolbar { flex-direction: column; align-items: stretch !important; gap: 8px !important; }
+          .cc-toolbar > * { width: 100%; min-width: 0 !important; max-width: none !important; }
+
+          /* Tabla: columnas no esenciales ocultas en mobile */
+          .cc-table-col-metodo { display: none; }
+          .cc-table-col-fecha-label { display: none; }
+          /* Hacer tabla horizontalmente scrollable */
+          .cc-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .cc-table { min-width: 400px; }
+
+          /* Filas de movimientos mas compactas */
+          .cc-table td, .cc-table th { padding: 8px 10px !important; }
+          .cc-table td:first-child, .cc-table th:first-child { padding-left: 12px !important; }
+
+          /* Panel cierre: cards en columa unica */
+          .cc-cierre-grid { grid-template-columns: 1fr !important; }
+
+          /* Historial cierres: 1 col */
+          .cc-cierre-stats { grid-template-columns: 1fr 1fr !important; }
+        }
       `}</style>
     </div>
   )

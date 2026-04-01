@@ -570,13 +570,13 @@ const AgregarVenta = ({
 
                 {/* Fechas */}
                 <div className="av-dates-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <label className="av-lbl">Fecha</label>
-                    <input type="date" className="av-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} />
+                    <input type="date" className="av-inp av-date-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} />
                   </div>
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <label className="av-lbl">Entrega <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opc.)</span></label>
-                    <input type="date" className="av-inp gestify-date-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} />
+                    <input type="date" className="av-inp av-date-inp gestify-date-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} />
                   </div>
                 </div>
 
@@ -960,6 +960,11 @@ const AgregarVenta = ({
           .av-search-hint { display:none; }
           .av-btn-ghost { display:none; }
           .av-header-eyebrow { display:none; }
+
+          /* Fechas responsive - no overflow */
+          .av-dates-grid { min-width: 0; }
+          .av-dates-grid > div { min-width: 0; }
+          .av-date-inp { min-width: 0; box-sizing: border-box; width: 100%; }
 
           /* Fechas apiladas */
           .av-dates-grid { grid-template-columns:1fr !important; }
