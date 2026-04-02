@@ -209,7 +209,7 @@ export const useVentas = () => {
               .single()
 
             if (prod) {
-              const nuevoStock = (prod.stock || 0) - item.cantidad
+              const nuevoStock = Math.max(0, (prod.stock || 0) - item.cantidad)
               await supabase
                 .from('productos')
                 .update({ stock: nuevoStock })

@@ -580,7 +580,10 @@ export const useFacturacion = () => {
               .filter(item => item.controlaStock !== false && item.productoId)
               .map(async item => {
                 const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
-                if (prod) await supabase.from('productos').update({ stock: prod.stock - item.cantidad }).eq('id', item.productoId)
+                if (prod && prod.stock != null) {
+                  const nuevoStock = Math.max(0, prod.stock - item.cantidad)
+                  await supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.productoId)
+                }
               })
           )
         })().catch(e => console.warn('Background task error:', e))
@@ -1318,8 +1321,9 @@ export const useFacturacion = () => {
       for (const item of facturaData.items) {
         if (item.productoId) {
           const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
-          if (prod) {
-            await supabase.from('productos').update({ stock: prod.stock - item.cantidad }).eq('id', item.productoId)
+          if (prod && prod.stock != null) {
+            const nuevoStock = Math.max(0, prod.stock - item.cantidad)
+            await supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.productoId)
           }
         }
       }

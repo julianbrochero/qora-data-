@@ -358,7 +358,14 @@ const AgregarVenta = ({
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
                             <div className="av-drop-precio">{fNum(p.precio)}</div>
-                            <div className="av-drop-add">+ Agregar</div>
+                            <div style={{ 
+                               fontSize: 10, 
+                               fontWeight: 600,
+                               color: p.stock <= 0 ? '#ef4444' : (p.stock <= 3 ? '#f59e0b' : '#9ca3af'),
+                               marginTop: 1
+                            }}>
+                              {p.stock <= 0 ? 'Sin stock' : (p.stock <= 3 ? 'Stock bajo' : '+ Agregar')}
+                            </div>
                           </div>
                         </button>
                       ))}

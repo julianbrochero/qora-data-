@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from "react"
 import { useAuth } from "../../lib/AuthContext"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
+import MobileDashboard from "./MobileDashboard"
 import {
   Search, Bell, Plus, DollarSign, FileText, Users, Wallet,
   Calendar, UserPlus, PackagePlus, BarChart3, CheckCircle2,
@@ -635,9 +636,25 @@ const Dashboard = ({
     }
   }, [openModal, onNuevaVenta])
 
+  /* ── Mobile layout (< md) ── */
+  const mobileProps = {
+    clientes, productos, facturas, pedidos, caja,
+    onViewAllFacturas, onViewAllProductos, onViewAllPedidos,
+    onViewAllClientes, onViewAllCaja, onViewReportes, onNuevaVenta,
+    openModal, onOpenMobileSidebar,
+  }
+
   return (
     <div className="w-full h-full min-h-screen flex flex-col overflow-x-hidden bg-[#F5F5F5]"
       style={{ fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+
+      {/* ══════ MOBILE VIEW (< md) ══════ */}
+      <div className="block md:hidden">
+        <MobileDashboard {...mobileProps} />
+      </div>
+
+      {/* ══════ DESKTOP VIEW (≥ md) ══════ */}
+      <div className="hidden md:flex md:flex-col md:w-full md:h-full">
 
       {/* ══ Fonts ══ */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500;600&display=swap');`}</style>
@@ -1093,6 +1110,7 @@ const Dashboard = ({
           .chart-bar-label { font-size: 9px !important; }
         }
       `}</style>
+      </div>{/* end desktop wrapper */}
     </div>
   )
 }
