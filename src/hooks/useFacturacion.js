@@ -339,124 +339,89 @@ export const useFacturacion = () => {
     return `FA-${(ultimoNumero + 1).toString().padStart(8, '0')}`
   }
 
-  // 2. Lógica UNIFICADA de cobro (Regla de Oro)
+  // 2. Lógica UNIFICADA de cobro — OPTIMISTIC + BACKGROUND
+  // Antes: 8 llamadas secuenciales a Supabase (~1.6s bloqueantes)
+  // Ahora: 0 lecturas (usa estado local) + escrituras en paralelo en background (~0ms para la UI)
   const registrarCobro = async (ventaId, monto, descripcion = '', metodoPago = 'Efectivo') => {
     try {
-      console.log(`💰 Registrando cobro unificado para venta ${ventaId}: $${monto}`)
-
-      // A. Obtener Venta (Factura)
-      const { data: venta, error: ventaError } = await supabase
-        .from('facturas')
-        .select('*')
-        .eq('id', ventaId)
-        .single()
-
-      if (ventaError) throw new Error('Venta asociada no encontrada')
-
       const montoCobro = parseFloat(monto)
       if (montoCobro <= 0) throw new Error('Monto debe ser mayor a 0')
 
-      // B. Obtener código de pedido asociado (si existe)
-      let pedidoCodigo = null
-      if (venta.pedido_id) {
-        const { data: pedido } = await supabase
-          .from('pedidos')
-          .select('codigo')
-          .eq('id', venta.pedido_id)
-          .single()
-        pedidoCodigo = pedido?.codigo || null
+      // A. Leer venta desde estado local (0ms) — fallback a Supabase si no está cargada
+      let venta = facturas.find(f => f.id === ventaId)
+      if (!venta) {
+        const { data, error } = await supabase.from('facturas').select('*').eq('id', ventaId).single()
+        if (error || !data) throw new Error('Venta asociada no encontrada')
+        venta = data
       }
 
-      // Armar descripción con número de pedido si está disponible
+      // B. Leer pedido desde estado local (0ms) — sin query extra a Supabase
+      const pedidoLocal = venta.pedido_id ? pedidos.find(p => p.id === venta.pedido_id) : null
+      const pedidoCodigo = pedidoLocal?.codigo || null
+
+      // C. Calcular nuevos valores
+      const nuevoPagado = (parseFloat(venta.montopagado) || 0) + montoCobro
+      const nuevoSaldo  = Math.max(0, (parseFloat(venta.total) || 0) - nuevoPagado)
+      let nuevoEstado   = venta.estado
+      if (nuevoSaldo === 0) nuevoEstado = 'pagada'
+      else if (nuevoPagado > 0) nuevoEstado = 'parcial'
+
+      const nuevoPagadoPedido = pedidoLocal ? (parseFloat(pedidoLocal.monto_abonado) || 0) + montoCobro : 0
+      const nuevoSaldoPedido  = pedidoLocal ? Math.max(0, (parseFloat(pedidoLocal.total) || 0) - nuevoPagadoPedido) : 0
+
+      // D. ── OPTIMISTIC: actualizar UI al instante (0ms) ──
+      setFacturas(prev => prev.map(f =>
+        f.id === ventaId ? { ...f, montopagado: nuevoPagado, saldopendiente: nuevoSaldo, estado: nuevoEstado } : f
+      ))
+      if (pedidoLocal) {
+        setPedidos(prev => prev.map(p =>
+          p.id === pedidoLocal.id ? { ...p, monto_abonado: nuevoPagadoPedido, saldo_pendiente: nuevoSaldoPedido } : p
+        ))
+      }
+      if (venta.cliente_id) {
+        const reduccion = (parseFloat(venta.saldopendiente) || 0) - nuevoSaldo
+        setClientes(prev => prev.map(c =>
+          c.id === venta.cliente_id ? { ...c, deuda: Math.max(0, (parseFloat(c.deuda) || 0) - reduccion) } : c
+        ))
+      }
+      // Actualizar caja local al instante
+      setCaja(prev => ({ ...prev, saldo: (prev.saldo || 0) + montoCobro, ingresos: (prev.ingresos || 0) + montoCobro }))
+
+      // E. ── BACKGROUND: sync a Supabase en paralelo sin bloquear ──
       const descAuto = pedidoCodigo
         ? `Cobro ${pedidoCodigo} (${venta.numero || 'FA'}) - ${venta.cliente || 'Cliente'}`
         : `Cobro ${venta.numero || 'S/N'} - ${venta.cliente || 'Cliente'}`
 
-      // C. Crear Movimiento de Caja
       const movData = {
-        tipo: 'ingreso',
-        monto: montoCobro,
+        tipo: 'ingreso', monto: montoCobro,
         description: descripcion || descAuto,
         metodo: metodoPago || 'Efectivo',
         referencia: pedidoCodigo ? `pedido:${venta.pedido_id}` : 'venta',
-        fecha: new Date().toISOString(),
-        user_id: user.id
+        fecha: new Date().toISOString(), user_id: user.id
       }
-
-      // Usamos el helper existente agregarMovimientoCaja para actualizar state local
-      await agregarMovimientoCaja(movData)
-
-      // C. Crear Abono (Registro histórico)
       const abonoData = {
-        cliente_nombre: venta.cliente,
-        monto: montoCobro,
+        cliente_nombre: venta.cliente, monto: montoCobro,
         fecha: new Date().toISOString().split('T')[0],
-        metodo: 'Efectivo',
-        descripcion: movData.descripcion,
-        user_id: user.id
-      }
-      const { error: abonoError } = await supabase.from('abonos').insert([abonoData])
-      if (!abonoError) {
-        setAbonos(prev => [abonoData, ...prev])
+        metodo: metodoPago || 'Efectivo',
+        descripcion: movData.description, user_id: user.id
       }
 
-      // D. Actualizar Venta (Factura)
-      const nuevoPagado = (parseFloat(venta.montopagado) || 0) + montoCobro
-      const nuevoSaldo = Math.max(0, (parseFloat(venta.total) || 0) - nuevoPagado)
-      let nuevoEstado = venta.estado
-      if (nuevoSaldo === 0) nuevoEstado = 'pagada'
-      else if (nuevoPagado > 0) nuevoEstado = 'parcial'
-
-      const { error: updateVentaError } = await supabase
-        .from('facturas')
-        .update({
-          montopagado: nuevoPagado,
-          saldopendiente: nuevoSaldo,
-          estado: nuevoEstado
-        })
-        .eq('id', ventaId)
-
-      if (updateVentaError) throw updateVentaError
-
-      // Actualizar estado local Facturas
-      setFacturas(prev => prev.map(f => f.id === ventaId ? { ...f, montopagado: nuevoPagado, saldopendiente: nuevoSaldo, estado: nuevoEstado } : f))
-
-      // F. Actualizar deuda del cliente en estado local
-      if (venta.cliente_id) {
-        // Reducimos la deuda: si pagó de más el saldo delta es la reducción real
-        const reduccion = (parseFloat(venta.saldopendiente) || 0) - nuevoSaldo
-        setClientes(prev => prev.map(c =>
-          c.id === venta.cliente_id
-            ? { ...c, deuda: Math.max(0, (parseFloat(c.deuda) || 0) - reduccion) }
-            : c
-        ))
-      }
-
-      // E. Sincronizar Pedido Asociado — usa FK pedido_id (no busca por texto en notas)
-      if (venta.pedido_id) {
-        const { data: pedido } = await supabase
-          .from('pedidos')
-          .select('*')
-          .eq('id', venta.pedido_id)
-          .single()
-
-        if (pedido) {
-          const nuevoPagadoPedido = (parseFloat(pedido.monto_abonado) || 0) + montoCobro
-          const nuevoSaldoPedido = Math.max(0, (parseFloat(pedido.total) || 0) - nuevoPagadoPedido)
-
-          await supabase.from('pedidos').update({
-            monto_abonado: nuevoPagadoPedido,
-            saldo_pendiente: nuevoSaldoPedido
-          }).eq('id', pedido.id)
-
-          // Actualizar estado local Pedidos
-          setPedidos(prev => prev.map(p =>
-            p.id === pedido.id
-              ? { ...p, monto_abonado: nuevoPagadoPedido, saldo_pendiente: nuevoSaldoPedido }
-              : p
-          ))
-        }
-      }
+      ;(async () => {
+        await Promise.all([
+          // Movimiento de caja
+          supabase.from('movimientos_caja').insert([movData]).select()
+            .then(({ data, error }) => { if (!error && data?.[0]) setMovimientosCaja(prev => [data[0], ...prev]) }),
+          // Abono histórico
+          supabase.from('abonos').insert([abonoData])
+            .then(({ error }) => { if (!error) setAbonos(prev => [abonoData, ...prev]) }),
+          // Actualizar factura
+          supabase.from('facturas').update({ montopagado: nuevoPagado, saldopendiente: nuevoSaldo, estado: nuevoEstado }).eq('id', ventaId),
+          // Actualizar pedido (si aplica)
+          pedidoLocal
+            ? supabase.from('pedidos').update({ monto_abonado: nuevoPagadoPedido, saldo_pendiente: nuevoSaldoPedido }).eq('id', pedidoLocal.id)
+            : Promise.resolve(),
+        ])
+      })().catch(e => console.warn('[registrarCobro] Background sync error:', e))
 
       return { success: true, nuevoSaldo }
 
@@ -596,45 +561,41 @@ export const useFacturacion = () => {
     }
   }
 
-  // 4. Agregar Abono a Pedido — llama registrarCobro() (función unificada)
+  // 4. Agregar Abono a Pedido — usa estado local (0ms) en lugar de query a Supabase
   const agregarAbonoAPedido = async (pedidoId, monto, metodoPago = 'Efectivo') => {
     try {
-      const { data: venta, error: ventaError } = await supabase
-        .from('facturas')
-        .select('id')
-        .eq('pedido_id', pedidoId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (ventaError || !venta) throw new Error('No se encontró la Venta asociada a este pedido')
-
+      // Buscar en estado local primero (0ms)
+      let venta = facturas.find(f => f.pedido_id === pedidoId)
+      if (!venta) {
+        // Fallback a Supabase solo si no está en memoria
+        const { data, error } = await supabase
+          .from('facturas').select('id').eq('pedido_id', pedidoId)
+          .order('created_at', { ascending: false }).limit(1).single()
+        if (error || !data) throw new Error('No se encontró la Venta asociada a este pedido')
+        venta = data
+      }
       return await registrarCobro(venta.id, monto, '', metodoPago)
-
     } catch (error) {
       console.error('Error agregando abono:', error)
       return { success: false, mensaje: error.message }
     }
   }
 
-  // 5. Marcar Pedido Pagado Total — llama registrarCobro() (función unificada)
+  // 5. Marcar Pedido Pagado Total — usa estado local (0ms) en lugar de query a Supabase
   const marcarPedidoPagadoTotal = async (pedidoId, metodoPago = 'Efectivo') => {
     try {
-      const { data: venta, error: ventaError } = await supabase
-        .from('facturas')
-        .select('*')
-        .eq('pedido_id', pedidoId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (ventaError || !venta) throw new Error('Venta no encontrada')
-
+      // Buscar en estado local primero (0ms)
+      let venta = facturas.find(f => f.pedido_id === pedidoId)
+      if (!venta) {
+        const { data, error } = await supabase
+          .from('facturas').select('*').eq('pedido_id', pedidoId)
+          .order('created_at', { ascending: false }).limit(1).single()
+        if (error || !data) throw new Error('Venta no encontrada')
+        venta = data
+      }
       const faltante = parseFloat(venta.saldopendiente) || 0
       if (faltante <= 0) return { success: true, mensaje: 'Ya está pagado' }
-
       return await registrarCobro(venta.id, faltante, 'Pago Total Pedido', metodoPago)
-
     } catch (error) {
       console.error('Error saldando pedido:', error)
       return { success: false, mensaje: error.message }
