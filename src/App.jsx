@@ -260,11 +260,10 @@ const SistemaFacturacion = () => {
         resultado = await generarFactura(facturaData);
       }
 
-      // ✅ Verificar que resultado existe antes de acceder a .success
       if (resultado && resultado.success) {
         toast.success(`${tipoVenta === 'pedido' ? 'Pedido' : 'Factura'} creado exitosamente`);
-        await recargarTodosLosDatos(); // Asegúrate de esperar la recarga
-        closeModalHandler();
+        closeModalHandler(); // cerrar inmediatamente — el estado local ya fue actualizado de forma optimista
+        recargarTodosLosDatos(); // sync en background sin bloquear la UI
       } else {
         // Si no hay resultado o success es false, mostrar el mensaje de error
         const mensajeError = resultado?.mensaje || resultado?.error || 'Error desconocido';

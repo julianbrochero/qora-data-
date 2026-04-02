@@ -29,6 +29,8 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
     const [notas, setNotas] = useState(pedido?.notas || '')
     const [cargando, setCargando] = useState(false)
     const [mensajeExito, setMensajeExito] = useState('')
+    const [mensajeError, setMensajeError] = useState('')
+    const [confirmacion, setConfirmacion] = useState(null) // { titulo, mensaje, onConfirm }
     const [editandoFecha, setEditandoFecha] = useState(false)
     const [fechaEntrega, setFechaEntrega] = useState(pedido?.fecha_entrega_estimada || '')
 
@@ -76,73 +78,126 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
     const porcentajePagado = total > 0 ? Math.min(100, (montoAbonado / total) * 100) : 0
 
     const mostrarExito = (msg) => { setMensajeExito(msg); setTimeout(() => setMensajeExito(''), 3000) }
+    const mostrarError = (msg) => { setMensajeError(msg); setTimeout(() => setMensajeError(''), 4000) }
 
-    /* handlers — sin cambios de lógica */
+    // Reemplaza window.confirm: muestra un micro-modal inline del sistema
+    const pedirConfirmacion = (titulo, mensaje, onConfirm) => setConfirmacion({ titulo, mensaje, onConfirm })
+
+    /* handlers */
     const handleRegistrarAbonoDirecto = async () => {
         const monto = parseFloat(montoAbono)
-        if (!monto || monto <= 0 || monto > saldoPendiente) { alert('Ingrese un monto válido (mayor a 0 y no mayor al saldo pendiente)'); return }
-        if (!formActions?.agregarAbonoAPedido) { alert('Función de pago no disponible'); return }
+        if (!monto || monto <= 0 || monto > saldoPendiente) { mostrarError('Ingresá un monto válido (mayor a 0 y no mayor al saldo pendiente)'); return }
+        if (!formActions?.agregarAbonoAPedido) { mostrarError('Función de pago no disponible'); return }
         setCargando(true)
         try {
             const r = await formActions.agregarAbonoAPedido(pedido.id, monto, metodoCobro)
             if (r.success) {
-                mostrarExito(`✅ Abono de $${fMonto(monto)} registrado`)
+                mostrarExito(`Abono de $${fMonto(monto)} registrado`)
                 setMontoAbono(''); setEditandoPago(false)
-                if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos()
-            } else { alert('❌ Error: ' + r.mensaje) }
-        } catch (e) { alert('❌ Error: ' + e.message) }
+                // registrarCobro ya actualiza el estado local — no necesitamos recargar todo
+            } else { mostrarError(r.mensaje || 'Error al registrar el cobro') }
+        } catch (e) { mostrarError(e.message) }
         finally { setCargando(false) }
     }
 
-    const handleMarcarPagadoDirecto = async () => {
+    const handleMarcarPagadoDirecto = () => {
         if (estaPagadoCompleto) return
-        if (!window.confirm(`¿Registrar pago total del saldo restante?\n\nSaldo a saldar: $${fMonto(saldoPendiente)}`)) return
-        if (!formActions?.marcarPedidoPagadoTotal) { alert('Función no disponible'); return }
-        setCargando(true)
-        try {
-            const r = await formActions.marcarPedidoPagadoTotal(pedido.id, metodoCobro)
-            if (r.success) { mostrarExito('✅ Venta saldada completamente'); if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos() }
-            else { alert('❌ Error: ' + r.mensaje) }
-        } catch (e) { alert('❌ Error: ' + e.message) }
-        finally { setCargando(false) }
+        pedirConfirmacion(
+            'Saldar venta completa',
+            `¿Registrar el pago total del saldo restante de $${fMonto(saldoPendiente)}?`,
+            async () => {
+                if (!formActions?.marcarPedidoPagadoTotal) { mostrarError('Función no disponible'); return }
+                setCargando(true)
+                try {
+                    const r = await formActions.marcarPedidoPagadoTotal(pedido.id, metodoCobro)
+                    if (r.success) mostrarExito('Venta saldada completamente')
+                    else mostrarError(r.mensaje || 'Error al saldar')
+                } catch (e) { mostrarError(e.message) }
+                finally { setCargando(false) }
+            }
+        )
     }
 
-    const handleCambiarEstado = async (nuevoEstado) => {
+    const handleCambiarEstado = (nuevoEstado) => {
         if (!formActions?.actualizarEstadoPedido || pedido?.estado === nuevoEstado) return
-        if (!window.confirm(`¿Cambiar estado a ${estadosConfig[nuevoEstado]?.label || nuevoEstado}?`)) return
-        try {
-            const r = await formActions.actualizarEstadoPedido(pedido.id, nuevoEstado)
-            if (r.success) { mostrarExito('✅ Estado actualizado'); if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos() }
-            else { alert('❌ Error: ' + r.mensaje) }
-        } catch (e) { alert('❌ Error: ' + e.message) }
+        const cfg = estadosConfig[nuevoEstado]
+        pedirConfirmacion(
+            `Cambiar estado`,
+            `¿Confirmar cambio de estado a "${cfg?.label || nuevoEstado}"?`,
+            async () => {
+                try {
+                    const r = await formActions.actualizarEstadoPedido(pedido.id, nuevoEstado)
+                    if (r.success) mostrarExito('Estado actualizado')
+                    else mostrarError(r.mensaje || 'Error al actualizar estado')
+                } catch (e) { mostrarError(e.message) }
+            }
+        )
     }
 
     const handleGuardarNotas = async () => {
         if (!formActions?.actualizarNotasPedido) return
         try {
             const r = await formActions.actualizarNotasPedido(pedido.id, notas)
-            if (r.success) mostrarExito('✅ Notas guardadas')
-            else alert('❌ Error: ' + r.mensaje)
-        } catch (e) { alert('❌ Error: ' + e.message) }
+            if (r.success) mostrarExito('Notas guardadas')
+            else mostrarError(r.mensaje || 'Error al guardar notas')
+        } catch (e) { mostrarError(e.message) }
     }
 
     const handleGuardarFechaEntrega = async () => {
-        if (!formActions?.actualizarPedido) { alert('Función no disponible'); return }
+        if (!formActions?.actualizarPedido) { mostrarError('Función no disponible'); return }
         try {
             const r = await formActions.actualizarPedido(pedido.id, { fecha_entrega_estimada: fechaEntrega || null })
-            if (r?.success) { mostrarExito('✅ Fecha de entrega actualizada'); setEditandoFecha(false); if (formActions.recargarTodosLosDatos) formActions.recargarTodosLosDatos() }
-            else { alert('❌ Error: ' + (r?.mensaje || 'Error desconocido')) }
-        } catch (e) { alert('❌ Error: ' + e.message) }
+            if (r?.success) { mostrarExito('Fecha de entrega actualizada'); setEditandoFecha(false) }
+            else mostrarError(r?.mensaje || 'Error desconocido')
+        } catch (e) { mostrarError(e.message) }
     }
 
     /* ─── render ─────────────────────────────────────────────── */
     return (
-        <div className="pd-root" style={{ width: '100%', maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+        <div className="pd-root" style={{ width: '100%', maxWidth: 700, margin: '0 auto', fontFamily: "'Inter', -apple-system, sans-serif", WebkitFontSmoothing: 'antialiased', position: 'relative' }}>
             <style>{`
                 .pd-root * { scrollbar-width: none; -ms-overflow-style: none; }
                 .pd-root *::-webkit-scrollbar { display: none; width: 0; height: 0; }
                 .pd-card { padding: 6px 10px; border-radius: 8px; }
+                @keyframes pd-slide-in { from { opacity:0; transform:scale(.94) translateY(-6px); } to { opacity:1; transform:scale(1) translateY(0); } }
             `}</style>
+
+            {/* ── MICRO-MODAL CONFIRMACIÓN (reemplaza window.confirm) ── */}
+            {confirmacion && (
+                <div style={{
+                    position: 'absolute', inset: 0, background: 'rgba(28,32,28,0.55)',
+                    backdropFilter: 'blur(4px)', zIndex: 200, borderRadius: 10,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                    <div style={{
+                        background: '#fff', borderRadius: 14, padding: '20px 22px', maxWidth: 300, width: '90%',
+                        boxShadow: '0 12px 40px rgba(0,0,0,0.18)', border: '1px solid rgba(0,0,0,0.07)',
+                        animation: 'pd-slide-in .18s ease',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(51,65,57,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <AlertCircle size={15} color={SYS.accent} />
+                            </div>
+                            <p style={{ fontSize: 13, fontWeight: 800, color: SYS.ct1, margin: 0, letterSpacing: '-.01em' }}>
+                                {confirmacion.titulo}
+                            </p>
+                        </div>
+                        <p style={{ fontSize: 12, color: SYS.ct3, marginBottom: 16, lineHeight: 1.45, margin: '0 0 16px' }}>
+                            {confirmacion.mensaje}
+                        </p>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => setConfirmacion(null)}
+                                style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: `1px solid ${SYS.border}`, background: SYS.surface2, color: SYS.ct2, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter' }}>
+                                Cancelar
+                            </button>
+                            <button onClick={() => { const fn = confirmacion.onConfirm; setConfirmacion(null); fn?.() }}
+                                style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', background: SYS.accent, color: '#fff', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'Inter' }}>
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Mensaje éxito ── */}
             {mensajeExito && (
@@ -152,6 +207,17 @@ const PedidoDetail = ({ pedido, clientes = [], facturas = [], formActions, close
                     display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
                 }}>
                     <BadgeCheck size={13} /> {mensajeExito}
+                </div>
+            )}
+
+            {/* ── Mensaje error ── */}
+            {mensajeError && (
+                <div style={{
+                    background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626',
+                    fontSize: 11, fontWeight: 600, padding: '6px 10px', borderRadius: 8,
+                    display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
+                }}>
+                    <XCircle size={13} /> {mensajeError}
                 </div>
             )}
 
