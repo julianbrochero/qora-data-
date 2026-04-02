@@ -1340,7 +1340,6 @@ export const useFacturacion = () => {
 
   const agregarCliente = async () => {
     try {
-      // Validar nombre
       if (!nuevoCliente.nombre || nuevoCliente.nombre.trim() === '') {
         throw new Error('El nombre del cliente es requerido')
       }
@@ -1351,15 +1350,23 @@ export const useFacturacion = () => {
         created_at: new Date().toISOString()
       }
 
+      // ── OPTIMISTIC: mostrar inmediatamente con ID temporal ──
+      const tempId = `temp-${Date.now()}`
+      setClientes(prev => [{ ...clienteData, id: tempId }, ...prev])
+      setNuevoCliente({ nombre: '', telefono: '', cuit: '' })
+
       const { data, error } = await supabase
         .from('clientes')
         .insert([clienteData])
         .select()
 
-      if (error) throw error
+      if (error) {
+        setClientes(prev => prev.filter(c => c.id !== tempId)) // revertir
+        throw error
+      }
 
-      setClientes(prev => [data[0], ...prev])
-      setNuevoCliente({ nombre: '', telefono: '', cuit: '' })
+      // Reemplazar temp con el registro real
+      setClientes(prev => prev.map(c => c.id === tempId ? data[0] : c))
 
       return { success: true, cliente: data[0] }
     } catch (error) {
@@ -1371,26 +1378,25 @@ export const useFacturacion = () => {
 
   const editarCliente = async (clienteId, datosActualizados) => {
     try {
-      // Validar nombre
       if (datosActualizados.nombre && datosActualizados.nombre.trim() === '') {
         throw new Error('El nombre del cliente no puede estar vacío')
       }
 
+      // ── OPTIMISTIC: actualizar inmediatamente, guardar snapshot para revertir ──
+      const prevClientes = clientes
+      setClientes(prev => prev.map(cliente =>
+        cliente.id === clienteId ? { ...cliente, ...datosActualizados } : cliente
+      ))
+
       const { error } = await supabase
         .from('clientes')
-        .update({
-          ...datosActualizados,
-          updated_at: new Date().toISOString()
-        })
+        .update({ ...datosActualizados, updated_at: new Date().toISOString() })
         .eq('id', clienteId)
 
-      if (error) throw error
-
-      setClientes(prev => prev.map(cliente =>
-        cliente.id === clienteId
-          ? { ...cliente, ...datosActualizados }
-          : cliente
-      ))
+      if (error) {
+        setClientes(prevClientes) // revertir
+        throw error
+      }
 
       return { success: true }
     } catch (error) {
@@ -1401,14 +1407,20 @@ export const useFacturacion = () => {
 
   const eliminarCliente = async (clienteId) => {
     try {
+      // ── OPTIMISTIC: eliminar inmediatamente, guardar snapshot para revertir ──
+      const prevClientes = clientes
+      setClientes(prev => prev.filter(c => c.id !== clienteId))
+
       const { error } = await supabase
         .from('clientes')
         .delete()
         .eq('id', clienteId)
 
-      if (error) throw error
+      if (error) {
+        setClientes(prevClientes) // revertir
+        throw error
+      }
 
-      setClientes(prev => prev.filter(c => c.id !== clienteId))
       return { success: true }
     } catch (error) {
       console.error('Error eliminando cliente:', error)
@@ -1434,7 +1446,6 @@ export const useFacturacion = () => {
         }
       }
 
-      // Construir payload con campos explícitos (sin camelCase de estado)
       const productoData = {
         nombre: nuevoProducto.nombre.trim(),
         codigo,
@@ -1449,15 +1460,23 @@ export const useFacturacion = () => {
         created_at: new Date().toISOString()
       }
 
+      // ── OPTIMISTIC: mostrar inmediatamente con ID temporal ──
+      const tempId = `temp-${Date.now()}`
+      setProductos(prev => [{ ...productoData, id: tempId }, ...prev])
+      setNuevoProducto({ nombre: '', precio: 0, stock: 0, codigo: '', categoria: '', descripcion: '', controlaStock: false })
+
       const { data, error } = await supabase
         .from('productos')
         .insert([productoData])
         .select()
 
-      if (error) throw error
+      if (error) {
+        setProductos(prev => prev.filter(p => p.id !== tempId)) // revertir
+        throw error
+      }
 
-      setProductos(prev => [data[0], ...prev])
-      setNuevoProducto({ nombre: '', precio: 0, stock: 0, codigo: '', categoria: '', descripcion: '', controlaStock: false })
+      // Reemplazar temp con el registro real (tiene el id real de Supabase)
+      setProductos(prev => prev.map(p => p.id === tempId ? data[0] : p))
 
       return { success: true, producto: data[0] }
     } catch (error) {
@@ -1481,26 +1500,27 @@ export const useFacturacion = () => {
       if (datosActualizados.stock !== undefined) payload.stock = parseInt(datosActualizados.stock) || 0
       if (datosActualizados.categoria !== undefined) payload.categoria = datosActualizados.categoria
       if (datosActualizados.descripcion !== undefined) payload.descripcion = datosActualizados.descripcion
-      // Normalizar controlastock
       const cs = datosActualizados.controlaStock !== undefined ? datosActualizados.controlaStock
         : datosActualizados.controlastock !== undefined ? datosActualizados.controlastock
           : undefined
       if (cs !== undefined) payload.controlastock = !!cs
       if (datosActualizados.stock_minimo !== undefined) payload.stock_minimo = datosActualizados.stock_minimo != null ? parseInt(datosActualizados.stock_minimo) : null
 
+      // ── OPTIMISTIC: actualizar inmediatamente, guardar snapshot para revertir ──
+      const prevProductos = productos
+      setProductos(prev => prev.map(producto =>
+        producto.id === productoId ? { ...producto, ...payload } : producto
+      ))
+
       const { error } = await supabase
         .from('productos')
         .update(payload)
         .eq('id', productoId)
 
-      if (error) throw error
-
-      // Actualizar estado local (guardar con controlastock minúsculas también)
-      setProductos(prev => prev.map(producto =>
-        producto.id === productoId
-          ? { ...producto, ...payload }
-          : producto
-      ))
+      if (error) {
+        setProductos(prevProductos) // revertir
+        throw error
+      }
 
       return { success: true }
     } catch (error) {
@@ -1511,14 +1531,20 @@ export const useFacturacion = () => {
 
   const eliminarProducto = async (productoId) => {
     try {
+      // ── OPTIMISTIC: eliminar inmediatamente, guardar snapshot para revertir ──
+      const prevProductos = productos
+      setProductos(prev => prev.filter(p => p.id !== productoId))
+
       const { error } = await supabase
         .from('productos')
         .delete()
         .eq('id', productoId)
 
-      if (error) throw error
+      if (error) {
+        setProductos(prevProductos) // revertir
+        throw error
+      }
 
-      setProductos(prev => prev.filter(p => p.id !== productoId))
       return { success: true }
     } catch (error) {
       console.error('Error eliminando producto:', error)
@@ -1622,6 +1648,11 @@ export const useFacturacion = () => {
       created_at: new Date().toISOString()
     }
 
+    // ── OPTIMISTIC: mostrar inmediatamente con ID temporal ──
+    const tempId = `temp-${Date.now()}`
+    setClientes(prev => [{ ...clienteData, id: tempId }, ...prev])
+    if (!datosDirectos) setClienteRapido({ nombre: '', telefono: '' })
+
     const { data, error } = await supabase
       .from('clientes')
       .insert([clienteData])
@@ -1629,22 +1660,19 @@ export const useFacturacion = () => {
 
     if (error) {
       console.error('Error agregando cliente rápido:', error)
+      setClientes(prev => prev.filter(c => c.id !== tempId)) // revertir
       return { success: false, mensaje: error.message || 'Error al agregar cliente' }
     }
 
-    setClientes(prev => [data[0], ...prev])
-    if (!datosDirectos) setClienteRapido({ nombre: '', telefono: '' })
+    // Reemplazar temp con el registro real
+    setClientes(prev => prev.map(c => c.id === tempId ? data[0] : c))
 
     return { success: true, cliente: data[0], mensaje: 'Cliente agregado exitosamente' }
   }
 
   const agregarProductoRapido = async () => {
-    // Validar nombre
     if (!productoRapido.nombre || productoRapido.nombre.trim() === '') {
-      return {
-        success: false,
-        mensaje: 'El nombre del producto es requerido'
-      }
+      return { success: false, mensaje: 'El nombre del producto es requerido' }
     }
 
     const productoData = {
@@ -1665,6 +1693,11 @@ export const useFacturacion = () => {
     }
     productoData.codigo = nuevoCodigo
 
+    // ── OPTIMISTIC: mostrar inmediatamente con ID temporal ──
+    const tempId = `temp-${Date.now()}`
+    setProductos(prev => [{ ...productoData, id: tempId }, ...prev])
+    setProductoRapido({ nombre: '', precio: 0 })
+
     const { data, error } = await supabase
       .from('productos')
       .insert([productoData])
@@ -1672,14 +1705,12 @@ export const useFacturacion = () => {
 
     if (error) {
       console.error('Error agregando producto rápido:', error)
-      return {
-        success: false,
-        mensaje: error.message || 'Error al agregar producto'
-      }
+      setProductos(prev => prev.filter(p => p.id !== tempId)) // revertir
+      return { success: false, mensaje: error.message || 'Error al agregar producto' }
     }
 
-    setProductos(prev => [data[0], ...prev])
-    setProductoRapido({ nombre: '', precio: 0 })
+    // Reemplazar temp con el registro real
+    setProductos(prev => prev.map(p => p.id === tempId ? data[0] : p))
 
     return {
       success: true,

@@ -179,9 +179,12 @@ export const usePOS = () => {
             const vuelto = Math.max(0, pagado - total)
             const hoy = new Date().toISOString().split('T')[0]
 
-            // Generar código de venta POS
-            const { data: ultimoPedido } = await supabase
-                .from('pedidos').select('codigo').order('created_at', { ascending: false }).limit(1)
+            // ── OPTIMIZACIÓN: obtener secuencias en PARALELO (antes eran 2 awaits secuenciales) ──
+            const [{ data: ultimoPedido }, { data: ultimaFactura }] = await Promise.all([
+                supabase.from('pedidos').select('codigo').order('created_at', { ascending: false }).limit(1),
+                supabase.from('facturas').select('numero').eq('tipo', 'Factura A').order('created_at', { ascending: false }).limit(1),
+            ])
+
             let numPedido = 1
             if (ultimoPedido?.[0]?.codigo) {
                 const m = ultimoPedido[0].codigo.match(/\d+/)
@@ -189,9 +192,6 @@ export const usePOS = () => {
             }
             const codigoPOS = `POS-${numPedido.toString().padStart(4, '0')}`
 
-            // Generar número de factura
-            const { data: ultimaFactura } = await supabase
-                .from('facturas').select('numero').eq('tipo', 'Factura A').order('created_at', { ascending: false }).limit(1)
             let ultimoNum = 0
             if (ultimaFactura?.[0]?.numero) {
                 const matches = ultimaFactura[0].numero.match(/\d+/g)
@@ -199,13 +199,16 @@ export const usePOS = () => {
             }
             const numeroFactura = `FA-${(ultimoNum + 1).toString().padStart(8, '0')}`
 
+            const itemsJSON = JSON.stringify(carrito.map(i => ({ productoId: i.productoId, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad })))
+            const detalleProductos = carrito.map(i => `${i.nombre}${i.cantidad > 1 ? ` x${i.cantidad}` : ''}`).join(', ')
+
             // 1. Crear Pedido POS
             const { data: pedidoRes, error: pErr } = await supabase.from('pedidos').insert([{
                 codigo: codigoPOS,
                 cliente_nombre: 'Consumidor Final',
                 fecha_pedido: hoy,
                 fecha_entrega_estimada: hoy,
-                items: JSON.stringify(carrito.map(i => ({ productoId: i.productoId, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad }))),
+                items: itemsJSON,
                 total,
                 productos_count: carrito.length,
                 notas: `Venta POS | ${metodoPago}`,
@@ -218,83 +221,35 @@ export const usePOS = () => {
             if (pErr) throw pErr
             const nuevoPedido = pedidoRes[0]
 
-            // 2. Crear Factura asociada
-            const { data: facturaRes, error: fErr } = await supabase.from('facturas').insert([{
-                tipo: 'Factura A',
-                numero: numeroFactura,
-                fecha: hoy,
-                cliente: 'Consumidor Final',
-                pedido_id: nuevoPedido.id,
-                metodopago: metodoPago,
-                items: JSON.stringify(carrito.map(i => ({ productoId: i.productoId, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad }))),
-                total,
-                montopagado: total,
-                saldopendiente: 0,
-                estado: 'pagada',
-                user_id: user.id
-            }]).select()
+            // ── OPTIMIZACIÓN: factura + caja en PARALELO (antes eran 2 awaits secuenciales) ──
+            const [{ error: fErr }] = await Promise.all([
+                supabase.from('facturas').insert([{
+                    tipo: 'Factura A',
+                    numero: numeroFactura,
+                    fecha: hoy,
+                    cliente: 'Consumidor Final',
+                    pedido_id: nuevoPedido.id,
+                    metodopago: metodoPago,
+                    items: itemsJSON,
+                    total,
+                    montopagado: total,
+                    saldopendiente: 0,
+                    estado: 'pagada',
+                    user_id: user.id
+                }]).select(),
+                supabase.from('movimientos_caja').insert([{
+                    tipo: 'ingreso',
+                    monto: total,
+                    description: `Venta POS ${codigoPOS} | ${metodoPago} | ${detalleProductos}`,
+                    metodo: metodoPago,
+                    referencia: `pedido:${nuevoPedido.id}`,
+                    fecha: new Date().toISOString(),
+                    user_id: user.id
+                }]),
+            ])
             if (fErr) throw fErr
 
-            // 3. Movimiento de Caja (con detalle de productos)
-            const detalleProductos = carrito
-                .map(i => `${i.nombre}${i.cantidad > 1 ? ` x${i.cantidad}` : ''}`)
-                .join(', ')
-
-            await supabase.from('movimientos_caja').insert([{
-                tipo: 'ingreso',
-                monto: total,
-                description: `Venta POS ${codigoPOS} | ${metodoPago} | ${detalleProductos}`,
-                metodo: metodoPago,
-                referencia: `pedido:${nuevoPedido.id}`,
-                fecha: new Date().toISOString(),
-                user_id: user.id
-            }])
-
-
-            // 4. Descontar stock en paralelo + detectar alertas de bajo stock
-            const alertas = []
-            await Promise.all(carrito.map(async (item) => {
-                // Saltar items libres (sin productoId en la DB)
-                if (!item.productoId) return
-
-                // Leer el stock actual (select('*') para no fallar si falta alguna columna)
-                const { data: prod, error: readErr } = await supabase
-                    .from('productos')
-                    .select('*')
-                    .eq('id', item.productoId)
-                    .single()
-
-                if (readErr || !prod) {
-                    console.warn(`[POS] No se pudo leer producto ${item.productoId}:`, readErr?.message)
-                    return
-                }
-
-                const stockActual = typeof prod.stock === 'number' ? prod.stock : (parseInt(prod.stock) || 0)
-                const nuevoStock = Math.max(0, stockActual - item.cantidad)
-
-                // Actualizar stock
-                const { error: updateErr } = await supabase
-                    .from('productos')
-                    .update({ stock: nuevoStock })
-                    .eq('id', item.productoId)
-                    .eq('user_id', user.id)
-
-                if (updateErr) {
-                    console.error(`[POS] Error descontando stock de "${item.nombre}":`, updateErr.message)
-                    return
-                }
-
-                console.log(`[POS] Stock "${item.nombre}": ${stockActual} → ${nuevoStock} (-${item.cantidad})`)
-
-                // Detectar bajo stock
-                const minimo = prod.stock_minimo ?? prod.stockminimo ?? 5
-                if (nuevoStock <= minimo) {
-                    alertas.push({ nombre: prod.nombre, stock: nuevoStock, minimo })
-                }
-            }))
-            if (alertas.length) setAlertasStock(alertas)
-
-
+            // ── OPTIMISTIC: mostrar éxito inmediatamente sin esperar el descuento de stock ──
             const resumen = {
                 codigo: codigoPOS,
                 numero: numeroFactura,
@@ -308,6 +263,32 @@ export const usePOS = () => {
             setUltimaVenta(resumen)
             limpiarCarrito()
             setModalCobro(false)
+            setCargando(false)
+
+            // ── BACKGROUND: descontar stock sin bloquear la UI ──
+            ;(async () => {
+                const alertas = []
+                await Promise.all(carrito.map(async (item) => {
+                    if (!item.productoId) return
+                    const { data: prod, error: readErr } = await supabase
+                        .from('productos').select('*').eq('id', item.productoId).single()
+                    if (readErr || !prod) {
+                        console.warn(`[POS] No se pudo leer producto ${item.productoId}:`, readErr?.message)
+                        return
+                    }
+                    const stockActual = typeof prod.stock === 'number' ? prod.stock : (parseInt(prod.stock) || 0)
+                    const nuevoStock = Math.max(0, stockActual - item.cantidad)
+                    const { error: updateErr } = await supabase
+                        .from('productos').update({ stock: nuevoStock })
+                        .eq('id', item.productoId).eq('user_id', user.id)
+                    if (updateErr) { console.error(`[POS] Error stock "${item.nombre}":`, updateErr.message); return }
+                    console.log(`[POS] Stock "${item.nombre}": ${stockActual} → ${nuevoStock} (-${item.cantidad})`)
+                    const minimo = prod.stock_minimo ?? prod.stockminimo ?? 5
+                    if (nuevoStock <= minimo) alertas.push({ nombre: prod.nombre, stock: nuevoStock, minimo })
+                }))
+                if (alertas.length) setAlertasStock(alertas)
+            })().catch(e => console.warn('[POS] Background stock update error:', e))
+
             return { success: true, resumen }
 
         } catch (e) {
