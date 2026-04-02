@@ -361,11 +361,24 @@ const DesktopDashboard = ({
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={onOpenMobileSidebar}
-            className="lg:hidden"
-            style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)", color: "rgba(255,255,255,.7)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+            id="dd-hamburger-main"
+            style={{
+              width: 30, height: 30, borderRadius: 8,
+              background: "rgba(255,255,255,.06)",
+              border: "1px solid rgba(255,255,255,.12)",
+              color: "rgba(255,255,255,.7)",
+              display: "none",
+              alignItems: "center", justifyContent: "center", cursor: "pointer",
+            }}
           >
             <Menu size={16} strokeWidth={2} />
           </button>
+          <style>{`
+            #dd-hamburger-main { display: none !important; }
+            @media (max-width: 1023px) { 
+              #dd-hamburger-main { display: flex !important; } 
+            }
+          `}</style>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,.45)", marginBottom: 2, letterSpacing: ".06em", textTransform: "uppercase" }}>Panel de Control</p>
             <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-.03em", color: "#fff", lineHeight: 1 }}>Dashboard</h2>
@@ -602,7 +615,7 @@ const DesktopDashboard = ({
                       <Icon size={12} strokeWidth={2} style={{ color: ct3 }} />
                       <span style={{ fontSize: 9, color: ct3, fontWeight: 600 }}>{s.sub}</span>
                     </div>
-                    <p style={{ fontSize: 16, fontWeight: 800, color: ct1, letterSpacing: "-0.04em", lineHeight: 1 }}>{s.value}</p>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: ct1, lineHeight: 1 }}>{s.value}</p>
                     <p style={{ fontSize: 10, color: ct3, fontWeight: 500 }}>{s.label}</p>
                   </button>
                 )

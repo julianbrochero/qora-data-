@@ -172,9 +172,25 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
             {/* HEADER */}
             <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px,3vw,24px)', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+                    <button 
+                        onClick={onOpenMobileSidebar} 
+                        id="conf-hamburger"
+                        className="w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" 
+                        style={{ 
+                            background: 'rgba(255,255,255,.06)', 
+                            border: '1px solid rgba(255,255,255,.12)', 
+                            color: 'rgba(255,255,255,.7)',
+                            display: 'none'
+                        }}
+                    >
                         <Menu size={16} strokeWidth={2} />
                     </button>
+                    <style>{`
+                        #conf-hamburger { display: none !important; }
+                        @media (max-width: 1023px) { 
+                            #conf-hamburger { display: flex !important; } 
+                        }
+                    `}</style>
                     <img src="/newlogo.png" alt="Gestify" style={{ height: 32, objectFit: 'contain' }} />
                     <div>
                         <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Sistema</p>

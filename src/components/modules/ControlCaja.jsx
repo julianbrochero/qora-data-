@@ -131,9 +131,25 @@ const ControlCaja = ({ caja = {}, movimientosCaja = [], cierresCaja = [], pedido
       {/* ══ HEADER ══ */}
       <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '8px clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)', display: 'flex' }}>
+          <button 
+            onClick={onOpenMobileSidebar} 
+            id="caja-hamburger"
+            className="w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" 
+            style={{ 
+              background: 'rgba(255,255,255,.06)', 
+              border: '1px solid rgba(255,255,255,.12)', 
+              color: 'rgba(255,255,255,.7)',
+              display: 'none'
+            }}
+          >
             <Menu size={16} strokeWidth={2} />
           </button>
+          <style>{`
+            #caja-hamburger { display: none !important; }
+            @media (max-width: 1023px) { 
+              #caja-hamburger { display: flex !important; } 
+            }
+          `}</style>
           <div className="hidden sm:block">
             <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
             <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Caja</h2>

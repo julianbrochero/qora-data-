@@ -366,6 +366,16 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
     recargarProductos?.()
   }
 
+  // ── Toggle controla stock masivo ──
+  const toggleControlaStockSeleccionados = async (activar) => {
+    const ids = [...seleccionados]
+    if (!editarProducto || ids.length === 0) return
+    await Promise.all(ids.map(id => editarProducto(id, { controlastock: activar })))
+    setSeleccionados(new Set())
+    setModoSeleccion(false)
+    recargarProductos?.()
+  }
+
   const fMonto = v => (parseFloat(v) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   const resumen = {
@@ -667,9 +677,25 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
       {/* ══ HEADER ══ */}
       <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap', paddingBottom: 8, paddingTop: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onOpenMobileSidebar} className="md:hidden w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.7)' }}>
+          <button 
+            onClick={onOpenMobileSidebar} 
+            id="prod-hamburger"
+            className="w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" 
+            style={{ 
+              background: 'rgba(255,255,255,.06)', 
+              border: '1px solid rgba(255,255,255,.12)', 
+              color: 'rgba(255,255,255,.7)',
+              display: 'none'
+            }}
+          >
             <Menu size={16} strokeWidth={2} />
           </button>
+          <style>{`
+            #prod-hamburger { display: none !important; }
+            @media (max-width: 1023px) { 
+              #prod-hamburger { display: flex !important; } 
+            }
+          `}</style>
           <div>
             <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
             <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Productos</h2>
@@ -902,6 +928,31 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                     </>
                   )}
                 </div>
+                {/* Toggle controla stock */}
+                <button
+                  onClick={() => {
+                    customConfirm(
+                      `Activar control de stock`,
+                      `¿Activar control de stock en ${seleccionados.size} producto${seleccionados.size !== 1 ? 's' : ''}? El stock empezará a descontarse en ventas.`,
+                      () => { toggleControlaStockSeleccionados(true); cerrarDialogo() }
+                    )
+                  }}
+                  title="Activar control de stock en los seleccionados"
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: accent, background: 'rgba(51,65,57,.1)', border: `1px solid rgba(51,65,57,.25)`, cursor: 'pointer' }}>
+                  <CheckCircle size={12} /> Activar stock
+                </button>
+                <button
+                  onClick={() => {
+                    customConfirm(
+                      `Desactivar control de stock`,
+                      `¿Desactivar control de stock en ${seleccionados.size} producto${seleccionados.size !== 1 ? 's' : ''}? El stock dejará de descontarse y no tendrá límite.`,
+                      () => { toggleControlaStockSeleccionados(false); cerrarDialogo() }
+                    )
+                  }}
+                  title="Desactivar control de stock en los seleccionados"
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#6B7280', background: 'rgba(107,114,128,.08)', border: '1px solid rgba(107,114,128,.2)', cursor: 'pointer' }}>
+                  <Archive size={12} /> Desactivar stock
+                </button>
                 <button onClick={eliminarSeleccionados} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', background: '#DC2626', border: 'none', cursor: 'pointer' }}>
                   <Trash2 size={12} /> Eliminar {seleccionados.size}
                 </button>

@@ -48,7 +48,7 @@ export const useVentas = () => {
         if (item.controlaStock !== false) {
           const { data: producto, error: productoError } = await supabase
             .from('productos')
-            .select('stock, nombre')
+            .select('stock, nombre, controlastock')
             .eq('id', item.productoId)
             .single()
 
@@ -57,7 +57,10 @@ export const useVentas = () => {
             continue
           }
 
-          if (producto && producto.stock < item.cantidad) {
+          // Si stock es null o el producto no controla stock, saltar
+          if (!producto || producto.stock === null || producto.controlastock === false) continue
+
+          if (producto.stock < item.cantidad) {
             throw new Error(`Stock insuficiente para ${producto.nombre || item.producto}. Disponible: ${producto.stock}, Solicitado: ${item.cantidad}`)
           }
         }
@@ -204,17 +207,18 @@ export const useVentas = () => {
           try {
             const { data: prod } = await supabase
               .from('productos')
-              .select('stock')
+              .select('stock, controlastock')
               .eq('id', item.productoId)
               .single()
 
-            if (prod) {
+            // Solo descontar si el producto realmente controla stock y el stock no es null
+            if (prod && prod.controlastock === true && prod.stock !== null) {
               const nuevoStock = Math.max(0, (prod.stock || 0) - item.cantidad)
               await supabase
                 .from('productos')
                 .update({ stock: nuevoStock })
                 .eq('id', item.productoId)
-              console.log(`Stock actualizado para producto ${item.productoId}: -${item.cantidad}`)
+              console.log(`Stock actualizado para producto ${item.productoId}: ${prod.stock} → ${nuevoStock} (-${item.cantidad})`)
             }
           } catch (stockError) {
             console.error(`Error actualizando stock para producto ${item.productoId}:`, stockError)

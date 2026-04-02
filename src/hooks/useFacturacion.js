@@ -544,8 +544,9 @@ export const useFacturacion = () => {
             pedidoData.items
               .filter(item => item.controlaStock !== false && item.productoId)
               .map(async item => {
-                const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
-                if (prod && prod.stock != null) {
+                const { data: prod } = await supabase.from('productos').select('stock, controlastock').eq('id', item.productoId).single()
+                // Solo descontar si el producto realmente controla stock y stock no es null
+                if (prod && prod.controlastock === true && prod.stock !== null) {
                   const nuevoStock = Math.max(0, prod.stock - item.cantidad)
                   await supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.productoId)
                 }
@@ -1281,8 +1282,9 @@ export const useFacturacion = () => {
       // Actualizar stock para productos del catálogo
       for (const item of facturaData.items) {
         if (item.productoId) {
-          const { data: prod } = await supabase.from('productos').select('stock').eq('id', item.productoId).single()
-          if (prod && prod.stock != null) {
+          const { data: prod } = await supabase.from('productos').select('stock, controlastock').eq('id', item.productoId).single()
+          // Solo descontar si el producto controla stock y stock no es null
+          if (prod && prod.controlastock === true && prod.stock !== null) {
             const nuevoStock = Math.max(0, prod.stock - item.cantidad)
             await supabase.from('productos').update({ stock: nuevoStock }).eq('id', item.productoId)
           }
