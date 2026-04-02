@@ -245,7 +245,7 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
             <div style={{ position: 'relative' }}>
               <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
               <input ref={precioRef} type="number" required value={data.precio || ''} onChange={e => handleChange('precio', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
-                onKeyDown={e => handleKeyDown(e, costoRef)}
+                onKeyDown={e => handleKeyDown(e, isEdit ? costoRef : null)}
                 onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0.01"
                 style={{ ...inputBase, paddingLeft: 30 }} />
             </div>

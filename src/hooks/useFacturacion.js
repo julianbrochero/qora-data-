@@ -1455,7 +1455,8 @@ export const useFacturacion = () => {
         categoria: nuevoProducto.categoria || '',
         descripcion: nuevoProducto.descripcion || '',
         controlastock: !!(nuevoProducto.controlaStock || nuevoProducto.controlastock),
-        stock_minimo: nuevoProducto.stock_minimo != null ? parseInt(nuevoProducto.stock_minimo) : null,
+        // Solo incluir stock_minimo si tiene un valor real (evita error si la columna no existe)
+        ...(nuevoProducto.stock_minimo != null && { stock_minimo: parseInt(nuevoProducto.stock_minimo) }),
         user_id: user.id,
         created_at: new Date().toISOString()
       }
