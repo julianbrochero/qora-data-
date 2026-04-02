@@ -237,9 +237,9 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
       if (costoActual > 0) await editarProducto(prodId, { costo: null })
       cancelEdit(); return
     }
-    const numVal = parseFloat(val)
+    const numVal = field === 'stock' ? parseInt(val) : parseFloat(val)
     if (isNaN(numVal) || numVal < 0) { cancelEdit(); return }
-    const valActual = field === 'precio' ? parseFloat(prod.precio) : parseFloat(prod.costo)
+    const valActual = parseFloat(prod[field])
     if (numVal !== valActual) await editarProducto(prodId, { [field]: numVal })
     cancelEdit()
   }
@@ -380,7 +380,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
 
   const resumen = {
     total: filtrados.length,
-    conStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > stockCfg.umbral).length,
+    conStock: filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) > 0).length,
     bajoStock: stockCfg.activo ? filtrados.filter(p => (p.controlastock || p.controlaStock) && (p.stock || 0) <= stockCfg.umbral).length : 0,
     sinControl: filtrados.filter(p => !(p.controlastock || p.controlaStock)).length,
   }
@@ -929,30 +929,21 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                   )}
                 </div>
                 {/* Toggle controla stock */}
-                <button
-                  onClick={() => {
-                    customConfirm(
-                      `Activar control de stock`,
-                      `¿Activar control de stock en ${seleccionados.size} producto${seleccionados.size !== 1 ? 's' : ''}? El stock empezará a descontarse en ventas.`,
-                      () => { toggleControlaStockSeleccionados(true); cerrarDialogo() }
-                    )
-                  }}
-                  title="Activar control de stock en los seleccionados"
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: accent, background: 'rgba(51,65,57,.1)', border: `1px solid rgba(51,65,57,.25)`, cursor: 'pointer' }}>
-                  <CheckCircle size={12} /> Activar stock
-                </button>
-                <button
-                  onClick={() => {
-                    customConfirm(
-                      `Desactivar control de stock`,
-                      `¿Desactivar control de stock en ${seleccionados.size} producto${seleccionados.size !== 1 ? 's' : ''}? El stock dejará de descontarse y no tendrá límite.`,
-                      () => { toggleControlaStockSeleccionados(false); cerrarDialogo() }
-                    )
-                  }}
-                  title="Desactivar control de stock en los seleccionados"
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#6B7280', background: 'rgba(107,114,128,.08)', border: '1px solid rgba(107,114,128,.2)', cursor: 'pointer' }}>
-                  <Archive size={12} /> Desactivar stock
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8, background: 'rgba(0,0,0,.04)', border: '1px solid rgba(0,0,0,.1)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#374151', paddingRight: 4 }}>Stock</span>
+                  <button
+                    onClick={() => { customConfirm(`Activar control de stock`, `¿Activar control de stock en ${seleccionados.size} producto${seleccionados.size !== 1 ? 's' : ''}? El stock empezará a descontarse en ventas.`, () => { toggleControlaStockSeleccionados(true); cerrarDialogo() }) }}
+                    title="Activar control de stock"
+                    style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, color: accent, background: 'rgba(51,65,57,.12)', border: `1px solid rgba(51,65,57,.3)`, cursor: 'pointer' }}>
+                    Sí
+                  </button>
+                  <button
+                    onClick={() => { customConfirm(`Desactivar control de stock`, `¿Desactivar control de stock en ${seleccionados.size} producto${seleccionados.size !== 1 ? 's' : ''}? El stock dejará de descontarse y no tendrá límite.`, () => { toggleControlaStockSeleccionados(false); cerrarDialogo() }) }}
+                    title="Desactivar control de stock"
+                    style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, color: '#6B7280', background: 'rgba(107,114,128,.08)', border: '1px solid rgba(107,114,128,.2)', cursor: 'pointer' }}>
+                    No
+                  </button>
+                </div>
                 <button onClick={eliminarSeleccionados} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', background: '#DC2626', border: 'none', cursor: 'pointer' }}>
                   <Trash2 size={12} /> Eliminar {seleccionados.size}
                 </button>
@@ -1097,14 +1088,32 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
                         )}
                       </td>
 
-                      {/* stock */}
+                      {/* stock — editable inline */}
                       <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
-                        {csOk ? (
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: stockLow ? '#FEF2F2' : '#F0FDF4', color: stockLow ? '#991B1B' : '#065F46', border: `1px solid ${stockLow ? '#FCA5A5' : '#6EE7B7'}` }}>
-                            {stockLow && <AlertTriangle size={11} strokeWidth={2.5} />}
-                            {prod.stock || 0} u.
+                        {inlineEdit.prodId === prod.id && inlineEdit.field === 'stock' ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                            <input
+                              type="number" value={inlineEdit.val} min="0" step="1" autoFocus
+                              onChange={e => setInlineEdit(p => ({ ...p, val: e.target.value }))}
+                              onBlur={() => commitEdit(prod)}
+                              onKeyDown={e => { if (e.key === 'Enter') commitEdit(prod); if (e.key === 'Escape') cancelEdit() }}
+                              style={{ width: 70, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 700, color: stockLow ? '#991B1B' : '#065F46', background: stockLow ? '#FEF2F2' : '#F0FDF4', border: `1.5px solid ${stockLow ? '#EF4444' : '#059669'}`, borderRadius: 7, outline: 'none', textAlign: 'right', fontFamily: "'Inter', sans-serif" }}
+                            />
                           </div>
-                        ) : <span style={{ color: ct3, fontSize: 12 }}>—</span>}
+                        ) : (
+                          <button onClick={() => { if (csOk) startEdit(prod.id, 'stock', prod.stock || 0) }}
+                            title={csOk ? "Click para editar stock" : "El control de stock está desactivado"}
+                            style={{ background: 'none', border: 'none', cursor: csOk ? 'text' : 'default', padding: '4px 6px', borderRadius: 6, transition: 'background .12s', textAlign: 'right', display: 'block', marginLeft: 'auto', opacity: csOk ? 1 : 0.5 }}
+                            onMouseEnter={e => { if (csOk) e.currentTarget.style.background = stockLow ? 'rgba(153,27,27,.06)' : 'rgba(5,150,105,.06)' }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'none' }}>
+                            {csOk ? (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: stockLow ? '#FEF2F2' : '#F0FDF4', color: stockLow ? '#991B1B' : '#065F46', border: `1px solid ${stockLow ? '#FCA5A5' : '#6EE7B7'}` }}>
+                                {stockLow && <AlertTriangle size={11} strokeWidth={2.5} />}
+                                {prod.stock || 0} u.
+                              </div>
+                            ) : <span style={{ color: ct3, fontSize: 12 }}>—</span>}
+                          </button>
+                        )}
                       </td>
 
                       {/* control */}

@@ -285,6 +285,15 @@ const DesktopDashboard = ({
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
+  const [bellOpen, setBellOpen] = useState(false)
+  const bellRef = useRef(null)
+  useEffect(() => {
+    if (!bellOpen) return
+    const close = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false) }
+    document.addEventListener("mousedown", close)
+    return () => document.removeEventListener("mousedown", close)
+  }, [bellOpen])
+
   /* ── Cálculos ── */
   const hoy          = new Date()
   const startOfDay   = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
@@ -302,6 +311,13 @@ const DesktopDashboard = ({
   const pedProc     = pedidos.filter(p => p.estado === "preparando").length
   const pedEntr     = pedidos.filter(p => p.estado === "entregado").length
   const sinStock    = productos.filter(p => !!(p.controlastock || p.controlaStock) && (p.stock || 0) === 0).length
+
+  const umbralStock = (() => { try { return parseInt(localStorage.getItem('gestify_bajo_stock_umbral')) || 5 } catch { return 5 } })()
+  const alertasStock = useMemo(() =>
+    productos.filter(p => !!(p.controlastock || p.controlaStock) && (p.stock || 0) <= umbralStock)
+      .sort((a, b) => (a.stock || 0) - (b.stock || 0))
+      .slice(0, 10)
+  , [productos, umbralStock])
 
   const last7 = useMemo(() => Array.from({ length: 7 }, (_, i) => {
     const d  = new Date(hoy); d.setDate(d.getDate() - (6 - i))
@@ -403,9 +419,44 @@ const DesktopDashboard = ({
             <span style={{ fontSize: 11, color: "rgba(255,255,255,.4)", fontWeight: 500 }}>{fechaCap}</span>
           </div>
           <div style={{ width: 1, height: 20, background: "rgba(255,255,255,.1)", margin: "0 2px" }} className="hidden lg:block" />
-          <button style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <Bell size={14} strokeWidth={2} style={{ color: "rgba(255,255,255,.55)" }} />
-          </button>
+          <div ref={bellRef} style={{ position: "relative" }}>
+            <button
+              onClick={() => setBellOpen(v => !v)}
+              style={{ width: 32, height: 32, borderRadius: 8, background: bellOpen ? "rgba(255,255,255,.14)" : "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+              <Bell size={14} strokeWidth={2} style={{ color: alertasStock.length > 0 ? "#FCD34D" : "rgba(255,255,255,.55)" }} />
+              {alertasStock.length > 0 && (
+                <span style={{ position: "absolute", top: 4, right: 4, width: 7, height: 7, borderRadius: "50%", background: "#EF4444", border: "1.5px solid #334139" }} />
+              )}
+            </button>
+            {bellOpen && (
+              <div style={{ position: "absolute", top: 40, right: 0, width: 280, background: "#fff", borderRadius: 12, boxShadow: "0 8px 32px rgba(0,0,0,.15)", border: "1px solid rgba(0,0,0,.08)", zIndex: 999, overflow: "hidden" }}>
+                <div style={{ padding: "12px 14px 8px", borderBottom: "1px solid rgba(0,0,0,.07)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <AlertTriangle size={13} style={{ color: alertasStock.length > 0 ? "#EF4444" : "#6B7280" }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#374151" }}>Stock bajo</span>
+                  {alertasStock.length > 0 && (
+                    <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#fff", background: "#EF4444", borderRadius: 10, padding: "1px 6px" }}>{alertasStock.length}</span>
+                  )}
+                </div>
+                {alertasStock.length === 0 ? (
+                  <div style={{ padding: "18px 14px", textAlign: "center", fontSize: 12, color: "#9CA3AF" }}>Sin alertas de stock</div>
+                ) : (
+                  <div style={{ maxHeight: 240, overflowY: "auto" }}>
+                    {alertasStock.map(p => (
+                      <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: "1px solid rgba(0,0,0,.04)" }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "#1F2937", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nombre}</div>
+                          {p.codigo && <div style={{ fontSize: 10, color: "#9CA3AF" }}>{p.codigo}</div>}
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: (p.stock || 0) === 0 ? "#DC2626" : "#D97706", background: (p.stock || 0) === 0 ? "#FEF2F2" : "#FFFBEB", border: `1px solid ${(p.stock || 0) === 0 ? "#FCA5A5" : "#FDE68A"}`, borderRadius: 6, padding: "2px 8px", flexShrink: 0, marginLeft: 8 }}>
+                          {p.stock || 0} u.
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: isPro ? "rgba(74,222,128,.12)" : "rgba(255,255,255,.08)", border: `1px solid ${isPro ? "rgba(74,222,128,.25)" : "rgba(255,255,255,.14)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: isPro ? "#4ADE80" : "rgba(255,255,255,.65)", overflow: "hidden", flexShrink: 0 }}>
             {user?.user_metadata?.avatar_url
               ? <img src={user.user_metadata.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
