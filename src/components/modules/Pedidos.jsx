@@ -62,7 +62,8 @@ const Pedidos = ({
   /* ── filtros ── */
   const filtrarPedidos = pedidosSeguros.filter(p => {
     const q = String(searchTerm || "").toLowerCase()
-    const busq = String(p.codigo || "").toLowerCase().includes(q) || String(p.cliente_nombre || "").toLowerCase().includes(q)
+    const productosStr = (() => { try { const its = typeof p.items === 'string' ? JSON.parse(p.items) : (p.items || []); return its.map(i => (i.producto || i.nombre || '')).join(' ').toLowerCase() } catch { return '' } })()
+    const busq = !q || String(p.codigo || "").toLowerCase().includes(q) || String(p.cliente_nombre || "").toLowerCase().includes(q) || productosStr.includes(q)
     const estado = filtroEstado === "todos" || p.estado === filtroEstado
     const fact = filtroFacturacion === "todos" || (filtroFacturacion === "facturados" && p.factura_id) || (filtroFacturacion === "no-facturados" && !p.factura_id)
     const canal = filtroCanal === "todos" || p.canal_venta === filtroCanal || (filtroCanal === "sin-canal" && !p.canal_venta)
@@ -471,7 +472,7 @@ const Pedidos = ({
                               try {
                                 const stItems = typeof pedido.items === 'string' ? JSON.parse(pedido.items) : (pedido.items || []);
                                 if (stItems.length > 0) {
-                                  const summary = stItems.map(i => `${i.cantidad}x ${i.producto || i.nombre || '—'}`).join(', ');
+                                  const summary = stItems.map(i => { const nombre = i.producto || i.nombre || '—'; const cant = parseFloat(i.cantidad) || 1; return cant > 1 ? `${nombre} ×${cant}` : nombre; }).join(', ');
                                   return (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }} title={summary}>
                                       <Package size={11} strokeWidth={2.2} style={{ color: accent, flexShrink: 0 }} />
