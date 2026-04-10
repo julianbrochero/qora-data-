@@ -3,7 +3,7 @@
  * Misma lógica que AgregarVenta.jsx, UI completamente rediseñada
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { CheckCircle, CheckCircle2, TrendingUp, Search, Plus, Minus, Trash2, X, Save, Menu, User, ChevronDown, UserPlus, PackagePlus, AlertCircle } from 'lucide-react'
+import { CheckCircle, CheckCircle2, TrendingUp, Search, Plus, Minus, Trash2, X, Save, Menu, User, ChevronDown, UserPlus, PackagePlus, AlertCircle, Calendar } from 'lucide-react'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { PlusIcon, MenuIcon, SearchIcon, ChevronDownIcon } from '@nimbus-ds/icons'
 
@@ -65,8 +65,8 @@ const SelNativo = ({ value, onChange, children, placeholder }) => (
   </select>
 )
 
-const InputField = ({value,onChange,placeholder,type='text',min,style:extra}) => (
-  <input type={type} value={value} onChange={onChange} placeholder={placeholder} min={min}
+const InputField = ({value,onChange,placeholder,type='text',min,style:extra,className}) => (
+  <input type={type} value={value} onChange={onChange} placeholder={placeholder} min={min} className={className}
     style={{
       width:'100%', height:32, padding:'0 10px',
       fontSize:12, border:`1.5px solid ${C.border}`, borderRadius:7,
@@ -165,13 +165,17 @@ export default function AgregarVentaNimbus({
   const [canalVenta,    setCanalVenta]    = useState('')
   const [isProcessing,  setIsProcessing]  = useState(false)
   const [exito,         setExito]         = useState(null)
-  const [toastMsg,      setToastMsg]      = useState(null)
+  const [toastMsg,           setToastMsg]          = useState(null)
+  const [fechaEntregaPicker, setFechaEntregaPicker] = useState(false)
+  const [pickerViewDate,     setPickerViewDate]     = useState(() => new Date())
 
-  const busProductoRef = useRef(null)
-  const dropProdRef    = useRef(null)
-  const cliRef         = useRef(null)
-  const guardarRef     = useRef(null)
-  const [prodIdx,      setProdIdx]      = useState(-1)
+  const busProductoRef  = useRef(null)
+  const dropProdRef     = useRef(null)
+  const cliRef          = useRef(null)
+  const guardarRef      = useRef(null)
+  const fechaEntregaRef = useRef(null)
+  const totalRef        = useRef(0)
+  const [prodIdx,       setProdIdx]      = useState(-1)
 
   /* ── auto-focus al montar ── */
   useEffect(()=>{ setTimeout(()=>busProductoRef.current?.focus(), 80) }, [])
@@ -196,6 +200,7 @@ export default function AgregarVentaNimbus({
 
   /* ── cálculos ── */
   const total       = carrito.reduce((s,i)=>s+i.precio*i.cantidad,0)
+  totalRef.current  = total  // ref siempre fresca, sin stale closures
   const adelantoNum = parseFloat(adelanto)||0
   const saldo       = Math.max(0,total-adelantoNum)
   const puedeGuardar = carrito.length>0 && (clienteActivo?!!clienteId:true) && !isProcessing
@@ -255,16 +260,32 @@ export default function AgregarVentaNimbus({
 
   /* ── atajos de teclado ── */
   useEffect(()=>{
-    const h = e => {
-      const inInput = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)
-      // Ctrl+Enter → guardar (funciona aunque el cursor esté en un input)
-      if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); handleGuardar(); return }
-      // Shift solo → pagar total (solo fuera de inputs para no interferir con texto)
-      if(!inInput && e.key==='Shift' && !e.ctrlKey && !e.altKey && !e.metaKey){ e.preventDefault(); setAdelanto(String(total)) }
+    // Ctrl+Enter → guardar
+    const onDown = e => {
+      if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); handleGuardar() }
     }
-    window.addEventListener('keydown',h)
-    return ()=>window.removeEventListener('keydown',h)
-  },[handleGuardar, total])
+    // Shift solo (keyup) → pagar total. Funciona incluso con cursor en la barra de búsqueda.
+    // Se usa keyup + rastreo para distinguir "Shift solo" de "Shift+Letra" (mayúsculas)
+    let shiftAlone = false
+    const trackDown = e => {
+      if(e.key === 'Shift') { shiftAlone = true }
+      else { shiftAlone = false }
+    }
+    const trackUp = e => {
+      if(e.key === 'Shift' && shiftAlone && totalRef.current > 0) {
+        setAdelanto(String(totalRef.current))
+      }
+      if(e.key === 'Shift') shiftAlone = false
+    }
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keydown', trackDown)
+    window.addEventListener('keyup',   trackUp)
+    return ()=>{
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keydown', trackDown)
+      window.removeEventListener('keyup',   trackUp)
+    }
+  },[handleGuardar])
 
   /* ── scroll item seleccionado en dropdown (arriba y abajo) ── */
   useEffect(()=>{
@@ -285,6 +306,7 @@ export default function AgregarVentaNimbus({
     const h = e => {
       if(cliRef.current && !cliRef.current.contains(e.target)) setDropCliente(false)
       if(busProductoRef.current && !busProductoRef.current.closest?.('.pv-prod-wrap')?.contains(e.target)) setDropProducto(false)
+      if(fechaEntregaRef.current && !fechaEntregaRef.current.contains(e.target)) setFechaEntregaPicker(false)
     }
     document.addEventListener('mousedown',h)
     return ()=>document.removeEventListener('mousedown',h)
@@ -448,15 +470,72 @@ export default function AgregarVentaNimbus({
             {/* Fecha pedido */}
             <div>
               <Label>Fecha del pedido</Label>
-              <InputField type="date" value={fechaPedido} onChange={e=>setFechaPedido(e.target.value)}/>
+              <InputField type="date" value={fechaPedido} onChange={e=>setFechaPedido(e.target.value)} className="pv-date" style={{cursor:'pointer',colorScheme:'light'}}/>
             </div>
 
-            {/* Fecha entrega */}
-            <div>
+            {/* Fecha entrega — picker personalizado */}
+            <div ref={fechaEntregaRef} style={{position:'relative'}}>
               <Label>Fecha de entrega <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
-              <InputField type="date" value={fechaEntrega} onChange={e=>setFechaEntrega(e.target.value)}
-                style={{ color: fechaEntrega ? C.textDark : C.textLight }}
-              />
+              <button type="button"
+                onClick={()=>{ setPickerViewDate(fechaEntrega?new Date(fechaEntrega+'T12:00:00'):new Date()); setFechaEntregaPicker(v=>!v) }}
+                style={{
+                  width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
+                  fontSize:12,border:`1.5px solid ${fechaEntrega?C.borderFocus:C.border}`,borderRadius:7,
+                  background:C.bg,color:fechaEntrega?C.textDark:C.textLight,
+                  fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
+                  transition:'border-color .12s',
+                }}>
+                <Calendar size={13} color={fechaEntrega?C.primary:C.textLight} style={{flexShrink:0}}/>
+                <span style={{flex:1,textAlign:'left'}}>
+                  {fechaEntrega ? new Date(fechaEntrega+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : 'Sin fecha...'}
+                </span>
+                {fechaEntrega
+                  ? <span onMouseDown={e=>{e.stopPropagation();setFechaEntrega('');setFechaEntregaPicker(false)}} style={{color:C.textLight,fontSize:16,lineHeight:1,cursor:'pointer',flexShrink:0,padding:'0 2px'}}>×</span>
+                  : <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>}
+              </button>
+
+              {/* Mini calendario */}
+              {fechaEntregaPicker && (
+                <div className="pv-dp-wrap">
+                  <div className="pv-dp-header">
+                    <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
+                    <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pickerViewDate.getMonth()]} {pickerViewDate.getFullYear()}</span>
+                    <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
+                  </div>
+                  <div className="pv-dp-grid">
+                    {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
+                    {(()=>{
+                      const yr=pickerViewDate.getFullYear(), mo=pickerViewDate.getMonth()
+                      const firstDay=new Date(yr,mo,1).getDay()
+                      const daysInMo=new Date(yr,mo+1,0).getDate()
+                      const todayD=new Date()
+                      const cells=[]
+                      for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
+                      for(let d=1;d<=daysInMo;d++){
+                        const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                        const isSel=fechaEntrega===ds
+                        const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
+                        cells.push(
+                          <button key={d} type="button"
+                            className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                            onClick={()=>{setFechaEntrega(ds);setFechaEntregaPicker(false)}}>
+                            {d}
+                          </button>
+                        )
+                      }
+                      return cells
+                    })()}
+                  </div>
+                  {fechaEntrega && (
+                    <div className="pv-dp-footer">
+                      <button type="button" className="pv-dp-clear"
+                        onClick={()=>{setFechaEntrega('');setFechaEntregaPicker(false)}}>
+                        Limpiar fecha
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Estado */}
@@ -635,8 +714,8 @@ export default function AgregarVentaNimbus({
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>
                   <tr style={{background:C.surface,borderBottom:`1px solid ${C.border}`}}>
-                    {['Nombre','Precio','Costo','Stock','Cant.','Total',''].map(h=>(
-                      <th key={h} style={{
+                    {[['Nombre',''],['Precio',''],['Costo','pv-col-costo'],['Stock','pv-col-stock'],['Cant.',''],['Total',''],['','']].map(([h,cls])=>(
+                      <th key={h} className={cls} style={{
                         padding:'7px 12px',textAlign:'left',
                         fontSize:11,fontWeight:600,color:C.textMid,
                         letterSpacing:'0.05em',fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap',
@@ -668,7 +747,7 @@ export default function AgregarVentaNimbus({
                           />
                         </td>
                         {/* Costo editable */}
-                        <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
+                        <td className="pv-col-costo" style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
                           <input type="number" value={item.costo??''} onChange={e=>setCosto(item.id,e.target.value)} min="0"
                             placeholder="—"
                             style={{
@@ -682,7 +761,7 @@ export default function AgregarVentaNimbus({
                           />
                         </td>
                         {/* Stock */}
-                        <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
+                        <td className="pv-col-stock" style={{padding:'7px 12px',verticalAlign:'middle'}}>
                           <StockBadge prod={prod}/>
                         </td>
                         {/* Cantidad */}
@@ -800,6 +879,51 @@ export default function AgregarVentaNimbus({
         @media (min-width:768px){
           .pv-mobile{display:none!important;}
           .pv-desktop{display:flex!important;}
+        }
+
+        /* ── Fecha pedido (native input date) ── */
+        input[type="date"].pv-date {
+          cursor:pointer; color-scheme:light;
+        }
+        input[type="date"].pv-date::-webkit-calendar-picker-indicator {
+          cursor:pointer; opacity:.45;
+          filter:invert(.15) sepia(1) saturate(5) hue-rotate(100deg);
+        }
+
+        /* ── Mini calendario fecha entrega ── */
+        .pv-dp-wrap {
+          position:absolute; top:calc(100% + 4px); left:0; z-index:500;
+          background:#fff; border:1px solid #d1d5db; border-radius:10px;
+          box-shadow:0 8px 28px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+          padding:8px; width:220px;
+        }
+        .pv-dp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .pv-dp-nav {
+          width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+          background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px;
+          cursor:pointer; font-size:15px; color:#374151; transition:all .1s;
+        }
+        .pv-dp-nav:hover { background:#f3f4f6; border-color:#9ca3af; }
+        .pv-dp-title { font-size:12px; font-weight:700; color:#111827; }
+        .pv-dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .pv-dp-lbl { text-align:center; font-size:9px; font-weight:700; color:#9ca3af; text-transform:uppercase; padding:2px 0 4px; }
+        .pv-dp-day {
+          width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+          font-size:11px; font-weight:500; color:#374151;
+          border:none; background:transparent; border-radius:5px;
+          cursor:pointer; transition:all .1s; padding:0; font-family:'Inter',sans-serif;
+        }
+        .pv-dp-day:hover { background:#f3f4f6; }
+        .pv-dp-day.tod { font-weight:800; color:#334139; position:relative; }
+        .pv-dp-day.tod::after { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:3px; height:3px; background:#4ADE80; border-radius:50%; }
+        .pv-dp-day.sel { background:#334139 !important; color:#fff !important; font-weight:700; }
+        .pv-dp-footer { margin-top:6px; padding-top:6px; border-top:1px solid #f3f4f6; display:flex; justify-content:center; }
+        .pv-dp-clear { font-size:11px; font-weight:600; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; transition:color .1s; }
+        .pv-dp-clear:hover { color:#ef4444; }
+
+        /* ── Responsive tabla carrito ── */
+        @media (max-width:600px) {
+          .pv-col-costo, .pv-col-stock { display:none; }
         }
       `}</style>
     </div>
