@@ -37,6 +37,7 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
   const condicionIVARef = useRef(null)
   const submittingRef = useRef(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const isRapido = type === 'cliente-rapido'
   const isEdit = type === 'editar-cliente'
@@ -48,7 +49,8 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
     if (submittingRef.current) return
-    if (!data.nombre?.trim()) { alert('Por favor, ingrese el nombre del cliente'); nombreRef.current?.focus(); return }
+    if (!data.nombre?.trim()) { setError('El nombre del cliente es requerido'); nombreRef.current?.focus(); return }
+    setError('')
 
     submittingRef.current = true
     setIsSubmitting(true)
@@ -194,6 +196,13 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
             )}
           </div>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{ padding: '7px 10px', borderRadius: 7, background: '#FEF2F2', border: '1px solid #fecaca', fontSize: 12, color: '#DC2626', fontWeight: 500 }}>
+            {error}
+          </div>
+        )}
 
         {/* Botones */}
         <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>

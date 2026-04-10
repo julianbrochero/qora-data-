@@ -1,134 +1,104 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Package, Hash, DollarSign, Box, Tag, FileText, ToggleLeft, ToggleRight, CheckCircle } from 'lucide-react'
+import { Package, CheckCircle, X } from 'lucide-react'
 
-/* ══════════════════════════════════════════════
-   PALETA GESTIFY - consistente con Pedidos / Clientes
-══════════════════════════════════════════════ */
-const ct1 = '#1e2320'
-const ct2 = '#30362F'
-const ct3 = '#8B8982'
-const accent = '#334139'
-const border = 'rgba(48,54,47,.13)'
-
-const inputBase = {
-  width: '100%', height: 36, padding: '0 12px',
-  fontSize: 12, color: ct1, background: '#fff',
-  border: `1px solid ${border}`, borderRadius: 8,
-  outline: 'none', fontFamily: "'Inter', sans-serif",
-  transition: 'border-color .15s',
+const C = {
+  bg: '#ffffff', pageBg: '#f8f9fb', border: '#d1d5db',
+  primary: '#334139', primarySurf: '#eaf0eb',
+  textBlack: '#111827', textMid: '#6b7280', textLight: '#9ca3af',
+  danger: '#DC2626', dangerSurf: '#FEF2F2',
 }
 
-const labelBase = {
-  fontSize: 11, fontWeight: 600, color: ct2,
-  marginBottom: 5, display: 'block', letterSpacing: '.01em',
+const inp = (err) => ({
+  width: '100%', height: 34, padding: '0 10px',
+  fontSize: 13, color: C.textBlack, background: C.bg,
+  border: `1.5px solid ${err ? C.danger : C.border}`, borderRadius: 7,
+  outline: 'none', fontFamily: "'Inter', sans-serif",
+  transition: 'border-color .12s',
+  boxSizing: 'border-box',
+})
+
+const lbl = {
+  fontSize: 11, fontWeight: 600, color: C.textMid,
+  marginBottom: 4, display: 'block',
 }
 
 const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, categorias = [] }) => {
   const { nuevoProducto, setNuevoProducto, productoRapido, setProductoRapido } = formData
   const { agregarProducto, editarProducto, agregarProductoRapido } = formActions
 
-  const isEdit = type === 'editar-producto'
+  const isEdit   = type === 'editar-producto'
   const isRapido = type === 'producto-rapido'
 
-  const nombreRef = useRef(null)
-  const precioRef = useRef(null)
-  const costoRef  = useRef(null)
-  const stockRef = useRef(null)
-  const codigoRef = useRef(null)
-  const categoriaRef = useRef(null)
+  const nombreRef  = useRef(null)
+  const codigoRef  = useRef(null)
+  const precioRef  = useRef(null)
+  const costoRef   = useRef(null)
+  const stockRef   = useRef(null)
 
-  const data = isRapido ? productoRapido : nuevoProducto
+  const [error, setError] = useState('')
 
-  // Normalizar: Supabase devuelve 'controlastock' (minúsculas), el form usa 'controlaStock'
-  // Aceptamos ambas variantes
+  const data    = isRapido ? productoRapido : nuevoProducto
+  const setData = isRapido
+    ? (fn) => setProductoRapido(typeof fn === 'function' ? fn(productoRapido) : fn)
+    : (fn) => setNuevoProducto(typeof fn === 'function' ? fn(nuevoProducto) : fn)
+
   const csActivo = !!(data.controlaStock || data.controlastock)
 
-  const handleChange = (campo, valor) => {
-    if (isRapido) setProductoRapido(prev => ({ ...prev, [campo]: valor }))
-    else setNuevoProducto(prev => ({ ...prev, [campo]: valor }))
+  const set = (campo, valor) => {
+    setError('')
+    setData(prev => ({ ...prev, [campo]: valor }))
   }
 
-  const toggleControlaStock = () => {
-    const nov = !csActivo
-    // Actualizar unificadamente para evitar carreras entre estados
-    const update = (prev) => {
-      const n = { ...prev, controlaStock: nov }
+  const toggleCS = () => {
+    setData(prev => {
+      const n = { ...prev, controlaStock: !csActivo }
       delete n.controlastock
       return n
-    }
-    if (isRapido) setProductoRapido(update)
-    else setNuevoProducto(update)
+    })
   }
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
-    if (!data.nombre?.trim()) { alert('El nombre del producto es requerido'); nombreRef.current?.focus(); return }
+    setError('')
+    if (!data.nombre?.trim()) { setError('El nombre del producto es requerido'); nombreRef.current?.focus(); return }
     const precioNum = parseFloat(String(data.precio).replace(',', '.'))
-    if (!precioNum || precioNum <= 0) { alert('El precio debe ser mayor a 0'); precioRef.current?.focus(); return }
-    if (!isRapido && csActivo && (parseInt(data.stock) || 0) < 0) { alert('El stock no puede ser negativo'); stockRef.current?.focus(); return }
+    if (!precioNum || precioNum <= 0) { setError('El precio debe ser mayor a 0'); precioRef.current?.focus(); return }
+    if (!isRapido && csActivo && (parseInt(data.stock) || 0) < 0) { setError('El stock no puede ser negativo'); stockRef.current?.focus(); return }
 
     let result
-    if (isRapido) result = await agregarProductoRapido()
+    if (isRapido)  result = await agregarProductoRapido()
     else if (isEdit) result = await editarProducto(selectedItem?.id, data)
-    else result = await agregarProducto()
+    else             result = await agregarProducto()
 
     if (result?.success) {
       const cb = formData.selectedItem?.onSuccess || formData.onSuccess
       if (cb) cb(result.producto || result.data || result)
       else closeModal()
     } else {
-      alert(result?.mensaje || 'Error al guardar el producto. Revisá los datos e intentá de nuevo.')
+      setError(result?.mensaje || 'Error al guardar. Revisá los datos e intentá de nuevo.')
     }
   }
 
-  const handleKeyDown = (e, nextRef) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      // En modo edición, permitimos guardar directamente desde campos clave para agilizar
-      const camposQueGuardan = ['nombre', 'precio', 'categoria', 'codigo']
-      const campoActual = Object.keys(refs).find(k => refs[k].current === e.target)
-      
-      if (isEdit && camposQueGuardan.includes(campoActual)) {
-        handleSubmit()
-      } else if (nextRef?.current) {
-        nextRef.current.focus()
-      } else {
-        handleSubmit()
-      }
-    }
+  const next = (ref) => (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); ref?.current ? ref.current.focus() : handleSubmit() }
   }
-
-  // Mapa de refs para identificar el campo actual en handleKeyDown
-  const refs = { nombre: nombreRef, precio: precioRef, costo: costoRef, stock: stockRef, codigo: codigoRef, categoria: categoriaRef }
 
   // Ctrl+Enter → guardar
   useEffect(() => {
-    if (!isEdit) return
-    const h = e => { if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); handleSubmit() } }
+    const h = (e) => { if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); handleSubmit() } }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
-  }, [isEdit, data])
+  }, [data])
 
+  // Auto focus
   useEffect(() => {
-    if (!isRapido && !csActivo) {
-      if (data.stock !== 0) handleChange('stock', 0)
-    }
-  }, [csActivo, isRapido])
-
-  useEffect(() => {
-    if (!isEdit) { const t = setTimeout(() => nombreRef.current?.focus(), 100); return () => clearTimeout(t) }
-  }, [isEdit])
-
-  // Prellenar categoría si vino del modal de categorías (solo en nuevo producto)
-  useEffect(() => {
-    if (!isEdit && !isRapido && selectedItem?.categoria) {
-      setNuevoProducto(prev => ({ ...prev, categoria: selectedItem.categoria }))
-    }
+    const t = setTimeout(() => nombreRef.current?.focus(), 80)
+    return () => clearTimeout(t)
   }, [])
 
-  // EDICIÓN: cargar TODOS los datos del producto directamente desde selectedItem
+  // Cargar datos en edición
   useEffect(() => {
     if (isEdit && selectedItem?.id) {
       const cs = !!(selectedItem.controlaStock || selectedItem.controlastock)
@@ -145,100 +115,98 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
     }
   }, [selectedItem?.id])
 
-  const fmtPrecio = (parseFloat(data.precio) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  // Reset stock cuando se desactiva inventario
+  useEffect(() => {
+    if (!isRapido && !csActivo && data.stock !== 0) set('stock', 0)
+  }, [csActivo, isRapido])
+
   const precioNum = parseFloat(data.precio) || 0
   const costoNum  = parseFloat(data.costo)  || 0
-  const margenPesos = precioNum - costoNum
-  const margenPorc  = precioNum > 0 && costoNum > 0 ? ((margenPesos / precioNum) * 100) : null
+  const margen    = precioNum > 0 && costoNum > 0 ? ((precioNum - costoNum) / precioNum * 100) : null
 
-  const focusStyle = (e) => { e.target.style.borderColor = accent; e.target.style.boxShadow = '0 0 0 3px rgba(51,65,57,.08)' }
-  const blurStyle = (e) => { e.target.style.borderColor = border; e.target.style.boxShadow = 'none' }
+  const focusOn = (e) => { e.target.style.borderColor = C.primary }
+  const blurOff = (e) => { e.target.style.borderColor = error ? C.danger : C.border }
+
+  const title = isRapido ? 'Producto rápido' : isEdit ? 'Editar producto' : 'Nuevo producto'
 
   return (
-    <div style={{ width: '100%', maxWidth: 420, margin: '0 auto', fontFamily: "'Inter', sans-serif" }}>
-      {/* Chips de tipo */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 18 }}>
-        {[
-          { k: isRapido ? 'Producto rápido' : isEdit ? 'Editar producto' : 'Nuevo producto', active: true },
-        ].map((c, i) => (
-          <span key={i} style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', background: c.active ? 'rgba(51,65,57,.1)' : 'transparent', color: accent, border: `1px solid rgba(51,65,57,.2)` }}>
-            {c.k}
-          </span>
-        ))}
+    <div style={{ fontFamily: "'Inter', sans-serif" }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 12px', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: C.primarySurf, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Package size={16} strokeWidth={2} style={{ color: C.primary }} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.textBlack }}>{title}</h2>
+            {isEdit && <p style={{ margin: 0, fontSize: 11, color: C.textLight }}>Ctrl+Enter para guardar</p>}
+          </div>
+        </div>
+        <button onClick={closeModal} style={{ width: 30, height: 30, borderRadius: 7, border: `1px solid ${C.border}`, background: C.bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <X size={14} style={{ color: C.textMid }} />
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Form */}
+      <form onSubmit={handleSubmit} style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
         {/* Nombre */}
         <div>
-          <label style={labelBase}>Nombre del producto <span style={{ color: '#DC2626' }}>*</span></label>
-          <div style={{ position: 'relative' }}>
-            <Package size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-            <input ref={nombreRef} type="text" required value={data.nombre || ''} onChange={e => handleChange('nombre', e.target.value)} onKeyDown={e => handleKeyDown(e, precioRef)}
-              onFocus={focusStyle} onBlur={blurStyle} placeholder="Ej: Campera de cuero"
-              style={{ ...inputBase, paddingLeft: 30 }} />
-          </div>
+          <label style={lbl}>Nombre <span style={{ color: C.danger }}>*</span></label>
+          <input
+            ref={nombreRef} type="text" value={data.nombre || ''}
+            onChange={e => set('nombre', e.target.value)}
+            onKeyDown={next(codigoRef)} onFocus={focusOn} onBlur={blurOff}
+            placeholder="Ej: Campera de cuero"
+            style={inp(error && !data.nombre?.trim())}
+          />
         </div>
 
         {/* Código + Categoría */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 10 }}>
           <div>
-            <label style={labelBase}>Código</label>
-            <div style={{ position: 'relative' }}>
-              <Hash size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-              <input ref={codigoRef} type="text" value={data.codigo || ''} onChange={e => handleChange('codigo', e.target.value)} onKeyDown={e => handleKeyDown(e, categoriaRef)}
-                onFocus={focusStyle} onBlur={blurStyle} placeholder="AUTO"
-                style={{ ...inputBase, paddingLeft: 30 }} />
-            </div>
+            <label style={lbl}>Código</label>
+            <input
+              ref={codigoRef} type="text" value={data.codigo || ''}
+              onChange={e => set('codigo', e.target.value)}
+              onKeyDown={next(precioRef)} onFocus={focusOn} onBlur={blurOff}
+              placeholder="Automático"
+              style={inp()}
+            />
           </div>
-
           <div>
-            <label style={labelBase}>
-              Categoría <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span>
-            </label>
-            <div style={{ position: 'relative' }}>
-              <Tag size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-              <input
-                ref={categoriaRef}
-                type="text"
-                value={data.categoria || ''}
-                onChange={e => handleChange('categoria', e.target.value)}
-                onKeyDown={e => handleKeyDown(e, precioRef)}
-                onFocus={focusStyle}
-                onBlur={blurStyle}
-                placeholder="Ej: Indumentaria, Electrónica..."
-                style={{ ...inputBase, paddingLeft: 30 }}
-              />
-            </div>
-            {/* Chips de categorías existentes */}
+            <label style={lbl}>Categoría</label>
+            <input
+              type="text" value={data.categoria || ''}
+              onChange={e => set('categoria', e.target.value)}
+              onKeyDown={next(precioRef)} onFocus={focusOn} onBlur={blurOff}
+              placeholder="Indumentaria, Electrónica..."
+              style={inp()}
+            />
             {categorias.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 7 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
                 {categorias
                   .filter(c => {
-                    const nombre = c.nombre || c
+                    const n = c.nombre || c
                     const q = (data.categoria || '').toLowerCase()
-                    return !q || nombre.toLowerCase().includes(q)
+                    return !q || n.toLowerCase().includes(q)
                   })
                   .map((c, i) => {
-                    const nombre = c.nombre || c
-                    const activo = (data.categoria || '').toLowerCase() === nombre.toLowerCase()
+                    const n = c.nombre || c
+                    const activo = (data.categoria || '').toLowerCase() === n.toLowerCase()
                     return (
-                      <button
-                        key={i}
-                        type="button"
-                        tabIndex={-1}
-                        onClick={e => { e.preventDefault(); handleChange('categoria', nombre) }}
-                        onMouseDown={e => e.preventDefault()} // Evitar pérdida de foco
+                      <button key={i} type="button" tabIndex={-1}
+                        onClick={() => set('categoria', n)}
+                        onMouseDown={e => e.preventDefault()}
                         style={{
-                          padding: '3px 9px', borderRadius: 16, fontSize: 10, fontWeight: 700,
-                          border: activo ? 'none' : `1px solid ${border}`,
-                          background: activo ? accent : 'rgba(48,54,47,.05)',
-                          color: activo ? '#fff' : ct2,
-                          cursor: 'pointer', transition: 'all .12s',
+                          padding: '2px 8px', borderRadius: 12, fontSize: 10, fontWeight: 600,
+                          border: activo ? 'none' : `1px solid ${C.border}`,
+                          background: activo ? C.primary : C.pageBg,
+                          color: activo ? '#fff' : C.textMid,
+                          cursor: 'pointer', transition: 'all .1s',
                         }}
-                      >
-                        {nombre}
-                      </button>
+                      >{n}</button>
                     )
                   })}
               </div>
@@ -249,120 +217,98 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
         {/* Precio + Costo */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
-            <label style={labelBase}>Precio de venta <span style={{ color: '#DC2626' }}>*</span></label>
-            <div style={{ position: 'relative' }}>
-              <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-              <input ref={precioRef} type="number" required value={data.precio || ''} onChange={e => handleChange('precio', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
-                onKeyDown={e => handleKeyDown(e, isEdit ? costoRef : null)}
-                onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0.01"
-                style={{ ...inputBase, paddingLeft: 30 }} />
-            </div>
+            <label style={lbl}>Precio de venta <span style={{ color: C.danger }}>*</span></label>
+            <input
+              ref={precioRef} type="number" value={data.precio || ''}
+              onChange={e => set('precio', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+              onKeyDown={next(costoRef)} onFocus={focusOn} onBlur={blurOff}
+              placeholder="0.00" step="0.01" min="0.01"
+              style={inp(error && !(parseFloat(data.precio) > 0))}
+            />
           </div>
           <div>
-            <label style={labelBase}>Costo <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional, privado)</span></label>
-            <div style={{ position: 'relative' }}>
-              <DollarSign size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-              <input ref={costoRef} type="number" value={data.costo ?? ''} onChange={e => handleChange('costo', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
-                onKeyDown={e => handleKeyDown(e, stockRef)}
-                onFocus={focusStyle} onBlur={blurStyle} placeholder="0.00" step="0.01" min="0"
-                style={{ ...inputBase, paddingLeft: 30 }} />
-            </div>
+            <label style={lbl}>
+              Costo <span style={{ fontSize: 10, color: C.textLight, fontWeight: 400 }}>privado</span>
+              {margen !== null && (
+                <span style={{ float: 'right', fontWeight: 700, color: margen >= 0 ? '#16a34a' : C.danger }}>
+                  {margen.toFixed(1)}% margen
+                </span>
+              )}
+            </label>
+            <input
+              ref={costoRef} type="number" value={data.costo ?? ''}
+              onChange={e => set('costo', e.target.value === '' ? '' : parseFloat(e.target.value) || 0)}
+              onKeyDown={next(csActivo ? stockRef : null)} onFocus={focusOn} onBlur={blurOff}
+              placeholder="0.00" step="0.01" min="0"
+              style={inp()}
+            />
           </div>
         </div>
 
-        {/* Stock */}
-        <div>
-          <label style={labelBase}>Stock {isEdit ? 'actual' : 'inicial'}</label>
-          <div style={{ position: 'relative' }}>
-            <Box size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-            <input ref={stockRef} type="number" value={data.stock ?? 0} onChange={e => handleChange('stock', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
-              disabled={!isRapido && !csActivo}
-              onFocus={focusStyle} onBlur={blurStyle} placeholder="0" min="0"
-              style={{ ...inputBase, paddingLeft: 30, background: (!isRapido && !csActivo) ? 'rgba(0,0,0,.03)' : '#fff', color: (!isRapido && !csActivo) ? ct3 : ct1, cursor: (!isRapido && !csActivo) ? 'not-allowed' : 'text' }} />
-          </div>
-        </div>
-
-        {/* Toggle control de inventario */}
+        {/* Toggle + Stock en misma fila */}
         {!isRapido && (
-          <div style={{ padding: '12px 14px', borderRadius: 10, background: csActivo ? 'rgba(51,65,57,.07)' : 'rgba(48,54,47,.04)', border: `1px solid ${csActivo ? 'rgba(51,65,57,.25)' : border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', transition: 'all .15s' }}
-            onClick={toggleControlaStock}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {csActivo
-                ? <ToggleRight size={20} style={{ color: accent }} />
-                : <ToggleLeft size={20} style={{ color: ct3 }} />}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: ct1 }}>Control de inventario</div>
-                <div style={{ fontSize: 10, color: ct3, marginTop: 1 }}>
-                  {csActivo ? 'Stock se descontará en cada venta.' : 'Stock ilimitado, no se descontará.'}
-                </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Toggle */}
+            <div
+              onClick={toggleCS}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 7, border: `1.5px solid ${csActivo ? C.primary : C.border}`, background: csActivo ? C.primarySurf : C.pageBg, cursor: 'pointer', flex: 1, transition: 'all .12s', userSelect: 'none' }}
+            >
+              <div style={{ width: 30, height: 17, borderRadius: 9, background: csActivo ? C.primary : C.border, position: 'relative', transition: 'background .15s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: csActivo ? 14 : 2, width: 13, height: 13, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,.2)', transition: 'left .15s' }} />
               </div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: csActivo ? C.primary : C.textMid }}>
+                Control de stock
+              </span>
             </div>
-            <div style={{ width: 36, height: 20, borderRadius: 10, background: csActivo ? accent : 'rgba(0,0,0,.15)', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
-              <div style={{ position: 'absolute', top: 2, left: csActivo ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)', transition: 'left .2s' }} />
+
+            {/* Stock */}
+            <div style={{ width: 100, flexShrink: 0 }}>
+              <input
+                ref={stockRef} type="number" value={data.stock ?? 0}
+                onChange={e => set('stock', e.target.value === '' ? '' : parseInt(e.target.value) || 0)}
+                disabled={!csActivo}
+                placeholder="0" min="0"
+                onFocus={focusOn} onBlur={blurOff}
+                style={{
+                  ...inp(),
+                  background: !csActivo ? C.pageBg : C.bg,
+                  color: !csActivo ? C.textLight : C.textBlack,
+                  cursor: !csActivo ? 'not-allowed' : 'text',
+                  textAlign: 'center',
+                }}
+              />
             </div>
+            <span style={{ fontSize: 11, color: C.textLight, flexShrink: 0 }}>unid.</span>
           </div>
         )}
 
-        {/* Descripción */}
-        {!isRapido && (
-          <div>
-            <label style={labelBase}>Descripción <span style={{ fontSize: 10, color: ct3, fontWeight: 400 }}>(opcional)</span></label>
-            <div style={{ position: 'relative' }}>
-              <FileText size={13} style={{ position: 'absolute', left: 10, top: 10, color: ct3 }} />
-              <textarea value={data.descripcion || ''} onChange={e => handleChange('descripcion', e.target.value)} rows={2} placeholder="Información adicional del producto..."
-                onFocus={focusStyle} onBlur={blurStyle}
-                style={{ ...inputBase, height: 'auto', paddingLeft: 30, paddingTop: 8, paddingBottom: 8, resize: 'none' }} />
-            </div>
-          </div>
-        )}
-
-        {/* Resumen visual */}
-        {!isRapido && (
-          <div style={{ borderRadius: 10, padding: '10px 14px', background: 'rgba(51,65,57,.05)', border: `1px solid rgba(51,65,57,.12)` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Precio de venta</span>
-              <span style={{ fontSize: 16, fontWeight: 800, color: accent, letterSpacing: '-.03em' }}>${fmtPrecio}</span>
-            </div>
-            {costoNum > 0 && (
-              <>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: `1px solid rgba(51,65,57,.12)` }}>
-                  <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Costo</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>${costoNum.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                  <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Ganancia estimada</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: margenPesos >= 0 ? '#065F46' : '#991B1B' }}>
-                      {margenPesos >= 0 ? '+' : ''}${margenPesos.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    {margenPorc !== null && (
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 5, background: margenPorc >= 0 ? '#D1FAE5' : '#FEE2E2', color: margenPorc >= 0 ? '#065F46' : '#991B1B' }}>
-                        {margenPorc.toFixed(1)}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-            {csActivo && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 6, borderTop: `1px solid rgba(51,65,57,.12)` }}>
-                <span style={{ fontSize: 11, color: ct3, fontWeight: 600 }}>Stock disponible</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: ct1 }}>{parseInt(data.stock) || 0} u.</span>
-              </div>
-            )}
+        {/* Error */}
+        {error && (
+          <div style={{ padding: '7px 10px', borderRadius: 7, background: C.dangerSurf, border: `1px solid #fecaca`, fontSize: 12, color: C.danger, fontWeight: 500 }}>
+            {error}
           </div>
         )}
 
         {/* Botones */}
-        <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-          <button type="button" onClick={closeModal} style={{ flex: 1, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', transition: 'all .13s', fontFamily: "'Inter', sans-serif" }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+        <div style={{ display: 'flex', gap: 8, paddingTop: 2 }}>
+          <button type="button" onClick={closeModal}
+            style={{ flex: 1, height: 34, borderRadius: 7, fontSize: 12, fontWeight: 600, color: C.textMid, background: 'transparent', border: `1px solid ${C.border}`, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .1s' }}
+            onMouseEnter={e => e.currentTarget.style.background = C.pageBg}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             Cancelar
           </button>
-          <button type="submit" style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', background: '#334139', border: '1px solid #334139', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#2b352f'} onMouseLeave={e => e.currentTarget.style.background = '#334139'}>
-            {isRapido ? '⚡ Agregar rápido' : isEdit ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</> : <><Package size={13} strokeWidth={2.5} /> Crear producto</>}
-            {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(255,255,255,.15)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
+          <button type="submit"
+            style={{ flex: 2, height: 34, borderRadius: 7, fontSize: 13, fontWeight: 700, color: '#fff', background: C.primary, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'inherit', transition: 'background .1s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#2b352f'}
+            onMouseLeave={e => e.currentTarget.style.background = C.primary}>
+            {isRapido
+              ? '⚡ Agregar rápido'
+              : isEdit
+                ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar</>
+                : <><Package size={13} strokeWidth={2.5} /> Crear producto</>}
+            {!isRapido && (
+              <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(255,255,255,.15)', borderRadius: 4, fontFamily: 'monospace' }}>↵</kbd>
+            )}
           </button>
         </div>
       </form>

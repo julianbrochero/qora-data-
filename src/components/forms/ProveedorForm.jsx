@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Truck, Phone, Mail, FileText, MapPin, Package, StickyNote, Building2 } from 'lucide-react';
 
 const ProveedorForm = ({ type, formData, formActions, closeModal }) => {
@@ -9,6 +9,7 @@ const ProveedorForm = ({ type, formData, formActions, closeModal }) => {
   const isEdit = type === 'editar-proveedor';
   const itemEdicion = isEdit ? (formData.selectedItem || {}) : {};
 
+  const [error, setError] = useState('')
   const [nuevoProveedor, setNuevoProveedor] = React.useState(
     itemEdicion.id ? itemEdicion : {
       nombre: '',
@@ -36,8 +37,9 @@ const ProveedorForm = ({ type, formData, formActions, closeModal }) => {
     if (e) e.preventDefault();
 
     // Validar nombre
+    setError('')
     if (!nuevoProveedor.nombre || !nuevoProveedor.nombre.trim()) {
-      alert('Por favor, ingrese el nombre del proveedor');
+      setError('El nombre del proveedor es requerido');
       nombreRef.current?.focus();
       return;
     }
@@ -45,7 +47,7 @@ const ProveedorForm = ({ type, formData, formActions, closeModal }) => {
     // Validar teléfono
     const telefono = nuevoProveedor.telefono?.trim() || '';
     if (!telefono || telefono.length < 8) {
-      alert('Por favor, ingrese un número de teléfono válido (mínimo 8 dígitos)');
+      setError('Ingresá un número de teléfono válido (mínimo 8 dígitos)');
       telefonoRef.current?.focus();
       return;
     }
@@ -273,6 +275,13 @@ const ProveedorForm = ({ type, formData, formActions, closeModal }) => {
             </div>
           </div>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{ padding: '7px 10px', borderRadius: 7, background: '#FEF2F2', border: '1px solid #fecaca', fontSize: 12, color: '#DC2626', fontWeight: 500 }}>
+            {error}
+          </div>
+        )}
 
         {/* Botones */}
         <div className="flex gap-2 pt-1">

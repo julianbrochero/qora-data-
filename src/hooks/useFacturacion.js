@@ -463,10 +463,9 @@ export const useFacturacion = () => {
       }
       const numeroFactura = `FA-${(ultimoNumero + 1).toString().padStart(8, '0')}`
 
-      let fechaEntrega = pedidoData.fechaEntregaEstimada
+      let fechaEntrega = pedidoData.fechaEntrega || pedidoData.fechaEntregaEstimada || null
       if (!fechaEntrega || String(fechaEntrega).trim() === '') {
-        const d = new Date(); d.setDate(d.getDate() + 7)
-        fechaEntrega = d.toISOString().split('T')[0]
+        fechaEntrega = null // sin fecha de entrega por defecto
       }
 
       // ── OPTIMISTIC UI: actualizar pantalla inmediatamente, sin esperar Supabase

@@ -23,6 +23,7 @@ const VentaForm = ({
   const [mostrarDropdownProducto, setMostrarDropdownProducto] = useState(false)
   const [productoIndex, setProductoIndex] = useState(-1)
   const [page, setPage] = useState(0)
+  const [formError, setFormError] = useState('')
   const ITEMS_PER_PAGE = 3
 
   const clienteRef = useRef(null)
@@ -200,8 +201,9 @@ const VentaForm = ({
   }
 
   const handleGuardarVenta = async () => {
-    if (!ventaData.clienteId) { alert("Selecciona un cliente"); return }
-    if (items.length === 0) { alert("Agrega al menos un producto"); return }
+    setFormError('')
+    if (!ventaData.clienteId) { setFormError("Seleccioná un cliente"); return }
+    if (items.length === 0) { setFormError("Agregá al menos un producto"); return }
 
     const total = calcularTotal()
 
@@ -223,7 +225,7 @@ const VentaForm = ({
         if (resultado?.success) {
           closeModal()
         } else {
-          alert('Error al guardar cambios: ' + (resultado?.mensaje || 'Error desconocido'))
+          setFormError('Error al guardar cambios: ' + (resultado?.mensaje || 'Error desconocido'))
         }
       }
       return
@@ -614,6 +616,11 @@ const VentaForm = ({
       </div>
 
       {/* BOTONES */}
+      {formError && (
+        <div style={{ padding: '7px 10px', borderRadius: 7, background: '#FEF2F2', border: '1px solid #fecaca', fontSize: 12, color: '#DC2626', fontWeight: 500, marginBottom: 6 }}>
+          {formError}
+        </div>
+      )}
       <div className="flex gap-2 pt-1">
         <button
           onClick={closeModal}

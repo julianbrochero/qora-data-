@@ -152,8 +152,6 @@ const SistemaFacturacion = () => {
       return;
     }
 
-    console.log('🟢 Abriendo modal:', type, data);
-
     // 🖊 'editar-pedido' → navega al módulo AgregarVenta con el pedido cargado
     if (type === 'editar-pedido' && data) {
       setPedidoAEditar(data)
@@ -242,8 +240,6 @@ const SistemaFacturacion = () => {
   // En App.jsx, reemplaza la función handleGuardarVenta con esta versión mejorada:
 
   const handleGuardarVenta = async (ventaData, tipoVenta) => {
-    console.log('Guardando venta:', { ventaData, tipoVenta });
-
     try {
       let resultado;
 

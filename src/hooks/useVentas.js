@@ -18,8 +18,6 @@ export const useVentas = () => {
     setLoading(true)
 
     try {
-      console.log('Datos recibidos en guardarVenta:', ventaData)
-
       // 1. Validación inicial de cliente
       if (!ventaData.clienteId) {
         throw new Error('Debe seleccionar un cliente')
@@ -94,8 +92,6 @@ export const useVentas = () => {
         updated_at: new Date().toISOString()
       }
 
-      console.log('Creando pedido:', pedidoData)
-
       const { data: pedidoGuardado, error: errorPedido } = await supabase
         .from('pedidos')
         .insert([pedidoData])
@@ -105,8 +101,6 @@ export const useVentas = () => {
         console.error('Error creando pedido:', errorPedido)
         throw errorPedido
       }
-
-      console.log('Pedido creado:', pedidoGuardado[0])
 
       // 6. Crear factura
       const numeroFactura = await generarNumeroFactura(ventaData.tipoFactura || 'Factura A')
@@ -137,8 +131,6 @@ export const useVentas = () => {
         created_at: new Date().toISOString()
       }
 
-      console.log('Creando factura:', facturaData)
-
       const { data: facturaGuardada, error: errorFactura } = await supabase
         .from('facturas')
         .insert([facturaData])
@@ -148,8 +140,6 @@ export const useVentas = () => {
         console.error('Error creando factura:', errorFactura)
         throw errorFactura
       }
-
-      console.log('Factura creada:', facturaGuardada[0])
 
       // 7. Actualizar pedido con ID de factura
       await supabase
@@ -218,7 +208,6 @@ export const useVentas = () => {
                 .from('productos')
                 .update({ stock: nuevoStock })
                 .eq('id', item.productoId)
-              console.log(`Stock actualizado para producto ${item.productoId}: ${prod.stock} → ${nuevoStock} (-${item.cantidad})`)
             }
           } catch (stockError) {
             console.error(`Error actualizando stock para producto ${item.productoId}:`, stockError)

@@ -157,6 +157,7 @@ export default function AgregarVentaNimbus({
   const [dropProducto,  setDropProducto]  = useState(false)
   const [carrito,       setCarrito]       = useState([])
   const [fechaPedido,   setFechaPedido]   = useState(new Date().toISOString().slice(0,10))
+  const [fechaEntrega,  setFechaEntrega]  = useState('')
   const [estado,        setEstado]        = useState(()=>{ try{return localStorage.getItem('gestify_pedido_estado')||'pendiente'}catch{return 'pendiente'} })
   const [notas,         setNotas]         = useState('')
   const [adelanto,      setAdelanto]      = useState('')
@@ -186,6 +187,7 @@ export default function AgregarVentaNimbus({
     let arr=[]; try{ arr=typeof pedidoAEditar.items==='string'?JSON.parse(pedidoAEditar.items):(pedidoAEditar.items||[]) }catch{}
     setCarrito(arr.map((i,idx)=>({ id:Date.now()+idx, productoId:i.productoId||i.producto_id||null, nombre:i.producto||i.nombre||'', codigo:i.codigo||'', precio:parseFloat(i.precio)||0, costo:i.costo??'', cantidad:parseFloat(i.cantidad)||1 })))
     if(pedidoAEditar.fecha_pedido) setFechaPedido(pedidoAEditar.fecha_pedido.slice(0,10))
+    if(pedidoAEditar.fecha_entrega_estimada) setFechaEntrega(pedidoAEditar.fecha_entrega_estimada.slice(0,10))
     if(pedidoAEditar.estado) setEstado(pedidoAEditar.estado)
     if(pedidoAEditar.notas) setNotas(pedidoAEditar.notas)
     if(pedidoAEditar.monto_abonado) setAdelanto(String(pedidoAEditar.monto_abonado))
@@ -226,7 +228,7 @@ export default function AgregarVentaNimbus({
   const quitarItem  = id          => setCarrito(prev=>prev.filter(i=>i.id!==id))
 
   const selCliente = c => { setClienteId(c.id); setClienteNombre(c.nombre); setBusCliente(c.nombre); setDropCliente(false) }
-  const limpiarTodo = () => { setClienteId(''); setClienteNombre(''); setBusCliente(''); setBusProducto(''); setCarrito([]); setFechaPedido(new Date().toISOString().slice(0,10)); setEstado('pendiente'); setNotas(''); setAdelanto(''); setCanalVenta('') }
+  const limpiarTodo = () => { setClienteId(''); setClienteNombre(''); setBusCliente(''); setBusProducto(''); setCarrito([]); setFechaPedido(new Date().toISOString().slice(0,10)); setFechaEntrega(''); setEstado('pendiente'); setNotas(''); setAdelanto(''); setCanalVenta('') }
 
   /* ── guardar ── */
   const handleGuardar = useCallback(async()=>{
@@ -237,11 +239,11 @@ export default function AgregarVentaNimbus({
       const ganancia = costoNum!=null ? (i.precio - costoNum) * i.cantidad : null
       return { id:i.id, productoId:i.productoId, producto:i.nombre, precio:i.precio, cantidad:i.cantidad, subtotal:i.precio*i.cantidad, costo:costoNum, ganancia }
     })
-    const final = { clienteId:clienteActivo?clienteId:null, clienteNombre:clienteActivo?clienteNombre:'Consumidor Final', fechaPedido, estado, notas, items, montoPagado:adelantoNum, total, canal_venta:canalVenta||null }
+    const final = { clienteId:clienteActivo?clienteId:null, clienteNombre:clienteActivo?clienteNombre:'Consumidor Final', fechaPedido, fechaEntrega:fechaEntrega||null, estado, notas, items, montoPagado:adelantoNum, total, canal_venta:canalVenta||null }
     try {
       let r
       if(pedidoAEditar?.id){
-        r = await formActions?.actualizarPedido?.(pedidoAEditar.id,{ cliente_id:final.clienteId, cliente_nombre:final.clienteNombre, fecha_pedido:final.fechaPedido, estado:final.estado, notas:final.notas, items:JSON.stringify(final.items), monto_abonado:final.montoPagado, saldo_pendiente:Math.max(0,final.total-final.montoPagado), total:final.total })
+        r = await formActions?.actualizarPedido?.(pedidoAEditar.id,{ cliente_id:final.clienteId, cliente_nombre:final.clienteNombre, fecha_pedido:final.fechaPedido, fecha_entrega_estimada:final.fechaEntrega, estado:final.estado, notas:final.notas, items:JSON.stringify(final.items), monto_abonado:final.montoPagado, saldo_pendiente:Math.max(0,final.total-final.montoPagado), total:final.total })
       } else {
         r = await formActions?.agregarPedidoSolo?.({...final, canal_venta: canalVenta||null})
       }
@@ -249,7 +251,7 @@ export default function AgregarVentaNimbus({
       else showToast('Error: '+(r?.mensaje||'Desconocido'))
     } catch(e){ showToast('Error: '+e.message) }
     finally{ setIsProcessing(false) }
-  },[carrito,clienteActivo,clienteId,clienteNombre,fechaPedido,estado,notas,adelantoNum,total,puedeGuardar,formActions,pedidoAEditar])
+  },[carrito,clienteActivo,clienteId,clienteNombre,fechaPedido,fechaEntrega,estado,notas,adelantoNum,total,puedeGuardar,formActions,pedidoAEditar])
 
   /* ── atajos de teclado ── */
   useEffect(()=>{
@@ -443,10 +445,18 @@ export default function AgregarVentaNimbus({
               </div>
             </div>
 
-            {/* Fecha */}
+            {/* Fecha pedido */}
             <div>
               <Label>Fecha del pedido</Label>
               <InputField type="date" value={fechaPedido} onChange={e=>setFechaPedido(e.target.value)}/>
+            </div>
+
+            {/* Fecha entrega */}
+            <div>
+              <Label>Fecha de entrega <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
+              <InputField type="date" value={fechaEntrega} onChange={e=>setFechaEntrega(e.target.value)}
+                style={{ color: fechaEntrega ? C.textDark : C.textLight }}
+              />
             </div>
 
             {/* Estado */}

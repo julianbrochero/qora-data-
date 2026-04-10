@@ -6,6 +6,7 @@ import {
     CheckCircle2, X, Zap, Loader2, ChevronRight, RotateCcw,
     Edit3, Tag
 } from 'lucide-react'
+import ConfirmDialog from '../shared/ConfirmDialog'
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const ACCENT = '#4ADE80'
@@ -360,6 +361,7 @@ const POS = ({ onVolver, embebido = false }) => {
     const [resIdx, setResIdx] = useState(-1) // índice seleccionado con flechas
     const [editandoPrecio, setEditandoPrecio] = useState(null) // { idx, valor }
     const [showModalLibre, setShowModalLibre] = useState(false)
+    const [confirmData, setConfirmData] = useState(null)
     const inputRef = useRef(null)
     const debounceRef = useRef(null)
 
@@ -388,7 +390,7 @@ const POS = ({ onVolver, embebido = false }) => {
             if (e.key === 'Escape') {
                 e.preventDefault()
                 if (showResultados) { setShowResultados(false); setResultados([]); return }
-                if (carrito.length && window.confirm('¿Cancelar la venta y vaciar el carrito?')) limpiarCarrito()
+                if (carrito.length) { setConfirmData({ msg: '¿Cancelar la venta y vaciar el carrito?', onConfirm: limpiarCarrito }); return }
                 setInputVal('')
                 return
             }
@@ -698,7 +700,7 @@ const POS = ({ onVolver, embebido = false }) => {
                     {carrito.length > 0 && (
                         <div style={{ padding: '8px 14px', borderTop: `1px solid ${BORDER}`, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 11, color: 'rgba(255,255,255,.3)' }}>{cantidadItems} artículo{cantidadItems !== 1 ? 's' : ''}</span>
-                            <button onClick={() => { if (window.confirm('¿Cancelar la venta?')) limpiarCarrito() }}
+                            <button onClick={() => setConfirmData({ msg: '¿Cancelar la venta?', onConfirm: limpiarCarrito })}
                                 style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(239,68,68,.5)', fontSize: 11, fontFamily: FONT }}
                                 onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
                                 onMouseLeave={e => e.currentTarget.style.color = 'rgba(239,68,68,.5)'}>
@@ -776,6 +778,14 @@ const POS = ({ onVolver, embebido = false }) => {
                 <TicketExitoso venta={ultimaVenta}
                     onNuevaVenta={() => { setUltimaVenta(null); setTimeout(() => inputRef.current?.focus(), 80) }} />
             )}
+            <ConfirmDialog
+                open={!!confirmData}
+                title="Cancelar venta"
+                description={confirmData?.msg || ''}
+                confirmLabel="Cancelar venta"
+                onConfirm={() => { confirmData?.onConfirm?.(); setConfirmData(null) }}
+                onCancel={() => setConfirmData(null)}
+            />
         </div>
     )
 }

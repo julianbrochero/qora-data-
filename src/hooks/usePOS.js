@@ -282,7 +282,6 @@ export const usePOS = () => {
                         .from('productos').update({ stock: nuevoStock })
                         .eq('id', item.productoId).eq('user_id', user.id)
                     if (updateErr) { console.error(`[POS] Error stock "${item.nombre}":`, updateErr.message); return }
-                    console.log(`[POS] Stock "${item.nombre}": ${stockActual} → ${nuevoStock} (-${item.cantidad})`)
                     const minimo = prod.stock_minimo ?? prod.stockminimo ?? 5
                     if (nuevoStock <= minimo) alertas.push({ nombre: prod.nombre, stock: nuevoStock, minimo })
                 }))

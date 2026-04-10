@@ -47,6 +47,7 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
     const [mostrarNuevoCliente, setMostrarNuevoCliente] = useState(false)
     const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", telefono: "", cuit: "" })
     const [creandoCliente, setCreandoCliente] = useState(false)
+    const [formError, setFormError] = useState('')
 
     const clienteRef = useRef(null)
 
@@ -73,7 +74,7 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
     }
 
     const handleCrearCliente = async () => {
-        if (!nuevoCliente.nombre.trim()) { alert("El nombre del cliente es requerido"); return }
+        if (!nuevoCliente.nombre.trim()) { setFormError("El nombre del cliente es requerido"); return }
         setCreandoCliente(true)
         try {
             const resultado = await formActions.agregarClienteRapido?.({
@@ -93,7 +94,7 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
                 setMostrarNuevoCliente(false)
             }
         } catch (error) {
-            alert("Error creando cliente: " + error.message)
+            setFormError("Error creando cliente: " + error.message)
         } finally {
             setCreandoCliente(false)
         }
@@ -121,10 +122,10 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
                 formActions?.recargarTodosLosDatos?.()
                 closeModal?.()
             } else {
-                alert("Error: " + (resultado?.mensaje || "Error desconocido"))
+                setFormError("Error: " + (resultado?.mensaje || "Error desconocido"))
             }
         } catch (error) {
-            alert("Error: " + error.message)
+            setFormError("Error: " + error.message)
         } finally {
             setGuardando(false)
         }
@@ -352,6 +353,13 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
                             </span>
                         </div>
                     </div>
+                )}
+
+                {/* Error */}
+                {formError && (
+                  <div style={{ padding: '7px 10px', borderRadius: 7, background: '#FEF2F2', border: '1px solid #fecaca', fontSize: 12, color: '#DC2626', fontWeight: 500 }}>
+                    {formError}
+                  </div>
                 )}
 
                 {/* ── BOTONES ── */}
