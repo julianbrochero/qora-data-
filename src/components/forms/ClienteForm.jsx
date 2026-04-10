@@ -162,7 +162,8 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
               <select ref={condicionIVARef} value={data.condicionIVA || 'Consumidor Final'}
                 onChange={e => handleChange('condicionIVA', e.target.value)}
                 onFocus={focusStyle} onBlur={blurStyle}
-                style={{ ...inputBase, paddingLeft: 30, cursor: 'pointer', appearance: 'none' }}>
+                className="app-select app-select--icon-left"
+                style={{ paddingLeft: 30 }}>
                 <option>Consumidor Final</option>
                 <option>Responsable Inscripto</option>
                 <option>Monotributo</option>
@@ -203,13 +204,13 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
             Cancelar
           </button>
           <button type="submit" disabled={isSubmitting}
-            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
-            onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.opacity = '.9' }}
-            onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.opacity = '1' }}>
+            style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', background: '#334139', border: '1px solid #334139', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            onMouseEnter={e => { if (!isSubmitting) e.currentTarget.style.background = '#2b352f' }}
+            onMouseLeave={e => { if (!isSubmitting) e.currentTarget.style.background = '#334139' }}>
             {isSubmitting ? 'Guardando...' : isRapido ? '⚡ Agregar rápido' : isEdit
               ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</>
               : <><User size={13} strokeWidth={2.5} /> Crear cliente</>}
-            {!isRapido && !isSubmitting && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
+            {!isRapido && !isSubmitting && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(255,255,255,.15)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
           </button>
         </div>
       </form>

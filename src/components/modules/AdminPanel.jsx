@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import {
   Users, TrendingUp, DollarSign, Clock,
   Download, RefreshCw, Shield, Search, X,
-  AlertCircle,
+  AlertCircle, ChevronRight,
   EyeOff, Eye, ArrowUpDown, ArrowUp, ArrowDown, Copy, CheckCheck
 } from 'lucide-react'
 
@@ -105,6 +105,14 @@ const AdminPanel = () => {
   const ingresos  = rows.filter(r => r.paid_until && new Date(r.paid_until) >= now)
                         .reduce((s, r) => s + (parseFloat(r.plan_price) || 0), 0)
 
+  /* ── Embudo de ventas ── */
+  const usuariosActivos  = rows.filter(r => r.trial_until || r.paid_until).length
+  const trialsExpirados  = rows.filter(r => {
+    if (!r.trial_until) return false
+    return new Date(r.trial_until) < now && (!r.paid_until || new Date(r.paid_until) < now) && !r.manually_suspended && !r.is_exempt
+  }).length
+  const pct = (n, base) => base > 0 ? Math.round((n / base) * 100) : 0
+
   const rowsFiltrados = [...rows
     .filter(r => showHidden ? hiddenIds.has(r.user_id) : !hiddenIds.has(r.user_id))
     .filter(r => {
@@ -192,6 +200,98 @@ const AdminPanel = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ══ EMBUDO DE VENTAS ══ */}
+        <div className="adm-funnel-card">
+          <div className="adm-funnel-hd">
+            <div>
+              <h3 className="adm-funnel-title">Embudo de Ventas</h3>
+              <p className="adm-funnel-sub">Seguimiento del ciclo de vida de usuarios · {total} registrados en total</p>
+            </div>
+          </div>
+
+          <div className="adm-funnel-body">
+            {/* ── Gráfico visual ── */}
+            <div className="adm-funnel-graphic">
+              {[
+                { color: '#8B5CF6', pctW: 100 },
+                { color: '#14B8A6', pctW: total > 0 ? Math.max(15, pct(usuariosActivos, total)) : 80 },
+                { color: '#F59E0B', pctW: total > 0 ? Math.max(10, pct(enTrial, total)) : 60 },
+                { color: '#F97316', pctW: total > 0 ? Math.max(8,  pct(trialsExpirados, total)) : 45 },
+                { color: '#EF4444', pctW: total > 0 ? Math.max(6,  pct(proActivo, total)) : 30 },
+              ].map((s, i) => (
+                <div key={i} className="adm-funnel-layer" style={{ width: `${s.pctW}%`, background: s.color }} />
+              ))}
+              <div className="adm-funnel-neck" />
+            </div>
+
+            {/* ── Etapas ── */}
+            <div className="adm-funnel-steps">
+              {[
+                {
+                  n: 1, color: '#8B5CF6', label: 'REGISTRADOS', count: total,
+                  quote: '"Cuánta gente entró al embudo"',
+                  bullets: ['Medir si tus anuncios funcionan', 'Ver si estás trayendo tráfico'],
+                  note: 'Si esto no sube → problema de marketing',
+                  onClick: () => setFiltro('todos'),
+                },
+                {
+                  n: 2, color: '#14B8A6', label: 'USUARIOS ACTIVOS', count: usuariosActivos,
+                  quote: '"Cuántos realmente usaron el sistema"',
+                  bullets: ['Medir si el producto se entiende', 'Validar onboarding'],
+                  note: 'Si es bajo → la gente entra y no entiende nada · Esto es lo MÁS importante ahora',
+                  onClick: null,
+                },
+                {
+                  n: 3, color: '#F59E0B', label: 'TRIALS ACTIVOS', count: enTrial,
+                  quote: '"Cuántos están en juego ahora"',
+                  bullets: ['Saber cuántos pueden convertirse en breve', 'Predecir ingresos futuros'],
+                  note: 'Es tu "pipeline" de ventas',
+                  onClick: () => setFiltro('trial'),
+                },
+                {
+                  n: 4, color: '#F97316', label: 'TRIALS EXPIRADOS', count: trialsExpirados,
+                  quote: '"Cuánta gente perdiste"',
+                  bullets: ['Detectar fuga de plata', 'Activar emails / retargeting'],
+                  note: 'Si esto es alto → tenés un leak fuerte',
+                  onClick: () => setFiltro('expirado'),
+                },
+                {
+                  n: 5, color: '#EF4444', label: 'SUSCRIPCIONES PRO', count: proActivo,
+                  quote: '"Cuántos pagan"',
+                  bullets: ['Ver si el negocio funciona', 'Medir crecimiento real'],
+                  note: 'Esto es validación pura',
+                  onClick: () => setFiltro('pro'),
+                },
+              ].map((step, i, arr) => (
+                <div key={step.n} className={`adm-step${step.onClick ? ' adm-step-click' : ''}`}
+                  onClick={step.onClick || undefined}>
+                  <div className="adm-step-l">
+                    <div className="adm-step-num">{step.n}</div>
+                    <div className="adm-step-arrow" style={{ background: step.color }}>
+                      <span className="adm-step-arrow-lbl">{step.label}</span>
+                      <div className="adm-step-arrow-tip" style={{ borderLeftColor: step.color }} />
+                    </div>
+                    <div className="adm-step-count" style={{ color: step.color }}>
+                      {step.count}
+                      {i > 0 && arr[i-1].count > 0 && (
+                        <span className="adm-step-conv">{pct(step.count, arr[i-1].count)}%</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="adm-step-r">
+                    <p className="adm-step-quote">{step.quote}</p>
+                    <ul className="adm-step-bullets">
+                      {step.bullets.map(b => <li key={b}>{b}</li>)}
+                    </ul>
+                    <p className="adm-step-note">{step.note}</p>
+                  </div>
+                  {step.onClick && <ChevronRight size={14} className="adm-step-caret" />}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ══ FILTROS + BÚSQUEDA ══ */}
@@ -434,9 +534,46 @@ const AdminPanel = () => {
         .adm-state-box { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px; gap:8px; }
         .adm-spinner { width:36px; height:36px; border:3px solid #F4F4F5; border-top-color:#18181B; border-radius:50%; animation:adm-spin .8s linear infinite; margin-bottom:12px; }
 
+        /* ══ Embudo de ventas ══ */
+        .adm-funnel-card { background:#ffffff; border:1px solid #E4E4E7; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.02); flex-shrink:0; }
+        .adm-funnel-hd { padding:20px 24px 16px; border-bottom:1px solid #F4F4F5; display:flex; align-items:flex-start; justify-content:space-between; }
+        .adm-funnel-title { font-size:16px; font-weight:700; color:#18181B; margin:0 0 3px; letter-spacing:-.3px; }
+        .adm-funnel-sub { font-size:12px; color:#71717A; margin:0; }
+        .adm-funnel-body { display:grid; grid-template-columns:140px 1fr; gap:0; align-items:start; padding:20px 24px 20px 20px; }
+
+        /* Gráfico visual */
+        .adm-funnel-graphic { display:flex; flex-direction:column; align-items:center; gap:0; padding-top:18px; }
+        .adm-funnel-layer { height:52px; border-radius:4px 4px 0 0; transition:width .4s ease; margin-bottom:2px; opacity:.92; }
+        .adm-funnel-layer:first-child { border-radius:16px 16px 0 0; }
+        .adm-funnel-neck { width:14%; height:28px; background:linear-gradient(to bottom,#EF4444,#b91c1c); border-radius:0 0 6px 6px; opacity:.85; }
+
+        /* Etapas */
+        .adm-funnel-steps { display:flex; flex-direction:column; gap:2px; }
+        .adm-step { display:flex; align-items:flex-start; gap:12px; padding:10px 12px; border-radius:8px; transition:background .15s; position:relative; }
+        .adm-step-click { cursor:pointer; }
+        .adm-step-click:hover { background:#F9FAFB; }
+        .adm-step-caret { color:#A1A1AA; flex-shrink:0; margin-top:12px; opacity:0; transition:opacity .15s; }
+        .adm-step-click:hover .adm-step-caret { opacity:1; }
+
+        .adm-step-l { display:flex; align-items:center; gap:8px; flex-shrink:0; width:260px; }
+        .adm-step-num { width:28px; height:28px; border-radius:50%; background:#18181B; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .adm-step-arrow { position:relative; display:flex; align-items:center; padding:5px 24px 5px 12px; border-radius:4px 0 0 4px; flex-shrink:0; min-width:130px; }
+        .adm-step-arrow-lbl { font-size:11px; font-weight:800; color:#fff; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+        .adm-step-arrow-tip { position:absolute; right:-14px; top:0; bottom:0; width:0; height:0; border-top:19px solid transparent; border-bottom:19px solid transparent; border-left:14px solid; }
+        .adm-step-count { font-size:22px; font-weight:800; letter-spacing:-1px; min-width:52px; display:flex; align-items:baseline; gap:6px; }
+        .adm-step-conv { font-size:11px; font-weight:600; color:#A1A1AA; letter-spacing:0; }
+
+        .adm-step-r { flex:1; padding-left:4px; }
+        .adm-step-quote { font-size:11px; color:#52525B; margin:0 0 3px; font-style:italic; }
+        .adm-step-bullets { margin:0 0 3px; padding-left:14px; }
+        .adm-step-bullets li { font-size:11px; color:#3F3F46; margin-bottom:1px; }
+        .adm-step-note { font-size:10.5px; color:#71717A; margin:0; font-weight:500; }
+
         /* ── Responsive ── */
         @media(max-width:1100px) {
           .adm-stats { grid-template-columns:repeat(2,1fr); }
+          .adm-funnel-body { grid-template-columns:110px 1fr; }
+          .adm-step-l { width:220px; }
         }
         @media(max-width:768px) {
           .adm-header-content { padding:0 20px; }
@@ -448,6 +585,14 @@ const AdminPanel = () => {
           .adm-search-wrap { width:100%; }
           .adm-filtros { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
           .adm-f-btn { white-space:nowrap; }
+          .adm-funnel-body { grid-template-columns:1fr; }
+          .adm-funnel-graphic { flex-direction:row; align-items:flex-end; padding-top:0; margin-bottom:16px; height:60px; }
+          .adm-funnel-layer { height:100%; border-radius:4px; margin-bottom:0; margin-right:2px; }
+          .adm-funnel-neck { display:none; }
+          .adm-step-l { width:auto; }
+          .adm-step { flex-wrap:wrap; }
+          .adm-step-r { width:100%; padding-left:36px; }
+          .adm-step-arrow { min-width:110px; }
         }
 
       `}</style>

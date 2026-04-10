@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import {
   ShoppingCart, PackagePlus, Package, Users,
   TrendingUp, Clock, ChevronRight, Search, Bell,
-  UserPlus, FileText, CheckCircle, Calendar, Wallet,
+  UserPlus, CheckCircle, Calendar, Wallet,
   DollarSign, Menu, X, ArrowRight, BarChart3, Activity,
   AlertTriangle,
 } from "lucide-react"
@@ -48,7 +48,7 @@ const cardSty  = { background: surface, borderColor: border, boxShadow: "0 1px 4
 /* ════════════════════════════════════════════════════════════════════════════
    BUSCADOR (dropdown sobre header oscuro)
 ════════════════════════════════════════════════════════════════════════════ */
-const SearchBar = ({ clientes = [], facturas = [], pedidos = [], onViewAllClientes, onViewAllFacturas, onViewAllPedidos }) => {
+const SearchBar = ({ clientes = [], pedidos = [], onViewAllClientes, onViewAllPedidos }) => {
   const [q, setQ]       = useState("")
   const [open, setOpen] = useState(false)
   const ref             = useRef(null)
@@ -61,15 +61,13 @@ const SearchBar = ({ clientes = [], facturas = [], pedidos = [], onViewAllClient
 
   const qLow   = q.toLowerCase().trim()
   const matchC = qLow ? clientes.filter(c => (c.nombre || "").toLowerCase().includes(qLow) || (c.email || "").toLowerCase().includes(qLow)).slice(0, 3) : []
-  const matchF = qLow ? facturas.filter(f => (f.numero || "").toLowerCase().includes(qLow) || (f.cliente_nombre || f.cliente || "").toLowerCase().includes(qLow)).slice(0, 3) : []
   const matchP = qLow ? pedidos.filter(p  => (p.codigo || "").toLowerCase().includes(qLow) || (p.cliente_nombre || "").toLowerCase().includes(qLow)).slice(0, 3) : []
-  const total  = matchC.length + matchF.length + matchP.length
+  const total  = matchC.length + matchP.length
   const show   = open && qLow.length > 0
   const clear  = () => { setQ(""); setOpen(false) }
 
   const groups = [
     { label: "Clientes", items: matchC, Icon: Users,        go: () => { onViewAllClientes?.(); clear() }, render: c => ({ t: c.nombre,                    s: c.email || c.telefono || "" }) },
-    { label: "Facturas", items: matchF, Icon: FileText,     go: () => { onViewAllFacturas?.(); clear() }, render: f => ({ t: `#${f.numero || "—"}`,        s: `${f.cliente_nombre || f.cliente || "—"} · ${fmt(f.total)}` }) },
     { label: "Ventas",   items: matchP, Icon: ShoppingCart, go: () => { onViewAllPedidos?.();  clear() }, render: p => ({ t: p.codigo || `PED-${String(p.id || "").slice(0, 6)}`, s: p.cliente_nombre || "—" }) },
   ].filter(g => g.items.length > 0)
 
@@ -266,10 +264,8 @@ const PedidoRow = ({ pedido, isLast }) => (
 const DesktopDashboard = ({
   clientes   = [],
   productos  = [],
-  facturas   = [],
   pedidos    = [],
   caja       = {},
-  onViewAllFacturas,
   onViewAllProductos,
   onViewAllClientes,
   onViewAllCaja,
@@ -299,14 +295,14 @@ const DesktopDashboard = ({
   const startOfDay   = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
   const startOfMonth = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
 
-  const ventasHoy = useMemo(() => facturas.filter(f => f.fecha && new Date(f.fecha) >= startOfDay),   [facturas])
-  const ventasMes = useMemo(() => facturas.filter(f => f.fecha && new Date(f.fecha) >= startOfMonth), [facturas])
+  const ventasHoy = useMemo(() => pedidos.filter(p => { const f=p.fecha_pedido||p.created_at; return f && new Date(f) >= startOfDay }),   [pedidos])
+  const ventasMes = useMemo(() => pedidos.filter(p => { const f=p.fecha_pedido||p.created_at; return f && new Date(f) >= startOfMonth }), [pedidos])
 
-  const totalHoy  = ventasHoy.reduce((s, f) => s + (f.total || 0), 0)
-  const totalMes  = ventasMes.reduce((s, f) => s + (f.total || 0), 0)
+  const totalHoy  = ventasHoy.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
+  const totalMes  = ventasMes.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
 
-  const factPend    = facturas.filter(f => f.estado === "pendiente" || f.estado === "parcial")
-  const totalDeuda  = factPend.reduce((s, f) => s + (f.total || 0), 0)
+  const pedConSaldo = pedidos.filter(p => parseFloat(p.saldo_pendiente) > 0.01)
+  const totalDeuda  = pedConSaldo.reduce((s, p) => s + (parseFloat(p.saldo_pendiente) || 0), 0)
   const pedPend     = pedidos.filter(p => p.estado === "pendiente").length
   const pedProc     = pedidos.filter(p => p.estado === "preparando").length
   const pedEntr     = pedidos.filter(p => p.estado === "entregado").length
@@ -323,12 +319,12 @@ const DesktopDashboard = ({
     const d  = new Date(hoy); d.setDate(d.getDate() - (6 - i))
     const ds = new Date(d.getFullYear(), d.getMonth(), d.getDate())
     const de = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
-    return facturas.filter(f => f.fecha && new Date(f.fecha) >= ds && new Date(f.fecha) < de).reduce((s, f) => s + (f.total || 0), 0)
-  }), [facturas])
+    return pedidos.filter(p => { const f=p.fecha_pedido||p.created_at; return f && new Date(f) >= ds && new Date(f) < de }).reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
+  }), [pedidos])
 
-  const recentFact = useMemo(() =>
-    [...facturas].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).slice(0, 5)
-  , [facturas])
+  const pedidosDeuda = useMemo(() =>
+    [...pedConSaldo].sort((a, b) => (parseFloat(b.saldo_pendiente)||0) - (parseFloat(a.saldo_pendiente)||0)).slice(0, 5)
+  , [pedidos])
 
   const pendPedidos = pedidos.filter(p => p.estado === "pendiente").slice(0, 4)
 
@@ -341,7 +337,7 @@ const DesktopDashboard = ({
   /* ── KPI cards — misma paleta que Pedidos.jsx ── */
   const kpis = [
     { label: "Pedidos activos", val: pedPend + pedProc,  sub: `${pedPend} pendientes · ${pedProc} en proceso`, Icon: Package,    bar: "#334139", iconBg: "rgba(51,65,57,.1)",     iconC: "#334139", onClick: onViewAllPedidos },
-    { label: "Por cobrar",      val: fmt(totalDeuda),    sub: `${factPend.length} factura${factPend.length !== 1 ? "s" : ""}`, Icon: DollarSign, bar: "#373F47", iconBg: "rgba(55,63,71,.1)",      iconC: "#373F47", onClick: onViewAllFacturas },
+    { label: "Por cobrar",      val: fmt(totalDeuda),    sub: `${pedConSaldo.length} venta${pedConSaldo.length !== 1 ? "s" : ""} con saldo`, Icon: DollarSign, bar: "#373F47", iconBg: "rgba(55,63,71,.1)",      iconC: "#373F47", onClick: onViewAllPedidos },
     { label: "Entregados",      val: pedEntr,            sub: "Completados este período",  Icon: CheckCircle, bar: "#606B6C", iconBg: "rgba(96,107,108,.1)",  iconC: "#606B6C", onClick: onViewAllPedidos },
     { label: "Ventas del mes",  val: fmt(totalMes),      sub: `Hoy: ${fmt(totalHoy)}`,     Icon: TrendingUp,  bar: "rgba(139,137,130,.35)", iconBg: "rgba(139,137,130,.08)", iconC: ct3, onClick: onViewReportes },
   ]
@@ -351,7 +347,6 @@ const DesktopDashboard = ({
     { icon: ShoppingCart, label: "Nueva Venta",    primary: true,  fn: () => onNuevaVenta?.() },
     { icon: UserPlus,     label: "Nuevo Cliente",  primary: false, fn: () => openModal?.("nuevo-cliente") },
     { icon: PackagePlus,  label: "Nuevo Producto", primary: false, fn: () => openModal?.("nuevo-producto") },
-    { icon: FileText,     label: "Nueva Factura",  primary: false, fn: () => openModal?.("nueva-factura") },
   ]
 
   return (
@@ -404,9 +399,8 @@ const DesktopDashboard = ({
         {/* Search — centrado, escondido en mobile */}
         <div className="hidden md:flex" style={{ flex: 1, justifyContent: "center", maxWidth: 360 }}>
           <SearchBar
-            clientes={clientes} facturas={facturas} pedidos={pedidos}
+            clientes={clientes} pedidos={pedidos}
             onViewAllClientes={onViewAllClientes}
-            onViewAllFacturas={onViewAllFacturas}
             onViewAllPedidos={onViewAllPedidos}
           />
         </div>
@@ -605,38 +599,49 @@ const DesktopDashboard = ({
           </div>
         </div>
 
-        {/* ── Col 2: Facturas recientes ── */}
+        {/* ── Col 2: Saldos pendientes ── */}
         <div className={cardCls} style={{ ...cardSty, minWidth: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px 8px", borderBottom: `1px solid ${borderL}`, background: surface2 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: ct2 }}>Facturas recientes</span>
-              <span style={{ fontSize: 9, fontWeight: 700, padding: "1.5px 6px", borderRadius: 4, background: "rgba(48,54,47,.08)", color: ct3 }}>{recentFact.length}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: ct2 }}>Saldos pendientes</span>
+              <span style={{ fontSize: 9, fontWeight: 700, padding: "1.5px 6px", borderRadius: 4, background: "rgba(48,54,47,.08)", color: ct3 }}>{pedidosDeuda.length}</span>
             </div>
-            <button onClick={onViewAllFacturas} style={{ fontSize: 10, fontWeight: 600, color: ct3, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}
+            <button onClick={onViewAllPedidos} style={{ fontSize: 10, fontWeight: 600, color: ct3, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 3 }}
               onMouseEnter={e => e.currentTarget.style.color = ct2}
               onMouseLeave={e => e.currentTarget.style.color = ct3}
             >
-              Ver todas <ArrowRight size={9} strokeWidth={2.5} />
+              Ver todos <ArrowRight size={9} strokeWidth={2.5} />
             </button>
           </div>
           <div style={{ padding: "4px 14px 8px" }}>
-            {recentFact.length === 0 ? (
+            {pedidosDeuda.length === 0 ? (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0" }}>
-                <FileText size={26} strokeWidth={1.5} style={{ color: ct3, marginBottom: 8, opacity: .5 }} />
-                <p style={{ fontSize: 12, color: ct3 }}>Sin facturas recientes</p>
+                <CheckCircle size={26} strokeWidth={1.5} style={{ color: ct3, marginBottom: 8, opacity: .5 }} />
+                <p style={{ fontSize: 12, color: ct3 }}>Sin saldos pendientes</p>
               </div>
             ) : (
-              recentFact.map((f, i) => (
-                <InvoiceRow
-                  key={f.id || i}
-                  numero={f.numero}
-                  cliente={f.cliente_nombre || f.cliente || ""}
-                  total={f.total || 0}
-                  fecha={f.fecha || ""}
-                  estado={f.estado || "pendiente"}
-                  isLast={i === recentFact.length - 1}
-                />
-              ))
+              pedidosDeuda.map((p, i) => {
+                const saldo = parseFloat(p.saldo_pendiente) || 0
+                return (
+                  <div
+                    key={p.id || i}
+                    className="flex items-center gap-3 py-3 -mx-1 px-1 rounded-lg"
+                    style={{ borderBottom: i === pedidosDeuda.length - 1 ? "none" : `1px solid ${borderL}`, cursor: "default", transition: "background .13s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(48,54,47,.022)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "rgba(55,63,71,.08)", border: "1px solid rgba(55,63,71,.18)" }}>
+                      <DollarSign size={13} strokeWidth={2} style={{ color: ct2 }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: ct1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.cliente_nombre || p.cliente || "Cliente"}</p>
+                      <p style={{ fontSize: 10, color: ct3 }}>{p.codigo || `PED-${String(p.id || "").slice(0, 6)}`} · {fmtDate(p.fecha_pedido || p.created_at)}</p>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20, flexShrink: 0, background: "rgba(55,63,71,.08)", color: ct2, border: "1px solid rgba(55,63,71,.18)" }}>Debe</span>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: ct1, minWidth: 72, textAlign: "right", flexShrink: 0, fontFamily: "monospace" }}>{fmt(saldo)}</p>
+                  </div>
+                )
+              })
             )}
           </div>
         </div>
@@ -651,8 +656,8 @@ const DesktopDashboard = ({
             </div>
             <div style={{ padding: "10px 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {[
-                { label: "Cobrado hoy",   value: fmt(ventasHoy.reduce((s, f) => s + (f.total || 0), 0)), sub: `${ventasHoy.length} fact.`, Icon: CheckCircle, onClick: onViewAllFacturas },
-                { label: "Por cobrar",    value: fmt(totalDeuda),  sub: `${factPend.length} fact.`,     Icon: Clock,        onClick: onViewAllFacturas },
+                { label: "Cobrado hoy",   value: fmt(ventasHoy.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)), sub: `${ventasHoy.length} venta${ventasHoy.length !== 1 ? "s" : ""}`, Icon: CheckCircle, onClick: onViewAllPedidos },
+                { label: "Por cobrar",    value: fmt(totalDeuda),  sub: `${pedConSaldo.length} venta${pedConSaldo.length !== 1 ? "s" : ""}`, Icon: Clock, onClick: onViewAllPedidos },
                 { label: "En proceso",    value: String(pedProc),  sub: "ventas",                       Icon: Activity,     onClick: onViewAllPedidos },
                 { label: "Sin stock",     value: String(sinStock), sub: sinStock === 0 ? "OK" : "prods", Icon: AlertTriangle, onClick: onViewAllProductos },
               ].map((s, i) => {

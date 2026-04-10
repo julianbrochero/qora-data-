@@ -595,7 +595,7 @@ const AgregarVenta = ({
                       <div style={{ position: 'relative' }}>
                         <select className="av-inp" value={estado}
                           onChange={e => { setEstado(e.target.value); try { localStorage.setItem('gestify_pedido_estado', e.target.value) } catch {} }}
-                          style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 22, fontSize: 11 }}>
+                          style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 22, fontSize: 11, boxShadow: '0 1px 3px rgba(0,0,0,.08)', transition: 'all .15s' }}>
                           {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                         </select>
                         <ChevronDown size={11} style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: eCfg.color }} />
@@ -622,7 +622,7 @@ const AgregarVenta = ({
                     <div style={{ position: 'relative' }}>
                       <select className="av-inp" value={estado}
                         onChange={e => { setEstado(e.target.value); try { localStorage.setItem('gestify_pedido_estado', e.target.value) } catch {} }}
-                        style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 28 }}>
+                        style={{ appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1.5px solid ${eCfg.border}`, fontWeight: 700, paddingRight: 28, boxShadow: '0 1px 3px rgba(0,0,0,.08)', transition: 'all .15s' }}>
                         {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                       </select>
                       <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: eCfg.color }} />
@@ -866,7 +866,7 @@ const AgregarVenta = ({
         .av-canal-chip.active { background:#334139; border-color:#334139; color:#fff; }
 
         /* ── Inputs generales ── */
-        .av-inp { width:100%; height:32px; padding:0 10px; border:1px solid #dde8e1; border-radius:8px; font-size:12px; color:#1e2320; outline:none; box-sizing:border-box; background:#fff; font-family:'Inter',sans-serif; transition:border-color .12s; }
+        .av-inp { width:100%; height:32px; padding:0 10px; border:1px solid #dde8e1; border-radius:8px; font-size:12px; color:#1e2320; outline:none; box-sizing:border-box; background-color:#fff; font-family:'Inter',sans-serif; transition:border-color .12s; }
         .av-inp:focus { border-color:#334139; box-shadow:0 0 0 3px rgba(51,65,57,.07); }
         .av-notes { height:38px; padding:6px 10px; resize:none; line-height:1.5; }
 

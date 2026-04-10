@@ -31,7 +31,7 @@ const accentL = 'rgba(51,65,57,.08)'
 const cardStyle = { background: surface, borderColor: border, boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }
 
 /* ─── input base ─── */
-const inputStyle = { width: '100%', height: 34, padding: '0 12px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif" }
+const inputStyle = { width: '100%', height: 34, padding: '0 12px', fontSize: 12, color: ct1, background: '#f2f2f2', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', fontFamily: "'Inter', sans-serif" }
 const labelStyle = { fontSize: 11, fontWeight: 600, color: ct2, marginBottom: 4, display: 'block' }
 
 /* ══════════════════════════════════════════════
@@ -770,14 +770,14 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
             </div>
 
             {/* filtro stock */}
-            <select value={filtroStock} onChange={e => setFiltroStock(e.target.value)} style={pillSelect}>
+            <select value={filtroStock} onChange={e => setFiltroStock(e.target.value)} className="app-select app-select-sm app-select--inline" style={{ minWidth: 168 }}>
               <option value="todos">Todos los productos</option>
               <option value="en-stock">Con stock disponible</option>
               <option value="bajo-stock">Bajo stock</option>
             </select>
 
             {/* filtro categoria */}
-            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} style={pillSelect}>
+            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} className="app-select app-select-sm app-select--inline" style={{ minWidth: 168 }}>
               <option value="todas">Todas las categorías</option>
               {categorias.sort((a, b) => a.nombre.localeCompare(b.nombre)).map(cat => (
                 <option key={cat.nombre} value={cat.nombre}>{cat.nombre}</option>
@@ -1158,7 +1158,7 @@ const Productos = ({ productos, searchTerm, setSearchTerm, openModal, eliminarPr
           {/* footer paginación */}
           <div style={{ padding: '12px 16px', background: surface, borderTop: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ height: 28, padding: '0 22px 0 8px', fontSize: 11, fontWeight: 600, color: ct2, background: '#fff', border: `1px solid ${border}`, borderRadius: 6, outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 5px center' }}>
+              <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} className="app-select app-select-xs app-select--inline" style={{ color: ct2, fontWeight: 600 }}>
                 <option value="10">10 / pág</option>
                 <option value="25">25 / pág</option>
                 <option value="50">50 / pág</option>

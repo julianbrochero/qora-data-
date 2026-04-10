@@ -74,10 +74,10 @@ export default function Landing() {
           <div className="hero-inner">
             <div className="hero-top">
               <div className="hero-badge reveal">
-                <div className="badge"><span className="badge-dot"></span>Sistema todo-en-uno para negocios argentinos</div>
+                <div className="badge"><span className="badge-dot"></span>Para PyMEs y negocios argentinos que quieren crecer</div>
               </div>
-              <h1 className="hero-h1 reveal">Gestioná tu negocio<br /><em>sin complicaciones</em></h1>
-              <p className="hero-sub reveal">Facturación, inventario, caja y reportes en una sola plataforma. Diseñado para PyMEs que necesitan control total sin perder tiempo.</p>
+              <h1 className="hero-h1 reveal">Dejá Excel.<br /><em>Empezá a saber si ganás plata de verdad.</em></h1>
+              <p className="hero-sub reveal">Controlá tus ingresos, gastos y ganancias en un solo lugar — sin perder horas, sin números que no cierran.</p>
               <div className="hero-actions reveal">
                 <Link to="/register" className="btn btn-primary btn-lg">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -90,7 +90,7 @@ export default function Landing() {
               </div>
               <p className="hero-note reveal">
                 Sin tarjeta de crédito <span className="hero-note-sep">·</span>
-                Configuración en 5 minutos <span className="hero-note-sep">·</span>
+                Listo en 5 minutos <span className="hero-note-sep">·</span>
                 Soporte en español
               </p>
             </div>
@@ -461,36 +461,68 @@ export default function Landing() {
       <div className="stats-band">
         <div className="stats-inner">
           {[
-            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, label: '10 módulos integrados' },
-            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>, label: 'PDF instantáneo' },
-            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, label: 'Control de caja en tiempo real' },
-            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>, label: 'Mercado Pago integrado' },
-            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, label: 'Datos seguros en la nube' },
-          ].map((s, i, arr) => (
-            <React.Fragment key={s.label}>
-              <div className="stat-item"><div className="stat-icon">{s.icon}</div><span className="stat-label">{s.label}</span></div>
-              {i < arr.length - 1 && <div className="stat-sep"></div>}
-            </React.Fragment>
+            { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, value: '10+', label: 'Módulos integrados' },
+            { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>, value: 'PDF', label: 'Generación instantánea' },
+            { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, value: '24/7', label: 'Control de caja en vivo' },
+            { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>, value: 'MP', label: 'Mercado Pago integrado' },
+            { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, value: '100%', label: 'Datos seguros en la nube' },
+          ].map((s, i) => (
+            <div className="stat-item" key={s.label} style={{ animationDelay: `${i * 80}ms` }}>
+              <div className="stat-icon-wrap">{s.icon}</div>
+              <div className="stat-text">
+                <span className="stat-value">{s.value}</span>
+                <span className="stat-label">{s.label}</span>
+              </div>
+            </div>
           ))}
         </div>
       </div>
+
+      {/* ── PAIN SECTION ── */}
+      <section className="section section-pain">
+        <div className="container">
+          <div className="section-header reveal">
+            <p className="section-eyebrow">¿Te suena familiar?</p>
+            <h2 className="section-title">El problema no es tu negocio.<br />Es que no tenés los números claros.</h2>
+          </div>
+          <div className="pain-grid">
+            {[
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, text:'"Tengo ventas pero no sé si realmente estoy ganando plata"' },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>, text:'"Uso Excel y cada cierre me lleva horas — y aun así no confío en los números"' },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="23" y2="12"/><line x1="23" y1="8" x2="19" y2="12"/></svg>, text:'"No sé exactamente cuánto me deben mis clientes sin revisar todo"' },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, text:'"Al final del mes no entiendo a dónde fue el dinero"' },
+            ].map((p, i) => (
+              <div className="pain-card reveal" key={p.text}>
+                <div className="pain-icon">{p.icon}</div>
+                <p className="pain-text">{p.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="pain-solution reveal">
+            <div className="pain-solution-inner">
+              <span className="pain-sol-label">La solución</span>
+              <p className="pain-sol-text">Gestify te da <strong>claridad total en tiempo real</strong> — sin planillas, sin adivinanzas, sin perder horas.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── FEATURES ── */}
       <section className="section section-alt" id="features">
         <div className="container">
           <div className="section-header reveal">
             <p className="section-eyebrow">Funcionalidades</p>
-            <h2 className="section-title">Todo lo que tu negocio necesita,<br />en un solo lugar</h2>
-            <p className="section-sub">Sin planillas de Excel, sin sistemas separados. Gestify centraliza todas las operaciones de tu negocio.</p>
+            <h2 className="section-title">Pasá de "creo que gano"<br />a "sé exactamente cuánto gano"</h2>
+            <p className="section-sub">Cada herramienta diseñada para darte control real — no más datos dispersos, no más sorpresas al cierre del mes.</p>
           </div>
           <div className="features-grid">
             {[
-              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title: 'Facturación completa', desc: 'Generá facturas, gestioná su estado (pendiente, pagada, anulada) y exportá en PDF con un clic. Historial completo por cliente.', tags: ['PDF automático','CUIT','Multi-estado'] },
-              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>, title: 'Control de Caja', desc: 'Registrá ingresos y egresos, cerrá la caja del día y llevá un control en tiempo real del flujo de efectivo de tu negocio.', tags: ['Cierre diario','Multi-método','Balance real'] },
-              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>, title: 'Gestión de Ventas', desc: 'Creá y seguí pedidos de venta con múltiples estados de pago. Convertí pedidos a facturas con un solo clic.', tags: ['Estados de pago','Conversión rápida','Historial'] },
-              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>, title: 'Presupuestos', desc: 'Generá presupuestos profesionales y convertílos a ventas o facturas cuando el cliente confirme. Sin recargar datos.', tags: ['Conversión a venta','PDF','Seguimiento'] },
-              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: 'CRM de Clientes', desc: 'Base de datos completa con seguimiento de deuda automático, historial de compras y datos de contacto completos.', tags: ['Saldo de deuda','Historial','CUIT'] },
-              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, title: 'Reportes & Analytics', desc: 'Dashboards con métricas de ventas, rentabilidad, clientes activos y tendencias. Tomá decisiones basadas en datos reales.', tags: ['Ventas por período','Rentabilidad','Top clientes'] },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, title: 'Cobrás y el PDF llega solo', desc: 'Generá facturas en segundos, el cliente recibe el PDF por email y vos tenés el historial completo por cliente. Sin papel, sin Excel.', tags: ['PDF automático','CUIT','Multi-estado'] },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>, title: 'Sabés cuánto dinero tenés ahora mismo', desc: 'Cada peso que entra o sale queda registrado. Cerrá la caja del día y sabé exactamente tu balance real — no el que esperabas.', tags: ['Cierre diario','Multi-método','Balance real'] },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>, title: 'Ninguna venta se pierde ni se olvida', desc: 'Creá pedidos, seguí su estado de pago y convertílos a factura con un clic. Todo queda registrado, nada se cae por las grietas.', tags: ['Estados de pago','Conversión rápida','Historial'] },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>, title: 'El cliente dice que sí — listo en segundos', desc: 'Generá presupuestos profesionales y cuando el cliente confirma, lo convertís en venta o factura con un clic. Sin volver a cargar nada.', tags: ['Conversión a venta','PDF','Seguimiento'] },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title: 'Nunca más un cliente que "ya te paga"', desc: 'Cada cliente tiene su saldo actualizado automáticamente. Sabés quién te debe, cuánto y desde cuándo — sin tener que revisar facturas.', tags: ['Saldo de deuda','Historial','CUIT'] },
+              { icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, title: 'Tomás decisiones con números, no con intuición', desc: 'Dashboards con ventas reales, rentabilidad por producto y tendencias del mes. Sabés qué te conviene hacer — antes de equivocarte.', tags: ['Ventas por período','Rentabilidad','Top clientes'] },
             ].map(f => (
               <div className="feature-card reveal" key={f.title}>
                 <div className="feature-icon">{f.icon}</div>
@@ -657,8 +689,8 @@ export default function Landing() {
         <div className="container">
           <div className="section-header reveal">
             <p className="section-eyebrow">Precios</p>
-            <h2 className="section-title">Simple y transparente</h2>
-            <p className="section-sub">Sin costos ocultos. Empezá gratis y upgradea cuando estés listo.</p>
+            <h2 className="section-title">Por menos de lo que perdés<br />sin tener los números claros</h2>
+            <p className="section-sub">Una sola venta que no cobras, un gasto que no registrás, o un mes sin saber tu ganancia real — ya vale más que el plan Pro. Probá gratis 7 días.</p>
           </div>
           <div className="pricing-grid reveal">
             <div className="pricing-card">
@@ -701,13 +733,13 @@ export default function Landing() {
         <div className="container">
           <div className="section-header reveal">
             <p className="section-eyebrow">Testimonios</p>
-            <h2 className="section-title">Lo que dicen nuestros clientes</h2>
+            <h2 className="section-title">Resultados reales de negocios reales</h2>
           </div>
           <div className="testimonials-grid">
             {[
-              { initials:'MG', text:'"Antes manejaba todo en planillas de Excel. Ahora con Gestify tengo el control total del negocio en un solo lugar. El módulo de caja es increíblemente preciso."', name:'Martín González', role:'Distribuidora de bebidas, Buenos Aires' },
-              { initials:'LC', text:'"El módulo de clientes me salvó. Ahora sé exactamente quién me debe plata sin revisar cientos de anotaciones. Lo recuperé en la primera semana."', name:'Laura Castro', role:'Ferretería, Rosario' },
-              { initials:'RP', text:'"Configuré todo en una tarde y al otro día ya estaba facturando. Los presupuestos que se convierten a ventas solos me ahorran un montón de tiempo."', name:'Roberto Peralta', role:'Almacén, Córdoba' },
+              { initials:'MG', text:'"Antes no sabía si el negocio ganaba o perdía plata de verdad. Ahora lo veo todos los días en el dashboard. El primer mes descubrí que un producto me daba pérdida y ni lo sabía."', name:'Martín González', role:'Distribuidora de bebidas, Buenos Aires' },
+              { initials:'LC', text:'"Dejé el Excel y el primer mes recuperé 4 horas por semana. Además, un cliente me debía $80.000 y yo ni me acordaba — Gestify me lo mostró solo en el panel de clientes."', name:'Laura Castro', role:'Ferretería, Rosario' },
+              { initials:'RP', text:'"Configuré todo en una tarde. Al día siguiente ya estaba facturando. Ahora cierro la caja en 2 minutos y sé exactamente cuánto entró y cuánto salió — sin adivinar."', name:'Roberto Peralta', role:'Almacén, Córdoba' },
             ].map(t => (
               <div className="testimonial-card reveal" key={t.name}>
                 <div className="testimonial-stars">{'★★★★★'.split('').map((s,i) => <span className="testimonial-star" key={i}>{s}</span>)}</div>
@@ -729,12 +761,12 @@ export default function Landing() {
           <div className="reveal">
             <div className="badge" style={{marginBottom:'28px'}}><span className="badge-dot"></span>7 días gratis — sin tarjeta de crédito</div>
           </div>
-          <h2 className="cta-title reveal">Empezá a controlar<br />tu negocio hoy mismo</h2>
-          <p className="cta-sub reveal">Configuración en minutos. Sin migraciones complejas. Tu negocio operando a pleno desde el día uno.</p>
+          <h2 className="cta-title reveal">Dejá el Excel.<br />Empezá a saber qué pasa<br />realmente en tu negocio.</h2>
+          <p className="cta-sub reveal">7 días gratis, sin tarjeta. En 5 minutos tenés todo configurado y empezás a ver tus números como nunca antes.</p>
           <div className="cta-actions reveal">
             <Link to="/register" className="btn btn-primary btn-lg">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              Crear cuenta gratuita
+              Empezar gratis ahora →
             </Link>
             <a href="#demo" className="btn btn-ghost-dark btn-lg">Ver demo interactivo</a>
           </div>

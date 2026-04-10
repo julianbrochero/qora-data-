@@ -1,372 +1,418 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
-import { Plus, Search, User, FileText, Mail, Phone, Edit, Trash2, Copy, Check, AlertCircle, DollarSign, ChevronLeft, ChevronRight, CheckCircle, Menu } from "lucide-react"
+import React, { useState, useEffect } from 'react'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import {
+  User, Search, FileText, Mail, Phone, Edit2, Trash2, Copy, Check, CheckCircle, AlertCircle
+} from 'lucide-react'
+import { MenuIcon, PlusIcon, SearchIcon } from "@nimbus-ds/icons"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ChevronLeftIcon, ChevronRightIcon } from "@nimbus-ds/icons"
 
-/* ══════════════════════════════════════════════
-   PALETA GESTIFY
-   #F5F5F5  fondo app
-   #FAFAFA  cards (surface)
-   #334139  acento verde musgo
-   #30362F  texto oscuro (ct1/ct2)
-   #8B8982  piedra / texto suave (ct3)
-   #4ADE80  Primary Action (Lima Dashboard)
-══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   PALETA NIMBUS
+══════════════════════════════════════════ */
+const C = {
+  pageBg:     "#f8f9fb",
+  bg:         "#ffffff",
+  border:     "#d1d5db",
+  borderMd:   "#9ca3af",
+  primary:    "#334139",
+  primaryHov: "#2b352f",
+  primarySurf:"#eaf0eb",
+  successTxt: "#065f46", successSurf: "#d1fae5", successBord: "#6ee7b7",
+  warnTxt:    "#92400e", warnSurf:    "#fef3c7", warnBord:    "#fcd34d",
+  dangerTxt:  "#991b1b", dangerSurf:  "#fee2e2", dangerBord:  "#fca5a5",
+  textBlack:  "#0d0d0d",
+  textDark:   "#111827",
+  textMid:    "#6b7280",
+  textLight:  "#9ca3af",
+}
 
-const Clientes = ({ clientes = [], searchTerm = "", setSearchTerm, openModal, eliminarCliente, onOpenMobileSidebar }) => {
+const fNum = (n) => (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+const RESPONSIVE = `
+  .pn-show-mobile { display: none; }
+  .pn-hide-mobile { display: flex; }
+  @media (max-width: 767px) {
+    .pn-show-mobile { display: flex !important; }
+    .pn-hide-mobile { display: none !important; }
+  }
+`
+
+/* ─── Botones base ─── */
+const Btn = ({ children, onClick, primary, disabled, style }) => {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      onClick={disabled ? null : onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
+        height: 32, padding: "0 18px", borderRadius: 6,
+        fontSize: 13, fontWeight: 500, fontFamily: "'Inter', sans-serif",
+        border: primary ? "none" : `1px solid ${C.border}`,
+        background: primary ? (hov ? C.primaryHov : C.primary) : (hov ? "#f9fafb" : C.bg),
+        color: primary ? "#fff" : C.textDark,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        transition: "all 0.1s",
+        ...style
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+const IcoBtn = ({ icon: Icon, onClick, title, color = C.textDark, danger }) => {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      onClick={onClick} title={title}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        width: 30, height: 30, borderRadius: 6,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        border: "none", background: hov ? (danger ? C.dangerSurf : "#f3f4f6") : "transparent",
+        color: danger && hov ? C.dangerTxt : color, cursor: "pointer", transition: "all 0.1s"
+      }}
+    >
+      <Icon size={14} strokeWidth={2} />
+    </button>
+  )
+}
+
+/* ─── Badge Estado ─── */
+const Pill = ({ color, bg, border, children }) => (
+  <span style={{
+    display: "inline-flex", alignItems: "center", gap: 4,
+    padding: "2px 8px", borderRadius: 6,
+    fontSize: 11, fontWeight: 600, fontFamily: "'Inter', sans-serif",
+    color, background: bg, border: `1px solid ${border}`,
+    whiteSpace: "nowrap"
+  }}>
+    {children}
+  </span>
+)
+
+
+/* ════════════════════════════════════════════════════
+   COMPONENTE PRINCIPAL
+════════════════════════════════════════════════════ */
+export default function Clientes({
+  clientes = [],
+  searchTerm = "",
+  setSearchTerm,
+  openModal,
+  eliminarCliente,
+  onOpenMobileSidebar
+}) {
   const [paginaActual, setPaginaActual] = useState(1)
-  const [itemsPorPagina, setItemsPorPagina] = useState(10)
+  const [itemsPorPagina, setItemsPorPagina] = useState(50)
   const [clienteCopiado, setClienteCopiado] = useState(null)
 
-  const [dialogo, setDialogo] = useState({ open: false, type: 'confirm', title: '', message: '', onConfirm: null, isDestructive: false })
-
-  /* ── atajo de teclado (solo Ctrl) ── */
-  useEffect(() => {
-    let ctrlPressed = false
-    let otherKeyPressed = false
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Control') {
-        ctrlPressed = true
-      } else if (ctrlPressed) {
-        otherKeyPressed = true
-      }
-    }
-
-    const handleKeyUp = (e) => {
-      if (e.key === 'Control') {
-        if (!otherKeyPressed && openModal) {
-          const active = document.activeElement
-          const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
-          if (!isInput) {
-            openModal('nuevo-cliente')
-          }
-        }
-        ctrlPressed = false
-        otherKeyPressed = false
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
-    }
-  }, [openModal])
-
-  const searchInputRef = useRef(null)
   const clientesSeguros = Array.isArray(clientes) ? clientes : []
 
-  const filtrarClientes = clientesSeguros.filter(cliente =>
-    (cliente.nombre || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
-    (cliente.cuit || "").includes(searchTerm) ||
-    (cliente.telefono || "").includes(searchTerm)
-  ).sort((a, b) => a.nombre.localeCompare(b.nombre))
+  /* ── Métricas ── */
+  const activos = clientesSeguros.filter(c => c.estado === 'activo' || !c.estado).length
+  const conDeuda = clientesSeguros.filter(c => (parseFloat(c.deuda) || 0) > 0).length
+  const totalDeuda = clientesSeguros.reduce((s, c) => s + (parseFloat(c.deuda) || 0), 0)
 
-  // Paginación
-  const totalPaginas = Math.ceil(filtrarClientes.length / itemsPorPagina)
+  /* ── Filtrado ── */
+  const filtrados = clientesSeguros
+    .filter(c => {
+      const q = (searchTerm || "").toLowerCase()
+      if (!q) return true
+      return (c.nombre || '').toLowerCase().includes(q) ||
+             (c.cuit || '').includes(q) ||
+             (c.telefono || '').includes(q)
+    })
+    .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
+
+  /* ── Paginación ── */
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
   const indiceFin = indiceInicio + itemsPorPagina
-  const clientesPaginados = filtrarClientes.slice(indiceInicio, indiceFin)
+  const paginados = filtrados.slice(indiceInicio, indiceFin)
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina)
 
   useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
-  const handleCopy = async (texto, tipo, clienteId) => {
+  /* ── Acciones ── */
+  const handleCopy = async (texto, clienteId) => {
     try {
       if (!texto) return
       await navigator.clipboard.writeText(texto)
-      setClienteCopiado({ id: clienteId, tipo })
+      setClienteCopiado(clienteId)
       setTimeout(() => setClienteCopiado(null), 2000)
     } catch (err) {
       console.error('Error al copiar: ', err)
     }
   }
 
-  const customConfirm = (title, message, onConfirm, isDestructive = false) => setDialogo({ open: true, type: 'confirm', title, message, onConfirm, isDestructive })
-  const cerrarDialogo = () => setDialogo(p => ({ ...p, open: false }))
-
+  const [confirmData, setConfirmData] = useState(null)
   const handleEliminar = (id) => {
-    if (!eliminarCliente) return
-    customConfirm('Eliminar Cliente', '¿Estás seguro de eliminar este cliente? Esta acción no se puede deshacer.', async () => {
-      await eliminarCliente(id);
-      cerrarDialogo()
-    }, true)
+    setConfirmData({
+      title: "¿Eliminar cliente?",
+      description: "Esta acción no se puede deshacer.",
+      onConfirm: () => { setConfirmData(null); eliminarCliente?.(id) },
+    })
   }
-
-  const resumenClientes = {
-    totalClientes: clientesSeguros.length,
-    conDeuda: clientesSeguros.filter(c => (Number.parseFloat(c.deuda) || 0) > 0).length,
-    totalDeuda: clientesSeguros.reduce((sum, c) => sum + (Number.parseFloat(c.deuda) || 0), 0),
-    clientesActivos: clientesSeguros.filter(c => c.estado === "activo" || !c.estado).length,
-  }
-
-  const fMonto = (m) => (Number.parseFloat(m) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
-  /* ── tokens de color base ── */
-  const bg = '#F5F5F5'
-  const surface = '#FAFAFA'
-  const border = 'rgba(48,54,47,.13)'
-  const ct1 = '#1e2320'
-  const ct2 = '#30362F'
-  const ct3 = '#8B8982'
-  const accent = '#334139'
-  const accentL = 'rgba(51,65,57,.08)'
-
-  const cardStyle = { background: surface, borderColor: border, boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
+    <div style={{ minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
+      <style>{RESPONSIVE}</style>
 
-      {/* ═══════════ HEADER ═══════════ */}
-      <header style={{ background: '#282A28', borderBottom: '1px solid rgba(255,255,255,.08)', padding: '0 clamp(12px, 3vw, 24px)', minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap', py: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button 
-            onClick={onOpenMobileSidebar} 
-            id="cli-hamburger"
-            className="w-[30px] h-[30px] rounded-lg flex items-center justify-center cursor-pointer transition-colors flex-shrink-0" 
-            style={{ 
-              background: 'rgba(255,255,255,.06)', 
-              border: '1px solid rgba(255,255,255,.12)', 
-              color: 'rgba(255,255,255,.7)',
-              display: 'none'
-            }}
-          >
-            <Menu size={16} strokeWidth={2} />
-          </button>
-          <style>{`
-            #cli-hamburger { display: none !important; }
-            @media (max-width: 1023px) { 
-              #cli-hamburger { display: flex !important; } 
-            }
-          `}</style>
-          <div>
-            <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.45)', marginBottom: 2, letterSpacing: '.06em', textTransform: 'uppercase' }}>Gestión</p>
-            <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.03em', color: '#fff', lineHeight: 1 }}>Clientes</h2>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          {/* Nuevo Cliente */}
-          <button onClick={() => openModal && openModal("nuevo-cliente")} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8,
-            fontSize: 11, fontWeight: 700, border: '1px solid #4ADE80', cursor: 'pointer', transition: 'all .13s',
-            background: '#4ADE80', color: '#0A1A0E',
-          }}>
-            <Plus size={12} strokeWidth={2.5} /> Nuevo Cliente
-            <span className="hidden sm:inline-block" style={{ marginLeft: 4, padding: '2px 5px', background: 'rgba(0,0,0,.1)', borderRadius: 4, fontSize: 9, fontFamily: "'DM Mono', monospace" }}>Ctrl</span>
-          </button>
-        </div>
-      </header>
-
-      {/* ═══════════ CARDS RESUMEN ═══════════ */}
-      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-        {[
-          { label: 'Total de Clientes', val: resumenClientes.totalClientes, icon: User, clr: '#373F47', sub: 'Registrados en el sistema' },
-          { label: 'Clientes Activos', val: resumenClientes.clientesActivos, icon: CheckCircle, clr: '#065F46', sub: `${resumenClientes.totalClientes > 0 ? Math.round((resumenClientes.clientesActivos / resumenClientes.totalClientes) * 100) : 0}% del total` },
-          { label: 'Con Deuda', val: resumenClientes.conDeuda, icon: AlertCircle, clr: '#92400E', sub: `${resumenClientes.totalClientes > 0 ? Math.round((resumenClientes.conDeuda / resumenClientes.totalClientes) * 100) : 0}% de los clientes` },
-          { label: 'Deuda Total', val: `$${fMonto(resumenClientes.totalDeuda)}`, icon: DollarSign, clr: '#991B1B', sub: 'Deuda acumulada global' },
-        ].map((s, i) => (
-          <div key={i} className="rounded-xl overflow-hidden border relative flex flex-col justify-center cursor-default"
-            style={{ ...cardStyle, background: '#E1E1E0', height: 76, padding: '0 20px', transition: 'box-shadow .2s,transform .2s', animation: `kpiIn .35s ${.05 + i * .07}s ease both` }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(48,54,47,.11),0 14px 36px rgba(48,54,47,.08)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = cardStyle.boxShadow }}>
-            <div style={{ position: 'absolute', top: 0, right: 0, width: 64, height: 64, background: `radial-gradient(circle at top right, ${s.clr}15, transparent 70%)` }} />
-            {/* barra lateral de color */}
-            <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3, background: s.clr, borderRadius: '0 2px 2px 0' }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: ct3, textTransform: 'uppercase', letterSpacing: '.03em', display: 'block', marginBottom: 2 }}>{s.label}</span>
-                <span style={{ fontSize: 20, fontWeight: 600, color: ct1, letterSpacing: '-.03em', display: 'block', lineHeight: 1.1 }}>{s.val}</span>
-              </div>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${s.clr}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <s.icon size={15} strokeWidth={2.5} style={{ color: s.clr }} />
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* ── Mobile topbar ── */}
+      <div className="pn-show-mobile" style={{
+        alignItems: "center", gap: 10, padding: "11px 16px",
+        background: C.bg, borderBottom: `1px solid ${C.border}`
+      }}>
+        <button onClick={onOpenMobileSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+          <MenuIcon size={20} color={C.textBlack} />
+        </button>
+        <span style={{ fontWeight: 700, fontSize: 17, color: C.textBlack }}>Clientes</span>
+        <button onClick={() => openModal && openModal("nuevo-cliente")} style={{
+          marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
+          height: 32, padding: "0 18px", borderRadius: 6, fontSize: 13, fontWeight: 500,
+          background: C.primary, color: "#fff", border: "none", cursor: "pointer",
+        }}>
+          <PlusIcon size={13} color="#fff" /> Nuevo
+          <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
+        </button>
       </div>
 
-      {/* ═══════════ MAIN CONTENT (TABLA) ═══════════ */}
-      <div style={{ padding: 'clamp(12px, 2vw, 18px) clamp(12px, 3vw, 24px) 24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ ...cardStyle, borderRadius: 12, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* ── Desktop header ── */}
+      <div className="pn-hide-mobile" style={{ background: C.pageBg }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 12px", gap: 12, boxSizing: "border-box" }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
+            Clientes
+          </h1>
+          <Btn primary onClick={() => openModal && openModal("nuevo-cliente")}>
+            <PlusIcon size={13} color="#fff" /> Nuevo Cliente
+            <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
+          </Btn>
+        </div>
+      </div>
 
-          {/* TOOLBAR CONTROLES */}
-          <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyItems: 'space-between', borderBottom: `1px solid ${border}`, background: surface, gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
-              <div style={{ position: 'relative', width: 280 }}>
-                <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3 }} />
-                <input ref={searchInputRef} type="text" placeholder="Buscar por nombre, CUIT o teléfono..." value={searchTerm} onChange={e => setSearchTerm && setSearchTerm(e.target.value)}
-                  style={{ width: '100%', height: 32, padding: '0 12px 0 30px', fontSize: 12, color: ct1, background: '#fff', border: `1px solid ${border}`, borderRadius: 8, outline: 'none', transition: 'all .15s' }}
-                  onFocus={e => e.target.style.borderColor = accent} onBlur={e => e.target.style.borderColor = border}
-                />
-              </div>
-              <span style={{ fontSize: 11, color: ct3, fontWeight: 500 }}>{filtrarClientes.length} clientes encontrados</span>
+      {/* ── Contenido centrado ── */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+
+
+        {/* ── Filtros ── */}
+        <div style={{
+          background: C.pageBg, padding: "12px 24px 0",
+          display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+        }}>
+          {/* Buscador */}
+          <div style={{ flex: "1 1 260px", position: "relative" }}>
+            <div style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+              <SearchIcon size={15} color={C.textLight} />
             </div>
+            <input type="text" value={searchTerm} onChange={e => setSearchTerm?.(e.target.value)}
+              placeholder="Buscar por nombre, CUIT o teléfono..."
+              style={{
+                width: "100%", height: 34, padding: "0 12px 0 34px", fontSize: 13,
+                border: `1px solid ${C.border}`, borderRadius: 8, outline: "none",
+                background: '#f2f2f2', color: C.textDark, fontFamily: "'Inter', sans-serif"
+              }}
+              onFocus={e => e.target.style.borderColor = C.primary}
+              onBlur={e => e.target.style.borderColor = C.border}
+            />
           </div>
+        </div>
 
-          {/* TABLA SCROLL */}
-          <div style={{ flex: 1, overflow: 'auto', background: '#FDFDFD' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead style={{ position: 'sticky', top: 0, background: surface, zIndex: 10, borderBottom: `1px solid ${border}` }}>
-                <tr>
-                  {['NOMBRE Y DATOS', 'CUIT / CUIL', 'CONTACTO', 'CONDICIÓN IVA', 'ESTADO/DEUDA', 'ACCIONES'].map((col, i) => (
-                    <th key={i} style={{ padding: '10px 16px', fontSize: 10, fontWeight: 700, color: ct3, textTransform: 'uppercase', letterSpacing: '.05em', whiteSpace: 'nowrap' }}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {clientesPaginados.length > 0 ? (
-                  clientesPaginados.map((cliente, i) => {
-                    const debe = Number.parseFloat(cliente.deuda) || 0
-                    const tieneDeuda = debe > 0
+        {/* ── Contenido principal ── */}
+        <div style={{ padding: "16px 24px" }}>
+          <p style={{ margin: "0 0 10px", fontSize: 12, color: C.textMid }}>
+            {filtrados.length} cliente{filtrados.length !== 1 ? "s" : ""}
+          </p>
 
-                    return (
-                      <tr key={cliente.id} style={{ borderBottom: `1px solid ${border}`, transition: 'background .15s', cursor: 'default' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(51,65,57,.02)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <div style={{ background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+            {filtrados.length === 0 ? (
+              <div style={{
+                display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", padding: "48px 24px", gap: 12,
+              }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 12, background: C.primarySurf,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <User size={24} color={C.primary} />
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: C.textBlack, marginBottom: 4 }}>
+                    Sin clientes
+                  </div>
+                  <div style={{ fontSize: 13, color: C.textMid }}>
+                    Crea un nuevo cliente para empezar a registrar operaciones.
+                  </div>
+                </div>
+                <Btn primary onClick={() => openModal && openModal("nuevo-cliente")}>
+                  <PlusIcon size={13} color="#fff" /> Nuevo Cliente
+                </Btn>
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
+                  <thead>
+                    <tr style={{ background: "#f9fafb", borderBottom: `1px solid ${C.border}` }}>
+                      {["NOMBRE Y CONTACTO", "CUIT / CUIL", "TELÉFONO", "CONDICIÓN IVA", "ESTADO", "ACCIONES"].map(h => (
+                        <th key={h} style={{
+                          padding: "10px 16px", textAlign: "left",
+                          fontSize: 10, fontWeight: 600, color: C.textMid,
+                          letterSpacing: "0.06em", fontFamily: "'Inter', sans-serif"
+                        }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginados.map(cliente => {
+                      const debe = parseFloat(cliente.deuda) || 0
+                      const tieneDeuda = debe > 0
 
-                        {/* CLIENTE INFO */}
-                        <td style={{ padding: '12px 16px', minWidth: 200, verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 34, height: 34, borderRadius: 8, background: accentL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <User size={15} strokeWidth={2.5} style={{ color: accent }} />
+                      return (
+                        <tr key={cliente.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                          
+                          {/* Nombre Email */}
+                          <td style={{ padding: "12px 16px" }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
+                              {cliente.nombre || "Sin nombre"}
                             </div>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: ct1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{cliente.nombre || 'Sin nombre'}</div>
-                              {cliente.email && <div style={{ fontSize: 11, color: ct3, marginTop: 1, display: 'flex', alignItems: 'center', gap: 4 }}><Mail size={10} /> <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.email}</span></div>}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* CUIT */}
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: ct2, fontFamily: "'DM Mono', monospace" }}>
-                            <FileText size={12} style={{ color: ct3 }} /> {cliente.cuit || "—"}
-                          </div>
-                        </td>
-
-                        {/* TELÉFONO */}
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: ct2 }}>
-                            <Phone size={12} style={{ color: ct3 }} />
-                            <span style={{ fontFamily: "'DM Mono', monospace" }}>{cliente.telefono || "—"}</span>
-                            {cliente.telefono && (
-                              <button onClick={() => handleCopy(cliente.telefono, "telefono", cliente.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 3, borderRadius: 4, transition: 'all .1s', color: clienteCopiado?.id === cliente.id ? '#065F46' : ct3 }} title="Copiar Teléfono">
-                                {clienteCopiado?.id === cliente.id ? <Check size={11} strokeWidth={3} /> : <Copy size={11} />}
-                              </button>
+                            {cliente.email && (
+                              <div style={{ fontSize: 11, color: C.textMid, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+                                <Mail size={12} /> {cliente.email}
+                              </div>
                             )}
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* IVA */}
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-                          <span style={{ padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 600, background: '#FAFAFA', color: '#373F47', border: '1px solid rgba(55,63,71,.12)', whiteSpace: 'nowrap' }}>
-                            {cliente.condicionIVA || "Consumidor Final"}
-                          </span>
-                        </td>
+                          {/* CUIT */}
+                          <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
+                            {cliente.cuit || "—"}
+                          </td>
+                          
+                          {/* Teléfono */}
+                          <td style={{ padding: "12px 16px" }}>
+                            {cliente.telefono ? (
+                              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
+                                {cliente.telefono}
+                                <button onClick={() => handleCopy(cliente.telefono, cliente.id)} style={{
+                                  background: "transparent", border: "none", cursor: "pointer", display: "flex", padding: 2, color: clienteCopiado === cliente.id ? C.successTxt : C.textMid
+                                }} title="Copiar Teléfono">
+                                  {clienteCopiado === cliente.id ? <Check size={14} /> : <Copy size={14} />}
+                                </button>
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: 13, color: C.textMid }}>—</span>
+                            )}
+                          </td>
 
-                        {/* ESTADO / DEUDA */}
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-                          {tieneDeuda ? (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, background: '#FEF2F2', color: '#991B1B', border: '1px solid #FCA5A5' }}>
-                              <AlertCircle size={11} strokeWidth={2.5} /> ${fMonto(debe)}
+                          {/* Condición IVA */}
+                          <td style={{ padding: "12px 16px" }}>
+                            <Pill color={C.textDark} bg="#f3f4f6" border={C.border}>
+                              {cliente.condicionIVA || "Consumidor Final"}
+                            </Pill>
+                          </td>
+
+                          {/* Estado/Deuda */}
+                          <td style={{ padding: "12px 16px" }}>
+                            {tieneDeuda ? (
+                              <Pill color={C.dangerTxt} bg={C.dangerSurf} border={C.dangerBord}>
+                                <AlertCircle size={12} /> $ {fNum(debe)}
+                              </Pill>
+                            ) : (
+                              <Pill color={C.successTxt} bg={C.successSurf} border={C.successBord}>
+                                <CheckCircle size={12} /> Al día
+                              </Pill>
+                            )}
+                          </td>
+
+                          {/* Acciones */}
+                          <td style={{ padding: "12px 16px" }}>
+                            <div style={{ display: "flex", gap: 4 }}>
+                              <IcoBtn icon={Edit2} title="Editar" onClick={() => openModal && openModal('editar-cliente', cliente)} />
+                              <IcoBtn icon={Trash2} title="Eliminar" danger onClick={() => handleEliminar(cliente.id)} />
                             </div>
-                          ) : (
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 700, background: '#F0FDF4', color: '#065F46', border: '1px solid #6EE7B7' }}>
-                              <CheckCircle size={11} strokeWidth={2.5} /> Al día
-                            </div>
-                          )}
-                        </td>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
 
-                        {/* ACCIONES */}
-                        <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button onClick={() => openModal && openModal('editar-cliente', cliente)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: surface, border: `1px solid ${border}`, cursor: 'pointer', transition: 'all .15s', color: ct2 }} onMouseEnter={e => e.currentTarget.style.background = '#f0f0f0'} onMouseLeave={e => e.currentTarget.style.background = surface} title="Editar">
-                              <Edit size={13} strokeWidth={2.5} />
-                            </button>
-                            <button onClick={() => handleEliminar(cliente.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: surface, border: `1px solid ${border}`, cursor: 'pointer', transition: 'all .15s', color: '#DC2626' }} onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.borderColor = '#FCA5A5' }} onMouseLeave={e => { e.currentTarget.style.background = surface; e.currentTarget.style.borderColor = border }} title="Eliminar">
-                              <Trash2 size={13} strokeWidth={2.5} />
-                            </button>
-                          </div>
-                        </td>
-
-                      </tr>
-                    )
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6}>
-                      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(48,54,47,.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                          <User size={20} style={{ color: ct3 }} />
-                        </div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: ct1, marginBottom: 4 }}>Ningún cliente encontrado</p>
-                        <p style={{ fontSize: 12, color: ct3 }}>{searchTerm ? 'Revisá los parámetros de búsqueda.' : 'Aún no cargaste ningún cliente en la plataforma.'}</p>
-                      </div>
-                    </td>
-                  </tr>
+                {/* Paginación */}
+                {totalPaginas > 1 && (
+                  <div className="flex items-center justify-between gap-4" style={{ padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
+                    <div className="flex items-center gap-2">
+                      <span style={{ fontSize: 12, color: C.textMid }}>Filas por página:</span>
+                      <Select value={String(itemsPorPagina)} onValueChange={v => setItemsPorPagina(Number(v))}>
+                        <SelectTrigger className="w-20 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent align="start" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
+                          <SelectGroup>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textMid }}>
+                      {indiceInicio + 1}–{Math.min(indiceFin, filtrados.length)} de {filtrados.length}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setPaginaActual(p => Math.max(1, p - 1))}
+                        disabled={paginaActual === 1}
+                        style={{
+                          width: 26, height: 26, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg,
+                          cursor: paginaActual === 1 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                          opacity: paginaActual === 1 ? 0.4 : 1,
+                        }}
+                      >
+                        <ChevronLeftIcon size={13} color={C.textMid}/>
+                      </button>
+                      <span style={{ fontSize: 12, color: C.textDark, minWidth: 48, textAlign: "center" }}>
+                        {paginaActual} / {totalPaginas}
+                      </span>
+                      <button
+                        onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))}
+                        disabled={paginaActual === totalPaginas}
+                        style={{
+                          width: 26, height: 26, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg,
+                          cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                          opacity: paginaActual === totalPaginas ? 0.4 : 1,
+                        }}
+                      >
+                        <ChevronRightIcon size={13} color={C.textMid}/>
+                      </button>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* FOOTER PAGINACIÓN */}
-          <div style={{ padding: '12px 16px', background: surface, borderTop: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ padding: '4px 24px 4px 8px', fontSize: 11, fontWeight: 600, color: ct2, background: '#fff', border: `1px solid ${border}`, borderRadius: 6, outline: 'none', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B8982' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}>
-                <option value="10">10 / pág</option>
-                <option value="20">20 / pág</option>
-                <option value="50">50 / pág</option>
-              </select>
-              <span style={{ fontSize: 11, color: ct3, fontWeight: 500 }}>
-                Mostrando {clientesPaginados.length > 0 ? (paginaActual - 1) * itemsPorPagina + 1 : 0} a {((paginaActual - 1) * itemsPorPagina) + clientesPaginados.length} de {filtrarClientes.length}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: paginaActual === 1 ? 'transparent' : '#fff', border: `1px solid ${paginaActual === 1 ? 'transparent' : border}`, cursor: paginaActual === 1 ? 'default' : 'pointer', color: paginaActual === 1 ? 'rgba(0,0,0,.2)' : ct2 }}>
-                <ChevronLeft size={14} />
-              </button>
-              <span style={{ fontSize: 11, fontWeight: 600, color: ct2, minWidth: 36, textAlign: 'center' }}>{paginaActual} / {totalPaginas || 1}</span>
-              <button onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual >= totalPaginas} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, background: paginaActual >= totalPaginas ? 'transparent' : '#fff', border: `1px solid ${paginaActual >= totalPaginas ? 'transparent' : border}`, cursor: paginaActual >= totalPaginas ? 'default' : 'pointer', color: paginaActual >= totalPaginas ? 'rgba(0,0,0,.2)' : ct2 }}>
-                <ChevronRight size={14} />
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
+
       </div>
 
-      {/* DIALOGO CONFIRMACION */}
-      {dialogo.open && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(2px)', animation: 'fadeIn .2s ease' }}>
-          <div style={{ background: '#fff', width: '90%', maxWidth: 360, borderRadius: 16, padding: 24, boxShadow: '0 10px 40px rgba(0,0,0,.1)', animation: 'scaleUp .2s ease' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: ct1, marginBottom: 8 }}>{dialogo.title}</h3>
-            <p style={{ fontSize: 13, color: ct3, lineHeight: 1.5, marginBottom: 20 }}>{dialogo.message}</p>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button onClick={cerrarDialogo} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: ct2, background: surface, border: `1px solid ${border}`, cursor: 'pointer' }}>Cancelar</button>
-              {dialogo.type === 'confirm' && (
-                <button onClick={() => { if (dialogo.onConfirm) dialogo.onConfirm(); cerrarDialogo() }} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#fff', background: dialogo.isDestructive ? '#DC2626' : ct1, border: 'none', cursor: 'pointer' }}>
-                  Confirmar
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* KEYFRAMES GLOBALES */}
-      <style>{`
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.25); }
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes scaleUp { from { opacity: 0; transform: scale(.95) } to { opacity: 1; transform: scale(1) } }
-        @keyframes kpiIn { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
-      `}</style>
+      <ConfirmDialog
+        open={!!confirmData}
+        title={confirmData?.title}
+        description={confirmData?.description}
+        onConfirm={confirmData?.onConfirm}
+        onCancel={()=>setConfirmData(null)}
+      />
     </div>
   )
 }
-
-export default Clientes

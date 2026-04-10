@@ -11,6 +11,16 @@
    VARIABLES DE TEMA
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
+  /* Shadcn Sidebar tokens — white like TiendaNube */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #334139;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f2f1;
+  --sidebar-accent-foreground: #0d0d0d;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: rgba(51,65,57,0.3);
+
   /* Backgrounds */
   --bg-app: #F5F5F5;
   --bg-surface: #ffffff;
@@ -108,6 +118,112 @@ body {
 
 /* ── Inputs / Select / Textarea ──────────────────────────────────────────── */
 
+/* Native <select> — misma línea que inputs (marca #334139, chevron custom) */
+select.app-select,
+select.app-select-sm,
+select.app-select-xs {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #111827;
+  background-color: #f8f9fa;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+select.app-select {
+  width: 100%;
+  max-width: 100%;
+  height: 36px;
+  padding: 0 38px 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+select.app-select-sm {
+  height: 32px;
+  padding: 0 32px 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border-width: 1px;
+  border-radius: 6px;
+  background-position: right 8px center;
+  background-size: 14px;
+}
+
+select.app-select-xs {
+  height: 28px;
+  padding: 0 28px 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-width: 1px;
+  border-radius: 6px;
+  background-size: 12px;
+  background-position: right 6px center;
+}
+
+select.app-select:hover,
+select.app-select-sm:hover,
+select.app-select-xs:hover {
+  border-color: #9ca3af;
+}
+
+select.app-select:focus,
+select.app-select-sm:focus,
+select.app-select-xs:focus {
+  border-color: #334139;
+  box-shadow: 0 0 0 3px rgba(51, 65, 57, 0.14);
+}
+
+select.app-select:disabled,
+select.app-select-sm:disabled,
+select.app-select-xs:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: #f9fafb;
+  color: #6b7280;
+}
+
+select.app-select--inline {
+  width: auto;
+  max-width: none;
+}
+
+select.app-select--icon-left {
+  padding-left: 30px;
+}
+
+/* AgregarVenta legacy: selects con clase av-inp */
+select.av-inp {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+select.av-inp:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,.10);
+}
+
+select.av-inp:focus {
+  border-color: #334139 !important;
+  box-shadow: 0 0 0 3px rgba(51,65,57,.12) !important;
+}
+
 /* ── Shadows ─────────────────────────────────────────────────────────────── */
 
 /* ── Tables ──────────────────────────────────────────────────────────────── */
@@ -154,11 +270,16 @@ body {
 }
 
 /* Hide scrollbar but keep scroll */
-.scrollbar-hide {
+.scrollbar-hide,
+[data-slot="sidebar-content"],
+[data-sidebar="content"] {
   scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar,
+[data-slot="sidebar-content"]::-webkit-scrollbar,
+[data-sidebar="content"]::-webkit-scrollbar {
   display: none;
 }
 
@@ -470,3 +591,16 @@ table {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIDEBAR PROVIDER — forzar fondo claro en toda la app
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-slot="sidebar-inset"],
+[data-sidebar="inset"],
+.sidebar-inset {
+  background: #f8f9fb !important;
+}
+
+/* Forzar fondo neutro en el wrapper del sidebar provider */
+[data-slot="sidebar-wrapper"] {
+  background: #f8f9fb !important;
+}

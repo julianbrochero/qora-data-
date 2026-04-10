@@ -697,7 +697,7 @@ const FacturaModule = ({ formData, formActions, onVolver, openModal }) => {
               <div>
                 <label className="block text-[10px] font-semibold mb-1 text-gray-600 uppercase">Tipo *</label>
                 <select
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:border-gray-500 focus:outline-none bg-white"
+                  className="app-select app-select-sm w-full text-xs"
                   value={nuevaFactura.tipo || ""}
                   onChange={(e) => setNuevaFactura((prev) => ({ ...prev, tipo: e.target.value }))}
                 >
@@ -721,7 +721,7 @@ const FacturaModule = ({ formData, formActions, onVolver, openModal }) => {
               <div>
                 <label className="block text-[10px] font-semibold mb-1 text-gray-600 uppercase">Método de Pago *</label>
                 <select
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:border-gray-500 focus:outline-none bg-white"
+                  className="app-select app-select-sm w-full text-xs"
                   value={nuevaFactura.metodoPago || ""}
                   onChange={(e) => setNuevaFactura((prev) => ({ ...prev, metodoPago: e.target.value }))}
                 >
@@ -934,7 +934,7 @@ const FacturaModule = ({ formData, formActions, onVolver, openModal }) => {
                             setItemsPorPagina(Number(e.target.value))
                             setPaginaActual(1)
                           }}
-                          className="px-1 py-0.5 text-[10px] border border-gray-300 rounded bg-white"
+                          className="app-select app-select-xs app-select--inline text-[10px]"
                         >
                           <option value="5">5 por página</option>
                           <option value="10">10 por página</option>
@@ -1136,7 +1136,7 @@ const FacturaModule = ({ formData, formActions, onVolver, openModal }) => {
               <div>
                 <label className="block text-[10px] font-semibold mb-1 text-gray-600 uppercase">Método de Pago *</label>
                 <select
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:border-gray-500 focus:outline-none bg-white"
+                  className="app-select app-select-sm w-full text-xs"
                   value={abonoData.metodo}
                   onChange={(e) => setAbonoData((prev) => ({ ...prev, metodo: e.target.value }))}
                 >

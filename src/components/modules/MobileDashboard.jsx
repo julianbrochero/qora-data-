@@ -223,10 +223,8 @@ const ActivityRow = ({ title, sub, amount, time, isLast }) => (
 const MobileDashboard = ({
   clientes = [],
   productos = [],
-  facturas = [],
   pedidos = [],
   caja = {},
-  onViewAllFacturas,
   onViewAllProductos,
   onViewAllPedidos,
   onViewAllClientes,
@@ -243,10 +241,10 @@ const MobileDashboard = ({
   const startOfDay   = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
   const startOfMonth = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
 
-  const ventasHoy  = useMemo(() => facturas.filter((f) => f.fecha && new Date(f.fecha) >= startOfDay),   [facturas])
-  const ventasMes  = useMemo(() => facturas.filter((f) => f.fecha && new Date(f.fecha) >= startOfMonth), [facturas])
-  const totalHoy   = ventasHoy.reduce((s, f) => s + (f.total || 0), 0)
-  const totalMes   = ventasMes.reduce((s, f) => s + (f.total || 0), 0)
+  const ventasHoy  = useMemo(() => pedidos.filter((p) => { const f=p.fecha_pedido||p.created_at; return f && new Date(f) >= startOfDay }),   [pedidos])
+  const ventasMes  = useMemo(() => pedidos.filter((p) => { const f=p.fecha_pedido||p.created_at; return f && new Date(f) >= startOfMonth }), [pedidos])
+  const totalHoy   = ventasHoy.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
+  const totalMes   = ventasMes.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
 
   const bajosStock  = productos.filter((p) => !!(p.controlastock || p.controlaStock) && (p.stock || 0) <= 5).length
   const pedidosPend = pedidos.filter((p) => p.estado === "pendiente").length
@@ -255,9 +253,9 @@ const MobileDashboard = ({
   const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches"
   const nombre = user?.user_metadata?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Admin"
 
-  const recentFacturas = useMemo(
-    () => [...facturas].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).slice(0, 5),
-    [facturas]
+  const recentPedidos = useMemo(
+    () => [...pedidos].sort((a, b) => new Date(b.fecha_pedido || b.created_at || 0) - new Date(a.fecha_pedido || a.created_at || 0)).slice(0, 5),
+    [pedidos]
   )
 
   /* ── Quick actions — paleta sistema ── */
@@ -436,7 +434,7 @@ const MobileDashboard = ({
                   accent={C.green}
                   label="Ventas del mes"
                   value={fmt(totalMes)}
-                  sub={`${ventasMes.length} fact.`}
+                  sub={`${ventasMes.length} venta${ventasMes.length !== 1 ? "s" : ""}`}
                 />
                 {bajosStock > 0 && (
                   <StatCard
@@ -466,11 +464,11 @@ const MobileDashboard = ({
             </section>
 
             {/* ── ACTIVIDAD RECIENTE ── */}
-            {recentFacturas.length > 0 ? (
+            {recentPedidos.length > 0 ? (
               <section>
                 <SectionHeader
                   title="Actividad reciente"
-                  onAction={onViewAllFacturas}
+                  onAction={onViewAllPedidos}
                   actionLabel="Ver todas"
                 />
                 <motion.div
@@ -485,14 +483,14 @@ const MobileDashboard = ({
                   }}
                 >
                   <div style={{ padding: "0 16px" }}>
-                    {recentFacturas.map((f, i) => (
+                    {recentPedidos.map((p, i) => (
                       <ActivityRow
-                        key={f.id || i}
-                        title={f.cliente_nombre || f.cliente || "Cliente"}
-                        sub={f.numero ? `#${f.numero}` : undefined}
-                        amount={fmt(f.total)}
-                        time={fmtTime(f.fecha)}
-                        isLast={i === recentFacturas.length - 1}
+                        key={p.id || i}
+                        title={p.cliente_nombre || p.cliente || "Cliente"}
+                        sub={p.codigo ? `#${p.codigo}` : undefined}
+                        amount={fmt(p.total)}
+                        time={fmtTime(p.fecha_pedido || p.created_at)}
+                        isLast={i === recentPedidos.length - 1}
                       />
                     ))}
                   </div>

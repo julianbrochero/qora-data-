@@ -433,7 +433,8 @@ const PedidoForm = ({ type, pedido, clientes = [], productos = [], formActions, 
           <div>
             <label style={{ display: 'block', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.07em', color: ct3, marginBottom: 4 }}>Estado</label>
             <select value={pedidoData.estado} onChange={e => { const v = e.target.value; setPedidoData(d => ({ ...d, estado: v })); try { localStorage.setItem('gestify_pedido_estado', v) } catch {} }}
-              style={{ ...inp, appearance: 'none', cursor: 'pointer', background: eCfg.bg, color: eCfg.color, border: `1px solid ${eCfg.border}`, fontWeight: 700 }}>
+              className="app-select app-select-sm"
+              style={{ cursor: 'pointer', backgroundColor: eCfg.bg, color: eCfg.color, border: `1px solid ${eCfg.border}`, fontWeight: 700 }}>
               {Object.entries(estadosCfg).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </div>

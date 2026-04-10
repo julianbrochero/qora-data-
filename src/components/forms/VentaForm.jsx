@@ -1,8 +1,9 @@
 "use client"
 
-import { Package, Search, ChevronDown, Plus, Trash2, User, X } from "lucide-react"
+import { Package, Search, ChevronDown, Plus, Trash2, User, X, CalendarIcon } from "lucide-react"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { useAuth } from "../../lib/AuthContext"
+import { cn } from "@/lib/utils"
 
 const VentaForm = ({
   type,
@@ -20,6 +21,7 @@ const VentaForm = ({
   const [busquedaProducto, setBusquedaProducto] = useState("")
   const [mostrarDropdownCliente, setMostrarDropdownCliente] = useState(false)
   const [mostrarDropdownProducto, setMostrarDropdownProducto] = useState(false)
+  const [productoIndex, setProductoIndex] = useState(-1)
   const [page, setPage] = useState(0)
   const ITEMS_PER_PAGE = 3
 
@@ -118,6 +120,21 @@ const VentaForm = ({
       p.codigo?.toLowerCase().includes(busquedaProducto.toLowerCase())
     )
   }, [busquedaProducto, productosMock])
+
+  const handleProductoKeyDown = (e) => {
+    if (!mostrarDropdownProducto || productosFiltrados.length === 0) return
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setProductoIndex(prev => Math.min(prev + 1, productosFiltrados.length - 1))
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setProductoIndex(prev => Math.max(prev - 1, 0))
+    } else if (e.key === "Enter" && productoIndex >= 0) {
+      e.preventDefault()
+      agregarProducto(productosFiltrados[productoIndex])
+      setProductoIndex(-1)
+    }
+  }
 
   const items = ventaData.items || []
   const calcularTotal = () => items.reduce((acc, item) => acc + (item.subtotal || 0), 0)
@@ -336,7 +353,7 @@ const VentaForm = ({
             <label className="block text-[11px] font-medium text-gray-700 mb-0.5">Fecha venta</label>
             <input
               type="date"
-              className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
+              style={{ width: "100%", height: 34, padding: "0 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 7, background: "#fff", cursor: "pointer", color: "#111827", fontFamily: "inherit" }}
               value={ventaData.fechaVenta}
               onChange={(e) => setVentaData({ ...ventaData, fechaVenta: e.target.value })}
             />
@@ -347,10 +364,9 @@ const VentaForm = ({
             </label>
             <input
               type="date"
-              className="w-full px-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
+              style={{ width: "100%", height: 34, padding: "0 8px", fontSize: 12, border: "1px solid #e5e7eb", borderRadius: 7, background: "#fff", cursor: "pointer", color: "#111827", fontFamily: "inherit" }}
               value={ventaData.fechaEntrega}
               onChange={(e) => setVentaData({ ...ventaData, fechaEntrega: e.target.value })}
-              placeholder="Opcional para pedido"
             />
           </div>
         </div>
@@ -369,20 +385,24 @@ const VentaForm = ({
               className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white"
               placeholder="Buscar producto..."
               value={busquedaProducto}
-              onChange={(e) => { setBusquedaProducto(e.target.value); setMostrarDropdownProducto(true) }}
-              onFocus={() => setMostrarDropdownProducto(true)}
+              onChange={(e) => { setBusquedaProducto(e.target.value); setMostrarDropdownProducto(true); setProductoIndex(-1) }}
+              onFocus={() => { setMostrarDropdownProducto(true); setProductoIndex(-1) }}
+              onKeyDown={handleProductoKeyDown}
             />
             <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
             {mostrarDropdownProducto && productosFiltrados.length > 0 && (
               <div className="absolute z-10 w-full mt-0.5 bg-white border border-gray-200 rounded-md shadow-lg max-h-28 overflow-y-auto">
-                {productosFiltrados.map((producto) => (
+                {productosFiltrados.map((producto, idx) => (
                   <button
                     key={producto.id}
                     onClick={() => agregarProducto(producto)}
-                    className="w-full px-2 py-1.5 text-left hover:bg-gray-50 transition-colors text-[11px] border-b border-gray-100 last:border-b-0"
+                    className={`w-full px-2 py-1.5 text-left transition-colors text-[11px] border-b border-gray-100 last:border-b-0 relative ${idx === productoIndex ? "bg-blue-100" : "hover:bg-blue-50"}`}
                   >
+                    {idx === productoIndex && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-l-md" />
+                    )}
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-900">{producto.nombre}</span>
+                      <span className={`font-semibold ${idx === productoIndex ? "text-blue-700" : "text-gray-900"}`}>{producto.nombre}</span>
                       <span className="text-blue-600 font-medium">${producto.precio?.toLocaleString()}</span>
                     </div>
                     <div className="text-[9px] text-gray-500">Stock: {producto.stock} | {producto.codigo}</div>

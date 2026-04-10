@@ -1,7 +1,8 @@
 // Modal.jsx CORREGIDO
 "use client"
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Tag, Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import ClienteForm from '../forms/ClienteForm';
 import ProductoForm from '../forms/ProductoForm';
 import MovimientoCajaForm from '../forms/MovimientoCajaForm';
@@ -13,6 +14,167 @@ import PedidoDetail from '../forms/PedidoDetail'; // ✅ NUEVO
 import VentaForm from '../forms/VentaForm';
 import FacturaDirectaForm from '../forms/FacturaDirectaForm';
 import PresupuestoForm from '../forms/PresupuestoForm';
+
+/* ─── Gestión de Categorías ─── */
+function CategoriasPanel({ categorias = [], formActions = {}, onClose }) {
+  const [nueva, setNueva] = useState('')
+  const [editando, setEditando] = useState(null) // { nombre }
+  const [editVal, setEditVal] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const C = {
+    bg: '#ffffff', pageBg: '#f8f9fb', border: '#e5e7eb',
+    primary: '#334139', primarySurf: '#eaf0eb',
+    textBlack: '#111827', textMid: '#6b7280', textLight: '#9ca3af',
+    danger: '#DC2626', dangerSurf: '#FEF2F2',
+  }
+
+  const handleAgregar = async () => {
+    const n = nueva.trim()
+    if (!n || categorias.find(c => (c.nombre||c).toLowerCase() === n.toLowerCase())) return
+    setLoading(true)
+    await formActions.agregarCategoria?.(n)
+    setNueva(''); setLoading(false)
+  }
+
+  const handleRenombrar = async () => {
+    const n = editVal.trim()
+    if (!n || !editando) return
+    setLoading(true)
+    await formActions.renombrarCategoria?.(editando.nombre, n)
+    setEditando(null); setEditVal(''); setLoading(false)
+  }
+
+  const handleEliminar = async (nombre) => {
+    setLoading(true)
+    await formActions.eliminarCategoria?.(nombre)
+    setLoading(false)
+  }
+
+  const cats = categorias.map(c => typeof c === 'string' ? { nombre: c } : c)
+
+  return (
+    <div style={{ fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 14px', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 9, background: C.primarySurf, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Tag size={16} strokeWidth={2} style={{ color: C.primary }} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.textBlack }}>Categorías</h2>
+            <p style={{ margin: 0, fontSize: 11, color: C.textLight }}>{cats.length} categoría{cats.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+        <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 7, border: `1px solid ${C.border}`, background: C.bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <X size={14} style={{ color: C.textMid }} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '16px 20px' }}>
+        {/* Agregar nueva */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <input
+            value={nueva}
+            onChange={e => setNueva(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAgregar()}
+            placeholder="Nueva categoría..."
+            style={{
+              flex: 1, height: 34, padding: '0 12px', fontSize: 13,
+              border: `1.5px solid ${C.border}`, borderRadius: 8,
+              background: C.bg, color: C.textBlack, outline: 'none',
+              fontFamily: 'inherit',
+            }}
+            onFocus={e => e.target.style.borderColor = C.primary}
+            onBlur={e => e.target.style.borderColor = C.border}
+          />
+          <button
+            onClick={handleAgregar}
+            disabled={!nueva.trim() || loading}
+            style={{
+              height: 34, padding: '0 14px', borderRadius: 8, border: 'none',
+              background: nueva.trim() ? C.primary : C.border,
+              color: '#fff', fontSize: 13, fontWeight: 600, cursor: nueva.trim() ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'inherit',
+              transition: 'background .12s',
+            }}
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+
+        {/* Lista */}
+        {cats.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 0', color: C.textLight, fontSize: 13 }}>
+            No hay categorías aún
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 340, overflowY: 'auto' }}>
+            {cats.map((cat, i) => {
+              const nombre = cat.nombre || cat
+              const isEdit = editando?.nombre === nombre
+              return (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 12px', borderRadius: 9,
+                  border: `1px solid ${isEdit ? C.primary : C.border}`,
+                  background: isEdit ? C.primarySurf : C.pageBg,
+                  transition: 'all .12s',
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.primary, flexShrink: 0 }} />
+                  {isEdit ? (
+                    <>
+                      <input
+                        autoFocus
+                        value={editVal}
+                        onChange={e => setEditVal(e.target.value)}
+                        onKeyDown={e => { if(e.key==='Enter') handleRenombrar(); if(e.key==='Escape') { setEditando(null); setEditVal('') } }}
+                        style={{
+                          flex: 1, height: 26, padding: '0 8px', fontSize: 13,
+                          border: `1.5px solid ${C.primary}`, borderRadius: 6,
+                          background: C.bg, color: C.textBlack, outline: 'none', fontFamily: 'inherit',
+                        }}
+                      />
+                      <button onClick={handleRenombrar} style={{ width: 26, height: 26, borderRadius: 6, border: 'none', background: C.primary, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Check size={13} />
+                      </button>
+                      <button onClick={() => { setEditando(null); setEditVal('') }} style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={13} style={{ color: C.textMid }} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: C.textBlack }}>{nombre}</span>
+                      <button
+                        onClick={() => { setEditando(cat); setEditVal(nombre) }}
+                        title="Renombrar"
+                        style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = C.primary}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+                      >
+                        <Pencil size={12} style={{ color: C.textMid }} />
+                      </button>
+                      <button
+                        onClick={() => handleEliminar(nombre)}
+                        title="Eliminar"
+                        style={{ width: 26, height: 26, borderRadius: 6, border: `1px solid ${C.border}`, background: C.bg, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = C.danger; e.currentTarget.style.background = C.dangerSurf }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.bg }}
+                      >
+                        <Trash2 size={12} style={{ color: C.danger }} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const Modal = ({
   isOpen,
@@ -71,6 +233,7 @@ const Modal = ({
         );
 
       case 'ver-pedido':
+      case 'detalle-pedido':
         const pedidoSeleccionado = formData.pedidos?.find(p => p.id === formData.selectedItem?.id) || formData.selectedItem;
         const facturas = formData.facturas || [];
 
@@ -166,6 +329,15 @@ const Modal = ({
           />
         );
 
+      case 'categorias-producto':
+        return (
+          <CategoriasPanel
+            categorias={categoriasExistentes}
+            formActions={formActions}
+            onClose={onClose}
+          />
+        );
+
       case 'nuevo-presupuesto':
         return (
           <PresupuestoForm
@@ -216,11 +388,15 @@ const Modal = ({
         return 'max-w-xl';
 
       case 'ver-pedido':
-        return 'max-w-2xl';
+      case 'detalle-pedido':
+        return 'max-w-3xl';
 
       case 'nuevo-proveedor':
       case 'editar-proveedor':
         return 'max-w-xl';
+
+      case 'categorias-producto':
+        return 'max-w-sm';
 
       case 'nuevo-presupuesto':
         return 'max-w-xl';
@@ -234,9 +410,9 @@ const Modal = ({
   };
 
   return (
-    <div onClick={onClose} className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${modalType === 'ver-pedido' ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
-      <div onClick={e => e.stopPropagation()} className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full ${modalType === 'ver-pedido' ? 'max-h-[98vh]' : 'max-h-[95vh]'} overflow-y-auto`}>
-        <div className={modalType === 'ver-pedido' ? 'p-3' : 'p-4'}>
+    <div onClick={onClose} className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
+      <div onClick={e => e.stopPropagation()} className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full ${(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'max-h-[98vh]' : 'max-h-[95vh]'} overflow-y-auto`}>
+        <div className={(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'p-3' : 'p-4'}>
           {/* Contenido del modal */}
           {renderModalContent()}
         </div>

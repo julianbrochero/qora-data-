@@ -3,7 +3,9 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
+import '@nimbus-ds/styles/dist/index.css'
 import { HeroUIProvider } from "@heroui/react";
+import { TooltipProvider } from './components/ui/tooltip';
 import { AuthProvider } from './lib/AuthContext';
 import { ThemeProvider } from './lib/ThemeContext';
 import { SubscriptionProvider } from './lib/SubscriptionContext';
@@ -15,7 +17,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <SubscriptionProvider>
           <ThemeProvider>
             <HeroUIProvider>
-              <App />
+              <TooltipProvider>
+                <App />
+              </TooltipProvider>
             </HeroUIProvider>
           </ThemeProvider>
         </SubscriptionProvider>

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react"
 import { useAuth } from "../../lib/AuthContext"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
 import MobileDashboard from "./MobileDashboard"
-import DesktopDashboard from "./DesktopDashboard"
+import DesktopDashboard from "./DashboardNimbus"
 import {
   Search, Bell, Plus, DollarSign, FileText, Users, Wallet,
   Calendar, UserPlus, PackagePlus, BarChart3, CheckCircle2,
@@ -440,10 +440,10 @@ const StockAlertPanel = ({ productos, onViewAll }) => {
 /* ─────────────────────────────────────────────────────────────────────────────
    QUICK STATS BAR
 ───────────────────────────────────────────────────────────────────────────── */
-const QuickStatsBar = ({ facturas, pedidos, onViewAllFacturas, onViewAllPedidos }) => {
+const QuickStatsBar = ({ pedidos, onViewAllPedidos }) => {
   const stats = [
-    { label: 'Fact. pagadas', value: facturas.filter(f => f.estado === 'pagada').length, Icon: CheckCircle2, onClick: onViewAllFacturas },
-    { label: 'Fact. pendientes', value: facturas.filter(f => f.estado === 'pendiente' || f.estado === 'parcial').length, Icon: Clock, onClick: onViewAllFacturas },
+    { label: 'Con saldo pendiente', value: pedidos.filter(p => parseFloat(p.saldo_pendiente) > 0.01).length, Icon: Clock, onClick: onViewAllPedidos },
+    { label: 'Pagados', value: pedidos.filter(p => parseFloat(p.saldo_pendiente) <= 0.01 && parseFloat(p.total) > 0).length, Icon: CheckCircle2, onClick: onViewAllPedidos },
     { label: 'Ventas en curso', value: pedidos.filter(p => p.estado === 'preparando' || p.estado === 'enviado').length, Icon: ShoppingCart, onClick: onViewAllPedidos },
     { label: 'Ventas completadas', value: pedidos.filter(p => p.estado === 'entregado' || p.estado === 'completado').length, Icon: Package, onClick: onViewAllPedidos },
   ]
@@ -479,15 +479,16 @@ const QuickStatsBar = ({ facturas, pedidos, onViewAllFacturas, onViewAllPedidos 
 /* ─────────────────────────────────────────────────────────────────────────────
    ANALYTICS CHART — usa datos reales por mes
 ───────────────────────────────────────────────────────────────────────────── */
-const AnalyticsChart = ({ facturas }) => {
+const AnalyticsChart = ({ pedidos }) => {
   const months = ['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
   const year = new Date().getFullYear()
   const porMes = months.map((_, idx) =>
-    facturas.filter(f => {
-      if (!f.fecha) return false
-      const d = new Date(f.fecha)
+    pedidos.filter(p => {
+      const fecha = p.fecha_pedido || p.created_at
+      if (!fecha) return false
+      const d = new Date(fecha)
       return d.getFullYear() === year && d.getMonth() === idx
-    }).reduce((s, f) => s + (f.total || 0), 0)
+    }).reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
   )
   const maxVal = Math.max(...porMes, 1)
 
@@ -511,7 +512,7 @@ const AnalyticsChart = ({ facturas }) => {
       <div className="flex justify-between items-start px-[16px] pt-[14px] pb-[10px] border-b" style={{ borderColor: 'rgba(48,54,47,.07)', background: '#E0E1DD' }}>
         <div>
           <p className="font-bold" style={{ fontSize: 12, color: '#30362F' }}>Ingresos Mensuales</p>
-          <p style={{ fontSize: 9.5, color: '#8B8982', marginTop: 2 }}>Año {year} • Facturas emitidas</p>
+          <p style={{ fontSize: 9.5, color: '#8B8982', marginTop: 2 }}>Año {year} • Ventas registradas</p>
         </div>
         <div className="flex gap-4">
           {[['#606B6C', 'Ingresos']].map(([c, l]) => (
@@ -569,8 +570,8 @@ const AnalyticsChart = ({ facturas }) => {
    MAIN DASHBOARD
 ───────────────────────────────────────────────────────────────────────────── */
 const Dashboard = ({
-  clientes = [], productos = [], facturas = [], pedidos = [],
-  caja = {}, onViewAllFacturas, onViewAllProductos,
+  clientes = [], productos = [], pedidos = [],
+  caja = {}, onViewAllProductos,
   onViewAllPedidos, onViewAllClientes, onViewAllCaja, onViewReportes, onNuevaVenta, openModal, onOpenMobileSidebar,
 }) => {
   const { user } = useAuth()
@@ -580,18 +581,14 @@ const Dashboard = ({
   const inicioAnteriorMes = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1)
   const finAnteriorMes = new Date(hoy.getFullYear(), hoy.getMonth(), 0)
 
-  const facturasEsteMes = facturas.filter(f => f.fecha && new Date(f.fecha) >= inicioMes)
-  const facturasMesAnterior = facturas.filter(f => {
-    if (!f.fecha) return false
-    const d = new Date(f.fecha)
-    return d >= inicioAnteriorMes && d <= finAnteriorMes
-  })
-  const totalEsteMes = facturasEsteMes.reduce((s, f) => s + (f.total || 0), 0)
-  const totalMesAnterior = facturasMesAnterior.reduce((s, f) => s + (f.total || 0), 0)
+  const pedidosEsteMes = pedidos.filter(p => { const f = p.fecha_pedido||p.created_at; return f && new Date(f) >= inicioMes })
+  const pedidosMesAnterior = pedidos.filter(p => { const f = p.fecha_pedido||p.created_at; if(!f) return false; const d=new Date(f); return d>=inicioAnteriorMes && d<=finAnteriorMes })
+  const totalEsteMes = pedidosEsteMes.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
+  const totalMesAnterior = pedidosMesAnterior.reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
   const cambioVentas = totalMesAnterior > 0
     ? (((totalEsteMes - totalMesAnterior) / totalMesAnterior) * 100).toFixed(1)
     : totalEsteMes > 0 ? 100 : 0
-  const facturasPendientes = facturas.filter(f => f.estado === 'pendiente' || f.estado === 'parcial').length
+  const pedidosConSaldo = pedidos.filter(p => parseFloat(p.saldo_pendiente) > 0.01).length
   const pedidosPendientes = pedidos.filter(p => p.estado === 'pendiente')
 
   const hora = hoy.getHours()
@@ -639,8 +636,8 @@ const Dashboard = ({
 
   /* ── Mobile layout (< md) ── */
   const mobileProps = {
-    clientes, productos, facturas, pedidos, caja,
-    onViewAllFacturas, onViewAllProductos, onViewAllPedidos,
+    clientes, productos, pedidos, caja,
+    onViewAllProductos, onViewAllPedidos,
     onViewAllClientes, onViewAllCaja, onViewReportes, onNuevaVenta,
     openModal, onOpenMobileSidebar,
   }

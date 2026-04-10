@@ -183,21 +183,6 @@ const Pedidos = ({
   /* ── clases reutilizables ── */
   const cardCls = `rounded-xl overflow-hidden border transition-all`
   const cardStyle = { background: surface, borderColor: border, boxShadow: '0 1px 4px rgba(48,54,47,.07),0 4px 18px rgba(48,54,47,.07)' }
-  const pillSelect = {
-    background: surface,
-    border: `1px solid ${border}`,
-    color: ct2,
-    borderRadius: '8px',
-    padding: '6px 11px',
-    fontSize: '11px',
-    fontWeight: 600,
-    fontFamily: 'Inter, sans-serif',
-    cursor: 'pointer',
-    outline: 'none',
-    appearance: 'none',
-    transition: 'border-color .13s',
-  }
-
   return (
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: bg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
 
@@ -326,7 +311,7 @@ const Pedidos = ({
             <div style={{ padding: 'clamp(8px,2vw,12px) clamp(12px,3vw,16px)', borderBottom: `1px solid ${border}`, background: surface2 }}>
               {/* Fila 1: Buscador + selects */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: canalesConfig.length > 0 ? 10 : 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '1 1 160px', minWidth: 140, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: '1 1 160px', minWidth: 140, height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${border}`, background: surface2 }}>
                   <Search size={12} strokeWidth={2} style={{ color: ct3, flexShrink: 0 }} />
                   <input
                     type="text" placeholder="Buscar…"
@@ -335,7 +320,7 @@ const Pedidos = ({
                   />
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <select value={filtroEstado} onChange={e => { const v = e.target.value; setFiltroEstado(v); try { localStorage.setItem('gestify_filtro_estado', v) } catch {} }} style={{ ...pillSelect, minWidth: 120 }}>
+                  <select value={filtroEstado} onChange={e => { const v = e.target.value; setFiltroEstado(v); try { localStorage.setItem('gestify_filtro_estado', v) } catch {} }} className="app-select app-select-sm app-select--inline" style={{ minWidth: 120 }}>
                     <option value="todos">Todos los estados</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="preparando">Preparando</option>
@@ -343,7 +328,7 @@ const Pedidos = ({
                     <option value="entregado">Entregado</option>
                     <option value="cancelado">Cancelado</option>
                   </select>
-                  <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} style={{ ...pillSelect, minWidth: 110 }}>
+                  <select value={filtroFacturacion} onChange={e => setFiltroFacturacion(e.target.value)} className="app-select app-select-sm app-select--inline" style={{ minWidth: 110 }}>
                     <option value="todos">Toda facturación</option>
                     <option value="facturados">Facturados</option>
                     <option value="no-facturados">Sin facturar</option>
@@ -422,16 +407,16 @@ const Pedidos = ({
                     return (
                       <div key={pedido.id}
                         className="ventas-row-grid"
-                        onClick={modoSeleccion ? () => toggleSeleccion(pedido.id) : undefined}
+                        onClick={modoSeleccion ? () => toggleSeleccion(pedido.id) : () => openModal && openModal('ver-pedido', pedido)}
                         style={{
                           display: 'grid',
                           gridTemplateColumns: modoSeleccion ? '32px 1.1fr 1.6fr .8fr .9fr 1.2fr 240px' : '1.1fr 1.6fr .8fr .9fr 1.2fr 240px',
                           gap: 14, padding: '12px 16px', borderBottom: `1px solid ${border}`,
                           background: sel ? accentL : 'transparent',
-                          cursor: modoSeleccion ? 'pointer' : 'default',
+                          cursor: 'pointer',
                           transition: 'background .13s', alignItems: 'center', position: 'relative',
                         }}
-                        onMouseEnter={e => { if (!sel) e.currentTarget.style.background = 'rgba(51,65,57,.02)' }}
+                        onMouseEnter={e => { if (!sel) e.currentTarget.style.background = 'rgba(0,0,0,.04)' }}
                         onMouseLeave={e => { if (!sel) e.currentTarget.style.background = 'transparent' }}>
                         {/* Barra lateral de color por estado */}
                         <div style={{
@@ -588,7 +573,7 @@ const Pedidos = ({
                 <span style={{ fontSize: 11, fontWeight: 500, color: ct3 }}>
                   Mostrando {Math.min(filtrarPedidos.length, pedidosPaginados.length)} de {filtrarPedidos.length}
                 </span>
-                <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} style={{ ...pillSelect, padding: '4px 8px', fontSize: 11 }}>
+                <select value={itemsPorPagina} onChange={e => setItemsPorPagina(Number(e.target.value))} className="app-select app-select-xs app-select--inline">
                   <option value="5">5 / pág</option>
                   <option value="10">10 / pág</option>
                   <option value="25">25 / pág</option>

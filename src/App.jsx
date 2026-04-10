@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -6,19 +6,19 @@ import { Menu } from 'lucide-react';
 import { useFacturacion } from './hooks/useFacturacion';
 import { useAuth } from './lib/AuthContext';
 import { useSubscriptionContext } from './lib/SubscriptionContext';
-import Sidebar from './components/layout/Sidebar';
+import AppSidebar from './components/layout/AppSidebar';
+import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
 import Modal from './components/layout/Modal';
 import Dashboard from './components/modules/Dashboard';
-import Facturacion from './components/modules/Facturacion';
 import Clientes from './components/modules/Clientes';
-import Productos from './components/modules/Productos';
+import Productos from './components/modules/ProductosNimbus';
 import ControlCaja from './components/modules/ControlCaja';
 import Reportes from './components/modules/Reportes';
 import Proveedores from './components/modules/Proveedores';
-import Pedidos from './components/modules/Pedidos';
+import Pedidos from './components/modules/PedidosNimbus';
 import Configuracion from './components/modules/Configuracion';
 import Presupuestos from './components/modules/Presupuestos';
-import AgregarVenta from './components/modules/AgregarVenta';
+import AgregarVenta from './components/modules/AgregarVentaNimbus';
 import AdminPanel from './components/modules/AdminPanel';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
@@ -62,9 +62,12 @@ const SistemaFacturacion = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [modalType, setModalType] = useState(null);
   const [modalData, setModalData] = useState(null);
+  const modalTypeRef = useRef(null);
+  useEffect(() => { modalTypeRef.current = modalType }, [modalType]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [pedidoAEditar, setPedidoAEditar] = useState(null);
+  const [productoParaCarrito, setProductoParaCarrito] = useState(null);
 
   const {
     // Estados existentes
@@ -193,11 +196,15 @@ const SistemaFacturacion = () => {
     }
   };
 
-  const closeModalHandler = () => {
-    console.log('🔴 Cerrando modal');
+  const closeModalHandler = useCallback(() => {
+    const prevType = modalTypeRef.current
     setModalType(null);
     setModalData(null);
-  };
+    if (prevType === 'editar-producto') {
+      setPedidoAEditar(null)
+      setActiveModule('agregar-venta')
+    }
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -311,27 +318,14 @@ const SistemaFacturacion = () => {
           {...commonProps}
           clientes={filtrarClientes}
           productos={filtrarProductos}
-          facturas={filtrarFacturas}
           pedidos={filtrarPedidos}
           caja={caja}
-          onViewAllFacturas={() => setActiveModule('facturacion')}
           onViewAllProductos={() => setActiveModule('productos')}
           onViewAllPedidos={() => setActiveModule('pedidos')}
           onViewAllClientes={() => setActiveModule('clientes')}
           onViewAllCaja={() => setActiveModule('caja')}
           onViewReportes={() => setActiveModule('reportes')}
           onNuevaVenta={() => setActiveModule('agregar-venta')}
-        />
-      ),
-      facturacion: (
-        <Facturacion
-          {...commonProps}
-          facturas={filtrarFacturas}
-          pedidos={filtrarPedidos}
-          onNuevaFactura={() => openModalHandler('factura-directa')}
-          registrarCobro={registrarCobro}
-          eliminarFactura={eliminarFactura}
-          recargarDatos={recargarTodosLosDatos}
         />
       ),
       clientes: (
@@ -352,6 +346,7 @@ const SistemaFacturacion = () => {
           agregarCategoria={agregarCategoria}
           renombrarCategoria={renombrarCategoria}
           eliminarCategoria={eliminarCategoria}
+          onAgregarAlCarrito={prod => { setProductoParaCarrito({ ...prod, _t: Date.now() }); setActiveModule('agregar-venta') }}
         />
       ),
       caja: (
@@ -391,9 +386,15 @@ const SistemaFacturacion = () => {
           productos={productos}
           actualizarEstadoPedido={actualizarEstadoPedido}
           eliminarPedido={eliminarPedido}
-          facturarPedido={handleFacturarPedido}
           recargarDatos={recargarTodosLosDatos}
           onNuevaVenta={() => setActiveModule('agregar-venta')}
+          formActions={{
+            actualizarEstadoPedido,
+            actualizarPedido,
+            actualizarNotasPedido,
+            agregarAbonoAPedido,
+            marcarPedidoPagadoTotal,
+          }}
         />
       ),
       'agregar-venta': (
@@ -402,12 +403,13 @@ const SistemaFacturacion = () => {
           clientes={clientes}
           productos={productos}
           pedidoAEditar={pedidoAEditar}
+          productoParaAgregarAlCarrito={productoParaCarrito}
           formActions={{
             agregarPedidoSolo,
             actualizarPedido,
             recargarTodosLosDatos,
           }}
-          onVentaCreada={() => { setPedidoAEditar(null); setActiveModule('pedidos') }}
+          onVentaCreada={() => { setPedidoAEditar(null); setProductoParaCarrito(null); setActiveModule('pedidos') }}
         />
       ),
       configuracion: <Configuracion {...commonProps} />,
@@ -433,7 +435,6 @@ const SistemaFacturacion = () => {
           {...commonProps}
           clientes={filtrarClientes}
           productos={filtrarProductos}
-          facturas={filtrarFacturas}
           pedidos={filtrarPedidos}
           caja={caja}
         />
@@ -441,30 +442,25 @@ const SistemaFacturacion = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#E0E1DD]">
-      <Sidebar
-        activeModule={activeModule}
-        setActiveModule={setActiveModule}
-        user={user}
-        onLogout={handleLogout}
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        pedidos={pedidos}
-      />
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full" style={{ background: "#f8f9fb" }}>
+        <AppSidebar
+          activeModule={activeModule}
+          setActiveModule={setActiveModule}
+          pedidos={pedidos}
+        />
 
-      {/* Contenido principal */}
-      <div className={`flex-1 transition-all duration-300 ease-in-out min-w-0 ${isSidebarCollapsed ? 'md:ml-[64px]' : 'md:ml-[220px]'}`}>
-        <div className="h-full">
-          <SubscriptionGate>
-            {renderActiveModule()}
-          </SubscriptionGate>
-        </div>
-      </div>
+        {/* Contenido principal */}
+        <SidebarInset className="flex-1 min-w-0" style={{ background: "#f8f9fb" }}>
+          <div style={{ width: "100%", minHeight: "100vh", background: "#f8f9fb" }}>
+            <SubscriptionGate>
+              {renderActiveModule()}
+            </SubscriptionGate>
+          </div>
+        </SidebarInset>
 
-      {/* ✅ UNIFICADO: Solo un Modal con todas las props necesarias */}
-      <Modal
+        {/* ✅ UNIFICADO: Solo un Modal con todas las props necesarias */}
+        <Modal
         isOpen={!!modalType}
         onClose={closeModalHandler}
         modalType={modalType}
@@ -519,9 +515,13 @@ const SistemaFacturacion = () => {
           crearFacturaDirecta, // ✅ NUEVO - para Factura Directa
           guardarPresupuesto,  // para Presupuestos
           actualizarNotasPedido, // para guardar notas en el detalle de venta
+          agregarCategoria,
+          renombrarCategoria,
+          eliminarCategoria,
         }}
       />
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 

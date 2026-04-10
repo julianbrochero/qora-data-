@@ -320,7 +320,8 @@ const FacturaDirectaForm = ({ clientes = [], formActions, closeModal }) => {
                     <div style={{ position: 'relative' }}>
                         <Wallet size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: ct3, zIndex: 1 }} />
                         <select
-                            style={{ ...inputBase, paddingLeft: 30, cursor: 'pointer', appearance: 'none' }}
+                            className="app-select app-select--icon-left"
+                            style={{ paddingLeft: 30 }}
                             value={metodoPago}
                             onChange={(e) => setMetodoPago(e.target.value)}
                             onFocus={focusStyle}

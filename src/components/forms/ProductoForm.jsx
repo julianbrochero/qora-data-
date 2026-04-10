@@ -103,6 +103,14 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
   // Mapa de refs para identificar el campo actual en handleKeyDown
   const refs = { nombre: nombreRef, precio: precioRef, costo: costoRef, stock: stockRef, codigo: codigoRef, categoria: categoriaRef }
 
+  // Ctrl+Enter → guardar
+  useEffect(() => {
+    if (!isEdit) return
+    const h = e => { if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); handleSubmit() } }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [isEdit, data])
+
   useEffect(() => {
     if (!isRapido && !csActivo) {
       if (data.stock !== 0) handleChange('stock', 0)
@@ -351,10 +359,10 @@ const ProductoForm = ({ type, selectedItem, formData, formActions, closeModal, c
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,.04)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             Cancelar
           </button>
-          <button type="submit" style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#0A1A0E', background: '#4ADE80', border: '1px solid #4ADE80', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+          <button type="submit" style={{ flex: 2, height: 36, borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', background: '#334139', border: '1px solid #334139', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: "'Inter', sans-serif", transition: 'all .13s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#2b352f'} onMouseLeave={e => e.currentTarget.style.background = '#334139'}>
             {isRapido ? '⚡ Agregar rápido' : isEdit ? <><CheckCircle size={13} strokeWidth={2.5} /> Guardar cambios</> : <><Package size={13} strokeWidth={2.5} /> Crear producto</>}
-            {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(0,0,0,.08)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
+            {!isRapido && <kbd style={{ fontSize: 9, padding: '1.5px 5px', background: 'rgba(255,255,255,.15)', borderRadius: 4, fontFamily: "'DM Mono', monospace" }}>↵</kbd>}
           </button>
         </div>
       </form>
