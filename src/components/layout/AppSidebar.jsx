@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react"
 import {
   LayoutDashboard, PlusCircle, ShoppingCart, FileText,
   Users, Truck, Package, Wallet, BarChart3, Settings,
-  LogOut, ShieldCheck, ChevronUp,
+  LogOut, ShieldCheck, ChevronUp, X,
 } from "lucide-react"
 import {
   Sidebar,
@@ -208,7 +208,7 @@ const UserFooter = ({ setActiveModule }) => {
 }
 
 /* ── Sidebar principal ── */
-const AppSidebar = ({ activeModule, setActiveModule, pedidos = [], ...props }) => {
+const AppSidebar = ({ activeModule, setActiveModule, pedidos = [], mobileOpen = false, onMobileClose, ...props }) => {
   const { user } = useAuth()
   const { state } = useSidebar()
 
@@ -219,7 +219,76 @@ const AppSidebar = ({ activeModule, setActiveModule, pedidos = [], ...props }) =
 
   const sections = getSections(pedidosHoy)
 
+  const handleNav = (id) => { setActiveModule(id); onMobileClose?.() }
+
   return (
+    <>
+    <style>{`
+      @media (max-width: 767px) {
+        [data-sidebar="sidebar"] { display: none !important; }
+      }
+      @keyframes mob-sb-in { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+    `}</style>
+
+    {/* Mobile drawer overlay */}
+    {mobileOpen && (
+      <>
+        <div onClick={onMobileClose} style={{ position:'fixed',inset:0,zIndex:1999,background:'rgba(0,0,0,0.4)',backdropFilter:'blur(2px)' }} />
+        <div style={{
+          position:'fixed',top:0,left:0,bottom:0,zIndex:2000,
+          width:260,background:'#fff',
+          boxShadow:'4px 0 32px rgba(0,0,0,0.18)',
+          display:'flex',flexDirection:'column',
+          animation:'mob-sb-in .22s cubic-bezier(.22,.97,.56,1)',
+          overflow:'hidden',
+        }}>
+          {/* Logo header */}
+          <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid #e5e7eb',flexShrink:0,minHeight:52 }}>
+            <img src="/newlogo.png" alt="Gestify" style={{ height:28,objectFit:'contain' }} />
+            <button onClick={onMobileClose} style={{ background:'none',border:'none',cursor:'pointer',display:'flex',padding:6,borderRadius:7,color:'#6b7280' }}>
+              <X size={18} />
+            </button>
+          </div>
+          {/* Nav */}
+          <div style={{ flex:1,overflowY:'auto',padding:'8px 10px' }}>
+            {sections.map(sec => (
+              <div key={sec.title} style={{ marginBottom:10 }}>
+                <div style={{ fontSize:10,fontWeight:600,color:'#9ca3af',letterSpacing:'0.06em',textTransform:'uppercase',padding:'4px 8px 2px' }}>{sec.title}</div>
+                {sec.items.map(item => {
+                  const isActive = activeModule === item.id
+                  return (
+                    <button key={item.id}
+                      onClick={() => handleNav(item.id)}
+                      style={{
+                        width:'100%',display:'flex',alignItems:'center',gap:10,
+                        padding:'9px 10px',borderRadius:7,border:'none',
+                        background:isActive?'#eef1ee':'transparent',
+                        color:isActive?'#334139':'#0d0d0d',
+                        fontSize:14,fontWeight:isActive?700:500,
+                        cursor:'pointer',textAlign:'left',
+                        fontFamily:"'Inter',sans-serif",
+                        marginBottom:1,position:'relative',
+                        transition:'background .1s',
+                      }}
+                      onMouseEnter={e=>{ if(!isActive) e.currentTarget.style.background='#f9fafb' }}
+                      onMouseLeave={e=>{ if(!isActive) e.currentTarget.style.background='transparent' }}
+                    >
+                      {isActive && <span style={{ position:'absolute',left:0,top:'50%',transform:'translateY(-50%)',width:3,height:18,borderRadius:'0 3px 3px 0',background:'#334139' }} />}
+                      <item.icon size={16} strokeWidth={isActive?2.2:1.8} style={{ color:isActive?'#334139':'#6b7280',flexShrink:0 }} />
+                      <span style={{ flex:1 }}>{item.label}</span>
+                      {item.badge && <span style={{ fontSize:10,fontWeight:700,background:'#334139',color:'#fff',padding:'1px 6px',borderRadius:9,minWidth:18,textAlign:'center' }}>{item.badge}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+          {/* Footer */}
+          <UserFooter setActiveModule={handleNav} />
+        </div>
+      </>
+    )}
+
     <Sidebar
       collapsible="none"
       style={{ "--sidebar-width": "220px" }}
@@ -313,6 +382,7 @@ const AppSidebar = ({ activeModule, setActiveModule, pedidos = [], ...props }) =
 
       <UserFooter setActiveModule={setActiveModule} />
     </Sidebar>
+    </>
   )
 }
 

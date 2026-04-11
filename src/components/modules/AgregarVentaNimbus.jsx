@@ -371,7 +371,7 @@ export default function AgregarVentaNimbus({
       )}
 
       {/* ── Header ── */}
-      <div style={{ background:C.pageBg }}>
+      <div style={{ background:C.bg, borderBottom:`1px solid ${C.border}` }}>
         {/* Mobile */}
         <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 16px' }} className="pv-mobile">
           <button onClick={onOpenMobileSidebar} style={{background:'none',border:'none',cursor:'pointer',display:'flex'}}><MenuIcon size={20} color={C.textBlack}/></button>
@@ -394,7 +394,7 @@ export default function AgregarVentaNimbus({
 
 
       {/* ── Contenido centrado ── */}
-      <div style={{ maxWidth:860,margin:'0 auto',padding:'8px 16px 16px' }}>
+      <div className="pv-content-pad">
 
         {/* ┌─────────────────────────────────┐ */}
         {/* │   CARD 1: Detalles de la Venta  │ */}
@@ -402,7 +402,7 @@ export default function AgregarVentaNimbus({
         <div style={{ background:C.bg,borderRadius:10,border:`1px solid ${C.border}`,padding:'10px 14px',marginBottom:8 }}>
           <h2 style={{margin:'0 0 7px',fontSize:12,fontWeight:700,color:C.textBlack,letterSpacing:'0.02em'}}>Detalles de la Venta</h2>
 
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+          <div className="pv-form-grid">
 
             {/* Cliente */}
             <div ref={cliRef} style={{position:'relative'}}>
@@ -805,13 +805,7 @@ export default function AgregarVentaNimbus({
           )}
 
           {/* ── Footer del carrito: Total + Adelanto + Guardar ── */}
-          <div style={{
-            borderTop:`2px solid #6b7280`,
-            padding:'10px 16px',
-            background:'#f9fafb',
-            display:'flex',alignItems:'center',justifyContent:'space-between',
-            flexWrap:'wrap',gap:8,
-          }}>
+          <div className="pv-cart-footer">
             <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
               <div>
                 <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Total</div>
@@ -862,10 +856,12 @@ export default function AgregarVentaNimbus({
                 </div>
               )}
             </div>
-            <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef}>
-              <Save size={15}/>{pedidoAEditar?'Actualizar Venta':'Crear Pedido'}
-              <span className="pv-desktop" style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl+Enter</span>
-            </BtnPrimary>
+            <div className="pv-cart-footer-save">
+              <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef}>
+                <Save size={15}/>{pedidoAEditar?'Actualizar Venta':'Crear Pedido'}
+                <span className="pv-desktop" style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl+Enter</span>
+              </BtnPrimary>
+            </div>
           </div>
         </div>
 
@@ -881,6 +877,24 @@ export default function AgregarVentaNimbus({
           .pv-desktop{display:flex!important;}
         }
 
+        /* ── Form grid responsive ── */
+        .pv-form-grid {
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:6px;
+        }
+        @media (max-width:540px) {
+          .pv-form-grid { grid-template-columns:1fr; }
+        }
+
+        /* ── Padding de contenido responsive ── */
+        .pv-content-pad {
+          max-width:860px; margin:0 auto; padding:8px 16px 16px;
+        }
+        @media (max-width:540px) {
+          .pv-content-pad { padding:8px 12px 16px; }
+        }
+
         /* ── Fecha pedido (native input date) ── */
         input[type="date"].pv-date {
           cursor:pointer; color-scheme:light;
@@ -889,6 +903,19 @@ export default function AgregarVentaNimbus({
           cursor:pointer; opacity:.45;
           filter:invert(.15) sepia(1) saturate(5) hue-rotate(100deg);
         }
+
+        /* ── Selects custom ── */
+        .app-select {
+          width:100%; height:32px; padding:0 28px 0 10px; font-size:12px;
+          border:1.5px solid #d1d5db; border-radius:7px; background:#fff;
+          font-family:'Inter',sans-serif; outline:none;
+          appearance:none; -webkit-appearance:none;
+          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat:no-repeat; background-position:right 10px center;
+          cursor:pointer; box-sizing:border-box;
+          transition:border-color .12s;
+        }
+        .app-select:focus { border-color:#334139; }
 
         /* ── Mini calendario fecha entrega ── */
         .pv-dp-wrap {
@@ -915,7 +942,7 @@ export default function AgregarVentaNimbus({
         }
         .pv-dp-day:hover { background:#f3f4f6; }
         .pv-dp-day.tod { font-weight:800; color:#334139; position:relative; }
-        .pv-dp-day.tod::after { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:3px; height:3px; background:#4ADE80; border-radius:50%; }
+        .pv-dp-day.tod::after { content:''; position:absolute; bottom:1px; left:50%; transform:translateX(-50%); width:3px; height:3px; background:#334139; border-radius:50%; }
         .pv-dp-day.sel { background:#334139 !important; color:#fff !important; font-weight:700; }
         .pv-dp-footer { margin-top:6px; padding-top:6px; border-top:1px solid #f3f4f6; display:flex; justify-content:center; }
         .pv-dp-clear { font-size:11px; font-weight:600; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; transition:color .1s; }
@@ -924,6 +951,23 @@ export default function AgregarVentaNimbus({
         /* ── Responsive tabla carrito ── */
         @media (max-width:600px) {
           .pv-col-costo, .pv-col-stock { display:none; }
+        }
+
+        /* ── Carrito footer responsive ── */
+        .pv-cart-footer {
+          border-top:2px solid #6b7280;
+          padding:10px 16px;
+          background:#f9fafb;
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          flex-wrap:wrap;
+          gap:8px;
+        }
+        @media (max-width:540px) {
+          .pv-cart-footer { flex-direction:column; align-items:stretch; }
+          .pv-cart-footer-save { width:100%; }
+          .pv-cart-footer-save button { width:100%; justify-content:center; }
         }
       `}</style>
     </div>

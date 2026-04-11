@@ -442,8 +442,10 @@ const SistemaFacturacion = () => {
       <div className="flex min-h-screen w-full" style={{ background: "#f8f9fb" }}>
         <AppSidebar
           activeModule={activeModule}
-          setActiveModule={setActiveModule}
+          setActiveModule={(mod) => { setActiveModule(mod); setSidebarOpen(false) }}
           pedidos={pedidos}
+          mobileOpen={sidebarOpen}
+          onMobileClose={() => setSidebarOpen(false)}
         />
 
         {/* Contenido principal */}
