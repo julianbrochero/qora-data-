@@ -14,7 +14,7 @@ export default function Landing() {
   const [scrolled, setScrolled]           = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeModule, setActiveModule]   = useState('facturacion');
+  const [activeModule, setActiveModule]   = useState('ventas');
   const [demoTab, setDemoTab]             = useState('dashboard');
   const [openFaq, setOpenFaq]             = useState(null);
 
@@ -194,7 +194,7 @@ export default function Landing() {
                         <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                         <span>Dashboard</span>
                       </div>
-                      <div className="msb-sec-label">Comercial</div>
+                      <div className="msb-sec-label">Gestión</div>
                       <div className={`msb-item${sidebarActive('venta')?' active':''}`}>
                         <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                         <span>Agregar Venta</span>
@@ -208,11 +208,6 @@ export default function Landing() {
                         <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
                         <span>Presupuestos</span>
                       </div>
-                      <div className="msb-item">
-                        <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                        <span>Facturación</span>
-                      </div>
-                      <div className="msb-sec-label">Contactos</div>
                       <div className="msb-item">
                         <svg className="msb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         <span>Clientes</span>
@@ -253,14 +248,14 @@ export default function Landing() {
                   <div className="mmain">
                     <div className="mmain-header">
                       <div className="mmain-search">
-                        <svg className="mmain-search-icon" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <span className="mmain-search-text">Buscar cliente, factura, venta...</span>
+                        <svg className="mmain-search-icon" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <span className="mmain-search-text">Buscar cliente, venta...</span>
                         <span className="mmain-search-kbd">⌘K</span>
                       </div>
                       <div className="mmain-spacer" />
                       <span className="mmain-date">Hoy — 25 Mar 2026</span>
                       <div className="mmain-bell">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                       </div>
                       <div className="mmain-avatar">A</div>
                     </div>
@@ -271,16 +266,16 @@ export default function Landing() {
                         <div className="mmain-title-row">
                           <div><div className="mmain-page-title">Dashboard</div><div className="mmain-page-sub">Resumen del negocio al día de hoy</div></div>
                           <div style={{display:'flex',gap:'6px'}}>
-                            <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>+ Nueva Venta</div>
-                            <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#4ADE80',cursor:'default'}}>+ Factura</div>
+                            <div style={{background:'#f3f4f6',border:'1px solid #e5e7eb',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#374151',cursor:'default'}}>+ Presupuesto</div>
+                            <div style={{background:'#334139',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#fff',cursor:'default'}}>+ Nueva Venta</div>
                           </div>
                         </div>
                         <div className="kpi-row">
                           {[
-                            {cls:'g',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#606B6C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,trend:'+18%',trendCls:'up',val:'$847.200',label:'Ventas del Mes',sub:'vs. $718.000 mes anterior',pct:85,pctLabel:'Meta mensual'},
-                            {cls:'a',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>,trend:'7 abiertas',trendCls:'nt',val:'$124.500',label:'Facturas Pendientes',sub:'Cobro promedio: $17.785',pct:73,pctLabel:'Cobradas'},
-                            {cls:'b',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#373F47" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,trend:'14 activos',trendCls:'nt',val:'14',label:'Pedidos Activos',sub:'3 creados hoy',pct:62,pctLabel:'Completados'},
-                            {cls:'n',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,trend:'+$12k hoy',trendCls:'up',val:'$38.750',label:'Caja del Día',sub:'Actualizado ahora',pct:94,pctLabel:'Vs. ayer'},
+                            {cls:'g',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#334139" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,trend:'+18%',trendCls:'up',val:'$847.200',label:'Ventas del Mes',sub:'vs. $718.000 mes anterior',pct:85,pctLabel:'Meta mensual'},
+                            {cls:'a',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,trend:'5 activos',trendCls:'nt',val:'5',label:'Presupuestos',sub:'Pendientes de respuesta',pct:60,pctLabel:'Enviados'},
+                            {cls:'b',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,trend:'14 activos',trendCls:'nt',val:'14',label:'Pedidos Activos',sub:'3 creados hoy',pct:62,pctLabel:'Completados'},
+                            {cls:'n',icon:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,trend:'+$12k hoy',trendCls:'up',val:'$38.750',label:'Caja del Día',sub:'Actualizado ahora',pct:94,pctLabel:'Vs. ayer'},
                           ].map(k => (
                             <div className={`kpi ${k.cls}`} key={k.label}>
                               <div className="kpi-top"><div className={`kpi-icon-wrap ${k.cls}`}>{k.icon}</div><div className={`kpi-trend ${k.trendCls}`}>{k.trend}</div></div>
@@ -293,16 +288,16 @@ export default function Landing() {
                         </div>
                         <div className="panels-row">
                           <div className="card-shell">
-                            <div className="card-shell-hd"><span className="card-shell-title">Últimas Facturas <span className="card-shell-count">12</span></span><span className="card-shell-action">Ver todas →</span></div>
+                            <div className="card-shell-hd"><span className="card-shell-title">Últimas Ventas <span className="card-shell-count">14</span></span><span className="card-shell-action">Ver todas →</span></div>
                             <div className="card-shell-body">
                               <table className="ft">
-                                <thead><tr><th>Factura</th><th>Cliente</th><th>Estado</th><th>Total</th></tr></thead>
+                                <thead><tr><th>Nº Venta</th><th>Cliente</th><th>Estado</th><th>Total</th></tr></thead>
                                 <tbody>
-                                  <tr><td>FA-000089</td><td>Comercial López</td><td><span className="pill pagada"><span className="pill-dot" />Pagada</span></td><td>$18.400</td></tr>
-                                  <tr><td>FA-000088</td><td>Distribuidora Sur</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td>$32.000</td></tr>
-                                  <tr><td>FA-000087</td><td>Ferretería Central</td><td><span className="pill pagada"><span className="pill-dot" />Pagada</span></td><td>$9.750</td></tr>
-                                  <tr><td>FA-000086</td><td>Panadería Norte</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td>$14.200</td></tr>
-                                  <tr><td>FA-000085</td><td>Almacén El Sol</td><td><span className="pill parcial"><span className="pill-dot" />Parcial</span></td><td>$22.600</td></tr>
+                                  <tr><td>PED-000041</td><td>Comercial López</td><td><span className="pill pagada"><span className="pill-dot" />Entregado</span></td><td>$18.400</td></tr>
+                                  <tr><td>PED-000040</td><td>Distribuidora Sur</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td>$32.000</td></tr>
+                                  <tr><td>PED-000039</td><td>Ferretería Central</td><td><span className="pill pagada"><span className="pill-dot" />Entregado</span></td><td>$9.750</td></tr>
+                                  <tr><td>PED-000038</td><td>Panadería Norte</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td>$14.200</td></tr>
+                                  <tr><td>PED-000037</td><td>Almacén El Sol</td><td><span className="pill parcial"><span className="pill-dot" />Parcial</span></td><td>$22.600</td></tr>
                                 </tbody>
                               </table>
                             </div>
@@ -327,8 +322,8 @@ export default function Landing() {
                         <div className="mmain-title-row">
                           <div><div className="mmain-page-title">Nueva Venta</div><div className="mmain-page-sub">Completá los datos del pedido</div></div>
                           <div style={{display:'flex',gap:'6px'}}>
-                            <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>Cancelar</div>
-                            <div style={{background:'#4ADE80',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'800',color:'#0A1A0E',cursor:'default'}}>Guardar Pedido</div>
+                            <div style={{background:'#f3f4f6',border:'1px solid #e5e7eb',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#374151',cursor:'default'}}>Cancelar</div>
+                            <div style={{background:'#334139',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'800',color:'#fff',cursor:'default'}}>Guardar Pedido</div>
                           </div>
                         </div>
                         <div className="av-cols">
@@ -409,7 +404,7 @@ export default function Landing() {
                               <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                               <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar cliente...</span>
                             </div>
-                            <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#4ADE80',cursor:'default'}}>+ Nueva Venta</div>
+                            <div style={{background:'#334139',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#fff',cursor:'default'}}>+ Nueva Venta</div>
                           </div>
                         </div>
                         <div className="filter-chips">
@@ -458,8 +453,8 @@ export default function Landing() {
                               <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#8B8982" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                               <span style={{fontSize:'9px',color:'#8B8982'}}>Buscar producto...</span>
                             </div>
-                            <div style={{background:'#E0E1DD',border:'1px solid rgba(48,54,47,.1)',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#606B6C',cursor:'default'}}>Categorías</div>
-                            <div style={{background:'#282A28',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#4ADE80',cursor:'default'}}>+ Nuevo</div>
+                            <div style={{background:'#f3f4f6',border:'1px solid #e5e7eb',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'600',color:'#374151',cursor:'default'}}>Categorías</div>
+                            <div style={{background:'#334139',borderRadius:'6px',padding:'4px 10px',fontSize:'9.5px',fontWeight:'700',color:'#fff',cursor:'default'}}>+ Nuevo</div>
                           </div>
                         </div>
                         <div className="filter-chips">
@@ -568,14 +563,13 @@ export default function Landing() {
           </div>
           <div className="items-grid reveal">
             {[
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>, title:'Facturación PDF', desc:'Generá facturas en segundos y el PDF llega automáticamente al cliente.' },
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>, title:'Control de Caja', desc:'Cada peso que entra o sale queda registrado. Cerrá el día y conocé tu balance real.' },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>, title:'Gestión de Ventas', desc:'Seguí cada pedido desde que entra hasta que se cobra — nada cae por las grietas.' },
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>, title:'Presupuestos', desc:'Convertí un presupuesto aceptado en venta con un clic — sin volver a cargar nada.' },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>, title:'Presupuestos con PDF', desc:'Creá presupuestos profesionales y convertílos en ventas con un clic. PDF incluido.' },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>, title:'Control de Caja', desc:'Cada peso que entra o sale queda registrado. Cerrá el día y conocé tu balance real.' },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, title:'CRM Clientes', desc:'Sabé exactamente quién te debe, cuánto y desde cuándo. Saldo siempre actualizado.' },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>, title:'Inventario', desc:'Stock actualizado en tiempo real. Sabé cuánto te queda antes de quedarte sin nada.' },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>, title:'Proveedores', desc:'Registrá tus proveedores y controlá las compras para conocer tu costo real.' },
               { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>, title:'Reportes y Analytics', desc:'Dashboard con ventas reales, rentabilidad y tendencias — tomás decisiones con datos.' },
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>, title:'Modo Kiosco / POS', desc:'Pantalla POS de pantalla completa con lector de código de barras para atención rápida.' },
             ].map(f => (
               <div className="item-cell" key={f.title}>
                 <div className="item-icon">{f.icon}</div>
@@ -597,40 +591,40 @@ export default function Landing() {
           </div>
           <div className="module-tabs-wrap reveal">
             <div className="module-tabs">
-              {['facturacion','caja','clientes'].map(mod => (
+              {['ventas','caja','clientes'].map(mod => (
                 <button key={mod} className={`module-tab${activeModule === mod ? ' active' : ''}`} onClick={() => setActiveModule(mod)}>
-                  {mod === 'facturacion' ? 'Facturación' : mod === 'caja' ? 'Control de Caja' : 'Clientes'}
+                  {mod === 'ventas' ? 'Gestión de Ventas' : mod === 'caja' ? 'Control de Caja' : 'Clientes'}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Facturación */}
-          <div className={`module-panel${activeModule === 'facturacion' ? ' active' : ''}`}>
+          {/* Ventas */}
+          <div className={`module-panel${activeModule === 'ventas' ? ' active' : ''}`}>
             <div>
-              <div className="module-tag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Facturación</div>
-              <h3 className="module-title">Todas tus facturas bajo control</h3>
-              <p className="module-desc">Generá, enviá y cobrá facturas desde un panel limpio. Con filtros por estado, búsqueda instantánea y exportación a PDF en segundos.</p>
+              <div className="module-tag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>Gestión de Ventas</div>
+              <h3 className="module-title">Cada venta bajo control, de principio a fin</h3>
+              <p className="module-desc">Registrá pedidos, seguí el estado de cada uno y cobrá adelantos o pagos totales. Todo el flujo de venta en un solo lugar.</p>
               <ul className="module-list">
-                <li><div className="mlc"><CheckIcon /></div>Numeración automática de facturas</li>
-                <li><div className="mlc"><CheckIcon /></div>Registro de pagos parciales o totales</li>
-                <li><div className="mlc"><CheckIcon /></div>Exportación a PDF con datos de tu empresa</li>
-                <li><div className="mlc"><CheckIcon /></div>Anulación con historial de cambios</li>
+                <li><div className="mlc"><CheckIcon /></div>Seguimiento de estado por pedido</li>
+                <li><div className="mlc"><CheckIcon /></div>Registro de pagos parciales y adelantos</li>
+                <li><div className="mlc"><CheckIcon /></div>Fecha de entrega con recordatorio</li>
+                <li><div className="mlc"><CheckIcon /></div>Canal de venta por pedido</li>
               </ul>
               <Link to="/register" className="btn btn-primary">Probar gratis →</Link>
             </div>
             <div className="module-visual">
               <div className="module-visual-inner">
                 <div className="mf-shell">
-                  <div className="mf-hd"><span className="mf-hd-title">Facturación</span><span className="mf-hd-btn">+ Nueva Factura</span></div>
+                  <div className="mf-hd"><span className="mf-hd-title">Ventas</span><span className="mf-hd-btn">+ Nueva Venta</span></div>
                   <table className="mf-table">
                     <thead><tr><th>Nº</th><th>Cliente</th><th>Estado</th><th>Fecha</th><th>Total</th></tr></thead>
                     <tbody>
-                      <tr><td>FA-000089</td><td>Comercial López</td><td><span className="pill pagada"><span className="pill-dot" />Pagada</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>25/03</td><td>$18.400</td></tr>
-                      <tr><td>FA-000088</td><td>Distribuidora Sur</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>24/03</td><td>$32.000</td></tr>
-                      <tr><td>FA-000087</td><td>Ferretería Central</td><td><span className="pill pagada"><span className="pill-dot" />Pagada</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>24/03</td><td>$9.750</td></tr>
-                      <tr><td>FA-000086</td><td>Panadería Norte</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>23/03</td><td>$14.200</td></tr>
-                      <tr><td>FA-000085</td><td>Almacén El Sol</td><td><span className="pill parcial"><span className="pill-dot" />Parcial</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>22/03</td><td>$22.600</td></tr>
+                      <tr><td>PED-000041</td><td>Comercial López</td><td><span className="pill pagada"><span className="pill-dot" />Entregado</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>25/03</td><td>$18.400</td></tr>
+                      <tr><td>PED-000040</td><td>Distribuidora Sur</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>24/03</td><td>$32.000</td></tr>
+                      <tr><td>PED-000039</td><td>Ferretería Central</td><td><span className="pill pagada"><span className="pill-dot" />Entregado</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>24/03</td><td>$9.750</td></tr>
+                      <tr><td>PED-000038</td><td>Panadería Norte</td><td><span className="pill parcial"><span className="pill-dot" />Parcial</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>23/03</td><td>$14.200</td></tr>
+                      <tr><td>PED-000037</td><td>Almacén El Sol</td><td><span className="pill pendiente"><span className="pill-dot" />Pendiente</span></td><td style={{fontSize:'9px',color:'#8B8982'}}>22/03</td><td>$22.600</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -750,7 +744,7 @@ export default function Landing() {
               <div className="pricing-desc">7 días de acceso completo. Sin tarjeta de crédito ni compromisos.</div>
               <hr className="pricing-divider" />
               <ul className="pricing-features">
-                {['Todos los módulos incluidos','Facturación ilimitada','Control de Caja y Reportes','Exportación PDF'].map(f => (
+                {['Todos los módulos incluidos','Ventas y pedidos ilimitados','Control de Caja y Reportes','Exportación PDF'].map(f => (
                   <li className="pricing-feature" key={f}><div className="pfi yes"><CheckIcon /></div>{f}</li>
                 ))}
                 <li className="pricing-feature"><div className="pfi no"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><span style={{color:'var(--text-muted)'}}>Soporte prioritario</span></li>
