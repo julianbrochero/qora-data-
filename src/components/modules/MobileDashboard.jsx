@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { motion } from "framer-motion"
+
 import {
   ShoppingCart, PackagePlus, Package, Users,
   BarChart3, Landmark, TrendingUp, AlertTriangle,
@@ -64,10 +64,7 @@ const itemVariants = {
    QUICK ACTION CARD
 ───────────────────────────────────────────────────────────────────────────── */
 const QuickCard = ({ icon: Icon, label, accent, onClick }) => (
-  <motion.button
-    variants={itemVariants}
-    whileTap={{ scale: 0.91 }}
-    whileHover={{ scale: 1.04, y: -2 }}
+  <button
     onClick={onClick}
     className="flex flex-col items-center justify-center gap-3 rounded-2xl p-4 w-full"
     style={{
@@ -108,15 +105,14 @@ const QuickCard = ({ icon: Icon, label, accent, onClick }) => (
     >
       {label}
     </span>
-  </motion.button>
+  </button>
 )
 
 /* ─────────────────────────────────────────────────────────────────────────────
    STAT CARD (horizontal)
 ───────────────────────────────────────────────────────────────────────────── */
 const StatCard = ({ icon: Icon, accent, label, value, sub }) => (
-  <motion.div
-    variants={itemVariants}
+  <div
     className="flex items-center gap-3 rounded-2xl p-4"
     style={{
       background: C.white,
@@ -146,7 +142,7 @@ const StatCard = ({ icon: Icon, accent, label, value, sub }) => (
         {sub}
       </span>
     )}
-  </motion.div>
+  </div>
 )
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -174,8 +170,7 @@ const SectionHeader = ({ title, onAction, actionLabel }) => (
    ACTIVITY ROW
 ───────────────────────────────────────────────────────────────────────────── */
 const ActivityRow = ({ title, sub, amount, time, isLast }) => (
-  <motion.div
-    variants={itemVariants}
+  <div
     className="flex items-center gap-3 py-3"
     style={{ borderBottom: isLast ? "none" : `1px solid ${C.lighter}` }}
   >
@@ -214,7 +209,7 @@ const ActivityRow = ({ title, sub, amount, time, isLast }) => (
         </p>
       )}
     </div>
-  </motion.div>
+  </div>
 )
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -309,8 +304,7 @@ const MobileDashboard = ({
 
             {/* Top row: menu + badge */}
             <div className="flex items-center justify-between mb-5">
-              <motion.button
-                whileTap={{ scale: 0.92 }}
+              <button
                 onClick={onOpenMobileSidebar}
                 className="flex items-center justify-center rounded-xl"
                 style={{
@@ -322,7 +316,7 @@ const MobileDashboard = ({
                 }}
               >
                 <Menu size={18} strokeWidth={2} color="white" />
-              </motion.button>
+              </button>
 
               <div
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
@@ -339,10 +333,7 @@ const MobileDashboard = ({
             </div>
 
             {/* Greeting */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.38 }}
+            <div
             >
               <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 3, letterSpacing: "0.01em" }}>
                 {saludo} 👋
@@ -353,13 +344,10 @@ const MobileDashboard = ({
               >
                 {nombre}
               </h1>
-            </motion.div>
+            </div>
 
             {/* Today's summary card */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
+            <div
               className="rounded-2xl p-4"
               style={{
                 background: "rgba(255,255,255,0.07)",
@@ -390,7 +378,7 @@ const MobileDashboard = ({
                   <TrendingUp size={22} strokeWidth={1.8} style={{ color: C.green }} />
                 </div>
               </div>
-            </motion.div>
+            </div>
 
           </div>
         </div>
@@ -402,10 +390,7 @@ const MobileDashboard = ({
             {/* ── ACCIONES RÁPIDAS ── */}
             <section>
               <SectionHeader title="Acciones rápidas" />
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
+              <div
                 style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}
               >
                 {acciones.map((a) => (
@@ -417,16 +402,13 @@ const MobileDashboard = ({
                     onClick={a.fn}
                   />
                 ))}
-              </motion.div>
+              </div>
             </section>
 
             {/* ── RESUMEN ── */}
             <section>
               <SectionHeader title="Resumen del negocio" />
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
+              <div
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 <StatCard
@@ -460,7 +442,7 @@ const MobileDashboard = ({
                   label="Clientes registrados"
                   value={`${clientes.length}`}
                 />
-              </motion.div>
+              </div>
             </section>
 
             {/* ── ACTIVIDAD RECIENTE ── */}
@@ -471,10 +453,7 @@ const MobileDashboard = ({
                   onAction={onViewAllPedidos}
                   actionLabel="Ver todas"
                 />
-                <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
+                <div
                   className="rounded-2xl overflow-hidden"
                   style={{
                     background: C.white,
@@ -494,14 +473,11 @@ const MobileDashboard = ({
                       />
                     ))}
                   </div>
-                </motion.div>
+                </div>
               </section>
             ) : (
               /* ── empty state ── */
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35 }}
+              <div
                 style={{
                   display: "flex", flexDirection: "column", alignItems: "center",
                   justifyContent: "center", paddingTop: 32, paddingBottom: 32, gap: 14,
@@ -523,9 +499,7 @@ const MobileDashboard = ({
                 <p style={{ fontSize: 13, color: C.soft, textAlign: "center", maxWidth: 220 }}>
                   Creá tu primera venta tocando el botón de acciones rápidas
                 </p>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  whileHover={{ scale: 1.02 }}
+                <button
                   onClick={() => onNuevaVenta?.()}
                   style={{
                     padding: "10px 24px", borderRadius: 12, fontWeight: 700, fontSize: 13,
@@ -536,8 +510,8 @@ const MobileDashboard = ({
                   }}
                 >
                   Nueva Venta
-                </motion.button>
-              </motion.div>
+                </button>
+              </div>
             )}
 
           </div>

@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 import '@nimbus-ds/styles/dist/index.css'
-import { HeroUIProvider } from "@heroui/react";
 import { TooltipProvider } from './components/ui/tooltip';
 import { AuthProvider } from './lib/AuthContext';
 import { ThemeProvider } from './lib/ThemeContext';
@@ -16,11 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <SubscriptionProvider>
           <ThemeProvider>
-            <HeroUIProvider>
-              <TooltipProvider>
+            <TooltipProvider>
                 <App />
               </TooltipProvider>
-            </HeroUIProvider>
           </ThemeProvider>
         </SubscriptionProvider>
       </AuthProvider>

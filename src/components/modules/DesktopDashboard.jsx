@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useMemo, useState, useEffect, useRef } from "react"
-import { AnimatePresence, motion } from "framer-motion"
 import {
   ShoppingCart, PackagePlus, Package, Users,
   TrendingUp, Clock, ChevronRight, Search, Bell,
@@ -100,19 +99,15 @@ const SearchBar = ({ clientes = [], pedidos = [], onViewAllClientes, onViewAllPe
       </div>
 
       {/* Dropdown */}
-      <AnimatePresence>
-        {show && (
-          <motion.div
-            initial={{ opacity: 0, y: -4, scale: .98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: .98 }}
-            transition={{ duration: .13 }}
+      {show && (
+          <div
             style={{
               position: "absolute", top: 38, left: 0, minWidth: 340, zIndex: 9999,
               background: "#1e2320", borderRadius: 10,
               border: "1px solid rgba(255,255,255,.1)",
               boxShadow: "0 20px 50px rgba(0,0,0,.5)", overflow: "hidden",
               fontFamily: "Inter, sans-serif",
+              animation: "db-drop-in .13s ease",
             }}
           >
             {total === 0 ? (
@@ -153,9 +148,8 @@ const SearchBar = ({ clientes = [], pedidos = [], onViewAllClientes, onViewAllPe
                 </div>
               </>
             )}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   )
 }
@@ -215,14 +209,13 @@ const MiniChart = ({ data }) => {
     <div>
       <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 40 }}>
         {data.map((v, i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ height: 0 }}
-            animate={{ height: `${Math.max((v / max) * 100, 5)}%` }}
-            transition={{ delay: i * 0.04, type: "spring", stiffness: 400, damping: 28 }}
             style={{
               flex: 1, borderRadius: "3px 3px 2px 2px", minHeight: 3,
+              height: `${Math.max((v / max) * 100, 5)}%`,
               background: i === data.length - 1 ? accent : "rgba(48,54,47,.2)",
+              animation: `db-bar-grow .4s ${i * 0.04}s ease both`,
             }}
           />
         ))}
@@ -357,6 +350,8 @@ const DesktopDashboard = ({
         .dd-scroll::-webkit-scrollbar-track { background: transparent }
         .dd-scroll::-webkit-scrollbar-thumb { background: rgba(48,54,47,.14); border-radius: 4px }
         @keyframes kpiIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes db-drop-in { from { opacity:0; transform:translateY(-4px) scale(.98) } to { opacity:1; transform:translateY(0) scale(1) } }
+        @keyframes db-bar-grow { from { transform:scaleY(0); transform-origin:bottom } to { transform:scaleY(1); transform-origin:bottom } }
       `}</style>
 
       {/* ══════ HEADER — idéntico al de Pedidos ══════ */}
