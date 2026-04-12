@@ -534,7 +534,7 @@ export default function FacturacionNimbus({
 
       {/* ── Modal Pago ── */}
       {mostrarPago && facturaSeleccionada && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.bg, width: "100%", maxWidth: 400, borderRadius: 12, padding: 24 }}>
             <h2 style={{ margin: "0 0 16px", fontSize: 18, color: C.textBlack }}>Registrar Cobro</h2>
             <div style={{ marginBottom: 16 }}>
@@ -580,7 +580,7 @@ export default function FacturacionNimbus({
 
       {/* ── Modal Detalle ── */}
       {detalleFactura && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.bg, width: "100%", maxWidth: 500, borderRadius: 12, padding: 24 }}>
             <h2 style={{ margin: "0 0 16px", fontSize: 18, color: C.textBlack }}>Detalle de Factura</h2>
             <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
@@ -625,7 +625,7 @@ export default function FacturacionNimbus({
 
       {/* ── Diálogo Global ── */}
       {dialogo.open && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.bg, width: "100%", maxWidth: 350, borderRadius: 12, padding: 24, textAlign: "center" }}>
             <h3 style={{ margin: "0 0 10px", fontSize: 16, color: dialogo.isDestructive ? C.dangerTxt : C.textBlack }}>{dialogo.title}</h3>
             <p style={{ margin: "0 0 20px", fontSize: 14, color: C.textMid }}>{dialogo.message}</p>

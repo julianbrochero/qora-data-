@@ -54,7 +54,9 @@ const AgregarVenta = ({
   const [metodoPago,     setMetodoPago]     = useState('efectivo')
   const [isProcessing,   setIsProcessing]   = useState(false)
   const [exito,          setExito]          = useState(null)
-  const [toastMsg,       setToastMsg]       = useState(null)
+  const [toastMsg,        setToastMsg]        = useState(null)
+  const [fechaEntregaPicker, setFechaEntregaPicker] = useState(false)
+  const [pickerViewDate,  setPickerViewDate]  = useState(() => new Date())
 
   const showToast = (msg, type = 'error') => {
     setToastMsg({ msg, type })
@@ -67,8 +69,10 @@ const AgregarVenta = ({
   const cliSelectRef    = useRef(null)
   const productoRef     = useRef(null)
   const busProductoRef  = useRef(null)
-  const guardarRef      = useRef(null)
-  const skipDropOnFocus = useRef(false)
+  const guardarRef        = useRef(null)
+  const skipDropOnFocus   = useRef(false)
+  const fechaEntregaRef   = useRef(null)
+  const totalRef          = useRef(0)
   const [dropCliPos,    setDropCliPos] = useState(null)
 
   const abrirDropCliente = () => {
@@ -107,8 +111,9 @@ const AgregarVenta = ({
 
   useEffect(() => {
     const fn = e => {
-      if (clienteRef.current  && !clienteRef.current.contains(e.target))  setDropCliente(false)
-      if (productoRef.current && !productoRef.current.contains(e.target)) setDropProducto(false)
+      if (clienteRef.current      && !clienteRef.current.contains(e.target))      setDropCliente(false)
+      if (productoRef.current     && !productoRef.current.contains(e.target))     setDropProducto(false)
+      if (fechaEntregaRef.current && !fechaEntregaRef.current.contains(e.target)) setFechaEntregaPicker(false)
     }
     document.addEventListener('mousedown', fn)
     return () => document.removeEventListener('mousedown', fn)
@@ -117,6 +122,7 @@ const AgregarVenta = ({
   /* ── cálculos ── */
   const subtotal      = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0)
   const total         = subtotal
+  totalRef.current    = total  // siempre actualizado, sin closures viejas
   const adelantoNum   = parseFloat(adelanto) || 0
   const saldo         = Math.max(0, total - adelantoNum)
   const gananciaTotal = carrito.reduce((s, i) => {
@@ -222,12 +228,13 @@ const AgregarVenta = ({
   }, [handleGuardar])
 
   useEffect(() => {
+    // Usar totalRef.current para evitar stale closure — se registra una sola vez
     let shiftDown = false; let otherKey = false
     const onDown = e => { if (e.key === 'Shift') { shiftDown = true; otherKey = false } else if (shiftDown) otherKey = true }
     const onUp   = e => {
       if (e.key === 'Shift') {
-        if (shiftDown && !otherKey && total > 0) {
-          setAdelanto(String(total))
+        if (shiftDown && !otherKey && totalRef.current > 0) {
+          setAdelanto(String(totalRef.current))
           setShiftFlash(true)
           setTimeout(() => setShiftFlash(false), 700)
         }
@@ -236,7 +243,7 @@ const AgregarVenta = ({
     }
     window.addEventListener('keydown', onDown); window.addEventListener('keyup', onUp)
     return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp) }
-  }, [total])
+  }, [])
 
   const eCfg = estadosCfg[estado] || estadosCfg.pendiente
 
@@ -581,9 +588,57 @@ const AgregarVenta = ({
                     <label className="av-lbl">Fecha</label>
                     <input type="date" className="av-inp av-date-inp gestify-date-input" value={fechaPedido} onChange={e => setFechaPedido(e.target.value)} />
                   </div>
-                  <div style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0, position: 'relative' }} ref={fechaEntregaRef}>
                     <label className="av-lbl">Entrega <span style={{ fontWeight: 400, color: '#9ca3af' }}>(opc.)</span></label>
-                    <input type="date" className="av-inp av-date-inp gestify-date-input" value={fechaEntrega} onChange={e => setFechaEntrega(e.target.value)} />
+                    <button type="button"
+                      onClick={() => { setPickerViewDate(fechaEntrega ? new Date(fechaEntrega + 'T12:00:00') : new Date()); setFechaEntregaPicker(v => !v) }}
+                      className={`av-date-btn${fechaEntrega ? ' has-val' : ''}`}>
+                      <Calendar size={12} strokeWidth={2} style={{ flexShrink: 0, opacity: .7 }} />
+                      <span style={{ flex: 1, textAlign: 'left', fontSize: 12, color: fechaEntrega ? '#1e2320' : '#9ca3af' }}>
+                        {fechaEntrega ? new Date(fechaEntrega + 'T12:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Sin fecha...'}
+                      </span>
+                      {fechaEntrega
+                        ? <button type="button" onClick={e => { e.stopPropagation(); setFechaEntrega(''); setFechaEntregaPicker(false) }} className="av-date-x">×</button>
+                        : <ChevronDown size={11} style={{ color: '#9ca3af', flexShrink: 0 }} />}
+                    </button>
+                    {fechaEntregaPicker && (
+                      <div className="av-dp-wrap">
+                        <div className="av-dp-header">
+                          <button type="button" onClick={() => setPickerViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))} className="av-dp-nav">‹</button>
+                          <span className="av-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pickerViewDate.getMonth()]} {pickerViewDate.getFullYear()}</span>
+                          <button type="button" onClick={() => setPickerViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))} className="av-dp-nav">›</button>
+                        </div>
+                        <div className="av-dp-grid">
+                          {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d => <div key={d} className="av-dp-lbl">{d}</div>)}
+                          {(() => {
+                            const yr = pickerViewDate.getFullYear(), mo = pickerViewDate.getMonth()
+                            const firstDay = new Date(yr, mo, 1).getDay()
+                            const daysInMo = new Date(yr, mo + 1, 0).getDate()
+                            const todayD = new Date()
+                            const cells = []
+                            for (let i = 0; i < firstDay; i++) cells.push(<div key={`e${i}`} />)
+                            for (let d = 1; d <= daysInMo; d++) {
+                              const ds = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                              const isSel = fechaEntrega === ds
+                              const isTod = todayD.getFullYear()===yr && todayD.getMonth()===mo && todayD.getDate()===d
+                              cells.push(
+                                <button key={d} type="button"
+                                  className={`av-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                                  onClick={() => { setFechaEntrega(ds); setFechaEntregaPicker(false) }}>
+                                  {d}
+                                </button>
+                              )
+                            }
+                            return cells
+                          })()}
+                        </div>
+                        {fechaEntrega && (
+                          <div className="av-dp-footer">
+                            <button type="button" onClick={() => { setFechaEntrega(''); setFechaEntregaPicker(false) }} className="av-dp-clear-btn">Limpiar fecha</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -759,12 +814,12 @@ const AgregarVenta = ({
         .av-panel::-webkit-scrollbar-thumb { background:rgba(51,65,57,.18); border-radius:3px; }
 
         /* ── Secciones del panel ── */
-        .av-sec { padding:12px 14px; }
+        .av-sec { padding:10px 12px; }
         .av-sec-pago { background:linear-gradient(160deg,#f4faf6 0%,#eef6f1 100%); border-top:1px solid #ddeee4; }
         .av-sec-row { display:flex; align-items:center; justify-content:space-between; }
         .av-sec-lbl { font-size:9px; font-weight:800; color:#8B8982; letter-spacing:.1em; text-transform:uppercase; }
         .av-divider { height:1px; background:#f0f4f2; margin:0; flex-shrink:0; }
-        .av-cta { padding:10px 14px 12px; flex-shrink:0; background:linear-gradient(160deg,#f4faf6 0%,#eef6f1 100%); }
+        .av-cta { padding:8px 12px 10px; flex-shrink:0; background:linear-gradient(160deg,#f4faf6 0%,#eef6f1 100%); }
 
         /* ── Cards izq ── */
         .av-card { background:#fff; border:1px solid #dde8e1; border-radius:12px; overflow:hidden; }
@@ -868,7 +923,7 @@ const AgregarVenta = ({
         /* ── Inputs generales ── */
         .av-inp { width:100%; height:32px; padding:0 10px; border:1px solid #dde8e1; border-radius:8px; font-size:12px; color:#1e2320; outline:none; box-sizing:border-box; background-color:#fff; font-family:'Inter',sans-serif; transition:border-color .12s; }
         .av-inp:focus { border-color:#334139; box-shadow:0 0 0 3px rgba(51,65,57,.07); }
-        .av-notes { height:38px; padding:6px 10px; resize:none; line-height:1.5; }
+        .av-notes { height:34px; padding:5px 10px; resize:none; line-height:1.5; }
 
         /* ── Resumen ── */
         .av-totales { display:flex; flex-direction:column; gap:5px; padding:9px 12px; background:#f8fdfb; border-radius:10px; border:1px solid #dde8e1; }
@@ -968,13 +1023,11 @@ const AgregarVenta = ({
           .av-btn-ghost { display:none; }
           .av-header-eyebrow { display:none; }
 
-          /* Fechas responsive - no overflow */
-          .av-dates-grid { min-width: 0; }
-          .av-dates-grid > div { min-width: 0; }
-          .av-date-inp { min-width: 0; box-sizing: border-box; width: 100%; }
-
-          /* Fechas apiladas */
-          .av-dates-grid { grid-template-columns:1fr !important; }
+          /* Fechas responsive */
+          .av-dates-grid { min-width:0; grid-template-columns:1fr !important; }
+          .av-dates-grid > div { min-width:0; }
+          .av-date-inp,.av-date-btn { min-width:0; box-sizing:border-box; width:100%; height:42px; font-size:14px; }
+          .av-dp-wrap { width:min(224px, calc(100vw - 24px)); }
 
           /* Tabla simplificada: solo Producto, Cantidad y Eliminar */
           .av-table th:nth-child(2),.av-table td:nth-child(2) { display:none; }
@@ -989,6 +1042,37 @@ const AgregarVenta = ({
           .av-sec { padding:14px 14px; }
           .av-cta { padding:12px 14px 16px; }
         }
+        /* ── Fecha entrega — trigger button ── */
+        .av-date-btn { width:100%; height:32px; display:flex; align-items:center; gap:7px; padding:0 9px; border:1px solid #dde8e1; border-radius:8px; background:#fff; cursor:pointer; font-family:'Inter',sans-serif; transition:border-color .12s,box-shadow .12s; }
+        .av-date-btn:hover { border-color:#bdd9c5; }
+        .av-date-btn.has-val { border-color:#4ADE80; box-shadow:0 0 0 2px rgba(74,222,128,.1); }
+        .av-date-x { width:16px; height:16px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:#9ca3af; font-size:14px; line-height:1; border-radius:3px; flex-shrink:0; padding:0; transition:all .1s; }
+        .av-date-x:hover { background:#fee2e2; color:#ef4444; }
+
+        /* ── Mini Calendar ── */
+        .av-dp-wrap { position:absolute; top:calc(100% + 4px); left:0; z-index:500; background:#fff; border:1px solid #d1ddd5; border-radius:11px; box-shadow:0 8px 28px rgba(31,77,46,.12),0 2px 8px rgba(0,0,0,.07); padding:8px; width:224px; }
+        .av-dp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .av-dp-nav { width:26px; height:26px; display:flex; align-items:center; justify-content:center; background:#f4f9f5; border:1px solid #dde8e1; border-radius:7px; cursor:pointer; font-size:15px; color:#334139; transition:all .1s; }
+        .av-dp-nav:hover { background:#e4f0e8; border-color:#bdd9c5; }
+        .av-dp-title { font-size:12px; font-weight:700; color:#1e2320; }
+        .av-dp-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .av-dp-lbl { text-align:center; font-size:9px; font-weight:700; color:#9ca3af; text-transform:uppercase; padding:2px 0 4px; }
+        .av-dp-day { width:100%; aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500; color:#374151; border:none; background:transparent; border-radius:6px; cursor:pointer; transition:all .1s; padding:0; font-family:'Inter',sans-serif; }
+        .av-dp-day:hover { background:#eaf2ec; color:#1e2320; }
+        .av-dp-day.tod { font-weight:800; color:#334139; }
+        .av-dp-day.tod::after { content:''; display:block; width:3px; height:3px; background:#4ADE80; border-radius:50%; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); }
+        .av-dp-day.tod { position:relative; }
+        .av-dp-day.sel { background:#334139 !important; color:#fff !important; font-weight:700; }
+        .av-dp-footer { margin-top:6px; padding-top:6px; border-top:1px solid #f0f4f2; display:flex; justify-content:center; }
+        .av-dp-clear-btn { font-size:11px; font-weight:600; color:#9ca3af; background:none; border:none; cursor:pointer; transition:color .1s; font-family:'Inter',sans-serif; }
+        .av-dp-clear-btn:hover { color:#ef4444; }
+
+        /* ── Select custom style ── */
+        select.av-inp { appearance:none; -webkit-appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 9px center; background-size:12px; padding-right:28px; }
+
+        /* ── Fecha pedido styled ── */
+        .av-date-inp { cursor:pointer; color-scheme:light; }
+        .av-date-inp::-webkit-calendar-picker-indicator { cursor:pointer; opacity:.5; filter:invert(.2) sepia(1) saturate(4) hue-rotate(100deg); }
       `}</style>
     </div>
   )

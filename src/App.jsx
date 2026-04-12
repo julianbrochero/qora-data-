@@ -7,7 +7,6 @@ import { useFacturacion } from './hooks/useFacturacion';
 import { useAuth } from './lib/AuthContext';
 import { useSubscriptionContext } from './lib/SubscriptionContext';
 import AppSidebar from './components/layout/AppSidebar';
-import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
 import Modal from './components/layout/Modal';
 import Dashboard from './components/modules/Dashboard';
 import Clientes from './components/modules/Clientes';
@@ -25,14 +24,22 @@ import AuthCallback from './components/auth/AuthCallback';
 import SubscriptionGate from './components/subscription/SubscriptionGate';
 import Landing from './components/Landing';
 
+/* ── Pantalla de carga con estética del sistema ── */
+const AppLoader = ({ text = "Verificando acceso..." }) => (
+  <div style={{ minHeight: "100vh", background: "#f8f9fb", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div style={{ textAlign: "center" }}>
+      <img src="/favicon.png" alt="Gestify" style={{ height: 52, objectFit: "contain", marginBottom: 24, opacity: 0.9 }} />
+      <div style={{ width: 28, height: 28, border: "3px solid #e5e7eb", borderTopColor: "#334139", borderRadius: "50%", animation: "app-spin .8s linear infinite", margin: "0 auto 16px" }} />
+      <p style={{ fontSize: 13, color: "#9ca3af", fontWeight: 500, margin: 0 }}>{text}</p>
+    </div>
+    <style>{`@keyframes app-spin { to { transform: rotate(360deg) } }`}</style>
+  </div>
+)
+
 // Ruta raíz: si ya tiene sesión va al sistema, si no muestra la landing
 const RootRoute = () => {
   const { user, loading } = useAuth();
-  if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
-    </div>
-  );
+  if (loading) return <AppLoader />;
   return user ? <Navigate to="/dashboard" replace /> : <Landing />;
 };
 
@@ -40,16 +47,7 @@ const RootRoute = () => {
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mb-4"></div>
-          <div className="text-lg text-gray-700">Verificando autenticación...</div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <AppLoader />;
 
   return user ? children : <Navigate to="/login" />;
 };
@@ -438,8 +436,7 @@ const SistemaFacturacion = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full" style={{ background: "#f8f9fb" }}>
+    <div style={{ minHeight: "100vh", background: "#f8f9fb" }}>
         <AppSidebar
           activeModule={activeModule}
           setActiveModule={(mod) => { setActiveModule(mod); setSidebarOpen(false) }}
@@ -448,14 +445,12 @@ const SistemaFacturacion = () => {
           onMobileClose={() => setSidebarOpen(false)}
         />
 
-        {/* Contenido principal */}
-        <SidebarInset className="flex-1 min-w-0" style={{ background: "#f8f9fb" }}>
-          <div style={{ width: "100%", minHeight: "100vh", background: "#f8f9fb" }}>
-            <SubscriptionGate>
-              {renderActiveModule()}
-            </SubscriptionGate>
-          </div>
-        </SidebarInset>
+        {/* Contenido principal — empujado a la derecha del sidebar fijo en desktop */}
+        <div className="md:pl-[220px]" style={{ minHeight: "100vh", background: "#f8f9fb" }}>
+          <SubscriptionGate>
+            {renderActiveModule()}
+          </SubscriptionGate>
+        </div>
 
         {/* ✅ UNIFICADO: Solo un Modal con todas las props necesarias */}
         <Modal
@@ -518,8 +513,7 @@ const SistemaFacturacion = () => {
           eliminarCategoria,
         }}
       />
-      </div>
-    </SidebarProvider>
+    </div>
   );
 };
 

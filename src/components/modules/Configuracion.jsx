@@ -59,13 +59,14 @@ const SectionTitle = ({ icon: Icon, title, desc }) => (
     </div>
 )
 
-const Inp = ({ value, onChange, placeholder, disabled }) => (
+const Inp = ({ value, onChange, placeholder, disabled, onKeyDown }) => (
     <input
         type="text"
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
+        onKeyDown={onKeyDown}
         onFocus={e => !disabled && (e.target.style.borderColor = C.primary)}
         onBlur={e => !disabled && (e.target.style.borderColor = C.border)}
         style={{ 
@@ -209,33 +210,55 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                 </div>
             </div>
 
-            {/* ── Settings Grid Compacto ── */}
+            {/* ── Settings Grid — todas las cards mismo alto ── */}
             <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
                 <div className="config-grid">
 
-                    {/* COLUMNA 1 */}
-                    <div className="config-col">
-                        {/* SUSCRIPCION */}
-                        <div className="tn-card">
-                            <SectionTitle icon={CreditCard} title="Suscripción" desc="Detalles de tu plan actual" />
-                            <div style={{ background: '#f9fafb', borderRadius: 8, border: `1px solid ${C.border}`, padding: '12px', marginBottom: 14 }}>
+                    {/* EMPRESA */}
+                    <div className="tn-card">
+                        <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usarán en presupuestos y comprobantes" />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Nombre comercial <span style={{color: C.dangerTxt}}>*</span></label>
+                                <Inp value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder="Ej: Mi Negocio" />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>CUIT / DNI</label>
+                                <Inp value={cuit} onChange={e => setCuit(e.target.value)} placeholder="Ej: 20-33444555-6" />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Dirección</label>
+                                <Inp value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Av. San Martín 123" />
+                            </div>
+                            {saveError && <p style={{ fontSize: 11, color: C.dangerTxt, margin: 0 }}>{saveError}</p>}
+                            <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                                <TnButton label="Guardar datos" icon={Save} onClick={guardarEmpresa} disabled={savingEmpresa} ok={savedOk} okLabel="Guardado" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SUSCRIPCION */}
+                    <div className="tn-card">
+                        <SectionTitle icon={CreditCard} title="Suscripción" desc="Detalles de tu plan actual" />
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ background: '#f9fafb', borderRadius: 8, border: `1px solid ${C.border}`, padding: '12px', marginBottom: 14, flex: 1 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: planActivo ? C.successTxt : planTrial ? C.warnBord : C.dangerTxt }} />
                                         <span style={{ fontSize: 12, fontWeight: 700, color: C.textDark }}>
-                                            {planActivo ? 'Pro' : planTrial ? 'Prueba Gratuita' : 'Plan Vencido'}
+                                            {planActivo ? 'Plan PRO activo' : planTrial ? 'Prueba Gratuita' : 'Plan Vencido'}
                                         </span>
                                     </div>
-                                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textMid }}>$ 14.999 / mes</span>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: C.textMid }}>$14.999/mes</span>
                                 </div>
-                                <p style={{ fontSize: 11, color: C.textMid, lineHeight: 1.4, margin: '0 0 10px 0' }}>
-                                    {planActivo ? `Tu cuota se renueva en ${daysRemaining} días.` : planTrial ? `Te quedan ${daysRemaining} días gratis.` : `Finalizó el período. Aboná para reactivar.`}
+                                <p style={{ fontSize: 11, color: C.textMid, lineHeight: 1.5, margin: '0 0 10px 0' }}>
+                                    {planActivo ? `Tu cuota se renueva en ${daysRemaining} días.` : planTrial ? `Te quedan ${daysRemaining} días de prueba gratuita.` : `Finalizó el período. Aboná para reactivar.`}
                                 </p>
                                 {planActivo && (
                                     <>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                             <span style={{ fontSize: 10, color: C.textMid }}>Período actual</span>
-                                            <span style={{ fontSize: 10, color: C.textMid }}>{daysRemaining} d. restantes</span>
+                                            <span style={{ fontSize: 10, color: C.textMid }}>{daysRemaining} días restantes</span>
                                         </div>
                                         <div style={{ height: 4, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
                                             <div style={{ height: '100%', borderRadius: 10, background: progreso > 80 ? C.dangerTxt : progreso > 50 ? C.warnBord : C.successTxt, width: `${progreso}%` }} />
@@ -247,77 +270,58 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 <TnButton label="Suscribirme Ahora" icon={Zap} onClick={handleSubscribe} disabled={loadingSub} />
                             )}
                         </div>
+                    </div>
 
-                        {/* MI CUENTA */}
-                        <div className="tn-card">
-                            <SectionTitle icon={User} title="Cuenta" desc="Datos de tu usuario administrador" />
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.primarySurf, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: C.primary }}>
+                    {/* CUENTA */}
+                    <div className="tn-card">
+                        <SectionTitle icon={User} title="Cuenta" desc="Datos de tu usuario administrador" />
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: '12px', background: '#f9fafb', borderRadius: 8, border: `1px solid ${C.border}` }}>
+                                <div style={{ width: 40, height: 40, borderRadius: '50%', background: C.primarySurf, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: C.primary, flexShrink: 0 }}>
                                     {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
                                 </div>
                                 <div style={{ minWidth: 0 }}>
-                                    <p style={{ fontSize: 13, fontWeight: 600, color: C.textDark, margin: 0 }}>{user?.user_metadata?.full_name || 'Administrador'}</p>
-                                    <p style={{ fontSize: 11, color: C.textMid, margin: 0 }}>{user?.email}</p>
+                                    <p style={{ fontSize: 13, fontWeight: 600, color: C.textDark, margin: '0 0 2px' }}>{user?.user_metadata?.full_name || 'Administrador'}</p>
+                                    <p style={{ fontSize: 11, color: C.textMid, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</p>
                                 </div>
                             </div>
-                            <TnButton secondary danger label="Cerrar sesión" icon={LogOut} onClick={signOut} />
-                        </div>
-                    </div>
-
-                    {/* COLUMNA 2 */}
-                    <div className="config-col">
-                        {/* EMPRESA */}
-                        <div className="tn-card">
-                            <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usarán en presupuestos y comprobantes" />
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                <div>
-                                    <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Nombre comercial <span style={{color: C.dangerTxt}}>*</span></label>
-                                    <Inp value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder="Ej: Mi Negocio" />
-                                </div>
-                                <div>
-                                    <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>CUIT / DNI</label>
-                                    <Inp value={cuit} onChange={e => setCuit(e.target.value)} placeholder="Ej: 20-33444555-6" />
-                                </div>
-                                <div>
-                                    <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Dirección</label>
-                                    <Inp value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Av. San Martín 123" />
-                                </div>
-                                {saveError && <p style={{ fontSize: 11, color: C.dangerTxt, margin: '0 0 -4px 0' }}>{saveError}</p>}
-                                <div style={{ paddingTop: 4 }}>
-                                    <TnButton label="Guardar datos" icon={Save} onClick={guardarEmpresa} disabled={savingEmpresa} ok={savedOk} okLabel="Guardado" />
-                                </div>
+                            <div style={{ marginTop: 'auto' }}>
+                                <TnButton secondary danger label="Cerrar sesión" icon={LogOut} onClick={signOut} />
                             </div>
                         </div>
                     </div>
 
-                    {/* COLUMNA 3 */}
-                    <div className="config-col">
-                        {/* INVENTARIO */}
-                        <div className="tn-card">
-                            <SectionTitle icon={AlertTriangle} title="Stock" desc="Avisos de inventario escaso" />
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
+                    {/* STOCK */}
+                    <div className="tn-card">
+                        <SectionTitle icon={AlertTriangle} title="Alertas de Stock" desc="Avisos de inventario escaso" />
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottom: `1px solid ${C.border}`, marginBottom: 12 }}>
                                 <div>
                                     <p style={{ margin: '0 0 2px', fontSize: 12, fontWeight: 600, color: C.textDark }}>Activar alertas</p>
-                                    <p style={{ margin: 0, fontSize: 11, color: C.textMid }}>Rojo si hay poco stock</p>
+                                    <p style={{ margin: 0, fontSize: 11, color: C.textMid }}>Marca en rojo el stock bajo</p>
                                 </div>
                                 <ToggleSwitch enabled={bajoStockActivo} onChange={() => setBajoStockActivo(v => !v)} />
                             </div>
-                            <div style={{ paddingTop: 12, opacity: bajoStockActivo ? 1 : 0.4, transition: '0.2s', marginBottom: 14 }}>
+                            <div style={{ opacity: bajoStockActivo ? 1 : 0.4, transition: '0.2s', marginBottom: 14, flex: 1 }}>
                                 <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Unidades mínimas</label>
                                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                     <Inp value={bajoStockUmbral} onChange={e => setBajoStockUmbral(parseInt(e.target.value)||0)} disabled={!bajoStockActivo} />
-                                    <span style={{ fontSize: 11, color: C.textMid, whiteSpace: 'nowrap' }}>unid. / límite</span>
+                                    <span style={{ fontSize: 11, color: C.textMid, whiteSpace: 'nowrap' }}>unid.</span>
                                 </div>
                             </div>
-                            <TnButton label="Guardar" icon={Save} onClick={guardarStock} ok={stockSavedOk} okLabel="Guardado" />
+                            <div style={{ marginTop: 'auto' }}>
+                                <TnButton label="Guardar" icon={Save} onClick={guardarStock} ok={stockSavedOk} okLabel="Guardado" />
+                            </div>
                         </div>
+                    </div>
 
-                        {/* CANALES DE VENTA */}
-                        <div className="tn-card">
-                            <SectionTitle icon={Tag} title="Canales de Venta" desc="Etiquetas predefinidas" />
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                    {/* CANALES DE VENTA */}
+                    <div className="tn-card">
+                        <SectionTitle icon={Tag} title="Canales de Venta" desc="Etiquetas para tus ventas" />
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12, minHeight: 32 }}>
                                 {canales.length === 0 ? (
-                                    <p style={{ fontSize: 11, color: C.textMid, margin: 0 }}>No hay canales.</p>
+                                    <p style={{ fontSize: 11, color: C.textMid, margin: 0 }}>Sin canales aún. Agregá el primero.</p>
                                 ) : (
                                     canales.map((canal, idx) => (
                                         <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 4, background: '#f3f4f6', border: `1px solid ${C.border}`, fontSize: 11, fontWeight: 500, color: C.textDark }}>
@@ -331,20 +335,25 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                             </div>
                             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                                 <div style={{ flex: 1 }}>
-                                    <Inp value={nuevoCanal} onChange={e => setNuevoCanal(e.target.value)} placeholder="Ej: Instagram..." />
+                                    <Inp value={nuevoCanal} onChange={e => setNuevoCanal(e.target.value)} placeholder="Ej: Instagram..."
+                                        onKeyDown={e => e.key === 'Enter' && agregarCanal()}
+                                    />
                                 </div>
                                 <button onClick={agregarCanal} disabled={!nuevoCanal.trim()}
                                     style={{ height: 32, width: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, background: nuevoCanal.trim() ? C.primary : '#f3f4f6', border: 'none', cursor: nuevoCanal.trim() ? 'pointer' : 'default', color: nuevoCanal.trim() ? '#fff' : C.borderMd, transition: 'all .1s', flexShrink: 0 }}>
                                     <Plus size={14} strokeWidth={2.5} />
                                 </button>
                             </div>
-                            <TnButton label="Guardar" icon={Save} onClick={guardarCanales} disabled={savingCanales} ok={canalesSavedOk} okLabel="Guardado" />
+                            <div style={{ marginTop: 'auto' }}>
+                                <TnButton label="Guardar" icon={Save} onClick={guardarCanales} disabled={savingCanales} ok={canalesSavedOk} okLabel="Guardado" />
+                            </div>
                         </div>
                     </div>
+
                 </div>
 
                 <div style={{ textAlign: 'center', paddingTop: 20 }}>
-                    <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: C.textLight }}>Gestify V2.0.3 (Compact Nimbus UI)</p>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: C.textLight }}>Gestify V2.0.3</p>
                 </div>
             </div>
 
@@ -353,24 +362,20 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
             display: grid;
             grid-template-columns: 1fr;
             gap: 16px;
-            align-items: start;
         }
-        @media (min-width: 768px) {
+        @media (min-width: 640px) {
             .config-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (min-width: 1024px) {
             .config-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
         }
-        .config-col {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
         .tn-card {
             background: #fff;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px solid ${C.border};
             padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
       `}</style>
         </div>

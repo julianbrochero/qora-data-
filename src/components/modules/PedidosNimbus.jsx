@@ -2,7 +2,7 @@
  * PedidosNimbus.jsx — módulo Ventas con estética TiendaNube
  * Misma interfaz de props que Pedidos.jsx
  */
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import {
   SearchIcon, PlusIcon, EditIcon, TrashIcon,
@@ -71,6 +71,10 @@ const RESPONSIVE = `
   @media (max-width: 767px) {
     .pn-show-mobile { display: flex !important; }
     .pn-hide-mobile { display: none !important; }
+  }
+  /* Asegura que el fondo oscurecido (overlay) cubra el sidebar y otros elementos fijos */
+  [data-radix-portal], [data-slot="dialog-portal"] {
+    z-index: 10000 !important;
   }
 `
 
@@ -252,6 +256,91 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
         </div>
       </td>
     </tr>
+  )
+}
+
+/* ─── Card mobile por venta ─── */
+const MobileCard = ({ p, onVer, onEditar, onEliminar }) => {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const estCfg  = ESTADOS[p.estado] || ESTADOS.pendiente
+  const pagoCfg = getEstadoPago(p)
+  const puedeEditar = p.estado !== "cancelado"
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setMenuOpen(false) }
+    document.addEventListener("mousedown", h)
+    return () => document.removeEventListener("mousedown", h)
+  }, [])
+
+  return (
+    <div onClick={() => onVer(p)} style={{
+      padding: "14px 16px", borderBottom: `1px solid ${C.border}`,
+      background: C.bg, cursor: "pointer", position: "relative",
+    }}>
+      {/* Fila superior: cliente + total */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.textBlack, marginBottom: 2 }}>
+            {p.cliente_nombre || "Sin nombre"}
+          </div>
+          <div style={{ fontSize: 11, color: C.textMid }}>
+            #{p.codigo || p.id?.toString().slice(-4)} · {fFecha(p.fecha_pedido || p.created_at)}
+          </div>
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.textBlack, flexShrink: 0, marginLeft: 12 }}>
+          {fMonto(p.total)}
+        </div>
+      </div>
+      {/* Fila inferior: badges + acciones */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }} onClick={e => e.stopPropagation()}>
+        <Badge {...estCfg} />
+        <Badge {...pagoCfg} />
+        <div ref={ref} style={{ marginLeft: "auto", position: "relative" }}>
+          <button onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
+            style={{
+              width: 30, height: 30, borderRadius: 6, border: `1px solid ${C.border}`,
+              background: menuOpen ? "#f3f4f6" : C.bg, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+            <MoreHorizontal size={15} color={C.textMid} strokeWidth={1.8}/>
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: "absolute", bottom: "calc(100% + 4px)", right: 0,
+              width: 160, background: C.bg, border: `1px solid ${C.border}`,
+              borderRadius: 8, boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
+              zIndex: 999, padding: "4px 0", overflow: "hidden",
+            }}>
+              <button onClick={() => { setMenuOpen(false); onVer(p) }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+                onMouseLeave={e => e.currentTarget.style.background = "none"}
+              >
+                <Eye size={13} color={C.textMid}/> Ver detalle
+              </button>
+              {puedeEditar && (
+                <button onClick={() => { setMenuOpen(false); onEditar(p) }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+                  onMouseLeave={e => e.currentTarget.style.background = "none"}
+                >
+                  <Edit size={13} color={C.textMid}/> Editar
+                </button>
+              )}
+              <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
+              <button onClick={() => { setMenuOpen(false); onEliminar(p.id) }}
+                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", fontSize: 13, color: "#DC2626", cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"}
+                onMouseLeave={e => e.currentTarget.style.background = "none"}
+              >
+                <Trash2 size={13} color="#DC2626"/> Eliminar
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -478,32 +567,44 @@ export default function PedidosNimbus({
               </Btn>
             </div>
           ) : (
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
-                    {["CLIENTE","FECHA","ESTADO","PAGO","TOTAL","ACCIONES"].map(h=>(
-                      <th key={h} style={{
-                        padding:"10px 20px", textAlign:"left",
-                        fontSize:11, fontWeight:600, color:C.textMid,
-                        letterSpacing:"0.06em", fontFamily:"'Inter',sans-serif",
-                        whiteSpace:"nowrap",
-                      }}>{h}</th>
+            <>
+              {/* Cards mobile */}
+              <div className="pn-show-mobile" style={{ flexDirection:"column" }}>
+                {pageItems.map(p=>(
+                  <MobileCard key={p.id} p={p}
+                    onVer={handleVer} onEditar={handleEditar} onEliminar={handleEliminar}
+                  />
+                ))}
+              </div>
+
+              {/* Tabla desktop */}
+              <div className="pn-hide-mobile" style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
+                      {["CLIENTE","FECHA","ESTADO","PAGO","TOTAL","ACCIONES"].map(h=>(
+                        <th key={h} style={{
+                          padding:"10px 20px", textAlign:"left",
+                          fontSize:11, fontWeight:600, color:C.textMid,
+                          letterSpacing:"0.06em", fontFamily:"'Inter',sans-serif",
+                          whiteSpace:"nowrap",
+                        }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageItems.map(p=>(
+                      <Row key={p.id} p={p}
+                        onVer={handleVer} onEditar={handleEditar}
+                        onEliminar={handleEliminar}
+                        menuAbierto={menuAbierto} setMenu={setMenu}
+                        menuPos={menuPos} setMenuPos={setMenuPos}
+                      />
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageItems.map(p=>(
-                    <Row key={p.id} p={p}
-                      onVer={handleVer} onEditar={handleEditar}
-                      onEliminar={handleEliminar}
-                      menuAbierto={menuAbierto} setMenu={setMenu}
-                      menuPos={menuPos} setMenuPos={setMenuPos}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
 
           {/* Paginación */}

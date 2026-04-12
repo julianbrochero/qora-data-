@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
 import {
@@ -802,7 +802,7 @@ const Pedidos = ({
 
       {/* ═══════════ DIÁLOGO ═══════════ */}
       {dialogo.open && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(20,25,22,.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(20,25,22,.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, padding: 16 }}>
           <div style={{ width: '100%', maxWidth: 360, borderRadius: 14, overflow: 'hidden', border: `1px solid ${border}`, background: surface, boxShadow: '0 16px 48px rgba(0,0,0,.35)', animation: 'kpiIn .2s ease' }}>
             {/* header */}
             <div style={{ padding: '12px 14px', borderBottom: `1px solid ${border}`, background: surface2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -941,4 +941,3 @@ const PageBtn = ({ children, onClick, disabled, D, border, surface, ct2 }) => {
 }
 
 export default Pedidos
-

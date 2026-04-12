@@ -168,13 +168,21 @@ export default function AgregarVentaNimbus({
   const [toastMsg,           setToastMsg]          = useState(null)
   const [fechaEntregaPicker, setFechaEntregaPicker] = useState(false)
   const [pickerViewDate,     setPickerViewDate]     = useState(() => new Date())
+  const [fechaPedidoPicker,  setFechaPedidoPicker]  = useState(false)
+  const [pedidoViewDate,     setPedidoViewDate]     = useState(() => new Date())
 
-  const busProductoRef  = useRef(null)
-  const dropProdRef     = useRef(null)
-  const cliRef          = useRef(null)
-  const guardarRef      = useRef(null)
-  const fechaEntregaRef = useRef(null)
-  const totalRef        = useRef(0)
+  const busProductoRef    = useRef(null)
+  const dropProdRef       = useRef(null)
+  const cliRef            = useRef(null)
+  const guardarRef        = useRef(null)
+  const fechaEntregaRef   = useRef(null)
+  const fechaPedidoRef    = useRef(null)
+  const totalRef          = useRef(0)
+  // Auto-selección de cliente/producto recién creado
+  const prevClientesIds   = useRef(new Set(clientes.map(c => c.id)))
+  const prevProductosIds  = useRef(new Set(productos.map(p => p.id)))
+  const waitingNewCliente = useRef(false)
+  const waitingNewProd    = useRef(false)
   const [prodIdx,       setProdIdx]      = useState(-1)
 
   /* ── auto-focus al montar ── */
@@ -197,6 +205,26 @@ export default function AgregarVentaNimbus({
     if(pedidoAEditar.monto_abonado) setAdelanto(String(pedidoAEditar.monto_abonado))
     if(pedidoAEditar.canal_venta) setCanalVenta(pedidoAEditar.canal_venta)
   },[pedidoAEditar?.id])
+
+  /* ── auto-selección cliente nuevo ── */
+  useEffect(() => {
+    if (waitingNewCliente.current) {
+      const nuevo = clientes.find(c => !prevClientesIds.current.has(c.id))
+      if (nuevo) { selCliente(nuevo); waitingNewCliente.current = false }
+    }
+    prevClientesIds.current = new Set(clientes.map(c => c.id))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientes])
+
+  /* ── auto-agregar producto nuevo ── */
+  useEffect(() => {
+    if (waitingNewProd.current) {
+      const nuevo = productos.find(p => !prevProductosIds.current.has(p.id))
+      if (nuevo) { agregarProd(nuevo); waitingNewProd.current = false }
+    }
+    prevProductosIds.current = new Set(productos.map(p => p.id))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productos])
 
   /* ── cálculos ── */
   const total       = carrito.reduce((s,i)=>s+i.precio*i.cantidad,0)
@@ -307,6 +335,7 @@ export default function AgregarVentaNimbus({
       if(cliRef.current && !cliRef.current.contains(e.target)) setDropCliente(false)
       if(busProductoRef.current && !busProductoRef.current.closest?.('.pv-prod-wrap')?.contains(e.target)) setDropProducto(false)
       if(fechaEntregaRef.current && !fechaEntregaRef.current.contains(e.target)) setFechaEntregaPicker(false)
+      if(fechaPedidoRef.current && !fechaPedidoRef.current.contains(e.target)) setFechaPedidoPicker(false)
     }
     document.addEventListener('mousedown',h)
     return ()=>document.removeEventListener('mousedown',h)
@@ -371,7 +400,7 @@ export default function AgregarVentaNimbus({
       )}
 
       {/* ── Header ── */}
-      <div style={{ background:C.bg, borderBottom:`1px solid ${C.border}` }}>
+      <div style={{ background:C.bg }}>
         {/* Mobile */}
         <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 16px' }} className="pv-mobile">
           <button onClick={onOpenMobileSidebar} style={{background:'none',border:'none',cursor:'pointer',display:'flex'}}><MenuIcon size={20} color={C.textBlack}/></button>
@@ -467,10 +496,57 @@ export default function AgregarVentaNimbus({
               </div>
             </div>
 
-            {/* Fecha pedido */}
-            <div>
+            {/* Fecha pedido — mismo picker que fecha entrega */}
+            <div ref={fechaPedidoRef} style={{position:'relative'}}>
               <Label>Fecha del pedido</Label>
-              <InputField type="date" value={fechaPedido} onChange={e=>setFechaPedido(e.target.value)} className="pv-date" style={{cursor:'pointer',colorScheme:'light'}}/>
+              <button type="button"
+                onClick={()=>{ setPedidoViewDate(new Date(fechaPedido+'T12:00:00')); setFechaPedidoPicker(v=>!v) }}
+                style={{
+                  width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
+                  fontSize:12,border:`1.5px solid ${C.borderFocus}`,borderRadius:7,
+                  background:C.bg,color:C.textDark,
+                  fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
+                  transition:'border-color .12s',
+                }}>
+                <Calendar size={13} color={C.primary} style={{flexShrink:0}}/>
+                <span style={{flex:1,textAlign:'left'}}>
+                  {new Date(fechaPedido+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
+                </span>
+                <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>
+              </button>
+              {fechaPedidoPicker && (
+                <div className="pv-dp-wrap">
+                  <div className="pv-dp-header">
+                    <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
+                    <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pedidoViewDate.getMonth()]} {pedidoViewDate.getFullYear()}</span>
+                    <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
+                  </div>
+                  <div className="pv-dp-grid">
+                    {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
+                    {(()=>{
+                      const yr=pedidoViewDate.getFullYear(), mo=pedidoViewDate.getMonth()
+                      const firstDay=new Date(yr,mo,1).getDay()
+                      const daysInMo=new Date(yr,mo+1,0).getDate()
+                      const todayD=new Date()
+                      const cells=[]
+                      for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
+                      for(let d=1;d<=daysInMo;d++){
+                        const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                        const isSel=fechaPedido===ds
+                        const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
+                        cells.push(
+                          <button key={d} type="button"
+                            className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                            onClick={()=>{setFechaPedido(ds);setFechaPedidoPicker(false)}}>
+                            {d}
+                          </button>
+                        )
+                      }
+                      return cells
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Fecha entrega — picker personalizado */}
@@ -601,14 +677,14 @@ export default function AgregarVentaNimbus({
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
               <h2 style={{margin:0,fontSize:13,fontWeight:700,color:C.textBlack}}>Productos</h2>
               <div style={{display:'flex',gap:5}}>
-                <button title="Nuevo cliente" onClick={()=>openModal?.('nuevo-cliente')}
+                <button title="Nuevo cliente" onClick={()=>{ waitingNewCliente.current=true; openModal?.('nuevo-cliente') }}
                   style={{display:'flex',alignItems:'center',gap:5,height:28,padding:'0 10px',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer',border:`1.5px solid ${C.border}`,background:C.bg,color:C.textMid,transition:'all .12s'}}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary}}
                   onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textMid}}
                 >
                   <UserPlus size={13}/> Cliente
                 </button>
-                <button title="Nuevo producto" onClick={()=>openModal?.('nuevo-producto')}
+                <button title="Nuevo producto" onClick={()=>{ waitingNewProd.current=true; openModal?.('nuevo-producto') }}
                   style={{display:'flex',alignItems:'center',gap:5,height:28,padding:'0 10px',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer',border:`1.5px solid ${C.border}`,background:C.bg,color:C.textMid,transition:'all .12s'}}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary}}
                   onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textMid}}

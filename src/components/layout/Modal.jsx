@@ -410,7 +410,7 @@ const Modal = ({
   };
 
   return (
-    <div onClick={onClose} className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 ${(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
+    <div onClick={onClose} className={`fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] ${(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'p-2 sm:p-4' : 'p-6 sm:p-10'}`}>
       <div onClick={e => e.stopPropagation()} className={`bg-white text-gray-900 rounded-xl shadow-2xl ${getModalWidth()} w-full ${(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'max-h-[98vh]' : 'max-h-[95vh]'} overflow-y-auto`}>
         <div className={(modalType === 'ver-pedido' || modalType === 'detalle-pedido') ? 'p-3' : 'p-4'}>
           {/* Contenido del modal */}

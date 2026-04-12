@@ -4,10 +4,11 @@ import TrialBanner from './TrialBanner'
 import WelcomeTrialModal from './WelcomeTrialModal'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../lib/AuthContext'
-import { AlertTriangle, AlertCircle, Crown, Shield, Copy, CheckCircle, MessageCircle, Lock, Mail, CreditCard, Key, LogOut } from 'lucide-react'
+import { Lock, AlertTriangle, CreditCard, Mail, LogOut } from 'lucide-react'
 
 const SUPPORT_EMAIL = 'brocherojulian72@gmail.com'
 
+/* ── Modal bloqueante: cuenta suspendida manualmente ── */
 const SuspendedBlockingModal = ({ email }) => {
     const handleEmail = () => {
         const subject = encodeURIComponent('Solicitud de reactivación - Gestify PRO')
@@ -19,69 +20,151 @@ const SuspendedBlockingModal = ({ email }) => {
         <div style={{
             position: 'fixed', inset: 0, zIndex: 99999,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(12px)',
+            background: 'rgba(15,20,15,0.6)', backdropFilter: 'blur(8px)',
             fontFamily: "'Inter', -apple-system, sans-serif",
             padding: 20,
         }}>
+            <style>{`@keyframes sg-up { from { transform: translateY(20px) scale(.97); opacity: 0 } to { transform: none; opacity: 1 } }`}</style>
             <div style={{
-                width: '100%', maxWidth: 460,
-                background: '#fff', borderRadius: 24,
-                boxShadow: '0 32px 100px rgba(0,0,0,.35)',
+                width: '100%', maxWidth: 420,
+                background: '#fff', borderRadius: 20,
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
                 overflow: 'hidden',
-                maxHeight: '90vh', overflowY: 'auto',
-                animation: 'sbmSlideUp .3s ease',
+                animation: 'sg-up .28s cubic-bezier(.22,.97,.56,1)',
             }}>
-                <div style={{
-                    background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%)',
-                    padding: '28px 28px 22px',
-                    textAlign: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}>
-                    <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,.05)' }} />
-                    <div style={{ position: 'absolute', bottom: -20, left: -20, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,.03)' }} />
-                    <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', border: '2px solid rgba(255,255,255,.15)' }}>
-                        <Lock size={26} color="#fca5a5" />
+                {/* Header */}
+                <div style={{ padding: '32px 32px 24px', textAlign: 'center', borderBottom: '1px solid #f3f4f6' }}>
+                    <div style={{
+                        width: 52, height: 52, borderRadius: 14,
+                        background: '#fef2f2', border: '1px solid #fecaca',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        margin: '0 auto 16px',
+                    }}>
+                        <Lock size={22} color="#dc2626" strokeWidth={1.8} />
                     </div>
-                    <h1 style={{ fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-.03em', margin: '0 0 6px' }}>Cuenta suspendida</h1>
-                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', margin: 0, lineHeight: 1.5 }}>Tu acceso fue bloqueado por falta de pago.</p>
+                    <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+                        Cuenta suspendida
+                    </h2>
+                    <p style={{ fontSize: 13, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
+                        Tu acceso fue bloqueado. Comunicate con soporte para regularizar tu situación.
+                    </p>
                 </div>
 
-                <div style={{ padding: 'clamp(16px, 4vw, 22px) clamp(16px, 5vw, 28px) clamp(20px, 5vw, 28px)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                        <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.5, marginBottom: 18 }}>
-                            Por favor comunicate con soporte para regularizar tu situación y volver a disfrutar de Gestify sin límites.
-                        </p>
-                        <button onClick={handleEmail} style={{ width: '100%', height: 42, borderRadius: 10, background: 'transparent', color: '#374151', border: '1.5px solid #D1D5DB', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'border-color .13s, background .13s', marginBottom: 14 }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#334139'; e.currentTarget.style.background = 'rgba(51,65,57,.04)' }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.background = 'transparent' }}>
-                            <Mail size={14} /> Contactar soporte por email
-                        </button>
-                    </div>
+                {/* Actions */}
+                <div style={{ padding: '24px 32px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <button onClick={handleEmail} style={{
+                        width: '100%', height: 44, borderRadius: 10,
+                        background: '#334139', color: '#fff',
+                        border: 'none', fontSize: 13, fontWeight: 600,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', gap: 8,
+                        fontFamily: "'Inter', sans-serif", transition: 'background .13s',
+                    }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#2a3530'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#334139'}
+                    >
+                        <Mail size={15} /> Contactar soporte
+                    </button>
+                    <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', margin: 0 }}>
+                        {SUPPORT_EMAIL}
+                    </p>
                 </div>
             </div>
-            <style>{`@keyframes sbmSlideUp { from { transform: translateY(30px) scale(.96); opacity: 0 } to { transform: none; opacity: 1 } }`}</style>
         </div>
     )
 }
+
+/* ── Modal bloqueante: suscripción expirada ── */
+const ExpiredModal = ({ onLogout, mpLoading, onMercadoPago }) => (
+    <div style={{
+        position: 'fixed', inset: 0, zIndex: 99999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(15,20,15,0.6)', backdropFilter: 'blur(8px)',
+        fontFamily: "'Inter', -apple-system, sans-serif",
+        padding: 20,
+    }}>
+        <style>{`@keyframes sg-up { from { transform: translateY(20px) scale(.97); opacity: 0 } to { transform: none; opacity: 1 } }`}</style>
+        <div style={{
+            width: '100%', maxWidth: 420,
+            background: '#fff', borderRadius: 20,
+            border: '1px solid #e5e7eb',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+            overflow: 'hidden',
+            animation: 'sg-up .28s cubic-bezier(.22,.97,.56,1)',
+        }}>
+            {/* Header */}
+            <div style={{ padding: '32px 32px 24px', textAlign: 'center', borderBottom: '1px solid #f3f4f6' }}>
+                <div style={{
+                    width: 52, height: 52, borderRadius: 14,
+                    background: '#fffbeb', border: '1px solid #fde68a',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 16px',
+                }}>
+                    <AlertTriangle size={22} color="#d97706" strokeWidth={1.8} />
+                </div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+                    Suscripción expirada
+                </h2>
+                <p style={{ fontSize: 13, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
+                    Tu período de prueba o plan PRO ha finalizado. Suscribite para seguir usando Gestify.
+                </p>
+            </div>
+
+            {/* Price */}
+            <div style={{ padding: '20px 32px 0', textAlign: 'center' }}>
+                <div style={{
+                    background: '#f8f9fb', borderRadius: 10,
+                    border: '1px solid #e5e7eb', padding: '14px 16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    marginBottom: 16,
+                }}>
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 2 }}>Plan Gestify PRO</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af' }}>Acceso completo · Sin límites</div>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#111827' }}>$14.999<span style={{ fontSize: 11, fontWeight: 500, color: '#9ca3af' }}>/mes</span></div>
+                </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ padding: '8px 32px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <button onClick={onMercadoPago} disabled={mpLoading} style={{
+                    width: '100%', height: 46, borderRadius: 10,
+                    background: '#009EE3', color: '#fff', border: 'none',
+                    fontSize: 13, fontWeight: 700, cursor: mpLoading ? 'wait' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    fontFamily: "'Inter', sans-serif", transition: 'filter .13s',
+                    boxShadow: '0 4px 12px rgba(0,158,227,0.25)',
+                }}
+                    onMouseEnter={e => { if (!mpLoading) e.currentTarget.style.filter = 'brightness(1.08)' }}
+                    onMouseLeave={e => e.currentTarget.style.filter = 'none'}
+                >
+                    <CreditCard size={16} />
+                    {mpLoading ? 'Cargando...' : 'Suscribirme con Mercado Pago'}
+                </button>
+                <button onClick={onLogout} style={{
+                    width: '100%', height: 40, borderRadius: 10,
+                    background: 'transparent', color: '#9ca3af',
+                    border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 500,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 8,
+                    fontFamily: "'Inter', sans-serif", transition: 'all .13s',
+                }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#374151'; e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.background = '#f9fafb' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.background = 'transparent' }}
+                >
+                    <LogOut size={14} /> Cerrar sesión
+                </button>
+            </div>
+        </div>
+    </div>
+)
 
 const SubscriptionGate = ({ children }) => {
     const { status, loading, daysRemaining, email, isPro, userId, manuallySuspended, checkStatus } = useSubscriptionContext()
     const { logout } = useAuth()
     const [mpLoading, setMpLoading] = useState(false)
-
-    const handleApplyCoupon = async () => {
-        if (!couponCode.trim()) return
-        setCouponStatus('loading')
-        try {
-            const validCoupons = ['GRATISPRO', '100USD', 'LANZAMIENTOFREE', 'DEVFREE', 'GRATIS']
-            if (validCoupons.includes(couponCode.toUpperCase().trim())) {
-                const paidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                const { error } = await supabase.from('subscriptions').update({ paid_until: paidUntil, mp_status: 'active' }).eq('user_id', userId)
-                if (error) throw error
-                setCouponStatus('success')
-                setTimeout(() => checkStatus(), 1500)
-            } else { setCouponStatus('error') }
-        } catch (error) { setCouponStatus('error') }
-    }
 
     const handleMercadoPago = async () => {
         setMpLoading(true)
@@ -92,72 +175,31 @@ const SubscriptionGate = ({ children }) => {
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F5F5', fontFamily: "'Inter', sans-serif" }}>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fb', fontFamily: "'Inter', sans-serif" }}>
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: 40, height: 40, border: '3px solid rgba(51,65,57,.15)', borderTopColor: '#334139', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#30362F' }}>Verificando suscripción...</p>
-                    <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+                    <img src="/favicon.png" alt="Gestify" style={{ height: 48, objectFit: 'contain', marginBottom: 20, opacity: 0.9 }} />
+                    <div style={{ width: 24, height: 24, border: '3px solid #e5e7eb', borderTopColor: '#334139', borderRadius: '50%', animation: 'sg-spin .8s linear infinite', margin: '0 auto 14px' }} />
+                    <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500, margin: 0 }}>Verificando suscripción...</p>
+                    <style>{`@keyframes sg-spin { to { transform: rotate(360deg) } }`}</style>
                 </div>
             </div>
         )
     }
 
-    // new_user: mostrar el sistema de fondo + modal encima (no reemplazar la pantalla)
     const showWelcomeModal = status === 'new_user'
 
-    if (manuallySuspended && status === 'suspended') { return <SuspendedBlockingModal email={email} /> }
+    if (manuallySuspended && status === 'suspended') {
+        return <SuspendedBlockingModal email={email} />
+    }
 
     if (status === 'suspended' && !manuallySuspended) {
-        return (
-            <div style={{ position: 'fixed', inset: 0, zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)', fontFamily: "'Inter', -apple-system, sans-serif", padding: 20 }}>
-                <div style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 24, boxShadow: '0 32px 100px rgba(0,0,0,.3)', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto', animation: 'sbmSlideUp .3s ease' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #1e2320 0%, #334139 50%, #1e2320 100%)', padding: '28px 28px 22px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(74,222,128,.06)' }} />
-                        <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(74,222,128,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', border: '2px solid rgba(74,222,128,.2)' }}>
-                            <AlertCircle size={26} color="#4ADE80" />
-                        </div>
-                        <h1 style={{ fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-.03em', margin: '0 0 6px' }}>Suscripción expirada</h1>
-                        <p style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', margin: 0, lineHeight: 1.5 }}>Tu período de prueba o plan PRO ha finalizado.</p>
-                    </div>
-
-                    <div style={{ padding: 'clamp(16px, 4vw, 22px) clamp(16px, 5vw, 28px) clamp(20px, 5vw, 28px)' }}>
-                        <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '14px 16px', marginBottom: 18, border: '1px solid #FCD34D', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                            <AlertTriangle size={18} color="#D97706" style={{ flexShrink: 0, marginTop: 1 }} />
-                            <div>
-                                <p style={{ fontSize: 12, fontWeight: 700, color: '#92400E', margin: '0 0 4px' }}>Activá tu Plan PRO para seguir operando</p>
-                                <p style={{ fontSize: 11, color: '#B45309', margin: 0, lineHeight: 1.5 }}>Suscribite de forma segura usando Mercado Pago. Es rápido, fácil e inmediato.</p>
-                            </div>
-                        </div>
-
-                        {/* Botones de acción principal */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-                            <button onClick={handleMercadoPago} disabled={mpLoading} style={{ width: '100%', minHeight: 48, borderRadius: 12, background: '#009EE3', color: '#fff', border: 'none', fontSize: 13, fontWeight: 800, cursor: mpLoading ? 'wait' : 'pointer', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all .15s', flexWrap: 'wrap', boxShadow: '0 4px 12px rgba(0, 158, 227, .25)' }} onMouseEnter={e => { if (!mpLoading) e.currentTarget.style.filter = 'brightness(1.1)' }} onMouseLeave={e => { if (!mpLoading) e.currentTarget.style.filter = 'none' }}>
-                                <CreditCard size={18} /> {mpLoading ? 'Cargando Mercado Pago...' : 'Suscribirme con Mercado Pago'}
-                            </button>
-                            
-                            <button onClick={logout} disabled={mpLoading} style={{ width: '100%', minHeight: 44, borderRadius: 10, background: 'transparent', color: '#6B7280', border: '1.5px solid #E5E7EB', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .13s' }} onMouseEnter={e => { e.currentTarget.style.color = '#374151'; e.currentTarget.style.borderColor = '#D1D5DB'; e.currentTarget.style.background = '#F9FAFB' }} onMouseLeave={e => { e.currentTarget.style.color = '#6B7280'; e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = 'transparent' }}>
-                                <LogOut size={16} /> Cerrar Sesión
-                            </button>
-                        </div>
-
-
-                        <p style={{ fontSize: 10, color: '#9CA3AF', textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
-                            <strong>Plan Gestify PRO · $14.999/mes</strong><br />Acceso completo a todas las funciones sin límites y soporte incluido.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        )
+        return <ExpiredModal onLogout={logout} mpLoading={mpLoading} onMercadoPago={handleMercadoPago} />
     }
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-            {/* TrialBanner maneja: trial (≤7d), active PRO (≤7d), grace, y el toast PRO al pagar */}
             <TrialBanner daysRemaining={daysRemaining} />
-
             <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>{children}</div>
-
-            {/* Modal de bienvenida para usuarios nuevos — overlay encima del sistema */}
             {showWelcomeModal && (
                 <WelcomeTrialModal userId={userId} onTrialStarted={() => checkStatus()} />
             )}
