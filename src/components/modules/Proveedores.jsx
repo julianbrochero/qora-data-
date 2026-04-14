@@ -144,6 +144,19 @@ export default function Proveedores({
 
   useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
+  /* ── Atajo Ctrl → nuevo ── */
+  useEffect(() => {
+    const h = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return
+      if (e.key === 'Control') {
+        e.preventDefault()
+        openModal?.('nuevo-proveedor')
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [openModal])
+
   const [confirmData, setConfirmData] = useState(null)
 
   /* ── Acciones ── */

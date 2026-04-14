@@ -176,9 +176,9 @@ const SubscriptionGate = ({ children }) => {
     if (loading) {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fb', fontFamily: "'Inter', sans-serif" }}>
-                <div style={{ textAlign: 'center' }}>
-                    <img src="/favicon.png" alt="Gestify" style={{ height: 48, objectFit: 'contain', marginBottom: 20, opacity: 0.9 }} />
-                    <div style={{ width: 24, height: 24, border: '3px solid #e5e7eb', borderTopColor: '#334139', borderRadius: '50%', animation: 'sg-spin .8s linear infinite', margin: '0 auto 14px' }} />
+                <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <img src="/favicon.png" alt="Gestify" style={{ height: 56, objectFit: 'contain', marginBottom: 24, opacity: 0.9, display: 'block' }} />
+                    <div style={{ width: 24, height: 24, border: '3px solid #e5e7eb', borderTopColor: '#334139', borderRadius: '50%', animation: 'sg-spin .8s linear infinite', marginBottom: 14 }} />
                     <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500, margin: 0 }}>Verificando suscripción...</p>
                     <style>{`@keyframes sg-spin { to { transform: rotate(360deg) } }`}</style>
                 </div>

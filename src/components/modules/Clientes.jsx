@@ -146,6 +146,19 @@ export default function Clientes({
 
   useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
+  /* ── Atajo Ctrl → nuevo ── */
+  useEffect(() => {
+    const h = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return
+      if (e.key === 'Control') {
+        e.preventDefault()
+        openModal?.('nuevo-cliente')
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [openModal])
+
   /* ── Acciones ── */
   const handleCopy = async (texto, clienteId) => {
     try {

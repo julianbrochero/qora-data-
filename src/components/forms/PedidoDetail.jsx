@@ -21,23 +21,26 @@ const fM  = m => (parseFloat(m) || 0).toLocaleString("es-AR", { minimumFractionD
 const fF  = f => { try { return new Date(f).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit" }) } catch { return "—" } }
 
 export default function PedidoDetail({ pedido, clientes = [], formActions, closeModal }) {
-  const [notas,      setNotas]      = useState(pedido?.notas || "")
-  const [metodo,     setMetodo]     = useState("Efectivo")
-  const [abono,      setAbono]      = useState("")
-  const [modoAbono,  setModoAbono]  = useState(false)
-  const [cargando,   setCargando]   = useState(false)
-  const [toast,      setToast]      = useState(null)
+  const [notas,         setNotas]       = useState(pedido?.notas || "")
+  const [metodo,        setMetodo]      = useState("Efectivo")
+  const [abono,         setAbono]       = useState("")
+  const [modoAbono,     setModoAbono]   = useState(false)
+  const [cargando,      setCargando]    = useState(false)
+  const [toast,         setToast]       = useState(null)
+  // Estado local de cobro para actualizar UI al instante (optimista)
+  const [cobradoLocal,  setCobradoLocal] = useState(null)
   const abonoRef = useRef(null)
 
   useEffect(() => {
     setNotas(pedido?.notas || "")
     setModoAbono(false)
     setAbono("")
+    setCobradoLocal(null)  // reset al cambiar de pedido
   }, [pedido?.id])
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok })
-    setTimeout(() => setToast(null), 2500)
+    setTimeout(() => setToast(null), 2800)
   }
 
   /* ── Datos ── */
@@ -47,8 +50,9 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
   })()
 
   const total        = parseFloat(pedido?.total) || 0
-  const cobrado      = parseFloat(pedido?.monto_abonado) || 0
-  const saldo        = pedido?.saldo_pendiente != null ? parseFloat(pedido.saldo_pendiente) : total - cobrado
+  // cobradoLocal permite actualizar la barra de progreso al instante sin esperar al padre
+  const cobrado      = cobradoLocal !== null ? cobradoLocal : (parseFloat(pedido?.monto_abonado) || 0)
+  const saldo        = Math.max(0, total - cobrado)
   const pagado       = saldo <= 0.01
   const pct          = total > 0 ? Math.min(100, Math.round((cobrado / total) * 100)) : 0
   const estadoActual = ESTADOS.find(e => e.key === pedido?.estado) || ESTADOS[0]
@@ -69,11 +73,20 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
   const saldarTodo = async () => {
     if (pagado || cargando) return
     setCargando(true)
+    // ⭐ Actualizar UI al instante (optimista)
+    setCobradoLocal(total)
+    showToast("¡Saldado! ✓")
     try {
       const r = await formActions?.marcarPedidoPagadoTotal?.(pedido.id, metodo)
-      if (r?.success) showToast("¡Saldado! ✓")
-      else showToast(r?.mensaje || "Error", false)
-    } catch (e) { showToast(e.message, false) }
+      if (!r?.success) {
+        // Revertir si falla
+        setCobradoLocal(null)
+        showToast(r?.mensaje || "Error al saldar", false)
+      }
+    } catch (e) {
+      setCobradoLocal(null)
+      showToast(e.message, false)
+    }
     finally { setCargando(false) }
   }
 
@@ -81,11 +94,13 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
     const monto = parseFloat(abono)
     if (!monto || monto <= 0) return showToast("Ingresá un monto", false)
     setCargando(true)
+    // Actualizar UI al instante
+    setCobradoLocal(Math.min(total, cobrado + monto))
     try {
       const r = await formActions?.agregarAbonoAPedido?.(pedido.id, monto, metodo)
       if (r?.success) { showToast(`$${fM(monto)} registrado`); setAbono(""); setModoAbono(false) }
-      else showToast(r?.mensaje || "Error", false)
-    } catch (e) { showToast(e.message, false) }
+      else { setCobradoLocal(null); showToast(r?.mensaje || "Error", false) }
+    } catch (e) { setCobradoLocal(null); showToast(e.message, false) }
     finally { setCargando(false) }
   }
 
@@ -111,8 +126,8 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
       const est = ESTADOS.find(s => s.kbd === e.key)
       if (est) { e.preventDefault(); cambiarEstado(est.key) }
       // S → saldar / Shift → pago total
-      if (e.key === "S" && e.shiftKey) { e.preventDefault(); saldarTodo() }
-      if (e.key === "s" && !e.shiftKey) { e.preventDefault(); saldarTodo() }
+      if ((e.key === "s" || e.key === "S") && e.shiftKey) { e.preventDefault(); saldarTodo() }
+      if ((e.key === "s" || e.key === "S") && !e.shiftKey) { e.preventDefault(); if (!pagado) { setModoAbono(true); setTimeout(() => abonoRef.current?.focus(), 60) } }
       // A → abono parcial
       if (e.key === "a" || e.key === "A") { e.preventDefault(); if (!pagado) { setModoAbono(true); setTimeout(() => abonoRef.current?.focus(), 60) } }
       // Esc → cerrar
@@ -126,16 +141,20 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
 
   return (
     <div style={{ fontFamily: "'Inter',sans-serif", fontSize: 13, color: "#111827" }}>
+      <style>{`
+        @keyframes pd-toast-in { from { opacity:0; transform:translateX(-50%) translateY(-8px) scale(.95) } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1) } }
+      `}</style>
 
       {/* Toast */}
       {toast && (
         <div style={{
-          position: "fixed", top: 14, left: "50%", transform: "translateX(-50%)",
-          zIndex: 9999, padding: "8px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+          position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)",
+          zIndex: 9999, padding: "10px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700,
           background: toast.ok ? "#f0fdf4" : "#fef2f2",
-          border: `1px solid ${toast.ok ? "#bbf7d0" : "#fecaca"}`,
-          color: toast.ok ? "#16a34a" : "#dc2626",
-          boxShadow: "0 4px 20px rgba(0,0,0,.10)", pointerEvents: "none", whiteSpace: "nowrap",
+          border: `1.5px solid ${toast.ok ? "#6ee7b7" : "#fca5a5"}`,
+          color: toast.ok ? "#15803d" : "#dc2626",
+          boxShadow: "0 6px 24px rgba(0,0,0,.13)", pointerEvents: "none", whiteSpace: "nowrap",
+          animation: "pd-toast-in .18s cubic-bezier(.22,.97,.56,1) both",
         }}>
           {toast.msg}
         </div>

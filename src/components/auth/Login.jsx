@@ -50,6 +50,9 @@ export default function Login() {
         /* Logo */
         .lg-logo {
           margin-bottom: 36px;
+          display: flex;
+          justify-content: center;
+          width: 100%;
         }
         .lg-logo img {
           height: 96px;

@@ -595,7 +595,10 @@ export const useFacturacion = () => {
       }
       const faltante = parseFloat(venta.saldopendiente) || 0
       if (faltante <= 0) return { success: true, mensaje: 'Ya está pagado' }
-      return await registrarCobro(venta.id, faltante, 'Pago Total Pedido', metodoPago)
+      const pedidoLocal = pedidos.find(p => p.id === pedidoId)
+      const pedidoCodigo = pedidoLocal?.codigo || ''
+      const descripcion = `Pago Total Pedido ${pedidoCodigo} - ${venta.cliente || 'Cliente'}`
+      return await registrarCobro(venta.id, faltante, descripcion, metodoPago)
     } catch (error) {
       console.error('Error saldando pedido:', error)
       return { success: false, mensaje: error.message }
