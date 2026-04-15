@@ -18,6 +18,7 @@ import Pedidos from './components/modules/PedidosNimbus';
 import Configuracion from './components/modules/Configuracion';
 import Presupuestos from './components/modules/Presupuestos';
 import AgregarVenta from './components/modules/AgregarVentaNimbus';
+import CalendarioEntregas from './components/modules/CalendarioEntregas';
 import AdminPanel from './components/modules/AdminPanel';
 import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
@@ -101,6 +102,7 @@ const SistemaFacturacion = () => {
     agregarProducto,
     editarProducto,
     eliminarProducto,
+    eliminarMultiplesProductos,
     agregarProductoRapido,
     agregarProveedor,
     editarProveedor,
@@ -192,14 +194,9 @@ const SistemaFacturacion = () => {
     }
   };
 
-  const closeModalHandler = useCallback(() => {
-    const prevType = modalTypeRef.current
+    const closeModalHandler = useCallback(() => {
     setModalType(null);
     setModalData(null);
-    if (prevType === 'editar-producto') {
-      setPedidoAEditar(null)
-      setActiveModule('agregar-venta')
-    }
   }, []);
 
   const handleLogout = async () => {
@@ -334,6 +331,7 @@ const SistemaFacturacion = () => {
           {...commonProps}
           productos={filtrarProductos}
           eliminarProducto={eliminarProducto}
+          eliminarMultiplesProductos={eliminarMultiplesProductos}
           editarProducto={editarProducto}
           recargarProductos={recargarTodosLosDatos}
           categoriasDb={categorias}
@@ -388,6 +386,7 @@ const SistemaFacturacion = () => {
             actualizarNotasPedido,
             agregarAbonoAPedido,
             marcarPedidoPagadoTotal,
+            openModal: openModalHandler,
           }}
         />
       ),
@@ -407,6 +406,13 @@ const SistemaFacturacion = () => {
         />
       ),
       configuracion: <Configuracion {...commonProps} />,
+      calendario: (
+        <CalendarioEntregas
+          {...commonProps}
+          pedidos={pedidos}
+          openModal={(type, data) => openModalHandler(type === 'editar-pedido' ? 'ver-pedido' : type, data)}
+        />
+      ),
       admin: <AdminPanel />,
       presupuestos: (
         <Presupuestos

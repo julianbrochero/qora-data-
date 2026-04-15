@@ -128,7 +128,7 @@ const InlineCell = ({ value, onSave, prefix="$" }) => {
 }
 
 /* ─── Fila producto ─── */
-const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto, setMenu, menuPos, setMenuPos }) => {
+const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto, setMenu, menuPos, setMenuPos, isSelected, onToggleSelect, selectionMode }) => {
   const [hov, setHov] = useState(false)
 
   const abrirMenu = e => {
@@ -162,9 +162,19 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
     <tr
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      onClick={() => onEdit(prod)}
-      style={{ background: hov ? "#f5f5f5" : C.bg, borderBottom: `1px solid ${C.border}`, transition: "background 0.1s", cursor: "pointer" }}
+      style={{ background: hov ? "#f5f5f5" : isSelected ? C.primarySurf : C.bg, borderBottom: `1px solid ${C.border}`, transition: "background 0.1s" }}
     >
+      {/* Checkbox */}
+      {selectionMode && (
+        <td style={{ padding: "10px 16px", verticalAlign: "middle" }}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelect(prod.id)}
+            style={{ cursor: "pointer", width: 16, height: 16 }}
+          />
+        </td>
+      )}
       {/* Nombre */}
       <td style={{ padding:"10px 16px", minWidth:200, maxWidth:320 }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -265,10 +275,12 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
 /* ══════════════════════════════════════════ */
 export default function ProductosNimbus({
   productos=[], searchTerm, setSearchTerm,
-  openModal, eliminarProducto, editarProducto, recargarProductos, onOpenMobileSidebar,
+  openModal, eliminarProducto, eliminarMultiplesProductos, editarProducto, recargarProductos, onOpenMobileSidebar,
   categoriasDb=[], onAgregarAlCarrito,
 }) {
   const { user } = useAuth()
+  const [selectedIds, setSelectedIds] = useState([])
+  const [selectionMode, setSelectionMode] = useState(false)
   const [filtroCat,    setFiltroCat]    = useState("todas")
   const [filtroStock,  setFiltroStock]  = useState("todos")
   const [sortStock,    setSortStock]    = useState(false)  // ordenar por stock ascendente
@@ -461,6 +473,25 @@ export default function ProductosNimbus({
             </Btn>
             <input ref={csvInputRef} type="file" accept=".csv,text/csv" style={{display:"none"}}
               onChange={e=>{ if(e.target.files?.[0]) importarCSV(e.target.files[0]) }}/>
+            
+            <button
+              onClick={() => {
+                setSelectionMode(!selectionMode)
+                if (selectionMode) setSelectedIds([])
+              }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                height: 32, padding: "0 14px", borderRadius: 6,
+                cursor: "pointer", fontSize: 13, fontWeight: 500,
+                border: `1.5px solid ${selectionMode ? C.primary : C.border}`,
+                background: selectionMode ? C.primarySurf : C.bg,
+                color: selectionMode ? C.primary : C.textDark,
+                transition: "all 0.1s"
+              }}
+            >
+              {selectionMode ? "Cancelar" : "Seleccionar"}
+            </button>
+
             <Btn primary onClick={()=>openModal?.("nuevo-producto")}>
               <PlusIcon size={13} color="#fff"/> Agregar producto
             </Btn>
@@ -575,6 +606,51 @@ export default function ProductosNimbus({
               <table style={{ width:"100%", borderCollapse:"collapse" }}>
                 <thead>
                   <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
+                    {selectionMode && (
+                      <th style={{ padding: "9px 16px", width: 40 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <input
+                            type="checkbox"
+                            title={selectedIds.length > 0 ? `${selectedIds.length} seleccionados` : "Seleccionar todos"}
+                            checked={pageItems.length > 0 && pageItems.every(p => selectedIds.includes(p.id))}
+                            onChange={(e) => {
+                              const checked = e.target.checked
+                              if (checked) {
+                                setSelectedIds(prev => [...new Set([...prev, ...pageItems.map(p => p.id)])])
+                              } else {
+                                setSelectedIds(prev => prev.filter(id => !pageItems.some(p => p.id === id)))
+                              }
+                            }}
+                            style={{ cursor: "pointer", width: 16, height: 16 }}
+                          />
+                          {selectedIds.length > 0 && (
+                            <button
+                              onClick={() => {
+                                setConfirmData({
+                                  title: `¿Eliminar ${selectedIds.length} productos?`,
+                                  description: "Esta acción no se puede deshacer.",
+                                  onConfirm: async () => {
+                                    setConfirmData(null)
+                                    await eliminarMultiplesProductos?.(selectedIds)
+                                    setSelectedIds([])
+                                    setSelectionMode(false)
+                                  }
+                                })
+                              }}
+                              title="Eliminar seleccionados"
+                              style={{
+                                background: "none", border: "none", padding: 2, display: "flex", cursor: "pointer",
+                                borderRadius: 4, transition: "background 0.2s"
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = "#fee2e2"}
+                              onMouseLeave={e => e.currentTarget.style.background = "none"}
+                            >
+                              <Trash2 size={15} color="#DC2626" />
+                            </button>
+                          )}
+                        </div>
+                      </th>
+                    )}
                     {["PRODUCTO","STOCK","PRECIO","COSTO","ACCIONES"].map((h, i) => (
                       <th key={h} style={{
                         padding:"9px 16px", textAlign: i === 4 ? "right" : "left",
@@ -593,6 +669,11 @@ export default function ProductosNimbus({
                       onAgregarAlCarrito={onAgregarAlCarrito}
                       menuAbierto={menuAbierto} setMenu={setMenu}
                       menuPos={menuPos} setMenuPos={setMenuPos}
+                      isSelected={selectedIds.includes(prod.id)}
+                      onToggleSelect={(id) => {
+                        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+                      }}
+                      selectionMode={selectionMode}
                     />
                   ))}
                 </tbody>

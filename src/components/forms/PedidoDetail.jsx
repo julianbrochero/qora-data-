@@ -27,15 +27,17 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
   const [modoAbono,     setModoAbono]   = useState(false)
   const [cargando,      setCargando]    = useState(false)
   const [toast,         setToast]       = useState(null)
-  // Estado local de cobro para actualizar UI al instante (optimista)
-  const [cobradoLocal,  setCobradoLocal] = useState(null)
+  // Estado local para actualizaciones optimistas
+  const [cobradoLocal, setCobradoLocal] = useState(null)
+  const [estadoLocal, setEstadoLocal]   = useState(null)
   const abonoRef = useRef(null)
 
   useEffect(() => {
     setNotas(pedido?.notas || "")
     setModoAbono(false)
     setAbono("")
-    setCobradoLocal(null)  // reset al cambiar de pedido
+    setCobradoLocal(null)
+    setEstadoLocal(null) // reset al cambiar de pedido
   }, [pedido?.id])
 
   const showToast = (msg, ok = true) => {
@@ -55,19 +57,34 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
   const saldo        = Math.max(0, total - cobrado)
   const pagado       = saldo <= 0.01
   const pct          = total > 0 ? Math.min(100, Math.round((cobrado / total) * 100)) : 0
-  const estadoActual = ESTADOS.find(e => e.key === pedido?.estado) || ESTADOS[0]
+  
+  const currentStatusKey = estadoLocal !== null ? estadoLocal : (pedido?.estado || "pendiente")
+  const estadoActual     = ESTADOS.find(e => e.key === currentStatusKey) || ESTADOS[0]
+  
   const cliente      = clientes.find(c => c.id === pedido?.cliente_id)
   const ganancia     = items.reduce((s, i) => s + (i.ganancia != null ? parseFloat(i.ganancia) : 0), 0)
   const hayGanancia  = items.some(i => i.ganancia != null)
 
   /* ── Acciones ── */
   const cambiarEstado = async (key) => {
-    if (key === pedido?.estado) return
+    if (key === (estadoLocal || pedido?.estado)) return
+    
+    // Actualización optimista
+    const prevStatus = estadoLocal || pedido?.estado
+    setEstadoLocal(key)
+    
     try {
       const r = await formActions?.actualizarEstadoPedido?.(pedido.id, key)
-      if (r?.success) showToast("Estado actualizado")
-      else showToast(r?.mensaje || "Error", false)
-    } catch (e) { showToast(e.message, false) }
+      if (r?.success) {
+        showToast("Estado actualizado")
+      } else {
+        setEstadoLocal(prevStatus) // revertir si falla
+        showToast(r?.mensaje || "Error", false)
+      }
+    } catch (e) { 
+      setEstadoLocal(prevStatus) // revertir si falla
+      showToast(e.message, false) 
+    }
   }
 
   const saldarTodo = async () => {
@@ -178,8 +195,25 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
               {pedido?.factura_id && <span style={{ background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", borderRadius: 4, padding: "1px 6px", fontWeight: 700, fontSize: 11 }}>✓ Facturado</span>}
             </div>
           </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: "#0d0d0d", letterSpacing: "-0.5px" }}>${fM(total)}</div>
+          <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+              <button 
+                onClick={() => {
+                  formActions?.openModal?.("editar-pedido", pedido);
+                  closeModal?.();
+                }}
+                style={{
+                  padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`,
+                  background: "#fff", fontSize: 11, fontWeight: 600, color: C.mid,
+                  cursor: "pointer", display: "flex", alignItems: "center", gap: 4
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = C.primary}
+                onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+              >
+                Editar
+              </button>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#0d0d0d", letterSpacing: "-0.5px" }}>${fM(total)}</div>
+            </div>
             <div style={{ fontSize: 11, color: pagado ? "#16a34a" : "#d97706", fontWeight: 600 }}>
               {pagado ? "✓ Pagado" : `Saldo $${fM(saldo)}`}
             </div>
@@ -242,7 +276,7 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
           Estado
         </div>
         <select
-          value={pedido?.estado || "pendiente"}
+          value={currentStatusKey}
           onChange={e => cambiarEstado(e.target.value)}
           className="app-select"
           style={{ width: 160, height: 34, fontSize: 12, fontWeight: 600, padding: "0 10px", borderRadius: 7, border: "1.5px solid #e5e7eb", cursor: "pointer" }}

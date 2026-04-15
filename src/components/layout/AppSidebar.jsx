@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react"
 import {
   LayoutDashboard, PlusCircle, ShoppingCart, FileText,
   Users, Truck, Package, Wallet, BarChart3, Settings,
-  LogOut, ShieldCheck, ChevronUp, X,
+  LogOut, ShieldCheck, ChevronUp, X, Calendar
 } from "lucide-react"
 import { useAuth } from "../../lib/AuthContext"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
@@ -10,17 +10,26 @@ import { ADMIN_EMAILS } from "../modules/AdminPanel"
 
 const SIDEBAR_W = 220
 
-const getSections = (pedidosHoy) => [
+const getSections = (pedidosHoy, activeModule) => [
   {
     title: "Inicio",
     items: [{ id: "dashboard", icon: LayoutDashboard, label: "Dashboard" }],
   },
   {
-    title: "Gestión",
+    title: "Ventas",
     items: [
       { id: "agregar-venta",  icon: PlusCircle,   label: "Agregar Venta" },
       { id: "pedidos",        icon: ShoppingCart,  label: "Ventas", badge: pedidosHoy > 0 ? String(pedidosHoy) : null },
+      // Solo mostramos el calendario si estamos en el módulo ventas (pedidos) o ya en el calendario
+      ...( (activeModule === 'pedidos' || activeModule === 'calendario') ? [
+        { id: "calendario", icon: Calendar, label: "Calendario Entregas", isSubItem: true }
+      ] : []),
       { id: "presupuestos",   icon: FileText,      label: "Presupuestos" },
+    ],
+  },
+  {
+    title: "Gestión",
+    items: [
       { id: "clientes",       icon: Users,         label: "Clientes" },
       { id: "proveedores",    icon: Truck,         label: "Proveedores" },
     ],
@@ -52,6 +61,7 @@ const NavItems = ({ sections, activeModule, onNav }) => (
               style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
                 padding: "9px 10px", borderRadius: 7, border: "none",
+                paddingLeft: item.isSubItem ? 28 : 10,
                 background: isActive ? "#eef1ee" : "transparent",
                 color: isActive ? "#334139" : "#0d0d0d",
                 fontSize: 13, fontWeight: isActive ? 700 : 500,
@@ -198,7 +208,7 @@ const AppSidebar = ({ activeModule, setActiveModule, pedidos = [], mobileOpen = 
   const pedidosHoy = pedidos.filter(p =>
     (p.created_at || p.fecha_pedido || "").split("T")[0] === hoy
   ).length
-  const sections = getSections(pedidosHoy)
+  const sections = getSections(pedidosHoy, activeModule)
   const handleNav = (id) => { setActiveModule(id); onMobileClose?.() }
 
   return (
@@ -237,9 +247,9 @@ const AppSidebar = ({ activeModule, setActiveModule, pedidos = [], mobileOpen = 
         position: "fixed", top: 0, left: 0, bottom: 0,
         width: SIDEBAR_W, zIndex: 100,
         background: "#fff", borderRight: "1px solid #e5e7eb",
-        display: "flex", flexDirection: "column",
+        flexDirection: "column",
         overflow: "hidden",
-      }} className="hidden md:flex">
+      }} className="hidden md:flex flex-col">
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 16px", borderBottom: "1px solid #e5e7eb", flexShrink: 0, minHeight: 52 }}>
           <img src="/newlogo.png" alt="Gestify" style={{ height: 30, objectFit: "contain" }} />

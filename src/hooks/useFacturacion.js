@@ -1518,6 +1518,31 @@ export const useFacturacion = () => {
     }
   }
 
+  const eliminarMultiplesProductos = async (productoIds) => {
+    try {
+      if (!productoIds || productoIds.length === 0) return { success: true }
+
+      // ── OPTIMISTIC: eliminar inmediatamente ──
+      const prevProductos = productos
+      setProductos(prev => prev.filter(p => !productoIds.includes(p.id)))
+
+      const { error } = await supabase
+        .from('productos')
+        .delete()
+        .in('id', productoIds)
+
+      if (error) {
+        setProductos(prevProductos) // revertir
+        throw error
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error eliminando múltiples productos:', error)
+      return { success: false, mensaje: error.message }
+    }
+  }
+
   const agregarMovimientoCaja = async (movimientoData) => {
     try {
       // Mapear 'descripcion' → 'description' (nombre real de la columna en Supabase)
@@ -1990,6 +2015,7 @@ export const useFacturacion = () => {
     agregarProducto,
     editarProducto,
     eliminarProducto,
+    eliminarMultiplesProductos,
     agregarProductoRapido,
     agregarProveedor,
     editarProveedor,

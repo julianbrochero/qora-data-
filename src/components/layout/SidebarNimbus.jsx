@@ -18,11 +18,12 @@ import {
   CloseIcon,
   UserCircleIcon,
 } from "@nimbus-ds/icons"
+import { Calendar } from "lucide-react"
 import { useAuth } from "../../lib/AuthContext"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
 import { ADMIN_EMAILS } from "../modules/AdminPanel"
 
-const getSections = (pedidosHoy, isAdmin) => [
+const getSections = (pedidosHoy, isAdmin, activeModule) => [
   {
     title: "Inicio",
     items: [{ id: "dashboard", icon: HomeIcon, label: "Dashboard" }],
@@ -32,6 +33,10 @@ const getSections = (pedidosHoy, isAdmin) => [
     items: [
       { id: "agregar-venta", icon: PlusCircleIcon, label: "Agregar Venta" },
       { id: "pedidos", icon: ShoppingCartIcon, label: "Ventas", badge: pedidosHoy > 0 ? pedidosHoy : null },
+      // Solo visible en el módulo ventas (pedidos) o calendario
+      ...( (activeModule === 'pedidos' || activeModule === 'calendario') ? [
+        { id: "calendario", icon: Calendar, label: "Calendario Entregas", isSubItem: true }
+      ] : []),
       { id: "presupuestos", icon: FileAltIcon, label: "Presupuestos" },
       { id: "facturacion", icon: FileIcon, label: "Facturación" },
     ],
@@ -116,10 +121,12 @@ const NavItem = ({ item, isActive, collapsed, onClick }) => {
           background: C.primary,
         }} />
       )}
-      <Ico size={15} color={color} />
-      {!collapsed && (
-        <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
-      )}
+      <div style={{ marginLeft: item.isSubItem ? 16 : 0, display: "flex", alignItems: "center", gap: 8 }}>
+        <Ico size={15} color={color} />
+        {!collapsed && (
+          <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
+        )}
+      </div>
       {!collapsed && item.badge && (
         <span style={{
           background: C.primary,
@@ -155,7 +162,7 @@ const SidebarNimbus = ({
     (p.created_at || p.fecha_pedido || "").split("T")[0] === hoy
   ).length
 
-  const sections = getSections(pedidosHoy, isAdmin)
+  const sections = getSections(pedidosHoy, isAdmin, activeModule)
   const W = isCollapsed ? 60 : 210
 
   const handleNav = (id) => {
