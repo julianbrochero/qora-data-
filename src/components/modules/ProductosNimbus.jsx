@@ -281,6 +281,7 @@ export default function ProductosNimbus({
   const { user } = useAuth()
   const [selectedIds, setSelectedIds] = useState([])
   const [selectionMode, setSelectionMode] = useState(false)
+  const [csvMenuOpen, setCsvMenuOpen] = useState(false)
   const [filtroCat,    setFiltroCat]    = useState("todas")
   const [filtroStock,  setFiltroStock]  = useState("todos")
   const [sortStock,    setSortStock]    = useState(false)  // ordenar por stock ascendente
@@ -299,7 +300,7 @@ export default function ProductosNimbus({
   }, [busqueda])
 
   useEffect(() => {
-    const h = () => setMenu(null)
+    const h = () => { setMenu(null); setCsvMenuOpen(false) }
     window.addEventListener('click', h)
     return () => window.removeEventListener('click', h)
   }, [])
@@ -465,12 +466,41 @@ export default function ProductosNimbus({
             <Btn onClick={()=>openModal?.("categorias-producto")}>
               <TagIcon size={13} color={C.textDark}/> Categorías
             </Btn>
-            <Btn onClick={exportarCSV}>
-              <DownloadIcon size={13} color={C.textDark}/> Exportar CSV
-            </Btn>
-            <Btn onClick={()=>csvInputRef.current?.click()} disabled={csvLoading}>
-              <Upload size={13} color={C.textDark}/> {csvLoading ? "Importando…" : "Importar CSV"}
-            </Btn>
+
+            <div style={{ position:"relative" }}>
+              <Btn onClick={(e)=>{ e.stopPropagation(); setCsvMenuOpen(!csvMenuOpen) }}>
+                <DownloadIcon size={13} color={C.textDark}/> CSV {csvLoading ? "..." : ""}
+              </Btn>
+              {csvMenuOpen && (
+                <div onClick={e => e.stopPropagation()} style={{
+                  position:"absolute", top:36, right:0,
+                  width:160, background:C.bg, borderRadius:8,
+                  border:`1px solid ${C.border}`,
+                  boxShadow:"0 8px 16px rgba(0,0,0,0.1)", zIndex:9999, padding:"4px 0",
+                }}>
+                  <button onClick={() => { setCsvMenuOpen(false); exportarCSV() }}
+                    style={{ display:"flex", alignItems:"center", gap:8, width:"100%", padding:"8px 12px",
+                      background:"transparent", border:"none", fontSize:13, color: C.textDark,
+                      cursor:"pointer", fontFamily:"'Inter',sans-serif", textAlign:"left" }}
+                    onMouseEnter={e => e.currentTarget.style.background="#f9fafb"}
+                    onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                  >
+                    <DownloadIcon size={14} color={C.textMid}/> Exportar
+                  </button>
+                  <button onClick={() => { setCsvMenuOpen(false); csvInputRef.current?.click() }}
+                    disabled={csvLoading}
+                    style={{ display:"flex", alignItems:"center", gap:8, width:"100%", padding:"8px 12px",
+                      background:"transparent", border:"none", fontSize:13, color: C.textDark,
+                      cursor:csvLoading?"not-allowed":"pointer", fontFamily:"'Inter',sans-serif", textAlign:"left", opacity:csvLoading?0.5:1 }}
+                    onMouseEnter={e => e.currentTarget.style.background="#f9fafb"}
+                    onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                  >
+                    <Upload size={14} color={C.textMid}/> {csvLoading ? "Importando..." : "Importar"}
+                  </button>
+                </div>
+              )}
+            </div>
+
             <input ref={csvInputRef} type="file" accept=".csv,text/csv" style={{display:"none"}}
               onChange={e=>{ if(e.target.files?.[0]) importarCSV(e.target.files[0]) }}/>
             
