@@ -127,6 +127,76 @@ const InlineCell = ({ value, onSave, prefix="$" }) => {
   )
 }
 
+/* ─── Card Mobile ─── */
+const MobileCard = ({ prod, onEdit, onDel, onAgregarAlCarrito, isSelected, onToggleSelect, selectionMode }) => {
+  const sinStock  = prod.controlaStock && (prod.stock ?? 0) <= 0
+  const stockBajo = prod.controlaStock && (prod.stock ?? 0) > 0 && (prod.stock ?? 0) <= (prod.stock_minimo||5)
+
+  return (
+    <div 
+      onClick={() => selectionMode ? onToggleSelect(prod.id) : onEdit(prod)}
+      style={{
+        padding: "12px 16px",
+        background: isSelected ? C.primarySurf : C.bg,
+        borderBottom: `1px solid ${C.border}`,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        position: "relative"
+      }}
+    >
+      {selectionMode && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => { e.stopPropagation(); onToggleSelect(prod.id) }}
+          style={{ width: 18, height: 18, cursor: "pointer" }}
+        />
+      )}
+
+      <div style={{
+        width: 44, height: 44, borderRadius: 8, flexShrink: 0,
+        background: "#f9fafb", border: `1px solid ${C.border}`,
+        display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+      }}>
+        {prod.imagen_url
+          ? <img src={prod.imagen_url} alt={prod.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <BoxPackedIcon size={20} color={C.textLight} />}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ 
+          fontSize: 14, fontWeight: 600, color: C.textDark, 
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" 
+        }}>
+          {prod.nombre}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{fmtP(prod.precio)}</span>
+          {!prod.controlaStock ? (
+             <span style={{ fontSize: 11, color: C.textMid }}>Stock: ∞</span>
+          ) : (
+            sinStock 
+              ? <span style={{ fontSize: 11, color: "#DC2626", fontWeight: 600 }}>Sin stock</span>
+              : stockBajo
+                ? <span style={{ fontSize: 11, color: "#D97706", fontWeight: 600 }}>{prod.stock} bajo</span>
+                : <span style={{ fontSize: 11, color: C.textMid }}>Stock: {prod.stock}</span>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display:"flex", alignItems:"center" }}>
+         <button 
+          onClick={(e) => { e.stopPropagation(); onEdit(prod) }}
+          style={{ background: "none", border: "none", padding: 8, cursor: "pointer" }}
+        >
+          <Edit size={16} color={C.textMid} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /* ─── Fila producto ─── */
 const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto, setMenu, menuPos, setMenuPos, isSelected, onToggleSelect, selectionMode }) => {
   const [hov, setHov] = useState(false)
@@ -632,10 +702,27 @@ export default function ProductosNimbus({
               </Btn>
             </div>
           ) : (
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
+            <>
+              {/* Cards mobile */}
+              <div className="pn-show-mobile" style={{ flexDirection:"column" }}>
+                {pageItems.map(prod=>(
+                  <MobileCard key={prod.id} prod={prod}
+                    onEdit={handleEdit} onDel={handleDel}
+                    onAgregarAlCarrito={onAgregarAlCarrito}
+                    isSelected={selectedIds.includes(prod.id)}
+                    onToggleSelect={(id) => {
+                      setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+                    }}
+                    selectionMode={selectionMode}
+                  />
+                ))}
+              </div>
+
+              {/* Tabla desktop */}
+              <div className="pn-hide-mobile" style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
                     {selectionMode && (
                       <th style={{ padding: "9px 16px", width: 40 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
