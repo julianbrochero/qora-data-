@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Package, Truck, CheckCircle, XCircle, Clock,
   DollarSign, TrendingUp, Check, X,
@@ -30,14 +30,22 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
   // Estado local para actualizaciones optimistas
   const [cobradoLocal, setCobradoLocal] = useState(null)
   const [estadoLocal, setEstadoLocal]   = useState(null)
+  const [canalLocal,  setCanalLocal]    = useState(null)
   const abonoRef = useRef(null)
+
+  // Canales configurados en localStorage
+  const canales = React.useMemo(() => {
+    try { const ls = localStorage.getItem('gestify_canales_venta'); if (ls) return JSON.parse(ls) } catch {}
+    return []
+  }, [])
 
   useEffect(() => {
     setNotas(pedido?.notas || "")
     setModoAbono(false)
     setAbono("")
     setCobradoLocal(null)
-    setEstadoLocal(null) // reset al cambiar de pedido
+    setEstadoLocal(null)
+    setCanalLocal(null)
   }, [pedido?.id])
 
   const showToast = (msg, ok = true) => {
@@ -286,6 +294,31 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
           ))}
         </select>
       </div>
+
+      {/* ══ CANAL DE VENTA ══ */}
+      {canales.length > 0 && (
+        <div style={{ padding: "10px 20px", borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: C.light, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+            Canal de venta
+          </div>
+          <select
+            value={canalLocal !== null ? canalLocal : (pedido?.canal_venta || "")}
+            onChange={async e => {
+              const val = e.target.value || null
+              setCanalLocal(val)
+              try {
+                await formActions?.actualizarPedido?.(pedido.id, { canal_venta: val })
+                showToast("Canal actualizado")
+              } catch { showToast("Error al guardar", false) }
+            }}
+            className="app-select"
+            style={{ width: 180, height: 32, fontSize: 12 }}
+          >
+            <option value="">Sin canal</option>
+            {canales.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      )}
 
       {/* ══ COBRO ══ */}
       {!pagado && (

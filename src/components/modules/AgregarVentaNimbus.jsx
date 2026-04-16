@@ -630,26 +630,21 @@ export default function AgregarVentaNimbus({
               </SelNativo>
             </div>
 
-          </div>
-
-          {/* Canal de venta */}
-          {canales.length > 0 && (
-            <div style={{marginTop:5}}>
-              <Label>Canal de venta</Label>
-              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                {canales.map(c=>(
-                  <button key={c} type="button" onClick={()=>setCanalVenta(canalVenta===c?'':c)}
-                    style={{
-                      padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:600,cursor:'pointer',
-                      border:`1.5px solid ${canalVenta===c?C.primary:C.border}`,
-                      background:canalVenta===c?C.primarySurf:C.bg,
-                      color:canalVenta===c?C.primary:C.textMid,
-                      transition:'all .12s',fontFamily:"'Inter',sans-serif",
-                    }}>{c}</button>
-                ))}
-              </div>
+            {/* Canal de venta */}
+            <div>
+              <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
+              <select
+                value={canalVenta}
+                onChange={e => setCanalVenta(e.target.value)}
+                className="app-select"
+                style={{ width:'100%' }}
+              >
+                <option value="">Sin canal</option>
+                {canales.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-          )}
+
+          </div>{/* end pv-form-grid */}
 
           {/* Notas */}
           <div style={{marginTop:5}}>
