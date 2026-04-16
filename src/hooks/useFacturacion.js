@@ -584,21 +584,65 @@ export const useFacturacion = () => {
   // 5. Marcar Pedido Pagado Total — usa estado local (0ms) en lugar de query a Supabase
   const marcarPedidoPagadoTotal = async (pedidoId, metodoPago = 'Efectivo') => {
     try {
-      // Buscar en estado local primero (0ms)
+      // 1. Buscar en pedidos locales primero
+      const pedidoLocal = pedidos.find(p => p.id === pedidoId)
+      const totalPedido = parseFloat(pedidoLocal?.total) || 0
+      const abonado     = parseFloat(pedidoLocal?.monto_abonado) || 0
+      const saldoPedido = Math.max(0, totalPedido - abonado)
+
+      // 2. Intentar buscar factura asociada
       let venta = facturas.find(f => f.pedido_id === pedidoId)
       if (!venta) {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('facturas').select('*').eq('pedido_id', pedidoId)
           .order('created_at', { ascending: false }).limit(1).single()
-        if (error || !data) throw new Error('Venta no encontrada')
-        venta = data
+        if (data) venta = data
       }
-      const faltante = parseFloat(venta.saldopendiente) || 0
-      if (faltante <= 0) return { success: true, mensaje: 'Ya está pagado' }
-      const pedidoLocal = pedidos.find(p => p.id === pedidoId)
-      const pedidoCodigo = pedidoLocal?.codigo || ''
-      const descripcion = `Pago Total Pedido ${pedidoCodigo} - ${venta.cliente || 'Cliente'}`
-      return await registrarCobro(venta.id, faltante, descripcion, metodoPago)
+
+      if (venta) {
+        // Hay factura — usar su saldo
+        const saldoVenta = parseFloat(venta.saldopendiente ?? venta.saldo_pendiente) || 0
+        const faltante   = saldoVenta > 0 ? saldoVenta : saldoPedido
+        if (faltante <= 0.01) return { success: true, mensaje: 'Ya está pagado' }
+        const pedidoCodigo  = pedidoLocal?.codigo || ''
+        const descripcion   = `Pago Total Pedido ${pedidoCodigo} - ${venta.cliente || 'Cliente'}`
+        return await registrarCobro(venta.id, faltante, descripcion, metodoPago)
+      }
+
+      // No hay factura — actualizar el pedido directamente en Supabase
+      if (saldoPedido <= 0.01) return { success: true, mensaje: 'Ya está pagado' }
+
+      // Optimistic local update
+      setPedidos(prev => prev.map(p =>
+        p.id === pedidoId
+          ? { ...p, monto_abonado: totalPedido, saldo_pendiente: 0 }
+          : p
+      ))
+      // Guardar en caja
+      const pedidoCodigo = pedidoLocal?.codigo || pedidoId.toString().slice(-4)
+      const movData = {
+        tipo: 'ingreso', monto: saldoPedido,
+        description: `Pago Total Pedido ${pedidoCodigo}`,
+        metodo: metodoPago || 'Efectivo',
+        referencia: `pedido:${pedidoId}`,
+        fecha: new Date().toISOString(), user_id: user.id,
+      }
+      ;(async () => {
+        await Promise.all([
+          supabase.from('pedidos').update({
+            monto_abonado: totalPedido,
+            saldo_pendiente: 0,
+          }).eq('id', pedidoId),
+          supabase.from('movimientos_caja').insert([movData]).select()
+            .then(({ data, error }) => {
+              if (!error && data?.[0]) setMovimientosCaja(prev => [data[0], ...prev])
+            }),
+        ])
+      })().catch(e => console.warn('[marcarPedidoPagadoTotal] Background sync error:', e))
+
+      setCaja(prev => ({ ...prev, saldo: (prev.saldo || 0) + saldoPedido, ingresos: (prev.ingresos || 0) + saldoPedido }))
+      return { success: true, nuevoSaldo: 0 }
+
     } catch (error) {
       console.error('Error saldando pedido:', error)
       return { success: false, mensaje: error.message }
