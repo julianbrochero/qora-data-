@@ -795,7 +795,8 @@ export default function ProductosNimbus({
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
 
           {/* Paginación */}

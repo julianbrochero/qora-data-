@@ -212,7 +212,6 @@ export default function CalendarioEntregas({ pedidos = [], openModal }) {
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
-                        whiteSpace: "nowrap",
                         transition: "all 0.1s"
                       }}
                       onMouseEnter={e => e.currentTarget.style.filter = "brightness(0.95)"}
