@@ -24,6 +24,10 @@ import Login from './components/auth/Login';
 import AuthCallback from './components/auth/AuthCallback';
 import SubscriptionGate from './components/subscription/SubscriptionGate';
 import Landing from './components/Landing';
+import OnboardingWizard from './components/OnboardingWizard';
+import DemoBanner from './components/DemoBanner';
+import { seedDemoData } from './utils/seedDemoData';
+import { supabase } from './lib/supabaseClient';
 
 /* ── Pantalla de carga con estética del sistema ── */
 const AppLoader = ({ text = "Verificando acceso..." }) => (
@@ -55,7 +59,7 @@ const PrivateRoute = ({ children }) => {
 
 // Componente principal de la aplicación (una vez autenticado)
 const SistemaFacturacion = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUserData } = useAuth();
   const { status: subscriptionStatus } = useSubscriptionContext();
   const [activeModule, setActiveModule] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,6 +71,54 @@ const SistemaFacturacion = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [pedidoAEditar, setPedidoAEditar] = useState(null);
   const [productoParaCarrito, setProductoParaCarrito] = useState(null);
+  // Ref para poder llamar a recargarTodosLosDatos desde handlers
+  // definidos antes del hook useFacturacion
+  const recargarRef = useRef(null)
+
+  // ── Onboarding & Demo data ──────────────────────────────────────────────
+  const needsOnboarding = user && !user.user_metadata?.onboarding_done
+  const hasDemoData     = user?.user_metadata?.demo_data === true
+  const [demoBannerVisible, setDemoBannerVisible] = useState(true)
+
+  const handleOnboardingComplete = useCallback(async (respuestas) => {
+    try {
+      await updateUserData({
+        onboarding_done: true,
+        onboarding: respuestas,
+        demo_data: true,
+      })
+      const canalesMap = {
+        'Instagram': ['Instagram', 'WhatsApp', 'Local'],
+        'TiendaNube': ['TiendaNube', 'Instagram', 'Local'],
+        'Local': ['Local', 'WhatsApp'],
+        'Mixto': ['Local', 'Instagram', 'WhatsApp', 'TiendaNube', 'Email'],
+      }
+      const canal = respuestas.canal || 'Mixto'
+      try { localStorage.setItem('gestify_canales_venta', JSON.stringify(canalesMap[canal] || canalesMap.Mixto)) } catch {}
+      await seedDemoData(user.id, respuestas)
+      recargarRef.current?.()
+    } catch (e) {
+      console.error('Onboarding error:', e)
+      await updateUserData({ onboarding_done: true }).catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, updateUserData])
+
+  const handleBorrarDemo = useCallback(async () => {
+    if (!user) return
+    try {
+      await supabase.from('pedidos').delete().eq('user_id', user.id)
+      await supabase.from('clientes').delete().eq('user_id', user.id)
+      await supabase.from('productos').delete().eq('user_id', user.id)
+      await updateUserData({ demo_data: false })
+      recargarRef.current?.()
+      toast.success('Datos de ejemplo eliminados. ¡El sistema está listo para usar!')
+    } catch (e) {
+      toast.error('Error al borrar: ' + e.message)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, updateUserData])
+
 
   const {
     // Estados existentes
@@ -142,6 +194,9 @@ const SistemaFacturacion = () => {
     renombrarCategoria,
     eliminarCategoria,
   } = useFacturacion();
+
+  // Asignar la ref una vez que useFacturacion la expone
+  recargarRef.current = recargarTodosLosDatos
 
   // ✅ FUNCIÓN CORREGIDA: openModal
   const openModalHandler = (type, data = {}) => {
@@ -441,6 +496,11 @@ const SistemaFacturacion = () => {
       );
   };
 
+  // Mostrar wizard si el usuario no completó el onboarding
+  if (needsOnboarding) {
+    return <OnboardingWizard onComplete={handleOnboardingComplete} />
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fb" }}>
         <AppSidebar
@@ -453,6 +513,15 @@ const SistemaFacturacion = () => {
 
         {/* Contenido principal — empujado a la derecha del sidebar fijo en desktop */}
         <div className="md:pl-[220px]" style={{ minHeight: "100vh", background: "#f8f9fb" }}>
+          {/* Banner datos de ejemplo */}
+          {hasDemoData && demoBannerVisible && (
+            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 20px 0' }}>
+              <DemoBanner
+                onDismiss={() => setDemoBannerVisible(false)}
+                onBorrarTodo={handleBorrarDemo}
+              />
+            </div>
+          )}
           <SubscriptionGate>
             {renderActiveModule()}
           </SubscriptionGate>

@@ -69,10 +69,14 @@ const RESPONSIVE = `
   .pn-show-mobile { display: none; }
   .pn-hide-mobile { display: flex; }
   @media (max-width: 767px) {
-    .pn-show-mobile { display: flex !important; }
+    .pn-show-mobile {
+      display: flex !important;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
     .pn-hide-mobile { display: none !important; }
   }
-  /* Asegura que el fondo oscurecido (overlay) cubra el sidebar y otros elementos fijos */
   [data-radix-portal], [data-slot="dialog-portal"] {
     z-index: 10000 !important;
   }
@@ -489,20 +493,23 @@ export default function PedidosNimbus({
 
       {/* ── Mobile topbar ── */}
       <div className="pn-show-mobile" style={{
-        alignItems:"center", gap:10, padding:"11px 16px",
+        alignItems:"center", gap:0, padding:"0 12px",
+        height: 54,
         background:C.bg, borderBottom:`1px solid ${C.border}`,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <button onClick={onOpenMobileSidebar}
-          style={{ background:"none",border:"none",cursor:"pointer",padding:4,display:"flex" }}>
-          <MenuIcon size={20} color={C.textBlack}/>
+          style={{ background:"none",border:"none",cursor:"pointer",padding:8,display:"flex",alignItems:"center",flexShrink:0 }}>
+          <MenuIcon size={22} color={C.textBlack}/>
         </button>
-        <span style={{ fontWeight:700, fontSize:17, color:C.textBlack }}>Ventas</span>
+        <span style={{ flex:1, textAlign:"center", fontWeight:700, fontSize:17, color:C.textBlack, fontFamily:"'Inter',sans-serif", letterSpacing:'-0.2px' }}>Ventas</span>
         <button onClick={onNuevaVenta} style={{
-          marginLeft:"auto", display:"flex", alignItems:"center", gap:5,
-          height:32, padding:"0 12px", borderRadius:8, fontSize:13, fontWeight:600,
+          display:"flex", alignItems:"center", gap:5, flexShrink:0,
+          height:36, padding:"0 14px", borderRadius:8, fontSize:13, fontWeight:700,
           background:C.primary, color:"#fff", border:"none", cursor:"pointer",
+          fontFamily:"'Inter',sans-serif",
         }}>
-          <PlusIcon size={13} color="#fff"/> Nueva
+          <PlusIcon size={14} color="#fff"/> Nueva
         </button>
       </div>
 
