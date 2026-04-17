@@ -205,7 +205,7 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
         {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
           <>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.textBlack, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>
-              Pedido #{p.codigo || p.id?.toString().slice(-4)}
+              #{p.codigo || p.id?.toString().slice(-4)}
             </div>
             <div style={{ fontSize: 11, color: C.textMid, fontFamily: "'Inter',sans-serif" }}>
               Consumidor Final
@@ -305,7 +305,7 @@ const MobileCard = ({ p, onVer, onEditar, onEliminar }) => {
             {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
               <>
                 <div style={{ fontSize: 15, fontWeight: 800, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  Pedido #{p.codigo || p.id?.toString().slice(-4)}
+                  #{p.codigo || p.id?.toString().slice(-4)}
                 </div>
                 <div style={{ fontSize: 12, color: C.textMid }}>
                   Consumidor Final · {fFecha(p.fecha_pedido || p.created_at)}

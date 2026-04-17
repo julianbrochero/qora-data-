@@ -182,7 +182,7 @@ export default function AgregarVentaNimbus({
   const [prodIdx,       setProdIdx]      = useState(-1)
 
   /* ── auto-focus al montar ── */
-  useEffect(()=>{ setTimeout(()=>busProductoRef.current?.focus(), 80) }, [])
+  useEffect(()=>{ setTimeout(()=>busProductoRef.current?.focus(), 200) }, [])
 
   const canales = React.useMemo(()=>{ try{ const ls=localStorage.getItem('gestify_canales_venta'); if(ls) return JSON.parse(ls) }catch{} return [] },[])
 
