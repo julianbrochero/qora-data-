@@ -2,7 +2,7 @@
  * PedidosNimbus.jsx — módulo Ventas con estética TiendaNube
  * Misma interfaz de props que Pedidos.jsx
  */
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useMemo } from "react"
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import {
   SearchIcon, PlusIcon, EditIcon, TrashIcon,
@@ -441,7 +441,7 @@ export default function PedidosNimbus({
   const totalDeuda      = pedidosConDeuda.reduce((s,p)=>s+(parseFloat(p.saldo_pendiente)||0),0)
 
   // Canales disponibles en los pedidos actuales
-  const canalesDisponibles = React.useMemo(() => {
+  const canalesDisponibles = useMemo(() => {
     const fromPedidos = [...new Set(pedidosSeguros.map(p => p.canal_venta).filter(Boolean))]
     try { const ls = localStorage.getItem('gestify_canales_venta'); if(ls) { const saved = JSON.parse(ls); return [...new Set([...saved, ...fromPedidos])] } } catch {}
     return fromPedidos
