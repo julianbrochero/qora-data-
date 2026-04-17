@@ -352,6 +352,7 @@ export default function ProductosNimbus({
   const [selectedIds, setSelectedIds] = useState([])
   const [selectionMode, setSelectionMode] = useState(false)
   const [csvMenuOpen, setCsvMenuOpen] = useState(false)
+  const [showCsvHelp, setShowCsvHelp] = useState(false)
   const [filtroCat,    setFiltroCat]    = useState("todas")
   const [filtroStock,  setFiltroStock]  = useState("todos")
   const [sortStock,    setSortStock]    = useState(false)  // ordenar por stock ascendente
@@ -544,7 +545,7 @@ export default function ProductosNimbus({
               {csvMenuOpen && (
                 <div onClick={e => e.stopPropagation()} style={{
                   position:"absolute", top:36, right:0,
-                  width:160, background:C.bg, borderRadius:8,
+                  width:180, background:C.bg, borderRadius:8,
                   border:`1px solid ${C.border}`,
                   boxShadow:"0 8px 16px rgba(0,0,0,0.1)", zIndex:9999, padding:"4px 0",
                 }}>
@@ -566,6 +567,16 @@ export default function ProductosNimbus({
                     onMouseLeave={e => e.currentTarget.style.background="transparent"}
                   >
                     <Upload size={14} color={C.textMid}/> {csvLoading ? "Importando..." : "Importar"}
+                  </button>
+                  <div style={{ height:1, background:C.border, margin:"4px 0" }}/>
+                  <button onClick={() => { setCsvMenuOpen(false); setShowCsvHelp(v => !v) }}
+                    style={{ display:"flex", alignItems:"center", gap:8, width:"100%", padding:"8px 12px",
+                      background:"transparent", border:"none", fontSize:13, color: C.primary,
+                      cursor:"pointer", fontFamily:"'Inter',sans-serif", textAlign:"left", fontWeight:600 }}
+                    onMouseEnter={e => e.currentTarget.style.background="#eaf0eb"}
+                    onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                  >
+                    ℹ️ Guía TiendaNube CSV
                   </button>
                 </div>
               )}
@@ -601,6 +612,35 @@ export default function ProductosNimbus({
 
       {/* ── Filtros + Contenido — mismo maxWidth ── */}
       <div style={{ maxWidth:1200, margin:"0 auto", width:"100%" }}>
+
+      {/* ── Guía CSV TiendaNube ── */}
+      {showCsvHelp && (
+        <div style={{ margin:"10px 24px 0", padding:"14px 18px", borderRadius:10, background:C.primarySurf, border:`1px solid rgba(51,65,57,.18)` }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+            <div style={{ fontWeight:700, fontSize:13, color:C.primary }}>📦 Cómo importar productos desde TiendaNube</div>
+            <button onClick={() => setShowCsvHelp(false)}
+              style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:C.textLight, lineHeight:1 }}>×</button>
+          </div>
+          <ol style={{ margin:0, paddingLeft:18, display:"flex", flexDirection:"column", gap:6 }}>
+            {[
+              ['Entrá a tu panel de TiendaNube', 'Panel → Productos → Exportar productos como CSV'],
+              ['Descargá el archivo CSV', 'El archivo se descargará con todas las columnas de TiendaNube'],
+              ['Columnas que se importan automáticamente', <span style={{fontFamily:"monospace",fontSize:11,background:"rgba(51,65,57,.1)",padding:"1px 5px",borderRadius:3}}>nombre, precio, descripcion, sku (→ codigo), stock</span>],
+              ['Importá el archivo', 'Hacé click en CSV → Importar y seleccioná el archivo descargado'],
+              ['Verificá los datos', 'Los productos aparecerán en la lista con sus precios y stock actualizados'],
+            ].map(([title, desc], i) => (
+              <li key={i} style={{ fontSize:12, color:C.textDark }}>
+                <span style={{ fontWeight:700, color:C.primary }}>{title}</span>
+                <br/>
+                <span style={{ color:C.textMid }}>{desc}</span>
+              </li>
+            ))}
+          </ol>
+          <div style={{ marginTop:10, padding:"7px 10px", borderRadius:7, background:"rgba(51,65,57,.07)", fontSize:11, color:C.primary, fontWeight:600 }}>
+            💡 Tip: Si el CSV viene en formato UTF-8 con separador coma (,) se importa sin configuración adicional.
+          </div>
+        </div>
+      )}
 
       {/* ── Banner CSV resultado ── */}
       {csvResultado && (

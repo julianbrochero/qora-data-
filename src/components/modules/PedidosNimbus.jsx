@@ -382,7 +382,8 @@ export default function PedidosNimbus({
   onOpenMobileSidebar,
   formActions = {},
 }) {
-  const [filtroEstado, setFiltroEstado] = useState(() => { try { return localStorage.getItem("gestify_filtro_estado")||"todos" } catch { return "todos" } })
+  const [filtroEstado, setFiltroEstado] = useState(null)
+  const [filtroCanalVenta, setFiltroCanalVenta] = useState(null)
   const [soloDeuda, setSoloDeuda] = useState(false)
   const [pagina,       setPagina]      = useState(1)
   const [busqueda, setBusqueda] = useState(searchTerm||"")
@@ -419,9 +420,10 @@ export default function PedidosNimbus({
     const q = busqueda.toLowerCase()
     const items = (() => { try { const it=typeof p.items==="string"?JSON.parse(p.items):(p.items||[]); return it.map(i=>i.producto||i.nombre||"").join(" ").toLowerCase() } catch { return "" } })()
     const okQ   = !q || String(p.codigo||"").toLowerCase().includes(q) || String(p.cliente_nombre||"").toLowerCase().includes(q) || items.includes(q)
-    const okE   = filtroEstado==="todos" || p.estado===filtroEstado
+    const okE   = !filtroEstado || p.estado===filtroEstado
     const okD   = !soloDeuda || parseFloat(p.saldo_pendiente)>0.01
-    return okQ&&okE&&okD
+    const okC   = !filtroCanalVenta || p.canal_venta===filtroCanalVenta
+    return okQ&&okE&&okD&&okC
   }).sort((a,b)=>new Date(b.fecha_pedido||b.created_at)-new Date(a.fecha_pedido||a.created_at))
 
   const totalPags = Math.max(1,Math.ceil(filtrados.length/itemsPerPage))
@@ -437,6 +439,13 @@ export default function PedidosNimbus({
   }
   const pedidosConDeuda = pedidosSeguros.filter(p=>parseFloat(p.saldo_pendiente)>0.01)
   const totalDeuda      = pedidosConDeuda.reduce((s,p)=>s+(parseFloat(p.saldo_pendiente)||0),0)
+
+  // Canales disponibles en los pedidos actuales
+  const canalesDisponibles = React.useMemo(() => {
+    const fromPedidos = [...new Set(pedidosSeguros.map(p => p.canal_venta).filter(Boolean))]
+    try { const ls = localStorage.getItem('gestify_canales_venta'); if(ls) { const saved = JSON.parse(ls); return [...new Set([...saved, ...fromPedidos])] } } catch {}
+    return fromPedidos
+  }, [pedidosSeguros])
 
   const [confirmData, setConfirmData] = useState(null)
 
@@ -491,23 +500,23 @@ export default function PedidosNimbus({
       <div style={{ padding:"14px 24px 0", display:"flex", gap:10, flexWrap:"wrap" }}>
         <StatCard
           label="Total ventas" value={resumen.total} color={C.textBlack}
-          active={filtroEstado==="todos" && !soloDeuda}
-          onClick={() => { setFiltroEstado("todos"); setSoloDeuda(false) }}
+          active={filtroEstado===null && !soloDeuda}
+          onClick={() => { setFiltroEstado(null); setSoloDeuda(false); setFiltroCanalVenta(null) }}
         />
         <StatCard
           label="Pendientes" value={resumen.pendientes} color="#D97706"
           active={filtroEstado==="pendiente"}
-          onClick={() => setFiltroEstado(v => v==="pendiente" ? "todos" : "pendiente")}
+          onClick={() => setFiltroEstado(v => v==="pendiente" ? null : "pendiente")}
         />
         <StatCard
           label="En proceso" value={resumen.enProceso} color="#2563EB"
           active={filtroEstado==="preparando"}
-          onClick={() => setFiltroEstado(v => v==="preparando" ? "todos" : "preparando")}
+          onClick={() => setFiltroEstado(v => v==="preparando" ? null : "preparando")}
         />
         <StatCard
           label="Entregados" value={resumen.entregados} color="#16A34A"
           active={filtroEstado==="entregado"}
-          onClick={() => setFiltroEstado(v => v==="entregado" ? "todos" : "entregado")}
+          onClick={() => setFiltroEstado(v => v==="entregado" ? null : "entregado")}
         />
         {/* Deuda */}
         <StatCard
@@ -543,7 +552,7 @@ export default function PedidosNimbus({
           />
         </div>
 
-        <select value={filtroEstado} onChange={e=>{ setFiltroEstado(e.target.value); try{localStorage.setItem("gestify_filtro_estado",e.target.value)}catch{} }} className="app-select app-select--inline" style={{ minWidth: 168 }}>
+        <select value={filtroEstado||"todos"} onChange={e=>{ const v=e.target.value; setFiltroEstado(v==="todos"?null:v) }} className="app-select app-select--inline" style={{ minWidth: 168 }}>
           <option value="todos">Todos los estados</option>
           <option value="pendiente">Pendiente</option>
           <option value="preparando">Preparando</option>
@@ -553,6 +562,31 @@ export default function PedidosNimbus({
         </select>
 
       </div>
+
+      {/* ── Filtro canal de venta (minimalista) ── */}
+      {canalesDisponibles.length > 0 && (
+        <div style={{ padding:"8px 24px 0", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
+          <span style={{ fontSize:11, fontWeight:600, color:C.textLight, letterSpacing:"0.05em", marginRight:2 }}>CANAL</span>
+          {canalesDisponibles.map(canal => (
+            <button
+              key={canal}
+              onClick={() => setFiltroCanalVenta(v => v===canal ? null : canal)}
+              style={{
+                padding:"3px 11px", borderRadius:20, fontSize:11, fontWeight:600,
+                border: filtroCanalVenta===canal ? `1.5px solid ${C.primary}` : `1.5px solid ${C.border}`,
+                background: filtroCanalVenta===canal ? C.primary : C.bg,
+                color: filtroCanalVenta===canal ? "#fff" : C.textMid,
+                cursor:"pointer", transition:"all .12s", fontFamily:"'Inter',sans-serif",
+              }}
+            >{canal}</button>
+          ))}
+          {filtroCanalVenta && (
+            <button onClick={() => setFiltroCanalVenta(null)}
+              style={{ fontSize:10, color:C.textLight, background:"none", border:"none", cursor:"pointer", marginLeft:2, textDecoration:"underline" }}
+            >limpiar</button>
+          )}
+        </div>
+      )}
 
       {/* ── Tabla ── */}
       <div style={{ padding:"10px 24px 24px" }}>

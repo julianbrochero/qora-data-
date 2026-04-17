@@ -57,8 +57,20 @@ const SelNativo = ({ value, onChange, children, placeholder }) => (
   <select
     value={value}
     onChange={onChange}
-    className="app-select"
-    style={{ color: value ? C.textDark : C.textLight }}
+    style={{
+      width:'100%', height:32, padding:'0 28px 0 10px',
+      fontSize:12, fontWeight:500,
+      border:`1.5px solid ${C.border}`, borderRadius:7,
+      background:`#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 9px center`,
+      color: value ? C.textDark : C.textLight,
+      fontFamily:"'Inter',sans-serif",
+      outline:'none', cursor:'pointer',
+      boxSizing:'border-box',
+      appearance:'none', WebkitAppearance:'none',
+      transition:'border-color .12s',
+    }}
+    onFocus={e  => e.target.style.borderColor = C.borderFocus}
+    onBlur={e   => e.target.style.borderColor = C.border}
   >
     {placeholder && <option value="" disabled>{placeholder}</option>}
     {children}
