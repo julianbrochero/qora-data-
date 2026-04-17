@@ -525,108 +525,163 @@ export default function AgregarVentaNimbus({
               <div style={{fontSize:12,color:C.textLight}}>Buscá un producto arriba para agregarlo</div>
             </div>
           ) : (
-            <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%',borderCollapse:'collapse'}}>
-                <thead>
-                  <tr style={{background:C.surface,borderBottom:`1px solid ${C.border}`}}>
-                    {[['Nombre',''],['Precio',''],['Costo','pv-col-costo'],['Stock','pv-col-stock'],['Cant.',''],['Total',''],['','']].map(([h,cls])=>(
-                      <th key={h} className={cls} style={{
-                        padding:'7px 12px',textAlign:'left',
-                        fontSize:11,fontWeight:600,color:C.textMid,
-                        letterSpacing:'0.05em',fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap',
-                      }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {carrito.map(item=>{
-                    const prod = getProd(item.productoId)
-                    return (
-                      <tr key={item.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                        <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                          <div style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif",marginBottom:2}}>{item.nombre}</div>
-                          {item.codigo && <div style={{fontSize:11,color:C.textMid}}>{item.codigo}</div>}
-                          {prod?.variantes && prod.variantes.length > 0 && (
-                            <div style={{marginTop:4}}>
-                              <select
-                                value={item.variante||''}
-                                onChange={e=>setVariante(item.id, e.target.value)}
-                                style={{
-                                  padding:'2px 4px', fontSize:11, borderRadius:4, border:`1px solid ${C.border}`,
-                                  background:C.surface, color:C.textDark, outline:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif"
-                                }}
-                              >
-                                {prod.variantes.split(',').map(v => <option key={v.trim()} value={v.trim()}>{v.trim()}</option>)}
-                              </select>
-                            </div>
-                          )}
-                        </td>
-                        <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
-                          <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0"
-                            style={{
-                              width:84,height:30,padding:'0 8px',fontSize:13,
-                              border:`1px solid ${C.border}`,borderRadius:6,
-                              background:C.bg,color:C.textDark,
-                              fontFamily:"'Inter',sans-serif",outline:'none',textAlign:'right',
-                            }}
-                            onFocus={e=>e.target.style.borderColor=C.borderFocus}
-                            onBlur={e =>e.target.style.borderColor=C.border}
-                          />
-                        </td>
-                        <td className="pv-col-costo" style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
-                          <input type="number" value={item.costo??''} onChange={e=>setCosto(item.id,e.target.value)} min="0"
-                            placeholder="—"
-                            style={{
-                              width:80,height:30,padding:'0 8px',fontSize:13,
-                              border:`1px solid ${C.border}`,borderRadius:6,
-                              background:'#fafafa',color:C.textMid,
-                              fontFamily:"'Inter',sans-serif",outline:'none',textAlign:'right',
-                            }}
-                            onFocus={e=>e.target.style.borderColor=C.borderFocus}
-                            onBlur={e =>e.target.style.borderColor=C.border}
-                          />
-                        </td>
-                        <td className="pv-col-stock" style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                          <StockBadge prod={prod}/>
-                        </td>
-                        <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                          <div style={{display:'flex',alignItems:'center',gap:4}}>
-                            <button onClick={()=>cambiarCant(item.id,-1)}
-                              style={{width:24,height:24,borderRadius:5,border:`1px solid ${C.border}`,background:C.bg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                              <Minus size={11} color={C.textDark}/>
-                            </button>
-                            <input type="number" value={item.cantidad} onChange={e=>setCant(item.id,e.target.value)} min="1"
-                              style={{width:38,height:24,textAlign:'center',fontSize:13,fontWeight:600,border:`1px solid ${C.border}`,borderRadius:5,background:C.bg,color:C.textDark,fontFamily:"'Inter',sans-serif",outline:'none'}}
+            <>
+              {/* DESKTOP: Tabla clásica */}
+              <div className="pv-hide-mobile" style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead>
+                    <tr style={{background:C.surface,borderBottom:`1px solid ${C.border}`}}>
+                      {[['Nombre',''],['Precio',''],['Costo','pv-col-costo'],['Stock','pv-col-stock'],['Cant.',''],['Total',''],['','']].map(([h,cls])=>(
+                        <th key={h} className={cls} style={{
+                          padding:'7px 12px',textAlign:'left',
+                          fontSize:11,fontWeight:600,color:C.textMid,
+                          letterSpacing:'0.05em',fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap',
+                        }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {carrito.map(item=>{
+                      const prod = getProd(item.productoId)
+                      return (
+                        <tr key={item.id} style={{borderBottom:`1px solid ${C.border}`}}>
+                          <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
+                            <div style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif",marginBottom:2}}>{item.nombre}</div>
+                            {item.codigo && <div style={{fontSize:11,color:C.textMid}}>{item.codigo}</div>}
+                            {prod?.variantes && prod.variantes.length > 0 && (
+                              <div style={{marginTop:4}}>
+                                <select
+                                  value={item.variante||''}
+                                  onChange={e=>setVariante(item.id, e.target.value)}
+                                  style={{
+                                    padding:'2px 4px', fontSize:11, borderRadius:4, border:`1px solid ${C.border}`,
+                                    background:C.surface, color:C.textDark, outline:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif"
+                                  }}
+                                >
+                                  {prod.variantes.split(',').map(v => <option key={v.trim()} value={v.trim()}>{v.trim()}</option>)}
+                                </select>
+                              </div>
+                            )}
+                          </td>
+                          <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
+                            <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0"
+                              style={{
+                                width:84,height:30,padding:'0 8px',fontSize:13,
+                                border:`1px solid ${C.border}`,borderRadius:6,
+                                background:C.bg,color:C.textDark,
+                                fontFamily:"'Inter',sans-serif",outline:'none',textAlign:'right',
+                              }}
+                              onFocus={e=>e.target.style.borderColor=C.borderFocus}
+                              onBlur={e =>e.target.style.borderColor=C.border}
                             />
-                            <button onClick={()=>cambiarCant(item.id,1)}
-                              style={{width:24,height:24,borderRadius:5,border:`1px solid ${C.border}`,background:C.bg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                              <Plus size={11} color={C.textDark}/>
+                          </td>
+                          <td className="pv-col-costo" style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
+                            <input type="number" value={item.costo??''} onChange={e=>setCosto(item.id,e.target.value)} min="0"
+                              placeholder="—"
+                              style={{
+                                width:80,height:30,padding:'0 8px',fontSize:13,
+                                border:`1px solid ${C.border}`,borderRadius:6,
+                                background:'#fafafa',color:C.textMid,
+                                fontFamily:"'Inter',sans-serif",outline:'none',textAlign:'right',
+                              }}
+                              onFocus={e=>e.target.style.borderColor=C.borderFocus}
+                              onBlur={e =>e.target.style.borderColor=C.border}
+                            />
+                          </td>
+                          <td className="pv-col-stock" style={{padding:'7px 12px',verticalAlign:'middle'}}>
+                            <StockBadge prod={prod}/>
+                          </td>
+                          <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:4}}>
+                              <button onClick={()=>cambiarCant(item.id,-1)}
+                                style={{width:24,height:24,borderRadius:5,border:`1px solid ${C.border}`,background:C.bg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                                <Minus size={11} color={C.textDark}/>
+                              </button>
+                              <input type="number" value={item.cantidad} onChange={e=>setCant(item.id,e.target.value)} min="1"
+                                style={{width:38,height:24,textAlign:'center',fontSize:13,fontWeight:600,border:`1px solid ${C.border}`,borderRadius:5,background:C.bg,color:C.textDark,fontFamily:"'Inter',sans-serif",outline:'none'}}
+                              />
+                              <button onClick={()=>cambiarCant(item.id,1)}
+                                style={{width:24,height:24,borderRadius:5,border:`1px solid ${C.border}`,background:C.bg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                                <Plus size={11} color={C.textDark}/>
+                              </button>
+                            </div>
+                          </td>
+                          <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
+                            <span style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif"}}>
+                              {fMon(item.precio*item.cantidad)}
+                            </span>
+                          </td>
+                          <td style={{padding:'7px 10px',verticalAlign:'middle'}}>
+                            <button onClick={()=>quitarItem(item.id)}
+                              style={{width:26,height:26,borderRadius:6,border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
+                              onMouseEnter={e=>e.currentTarget.style.background=C.dangerSurf}
+                              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                            >
+                              <Trash2 size={13} color={C.danger}/>
                             </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* MOBILE: Tarjetas lista de Items */}
+              <div className="pv-show-mobile" style={{flexDirection:'column'}}>
+                {carrito.map(item => {
+                  const prod = getProd(item.productoId);
+                  return (
+                    <div key={item.id} style={{padding:'14px 16px', borderBottom:`1px solid ${C.border}`}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+                        <div style={{flex:1,paddingRight:10}}>
+                          <div style={{fontSize:14,fontWeight:700,color:C.textBlack,marginBottom:2,lineHeight:1.2}}>{item.nombre}</div>
+                          {item.codigo && <div style={{fontSize:12,color:C.textMid}}>{item.codigo}</div>}
+                        </div>
+                        <button onClick={()=>quitarItem(item.id)} 
+                          style={{
+                            width:32,height:32,borderRadius:8,border:'none',
+                            background:C.dangerSurf,color:C.danger,display:'flex',
+                            alignItems:'center',justifyContent:'center',flexShrink:0
+                          }}>
+                          <Trash2 size={15}/>
+                        </button>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:12,alignItems:'flex-end'}}>
+                        <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                          {prod?.variantes && prod.variantes.length > 0 && (
+                            <select value={item.variante||''} onChange={e=>setVariante(item.id, e.target.value)}
+                              style={{ height:36, padding:'0 10px', fontSize:13, borderRadius:8, border:`1px solid ${C.border}`, background:C.surface, color:C.textDark, outline:'none' }}>
+                                {prod.variantes.split(',').map(v => <option key={v.trim()} value={v.trim()}>{v.trim()}</option>)}
+                            </select>
+                          )}
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span style={{fontSize:12,color:C.textMid,fontWeight:600}}>Precio:</span>
+                            <div style={{position:'relative',display:'flex',alignItems:'center'}}>
+                               <span style={{position:'absolute',left:8,fontSize:14,color:C.textMid,fontWeight:600}}>$</span>
+                               <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0" 
+                                style={{ width:88,height:36,padding:'0 8px 0 22px',fontSize:14,fontWeight:600,border:`1.5px solid ${C.border}`,borderRadius:8,background:C.bg,outline:'none' }}/>
+                            </div>
                           </div>
-                        </td>
-                        <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
-                          <span style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif"}}>
-                            {fMon(item.precio*item.cantidad)}
-                          </span>
-                        </td>
-                        <td style={{padding:'7px 10px',verticalAlign:'middle'}}>
-                          <button onClick={()=>quitarItem(item.id)}
-                            style={{width:26,height:26,borderRadius:6,border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
-                            onMouseEnter={e=>e.currentTarget.style.background=C.dangerSurf}
-                            onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-                          >
-                            <Trash2 size={13} color={C.danger}/>
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
+                          <div style={{display:'flex',alignItems:'center',gap:4}}>
+                            <button onClick={()=>cambiarCant(item.id,-1)} style={{width:32,height:32,borderRadius:8,border:`1.5px solid ${C.border}`,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}><Minus size={14} color={C.textDark}/></button>
+                            <input type="number" value={item.cantidad} onChange={e=>setCant(item.id,e.target.value)} min="1" style={{width:44,height:32,textAlign:'center',fontSize:15,fontWeight:700,border:`1.5px solid ${C.border}`,borderRadius:8,background:C.bg,outline:'none'}}/>
+                            <button onClick={()=>cambiarCant(item.id,1)} style={{width:32,height:32,borderRadius:8,border:`1.5px solid ${C.border}`,background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}><Plus size={14} color={C.textDark}/></button>
+                          </div>
+                          <div style={{fontSize:16,fontWeight:800,color:C.textBlack}}>{fMon(item.precio*item.cantidad)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
 
           {/* ── Separador ── */}
+
           <div style={{borderTop:`1px solid ${C.border}`}}/>
 
           {/* ── Sección Detalles: cliente + pago ── */}
@@ -981,16 +1036,20 @@ export default function AgregarVentaNimbus({
         @media (max-width:767px){
           .pv-desktop{display:none!important;}
           .pv-mobile{display:flex!important;}
+          .pv-hide-mobile{display:none!important;}
+          .pv-show-mobile{display:flex!important;}
         }
         @media (min-width:768px){
           .pv-mobile{display:none!important;}
           .pv-desktop{display:flex!important;}
+          .pv-hide-mobile{display:block!important;}
+          .pv-show-mobile{display:none!important;}
         }
 
         .pv-form-grid {
           display:grid;
           grid-template-columns:1fr 1fr;
-          gap:10px;
+          gap:14px;
         }
         @media (max-width:540px) {
           .pv-form-grid { grid-template-columns:1fr; }
