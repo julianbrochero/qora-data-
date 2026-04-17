@@ -552,32 +552,15 @@ export default function PedidosNimbus({
           />
         </div>
 
-        {/* Selector de Estado */}
-        <Select value={filtroEstado || "todos"} onValueChange={(v) => setFiltroEstado(v === "todos" ? null : v)}>
-          <SelectTrigger className="w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
-            <SelectValue placeholder="Todos los estados" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="todos">Todos los estados</SelectItem>
-              <SelectItem value="pendiente">Pendiente</SelectItem>
-              <SelectItem value="preparando">Preparando</SelectItem>
-              <SelectItem value="enviado">Enviado</SelectItem>
-              <SelectItem value="entregado">Entregado</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-
         {/* Selector de Canal de Venta */}
         {canalesDisponibles.length > 0 && (
           <Select value={filtroCanalVenta || "todos"} onValueChange={(v) => setFiltroCanalVenta(v === "todos" ? null : v)}>
-            <SelectTrigger className="w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
-              <SelectValue placeholder="Todos los canales" />
+            <SelectTrigger className="w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+              <SelectValue placeholder="CANAL" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="todos">Todos los canales</SelectItem>
+                <SelectItem value="todos">CANAL</SelectItem>
                 {canalesDisponibles.map(canal => (
                   <SelectItem key={canal} value={canal}>{canal}</SelectItem>
                 ))}

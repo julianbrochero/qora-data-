@@ -614,7 +614,7 @@ export default function AgregarVentaNimbus({
             <div>
               <Label>Estado</Label>
               <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
-                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
                   <SelectValue placeholder="Estado..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -629,7 +629,7 @@ export default function AgregarVentaNimbus({
             <div>
               <Label>Método de pago</Label>
               <Select value={metodoPago} onValueChange={v => { setMetodoPago(v); try{localStorage.setItem('gestify_metodo_pago',v)}catch{} }}>
-                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
                   <SelectValue placeholder="Método..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -644,7 +644,7 @@ export default function AgregarVentaNimbus({
             <div>
               <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
               <Select value={canalVenta} onValueChange={setCanalVenta}>
-                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
                   <SelectValue placeholder="Sin canal" />
                 </SelectTrigger>
                 <SelectContent>

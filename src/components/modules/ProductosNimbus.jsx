@@ -680,7 +680,7 @@ export default function ProductosNimbus({
         </div>
         {/* Selector de Categoría */}
         <Select value={filtroCat} onValueChange={setFiltroCat}>
-          <SelectTrigger className="w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+          <SelectTrigger className="w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
             <SelectValue placeholder="Todas las categorías" />
           </SelectTrigger>
           <SelectContent>
@@ -692,7 +692,7 @@ export default function ProductosNimbus({
 
         {/* Selector de Stock */}
         <Select value={filtroStock} onValueChange={setFiltroStock}>
-          <SelectTrigger className="w-full max-w-[160px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+          <SelectTrigger className="w-full max-w-[160px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
             <SelectValue placeholder="Todo el stock" />
           </SelectTrigger>
           <SelectContent>

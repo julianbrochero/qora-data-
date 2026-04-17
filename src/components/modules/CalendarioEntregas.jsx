@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Package, List } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Package, List, Menu } from 'lucide-react'
 
 const C = {
   pageBg:      "#f8f9fb",
@@ -29,7 +29,7 @@ const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto
 const fFecha = (f) => { try { return new Date(f+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) } catch { return '' } }
 const fMonto = (m) => (parseFloat(m)||0).toLocaleString('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0})
 
-export default function CalendarioEntregas({ pedidos = [], openModal }) {
+export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobileSidebar }) {
   const [currentDate,  setCurrentDate]  = useState(new Date())
   const [selectedDay,  setSelectedDay]  = useState(null) // "YYYY-MM-DD"
   const [vista,        setVista]        = useState('mes') // 'mes' | 'lista'
@@ -97,6 +97,14 @@ export default function CalendarioEntregas({ pedidos = [], openModal }) {
           .cal-days-header span.short { display:none }
         }
       `}</style>
+
+      {/* ── Mobile topbar ── */}
+      <div className="md:hidden flex items-center h-14 bg-white border-b border-[#e5e7eb] px-4 shrink-0" style={{position:'sticky',top:0,zIndex:40}}>
+        <button onClick={onOpenMobileSidebar} className="mr-3 p-1.5 -ml-1 rounded-md text-[#6b7280] hover:bg-[#f3f4f6]" aria-label="Abrir menú">
+          <Menu size={20} />
+        </button>
+        <span className="font-semibold text-sm text-[#111827]">Calendario</span>
+      </div>
 
       {/* ── Header ── */}
       <div style={{ maxWidth:900, margin:'0 auto', padding:'16px 20px 0' }}>
