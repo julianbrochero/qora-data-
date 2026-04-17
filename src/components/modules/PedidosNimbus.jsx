@@ -202,12 +202,25 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
     >
       {/* Código + cliente */}
       <td style={{ padding: "12px 20px" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: C.primary, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>
-          {p.cliente_nombre || "Sin nombre"}
-        </div>
-        <div style={{ fontSize: 11, color: C.textMid, fontFamily: "'Inter',sans-serif" }}>
-          #{p.codigo || p.id?.toString().slice(-4)}
-        </div>
+        {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textBlack, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>
+              Pedido #{p.codigo || p.id?.toString().slice(-4)}
+            </div>
+            <div style={{ fontSize: 11, color: C.textMid, fontFamily: "'Inter',sans-serif" }}>
+              Consumidor Final
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textBlack, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>
+              {p.cliente_nombre}
+            </div>
+            <div style={{ fontSize: 11, color: C.textMid, fontFamily: "'Inter',sans-serif" }}>
+              #{p.codigo || p.id?.toString().slice(-4)}
+            </div>
+          </>
+        )}
       </td>
 
       {/* Fecha */}
@@ -289,12 +302,25 @@ const MobileCard = ({ p, onVer, onEditar, onEliminar }) => {
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
           <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {p.cliente_nombre || "Sin nombre"}
-            </div>
-            <div style={{ fontSize: 12, color: C.textMid }}>
-              #{p.codigo || p.id?.toString().slice(-4)} · {fFecha(p.fecha_pedido || p.created_at)}
-            </div>
+            {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  Pedido #{p.codigo || p.id?.toString().slice(-4)}
+                </div>
+                <div style={{ fontSize: 12, color: C.textMid }}>
+                  Consumidor Final · {fFecha(p.fecha_pedido || p.created_at)}
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 800, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {p.cliente_nombre}
+                </div>
+                <div style={{ fontSize: 12, color: C.textMid }}>
+                  #{p.codigo || p.id?.toString().slice(-4)} · {fFecha(p.fecha_pedido || p.created_at)}
+                </div>
+              </>
+            )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
             <div style={{ fontSize: 16, fontWeight: 800, color: C.textBlack, lineHeight: 1, marginBottom: 4 }}>

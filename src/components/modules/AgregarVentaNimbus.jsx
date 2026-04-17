@@ -284,9 +284,9 @@ export default function AgregarVentaNimbus({
 
   /* ── atajos de teclado ── */
   useEffect(()=>{
-    // Ctrl+Enter → guardar
+    // F2 o Ctrl+Enter → guardar
     const onDown = e => {
-      if(e.ctrlKey && e.key==='Enter'){ e.preventDefault(); handleGuardar() }
+      if(e.key === 'F2' || (e.ctrlKey && e.key==='Enter')){ e.preventDefault(); handleGuardar() }
     }
     // Shift solo (keyup) → pagar total. Funciona incluso con cursor en la barra de búsqueda.
     // Se usa keyup + rastreo para distinguir "Shift solo" de "Shift+Letra" (mayúsculas)
@@ -719,6 +719,7 @@ export default function AgregarVentaNimbus({
                     value={busProducto}
                     onChange={e=>{setBusProducto(e.target.value);setDropProducto(true);setProdIdx(-1)}}
                     placeholder="Agregar Producto"
+                    autoFocus={true}
                     style={{
                       width:'100%',height:36,padding:'0 32px 0 12px',fontSize:13,
                       border:`1.5px solid ${C.border}`,borderRadius:8,
@@ -731,7 +732,11 @@ export default function AgregarVentaNimbus({
                       if(!dropProducto || productosFilt.length===0) return
                       if(e.key==='ArrowDown'){ e.preventDefault(); setProdIdx(i=>Math.min(i+1,productosFilt.length-1)) }
                       else if(e.key==='ArrowUp'){ e.preventDefault(); setProdIdx(i=>Math.max(i-1,-1)) }
-                      else if(e.key==='Enter'){ e.preventDefault(); if(prodIdx>=0) agregarProd(productosFilt[prodIdx]) }
+                      else if(e.key==='Enter'){ 
+                        e.preventDefault(); 
+                        if(prodIdx>=0) agregarProd(productosFilt[prodIdx])
+                        else if(productosFilt.length > 0) agregarProd(productosFilt[0]) 
+                      }
                       else if(e.key==='Escape'){ setDropProducto(false); setProdIdx(-1) }
                     }}
                   />
@@ -947,7 +952,13 @@ export default function AgregarVentaNimbus({
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Atajos info */}
+      <div style={{ textAlign:'center', marginTop:16, fontSize:11, color:C.textMid, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:15, opacity:0.8 }}>
+        <span>🚀 <b>Enter</b>: Agregar 1° producto</span>
+        <span>💸 <b>Shift</b>: Saldar total</span>
+        <span>💾 <b>F2</b> o <b>Ctrl+Enter</b>: Guardar</span>
       </div>
 
       <style>{`
