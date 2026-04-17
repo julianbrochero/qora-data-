@@ -604,3 +604,246 @@ table {
 [data-slot="sidebar-wrapper"] {
   background: #f8f9fb !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE UX — MEJORAS GLOBALES PARA TODOS LOS MÓDULOS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+
+  /* ── Touch targets mínimos 44px ── */
+  button,
+  [role="button"],
+  a[href],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Inputs y selects más altos en mobile ── */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: 16px !important;  /* Previene zoom automático en iOS */
+    border-radius: 10px !important;
+  }
+
+  /* Override específico para inputs dentro de tablas o compactos */
+  td input[type="number"],
+  td input[type="text"] {
+    min-height: 36px;
+    font-size: 14px !important;
+  }
+
+  /* ── Select nativo ── */
+  select.app-select,
+  select.app-select-sm {
+    height: 44px !important;
+    font-size: 15px !important;
+    padding: 0 40px 0 14px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Radix UI SelectTrigger (shadcn) ── */
+  [data-slot="select-trigger"],
+  button[role="combobox"] {
+    min-height: 44px !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Topbars de módulos ── */
+  .pv-mobile,
+  .pn-show-mobile,
+  [class*="mobile-header"],
+  [class*="mobile-topbar"] {
+    padding: 12px 16px !important;
+    min-height: 56px !important;
+  }
+
+  /* ── Tarjetas / Cards ── */
+  .card {
+    border-radius: 12px !important;
+  }
+
+  /* ── Tabla del carrito mobile ── */
+  .pv-content-pad {
+    padding: 8px 10px 80px !important;  /* Extra bottom para footer fijo */
+  }
+
+  /* ── Footer POS fijo al fondo ── */
+  .pv-cart-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+    border-top: 2px solid #d1d5db;
+    background: #fff !important;
+    padding: 12px 14px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .pv-cart-footer-save {
+    width: 100% !important;
+  }
+
+  .pv-cart-footer-save button {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 48px !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Botones de acción primaria (Crear pedido, Guardar, etc.) ── */
+  button[style*="background:#334139"],
+  button[style*="background: #334139"] {
+    min-height: 48px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+
+  /* ── Botón Pagar Total ── */
+  .pv-cart-footer button {
+    min-height: 44px !important;
+    font-size: 14px !important;
+    border-radius: 9px !important;
+  }
+
+  /* ── Búsqueda de productos ── */
+  .pv-prod-wrap input {
+    min-height: 48px !important;
+    font-size: 16px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Botones de variante/cantidad en tabla ── */
+  .pv-content-pad td button {
+    min-height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  /* ── Dropdown de productos ── */
+  .pv-prod-wrap [style*="position:absolute"],
+  .pv-prod-wrap [style*="position: absolute"] {
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  /* ── Botones del módulo Productos (CSV, Agregar, etc.) ── */
+  .pn-hide-mobile + div button,
+  .pn-show-mobile button {
+    min-height: 44px;
+  }
+
+  /* ── Cards de clientes, productos, pedidos ── */
+  [class*="nimbus-card"],
+  [style*="borderRadius:10"] {
+    margin-bottom: 10px;
+  }
+
+  /* ── Campos del formulario de venta ── */
+  .pv-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* ── Botón dashed cliente ── */
+  .pv-form-grid button {
+    min-height: 48px !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Toggle de opcionales ── */
+  .pv-form-grid ~ div button {
+    padding: 10px 0 !important;
+    font-size: 14px !important;
+  }
+
+  /* ── Shortcuts info mobile — ocultar ── */
+  .pv-content-pad > div:last-child > span {
+    font-size: 10px;
+  }
+
+  /* ── Modales mobile — full screen ── */
+  [role="dialog"],
+  .modal-content,
+  [data-slot="dialog-content"] {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-height: 50vh !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    transform: none !important;
+    position: fixed !important;
+  }
+
+  /* ── Pedidos / Ventas — cards más legibles ── */
+  [style*="fontSize:13"],
+  [style*="font-size: 13"] {
+    font-size: 14px;
+  }
+
+  /* ── Badges de estado ── */
+  [style*="borderRadius:99"],
+  [style*="border-radius: 99"] {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  /* ── Calendario Entregas ── */
+  .pv-content-pad table th,
+  .pv-content-pad table td {
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+  }
+
+  /* ── KPI Cards en Dashboard ── */
+  [style*="minWidth:160"],
+  [style*="min-width: 160"] {
+    min-width: 140px !important;
+  }
+}
+
+/* ── Tablet mobile (641-767px) ── */
+@media (min-width: 641px) and (max-width: 767px) {
+  .pv-form-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .pv-cart-footer {
+    flex-direction: row !important;
+  }
+}
+
+/* ── Mejoras táctiles universales (todos los tamaños) ── */
+@media (pointer: coarse) {
+  /* Dispositivos táctiles — aumentar área de clic */
+  button,
+  [role="button"] {
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(51, 65, 57, 0.08);
+    touch-action: manipulation;
+  }
+
+  /* Scroll suave en listas */
+  [style*="overflowY:auto"],
+  [style*="overflow-y: auto"],
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+

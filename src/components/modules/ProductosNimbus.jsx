@@ -469,27 +469,72 @@ export default function ProductosNimbus({
     return prods
   }
 
-  /* ── CSV IMPORT ── */
+  /* ── CSV IMPORT (upsert: actualiza existentes, inserta nuevos) ── */
   const importarCSV = async file => {
     if(!file||!user) return
     setCsvLoading(true); setCsvResultado(null)
     try {
-      const text=await file.text()
-      const prods=parsearCSV(text)
-      if(prods.length===0){ setCsvResultado({tipo:'error',msg:'No se encontraron productos válidos.'}); return }
-      const existingCodes=new Set(productos.map(p=>p.codigo).filter(Boolean))
-      let codeIdx=productos.length+1
-      const genCode=()=>{ let c; do{ c='PROD-'+String(codeIdx++).padStart(4,'0') }while(existingCodes.has(c)); existingCodes.add(c); return c }
-      const payload=prods.map(p=>({...p,codigo:p.codigo||genCode(),user_id:user.id,created_at:new Date().toISOString()}))
-      let insertados=0
-      for(let i=0;i<payload.length;i+=50){
-        const batch=payload.slice(i,i+50)
-        const {data,error}=await supabase.from('productos').insert(batch).select()
-        if(error) throw error; insertados+=data.length
+      const text = await file.text()
+      const prods = parsearCSV(text)
+      if(prods.length === 0){ setCsvResultado({tipo:'error',msg:'No se encontraron productos válidos.'}); return }
+
+      // Índices para match rápido
+      const porCodigo = new Map(productos.filter(p=>p.codigo).map(p=>[p.codigo.trim().toLowerCase(), p]))
+      const porNombre = new Map(productos.map(p=>[p.nombre.trim().toLowerCase(), p]))
+
+      // Generar códigos únicos para los que no tienen
+      const existingCodes = new Set(productos.map(p=>p.codigo).filter(Boolean))
+      let codeIdx = productos.length + 1
+      const genCode = () => { let c; do{ c='PROD-'+String(codeIdx++).padStart(4,'0') }while(existingCodes.has(c)); existingCodes.add(c); return c }
+
+      const toUpdate = [] // { id, fields }
+      const toInsert = [] // full objects
+
+      for(const p of prods) {
+        const keyCode = p.codigo?.trim().toLowerCase()
+        const keyNom  = p.nombre.trim().toLowerCase()
+
+        const existing = (keyCode && porCodigo.get(keyCode)) || porNombre.get(keyNom)
+
+        if(existing) {
+          // Producto encontrado → actualizar precio (y costo/stock si vienen en el CSV)
+          const fields = { precio: p.precio }
+          if(p.costo != null) fields.costo = p.costo
+          if(p.stock != null && p.stock > 0) fields.stock = p.stock
+          toUpdate.push({ id: existing.id, fields })
+        } else {
+          toInsert.push({
+            ...p,
+            codigo: p.codigo || genCode(),
+            user_id: user.id,
+            created_at: new Date().toISOString()
+          })
+        }
       }
-      setCsvResultado({tipo:'ok',msg:`Se importaron ${insertados} producto${insertados!==1?'s':''} correctamente.`})
+
+      let actualizados = 0, insertados = 0
+
+      // Actualizar existentes uno a uno (Supabase no soporta batch update bien)
+      for(const { id, fields } of toUpdate) {
+        const { error } = await supabase.from('productos').update(fields).eq('id', id)
+        if(!error) actualizados++
+      }
+
+      // Insertar nuevos en batches de 50
+      for(let i = 0; i < toInsert.length; i += 50) {
+        const batch = toInsert.slice(i, i+50)
+        const { data, error } = await supabase.from('productos').insert(batch).select()
+        if(error) throw error
+        insertados += data.length
+      }
+
+      const partes = []
+      if(actualizados > 0) partes.push(`${actualizados} actualizado${actualizados!==1?'s':''}`)
+      if(insertados  > 0) partes.push(`${insertados} nuevo${insertados!==1?'s':''}`)
+      const resumen = partes.length ? partes.join(' · ') : 'Sin cambios'
+      setCsvResultado({tipo:'ok', msg:`CSV procesado — ${resumen}.`})
       recargarProductos?.()
-    } catch(e){ setCsvResultado({tipo:'error',msg:e.message}) }
+    } catch(e){ setCsvResultado({tipo:'error', msg: e.message}) }
     finally{ setCsvLoading(false); if(csvInputRef.current) csvInputRef.current.value='' }
   }
 

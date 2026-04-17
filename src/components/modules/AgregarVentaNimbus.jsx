@@ -23,6 +23,7 @@ const C = {
   bg:         "#ffffff",
   border:     "#d1d5db",
   borderFocus:"#334139",
+  borderLight:"#e5e7eb",
   primary:    "#334139",
   primaryHov: "#2b352f",
   primarySurf:"#eaf0eb",
@@ -61,28 +62,14 @@ const Label = ({children}) => (
   </div>
 )
 
-const InputField = ({value,onChange,placeholder,type='text',min,style:extra,className}) => (
-  <input type={type} value={value} onChange={onChange} placeholder={placeholder} min={min} className={className}
-    style={{
-      width:'100%', height:32, padding:'0 10px',
-      fontSize:12, border:`1.5px solid ${C.border}`, borderRadius:7,
-      background:C.bg, color:C.textDark,
-      fontFamily:"'Inter',sans-serif", outline:'none',
-      boxSizing:'border-box', ...extra,
-    }}
-    onFocus={e=>e.target.style.borderColor=C.borderFocus}
-    onBlur={e =>e.target.style.borderColor=C.border}
-  />
-)
-
-const BtnPrimary = ({children,onClick,disabled,loading}) => {
+const BtnPrimary = React.forwardRef(({children,onClick,disabled,loading}, ref) => {
   const [hov,setHov]=useState(false)
   return (
-    <button onClick={onClick} disabled={disabled||loading}
+    <button ref={ref} onClick={onClick} disabled={disabled||loading}
       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       style={{
         display:'inline-flex',alignItems:'center',gap:7,
-        height:32, padding:'0 18px', borderRadius:6, border:'none',
+        height:36, padding:'0 18px', borderRadius:6, border:'none',
         background:disabled ? C.textLight : hov ? C.primaryHov : C.primary,
         color:'#fff', fontSize:13, fontWeight:500,
         fontFamily:"'Inter',sans-serif", cursor:disabled?'not-allowed':'pointer',
@@ -92,7 +79,7 @@ const BtnPrimary = ({children,onClick,disabled,loading}) => {
       {loading ? 'Guardando...' : children}
     </button>
   )
-}
+})
 
 const BtnGhost = ({children,onClick}) => {
   const [hov,setHov]=useState(false)
@@ -149,6 +136,8 @@ export default function AgregarVentaNimbus({
   const [clienteNombre, setClienteNombre] = useState('')
   const [busCliente,    setBusCliente]    = useState('')
   const [dropCliente,   setDropCliente]   = useState(false)
+  const [showClientSearch, setShowClientSearch] = useState(false)
+  const [showOpcionales, setShowOpcionales] = useState(false)
   const [busProducto,   setBusProducto]   = useState('')
   const [dropProducto,  setDropProducto]  = useState(false)
   const [carrito,       setCarrito]       = useState([])
@@ -174,7 +163,6 @@ export default function AgregarVentaNimbus({
   const fechaEntregaRef   = useRef(null)
   const fechaPedidoRef    = useRef(null)
   const totalRef          = useRef(0)
-  // Auto-selección de cliente/producto recién creado
   const prevClientesIds   = useRef(new Set(clientes.map(c => c.id)))
   const prevProductosIds  = useRef(new Set(productos.map(p => p.id)))
   const waitingNewCliente = useRef(false)
@@ -191,9 +179,9 @@ export default function AgregarVentaNimbus({
   /* ── cargar pedido a editar ── */
   useEffect(()=>{
     if(!pedidoAEditar) return
-    if(pedidoAEditar.cliente_id){ setClienteId(pedidoAEditar.cliente_id); setClienteNombre(pedidoAEditar.cliente_nombre||''); setBusCliente(pedidoAEditar.cliente_nombre||'') }
+    if(pedidoAEditar.cliente_id){ setClienteId(pedidoAEditar.cliente_id); setClienteNombre(pedidoAEditar.cliente_nombre||''); setBusCliente(pedidoAEditar.cliente_nombre||''); setShowClientSearch(true); }
     let arr=[]; try{ arr=typeof pedidoAEditar.items==='string'?JSON.parse(pedidoAEditar.items):(pedidoAEditar.items||[]) }catch{}
-    setCarrito(arr.map((i,idx)=>({ id:Date.now()+idx, productoId:i.productoId||i.producto_id||null, nombre:i.producto||i.nombre||'', codigo:i.codigo||'', precio:parseFloat(i.precio)||0, costo:i.costo??'', cantidad:parseFloat(i.cantidad)||1 })))
+    setCarrito(arr.map((i,idx)=>({ id:Date.now()+idx, productoId:i.productoId||i.producto_id||null, nombre:i.producto||i.nombre||'', codigo:i.codigo||'', variante:i.variante||'', precio:parseFloat(i.precio)||0, costo:i.costo??'', cantidad:parseFloat(i.cantidad)||1 })))
     if(pedidoAEditar.fecha_pedido) setFechaPedido(pedidoAEditar.fecha_pedido.slice(0,10))
     if(pedidoAEditar.fecha_entrega_estimada) setFechaEntrega(pedidoAEditar.fecha_entrega_estimada.slice(0,10))
     if(pedidoAEditar.estado) setEstado(pedidoAEditar.estado)
@@ -224,7 +212,7 @@ export default function AgregarVentaNimbus({
 
   /* ── cálculos ── */
   const total       = carrito.reduce((s,i)=>s+i.precio*i.cantidad,0)
-  totalRef.current  = total  // ref siempre fresca, sin stale closures
+  totalRef.current  = total
   const adelantoNum = parseFloat(adelanto)||0
   const saldo       = Math.max(0,total-adelantoNum)
   const puedeGuardar = carrito.length>0 && (clienteActivo?!!clienteId:true) && !isProcessing
@@ -236,14 +224,15 @@ export default function AgregarVentaNimbus({
   /* ── carrito ── */
   const agregarProd = p => {
     setCarrito(prev=>{
-      const ex = prev.find(i=>i.productoId===p.id)
-      if(ex) return prev.map(i=>i.productoId===p.id?{...i,cantidad:i.cantidad+1}:i)
-      return [...prev,{id:Date.now(),productoId:p.id,nombre:p.nombre,codigo:p.codigo,precio:p.precio,costo:p.costo??'',cantidad:1}]
+      const defecto = p.variantes ? p.variantes.split(',')[0].trim() : ''
+      const ex = prev.find(i=>i.productoId===p.id && (i.variante||'') === defecto)
+      if(ex) return prev.map(i=>i.productoId===p.id && (i.variante||'') === defecto ? {...i,cantidad:i.cantidad+1} : i)
+      return [...prev,{id:Date.now(),productoId:p.id,nombre:p.nombre,codigo:p.codigo,precio:p.precio,costo:p.costo??'',cantidad:1,variante:defecto}]
     })
     setBusProducto(''); setDropProducto(false); setProdIdx(-1)
     setTimeout(()=>busProductoRef.current?.focus(),60)
   }
-  /* ── agregar producto externo (desde módulo Productos) ── */
+
   useEffect(()=>{
     if(!productoParaAgregarAlCarrito) return
     agregarProd(productoParaAgregarAlCarrito)
@@ -254,10 +243,11 @@ export default function AgregarVentaNimbus({
   const setCant     = (id,val)   => setCarrito(prev=>prev.map(i=>i.id===id?{...i,cantidad:Math.max(1,parseFloat(val)||1)}:i))
   const setPrecio   = (id,val)   => setCarrito(prev=>prev.map(i=>i.id===id?{...i,precio:parseFloat(val)||0}:i))
   const setCosto    = (id,val)   => setCarrito(prev=>prev.map(i=>i.id===id?{...i,costo:val===''?'':parseFloat(val)||0}:i))
+  const setVariante = (id,val)   => setCarrito(prev=>prev.map(i=>i.id===id?{...i,variante:val}:i))
   const quitarItem  = id          => setCarrito(prev=>prev.filter(i=>i.id!==id))
 
-  const selCliente = c => { setClienteId(c.id); setClienteNombre(c.nombre); setBusCliente(c.nombre); setDropCliente(false) }
-  const limpiarTodo = () => { setClienteId(''); setClienteNombre(''); setBusCliente(''); setBusProducto(''); setCarrito([]); setFechaPedido(new Date().toISOString().slice(0,10)); setFechaEntrega(''); setEstado('pendiente'); setNotas(''); setAdelanto(''); setCanalVenta('') }
+  const selCliente = c => { setClienteId(c.id); setClienteNombre(c.nombre); setBusCliente(c.nombre); setDropCliente(false); setShowClientSearch(false) }
+  const limpiarTodo = () => { setClienteId(''); setClienteNombre(''); setBusCliente(''); setBusProducto(''); setCarrito([]); setFechaPedido(new Date().toISOString().slice(0,10)); setFechaEntrega(''); setEstado('pendiente'); setNotas(''); setAdelanto(''); setCanalVenta(''); setShowClientSearch(false); setShowOpcionales(false) }
 
   /* ── guardar ── */
   const handleGuardar = useCallback(async()=>{
@@ -266,7 +256,7 @@ export default function AgregarVentaNimbus({
     const items = carrito.map(i=>{
       const costoNum = (i.costo!==''&&i.costo!=null) ? parseFloat(i.costo) : null
       const ganancia = costoNum!=null ? (i.precio - costoNum) * i.cantidad : null
-      return { id:i.id, productoId:i.productoId, producto:i.nombre, precio:i.precio, cantidad:i.cantidad, subtotal:i.precio*i.cantidad, costo:costoNum, ganancia }
+      return { id:i.id, productoId:i.productoId, producto:i.nombre, variante:(i.variante||''), precio:i.precio, cantidad:i.cantidad, subtotal:i.precio*i.cantidad, costo:costoNum, ganancia }
     })
     const final = { clienteId:clienteActivo?clienteId:null, clienteNombre:clienteActivo?clienteNombre:'Consumidor Final', fechaPedido, fechaEntrega:fechaEntrega||null, estado, notas, items, montoPagado:adelantoNum, total, canal_venta:canalVenta||null }
     try {
@@ -284,23 +274,15 @@ export default function AgregarVentaNimbus({
 
   /* ── atajos de teclado ── */
   useEffect(()=>{
-    // F2 o Ctrl+Enter → guardar
-    // Teclas generales para auto-focus en buscador
     const onDown = e => {
-      // Guardar con F2 o Ctrl+Enter
       if(e.key === 'F2' || (e.ctrlKey && e.key==='Enter')){ e.preventDefault(); handleGuardar(); return }
-
-      // Auto-focus buscador de productos al tipear
       if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const active = document.activeElement
         if(active && !['INPUT','TEXTAREA','SELECT'].includes(active.tagName)){
-          // No estamos en ningún input, enfocamos buscador
           busProductoRef.current?.focus()
         }
       }
     }
-    // Shift solo (keyup) → pagar total. Funciona incluso con cursor en la barra de búsqueda.
-    // Se usa keyup + rastreo para distinguir "Shift solo" de "Shift+Letra" (mayúsculas)
     let shiftAlone = false
     const trackDown = e => {
       if(e.key === 'Shift') { shiftAlone = true }
@@ -322,7 +304,7 @@ export default function AgregarVentaNimbus({
     }
   },[handleGuardar])
 
-  /* ── scroll item seleccionado en dropdown (arriba y abajo) ── */
+  /* ── scroll item seleccionado en dropdown ── */
   useEffect(()=>{
     if(prodIdx < 0 || !dropProdRef.current) return
     const container = dropProdRef.current
@@ -348,7 +330,6 @@ export default function AgregarVentaNimbus({
     return ()=>document.removeEventListener('mousedown',h)
   },[])
 
-  /* ── obtener datos de producto por id ── */
   const getProd = (productoId) => productos.find(p=>p.id===productoId)
 
   return (
@@ -364,17 +345,14 @@ export default function AgregarVentaNimbus({
       {exito && (
         <div style={{
           position:'fixed', inset:0, zIndex:9999,
-          background:'rgba(0,0,0,0.3)',
-          backdropFilter:'blur(4px)',
+          background:'rgba(0,0,0,0.3)', backdropFilter:'blur(4px)',
           display:'flex', alignItems:'center', justifyContent:'center',
           animation:'av-fade-out .9s ease forwards',
         }}>
           <div style={{
-            background:'#fff', borderRadius:20,
-            padding:'44px 52px', textAlign:'center',
+            background:'#fff', borderRadius:20, padding:'44px 52px', textAlign:'center',
             boxShadow:'0 24px 64px rgba(0,0,0,0.22)',
-            animation:'av-slide-up .18s cubic-bezier(.22,.97,.56,1)',
-            minWidth:260,
+            animation:'av-slide-up .18s cubic-bezier(.22,.97,.56,1)', minWidth:260,
           }}>
             <div style={{
               width:76, height:76, borderRadius:'50%',
@@ -408,12 +386,10 @@ export default function AgregarVentaNimbus({
 
       {/* ── Header ── */}
       <div style={{ background:C.bg }}>
-        {/* Mobile */}
         <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 16px' }} className="pv-mobile">
           <button onClick={onOpenMobileSidebar} style={{background:'none',border:'none',cursor:'pointer',display:'flex'}}><MenuIcon size={20} color={C.textBlack}/></button>
           <span style={{fontWeight:700,fontSize:16,color:C.textBlack}}>{pedidoAEditar?'Editar Venta':'Agregar Venta'}</span>
         </div>
-        {/* Desktop — mismo maxWidth que el contenido */}
         <div style={{ maxWidth:860, margin:'0 auto', width:'100%', display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 24px 12px',gap:12,boxSizing:'border-box' }} className="pv-desktop">
           <h1 style={{margin:0,fontSize:22,fontWeight:700,color:C.textBlack,letterSpacing:'-0.3px'}}>
             {pedidoAEditar ? `Editando · ${pedidoAEditar.codigo||''}` : 'Agregar Venta'}
@@ -428,269 +404,15 @@ export default function AgregarVentaNimbus({
         </div>
       </div>
 
-
       {/* ── Contenido centrado ── */}
       <div className="pv-content-pad">
 
         {/* ┌─────────────────────────────────┐ */}
-        {/* │   CARD 1: Detalles de la Venta  │ */}
-        {/* └─────────────────────────────────┘ */}
-        <div style={{ background:C.bg,borderRadius:10,border:`1px solid ${C.border}`,padding:'10px 14px',marginBottom:8 }}>
-          <h2 style={{margin:'0 0 7px',fontSize:12,fontWeight:700,color:C.textBlack,letterSpacing:'0.02em'}}>Detalles de la Venta</h2>
-
-          <div className="pv-form-grid">
-
-            {/* Cliente */}
-            <div ref={cliRef} style={{position:'relative'}}>
-              <Label>Cliente</Label>
-              <div style={{display:'flex',gap:6}}>
-                <div style={{position:'relative',flex:1}}>
-                  <div style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
-                    <User size={14} color={C.textMid}/>
-                  </div>
-                  <input
-                    type="text"
-                    value={busCliente}
-                    onChange={e=>{setBusCliente(e.target.value);setDropCliente(true);if(!e.target.value){setClienteId('');setClienteNombre('')}}}
-                    placeholder={clienteActivo?'Buscar cliente...':'Consumidor Final'}
-                    disabled={!clienteActivo}
-                    style={{
-                      width:'100%',height:32,padding:'0 10px 0 28px',fontSize:12,
-                      border:`1.5px solid ${C.border}`,borderRadius:7,
-                      background:clienteActivo?C.bg:'#f9fafb',color:C.textDark,
-                      fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
-                    }}
-                    onFocus={e=>{e.target.style.borderColor=C.borderFocus;setDropCliente(true)}}
-                    onBlur={e=>e.target.style.borderColor=C.border}
-                  />
-                  {/* Dropdown clientes */}
-                  {dropCliente && clienteActivo && clientesFilt.length>0 && (
-                    <div style={{
-                      position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:100,
-                      background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,
-                      boxShadow:'0 4px 16px rgba(0,0,0,.1)',maxHeight:200,overflowY:'auto',
-                    }}>
-                      {clientesFilt.slice(0,8).map(c=>(
-                        <div key={c.id} onMouseDown={()=>selCliente(c)}
-                          style={{
-                            padding:'9px 12px',fontSize:13,color:C.textDark,cursor:'pointer',
-                            borderBottom:`1px solid #f3f4f6`,fontFamily:"'Inter',sans-serif",
-                          }}
-                          onMouseEnter={e=>e.currentTarget.style.background='#f9fafb'}
-                          onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-                        >
-                          <span style={{fontWeight:500}}>{c.nombre}</span>
-                          {c.telefono && <span style={{fontSize:11,color:C.textMid,marginLeft:8}}>{c.telefono}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {/* Toggle sin cliente */}
-                <button
-                  onClick={()=>{ setClienteActivo(v=>{ const n=!v; try{localStorage.setItem(PREF_KEY,String(n))}catch{}; if(n===false){setClienteId('');setClienteNombre('');setBusCliente('')}; return n }) }}
-                  title={clienteActivo?'Cambiar a sin cliente':'Agregar cliente'}
-                  style={{
-                    width:32,height:32,borderRadius:7,flexShrink:0,
-                    border:`1.5px solid ${clienteActivo?C.primary:C.border}`,
-                    background:clienteActivo?C.primary:C.bg,
-                    color:clienteActivo?'#fff':C.textMid,
-                    cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-                  }}
-                >
-                  <User size={14}/>
-                </button>
-              </div>
-            </div>
-
-            {/* Fecha pedido — mismo picker que fecha entrega */}
-            <div ref={fechaPedidoRef} style={{position:'relative'}}>
-              <Label>Fecha del pedido</Label>
-              <button type="button"
-                onClick={()=>{ setPedidoViewDate(new Date(fechaPedido+'T12:00:00')); setFechaPedidoPicker(v=>!v) }}
-                style={{
-                  width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
-                  fontSize:12,border:`1.5px solid ${C.borderFocus}`,borderRadius:7,
-                  background:C.bg,color:C.textDark,
-                  fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
-                  transition:'border-color .12s',
-                }}>
-                <Calendar size={13} color={C.primary} style={{flexShrink:0}}/>
-                <span style={{flex:1,textAlign:'left'}}>
-                  {new Date(fechaPedido+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
-                </span>
-                <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>
-              </button>
-              {fechaPedidoPicker && (
-                <div className="pv-dp-wrap">
-                  <div className="pv-dp-header">
-                    <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
-                    <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pedidoViewDate.getMonth()]} {pedidoViewDate.getFullYear()}</span>
-                    <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
-                  </div>
-                  <div className="pv-dp-grid">
-                    {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
-                    {(()=>{
-                      const yr=pedidoViewDate.getFullYear(), mo=pedidoViewDate.getMonth()
-                      const firstDay=new Date(yr,mo,1).getDay()
-                      const daysInMo=new Date(yr,mo+1,0).getDate()
-                      const todayD=new Date()
-                      const cells=[]
-                      for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
-                      for(let d=1;d<=daysInMo;d++){
-                        const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-                        const isSel=fechaPedido===ds
-                        const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
-                        cells.push(
-                          <button key={d} type="button"
-                            className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
-                            onClick={()=>{setFechaPedido(ds);setFechaPedidoPicker(false)}}>
-                            {d}
-                          </button>
-                        )
-                      }
-                      return cells
-                    })()}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Fecha entrega — picker personalizado */}
-            <div ref={fechaEntregaRef} style={{position:'relative'}}>
-              <Label>Fecha de entrega <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
-              <button type="button"
-                onClick={()=>{ setPickerViewDate(fechaEntrega?new Date(fechaEntrega+'T12:00:00'):new Date()); setFechaEntregaPicker(v=>!v) }}
-                style={{
-                  width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
-                  fontSize:12,border:`1.5px solid ${fechaEntrega?C.borderFocus:C.border}`,borderRadius:7,
-                  background:C.bg,color:fechaEntrega?C.textDark:C.textLight,
-                  fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
-                  transition:'border-color .12s',
-                }}>
-                <Calendar size={13} color={fechaEntrega?C.primary:C.textLight} style={{flexShrink:0}}/>
-                <span style={{flex:1,textAlign:'left'}}>
-                  {fechaEntrega ? new Date(fechaEntrega+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : 'Sin fecha...'}
-                </span>
-                {fechaEntrega
-                  ? <span onMouseDown={e=>{e.stopPropagation();setFechaEntrega('');setFechaEntregaPicker(false)}} style={{color:C.textLight,fontSize:16,lineHeight:1,cursor:'pointer',flexShrink:0,padding:'0 2px'}}>×</span>
-                  : <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>}
-              </button>
-
-              {/* Mini calendario */}
-              {fechaEntregaPicker && (
-                <div className="pv-dp-wrap">
-                  <div className="pv-dp-header">
-                    <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
-                    <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pickerViewDate.getMonth()]} {pickerViewDate.getFullYear()}</span>
-                    <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
-                  </div>
-                  <div className="pv-dp-grid">
-                    {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
-                    {(()=>{
-                      const yr=pickerViewDate.getFullYear(), mo=pickerViewDate.getMonth()
-                      const firstDay=new Date(yr,mo,1).getDay()
-                      const daysInMo=new Date(yr,mo+1,0).getDate()
-                      const todayD=new Date()
-                      const cells=[]
-                      for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
-                      for(let d=1;d<=daysInMo;d++){
-                        const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-                        const isSel=fechaEntrega===ds
-                        const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
-                        cells.push(
-                          <button key={d} type="button"
-                            className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
-                            onClick={()=>{setFechaEntrega(ds);setFechaEntregaPicker(false)}}>
-                            {d}
-                          </button>
-                        )
-                      }
-                      return cells
-                    })()}
-                  </div>
-                  {fechaEntrega && (
-                    <div className="pv-dp-footer">
-                      <button type="button" className="pv-dp-clear"
-                        onClick={()=>{setFechaEntrega('');setFechaEntregaPicker(false)}}>
-                        Limpiar fecha
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Estado */}
-            <div>
-              <Label>Estado</Label>
-              <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
-                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                  <SelectValue placeholder="Estado..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {ESTADOS_PEDIDO.map(e=><SelectItem key={e.val} value={e.val}>{e.lbl}</SelectItem>)}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Método de pago */}
-            <div>
-              <Label>Método de pago</Label>
-              <Select value={metodoPago} onValueChange={v => { setMetodoPago(v); try{localStorage.setItem('gestify_metodo_pago',v)}catch{} }}>
-                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                  <SelectValue placeholder="Método..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {METODOS_PAGO.map(m=><SelectItem key={m.val} value={m.val}>{m.lbl}</SelectItem>)}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Canal de venta */}
-            <div>
-              <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
-              <Select value={canalVenta} onValueChange={setCanalVenta}>
-                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                  <SelectValue placeholder="Sin canal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="">Sin canal</SelectItem>
-                    {canales.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-          </div>{/* end pv-form-grid */}
-
-          {/* Notas */}
-          <div style={{marginTop:5}}>
-            <Label>Notas (opcional)</Label>
-            <textarea value={notas} onChange={e=>setNotas(e.target.value)}
-              placeholder="Observaciones, instrucciones de entrega..."
-              rows={1}
-              style={{
-                width:'100%',padding:'6px 10px',fontSize:12,resize:'vertical',
-                border:`1.5px solid ${C.border}`,borderRadius:7,
-                background:C.bg,color:C.textDark,
-                fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
-              }}
-              onFocus={e=>e.target.style.borderColor=C.borderFocus}
-              onBlur={e =>e.target.style.borderColor=C.border}
-            />
-          </div>
-        </div>
-
-        {/* ┌─────────────────────────────────┐ */}
-        {/* │   CARD 2: Productos / Carrito   │ */}
+        {/* │   CARD: Productos + Detalles    │ */}
         {/* └─────────────────────────────────┘ */}
         <div style={{ background:C.bg,borderRadius:10,border:`1px solid ${C.border}`,overflow:'hidden' }}>
+
+          {/* ── Buscador de productos ── */}
           <div style={{padding:'12px 16px 10px',borderBottom:`1px solid ${C.border}`}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
               <h2 style={{margin:0,fontSize:13,fontWeight:700,color:C.textBlack}}>Productos</h2>
@@ -712,7 +434,6 @@ export default function AgregarVentaNimbus({
               </div>
             </div>
 
-            {/* Buscador de productos */}
             <div className="pv-prod-wrap" style={{position:'relative'}}>
               <div style={{display:'flex',gap:10,alignItems:'center'}}>
                 <div style={{
@@ -743,10 +464,10 @@ export default function AgregarVentaNimbus({
                       if(!dropProducto || productosFilt.length===0) return
                       if(e.key==='ArrowDown'){ e.preventDefault(); setProdIdx(i=>Math.min(i+1,productosFilt.length-1)) }
                       else if(e.key==='ArrowUp'){ e.preventDefault(); setProdIdx(i=>Math.max(i-1,-1)) }
-                      else if(e.key==='Enter'){ 
-                        e.preventDefault(); 
+                      else if(e.key==='Enter'){
+                        e.preventDefault();
                         if(prodIdx>=0) agregarProd(productosFilt[prodIdx])
-                        else if(productosFilt.length > 0) agregarProd(productosFilt[0]) 
+                        else if(productosFilt.length > 0) agregarProd(productosFilt[0])
                       }
                       else if(e.key==='Escape'){ setDropProducto(false); setProdIdx(-1) }
                     }}
@@ -757,7 +478,6 @@ export default function AgregarVentaNimbus({
                 </div>
               </div>
 
-              {/* Dropdown productos */}
               {dropProducto && busProducto && productosFilt.length>0 && (
                 <div ref={dropProdRef} style={{
                   position:'absolute',top:'calc(100% + 4px)',left:50,right:0,zIndex:100,
@@ -770,7 +490,6 @@ export default function AgregarVentaNimbus({
                     return (
                       <div key={p.id} data-pidx={idx} onMouseDown={()=>agregarProd(p)}
                         onMouseEnter={()=>setProdIdx(idx)}
-                        onMouseLeave={()=>{}}
                         style={{
                           display:'flex',alignItems:'center',justifyContent:'space-between',
                           padding:'9px 14px 9px 11px',cursor:'pointer',
@@ -794,15 +513,12 @@ export default function AgregarVentaNimbus({
                       </div>
                     )
                   })}
-                  {productosFilt.length===0 && (
-                    <div style={{padding:'14px',fontSize:13,color:C.textMid,textAlign:'center'}}>No se encontraron productos</div>
-                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Tabla del carrito */}
+          {/* ── Tabla del carrito ── */}
           {carrito.length===0 ? (
             <div style={{padding:'20px 24px',textAlign:'center'}}>
               <div style={{fontSize:13,color:C.textMid,marginBottom:6}}>El carrito está vacío</div>
@@ -827,12 +543,24 @@ export default function AgregarVentaNimbus({
                     const prod = getProd(item.productoId)
                     return (
                       <tr key={item.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                        {/* Nombre */}
                         <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                          <div style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif"}}>{item.nombre}</div>
+                          <div style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif",marginBottom:2}}>{item.nombre}</div>
                           {item.codigo && <div style={{fontSize:11,color:C.textMid}}>{item.codigo}</div>}
+                          {prod?.variantes && prod.variantes.length > 0 && (
+                            <div style={{marginTop:4}}>
+                              <select
+                                value={item.variante||''}
+                                onChange={e=>setVariante(item.id, e.target.value)}
+                                style={{
+                                  padding:'2px 4px', fontSize:11, borderRadius:4, border:`1px solid ${C.border}`,
+                                  background:C.surface, color:C.textDark, outline:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif"
+                                }}
+                              >
+                                {prod.variantes.split(',').map(v => <option key={v.trim()} value={v.trim()}>{v.trim()}</option>)}
+                              </select>
+                            </div>
+                          )}
                         </td>
-                        {/* Precio editable */}
                         <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
                           <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0"
                             style={{
@@ -845,7 +573,6 @@ export default function AgregarVentaNimbus({
                             onBlur={e =>e.target.style.borderColor=C.border}
                           />
                         </td>
-                        {/* Costo editable */}
                         <td className="pv-col-costo" style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
                           <input type="number" value={item.costo??''} onChange={e=>setCosto(item.id,e.target.value)} min="0"
                             placeholder="—"
@@ -859,11 +586,9 @@ export default function AgregarVentaNimbus({
                             onBlur={e =>e.target.style.borderColor=C.border}
                           />
                         </td>
-                        {/* Stock */}
                         <td className="pv-col-stock" style={{padding:'7px 12px',verticalAlign:'middle'}}>
                           <StockBadge prod={prod}/>
                         </td>
-                        {/* Cantidad */}
                         <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
                           <div style={{display:'flex',alignItems:'center',gap:4}}>
                             <button onClick={()=>cambiarCant(item.id,-1)}
@@ -879,13 +604,11 @@ export default function AgregarVentaNimbus({
                             </button>
                           </div>
                         </td>
-                        {/* Subtotal */}
                         <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
                           <span style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif"}}>
                             {fMon(item.precio*item.cantidad)}
                           </span>
                         </td>
-                        {/* Eliminar */}
                         <td style={{padding:'7px 10px',verticalAlign:'middle'}}>
                           <button onClick={()=>quitarItem(item.id)}
                             style={{width:26,height:26,borderRadius:6,border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
@@ -903,17 +626,296 @@ export default function AgregarVentaNimbus({
             </div>
           )}
 
-          {/* ── Footer del carrito: Total + Adelanto + Guardar ── */}
-          <div className="pv-cart-footer">
-            <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-              <div>
-                <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Total</div>
-                <span style={{fontSize:18,fontWeight:800,color:C.textBlack,fontFamily:"'Inter',sans-serif",letterSpacing:'-0.3px'}}>
-                  {fMon(total)}
-                </span>
+          {/* ── Separador ── */}
+          <div style={{borderTop:`1px solid ${C.border}`}}/>
+
+          {/* ── Sección Detalles: cliente + pago ── */}
+          <div style={{padding:'12px 16px'}}>
+            <div className="pv-form-grid" style={{marginBottom:8}}>
+              {/* Cliente */}
+              <div ref={cliRef} style={{position:'relative'}}>
+                <Label>Cliente</Label>
+                {clienteActivo && showClientSearch ? (
+                  <div style={{display:'flex',gap:6}}>
+                    <div style={{position:'relative',flex:1}}>
+                      <div style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+                        <User size={14} color={C.textMid}/>
+                      </div>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={busCliente}
+                        onChange={e=>{setBusCliente(e.target.value);setDropCliente(true);if(!e.target.value){setClienteId('');setClienteNombre('')}}}
+                        placeholder="Buscar cliente..."
+                        style={{
+                          width:'100%',height:32,padding:'0 10px 0 28px',fontSize:12,
+                          border:`1.5px solid ${C.border}`,borderRadius:7,
+                          background:C.bg,color:C.textDark,
+                          fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
+                        }}
+                        onFocus={e=>{e.target.style.borderColor=C.borderFocus;setDropCliente(true)}}
+                        onBlur={e=>e.target.style.borderColor=C.border}
+                      />
+                      {dropCliente && clientesFilt.length>0 && (
+                        <div style={{
+                          position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:100,
+                          background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,
+                          boxShadow:'0 4px 16px rgba(0,0,0,.1)',maxHeight:200,overflowY:'auto',
+                        }}>
+                          {clientesFilt.slice(0,8).map(c=>(
+                            <div key={c.id} onMouseDown={()=>selCliente(c)}
+                              style={{
+                                padding:'9px 12px',fontSize:13,color:C.textDark,cursor:'pointer',
+                                borderBottom:`1px solid #f3f4f6`,fontFamily:"'Inter',sans-serif",
+                              }}
+                              onMouseEnter={e=>e.currentTarget.style.background='#f9fafb'}
+                              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                            >
+                              <span style={{fontWeight:500}}>{c.nombre}</span>
+                              {c.telefono && <span style={{fontSize:11,color:C.textMid,marginLeft:8}}>{c.telefono}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={()=>{ setClienteActivo(false); setShowClientSearch(false); setClienteId(''); setClienteNombre(''); setBusCliente('') }}
+                      title="Cancelar" style={{width:32,height:32,borderRadius:7,border:`1px solid ${C.border}`,background:C.bg,color:C.textMid,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><X size={14}/></button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={()=>{ setClienteActivo(true); setShowClientSearch(true) }}
+                    style={{
+                      width:'100%', height:32, padding:'0 12px', fontSize:13, fontWeight:600,
+                      border:`1.5px ${clienteId?'solid':'dashed'} ${clienteId?C.primary:C.border}`, borderRadius:8,
+                      background:clienteId?'#f8fdf9':'transparent',
+                      color:clienteId?C.primary:C.textMid, cursor:'pointer',
+                      display:'flex', alignItems:'center', justifyContent:'flex-start',
+                      transition:'all .12s'
+                    }}
+                    onMouseEnter={e=>{if(!clienteId) e.currentTarget.style.borderColor=C.textMid}}
+                    onMouseLeave={e=>{if(!clienteId) e.currentTarget.style.borderColor=C.border}}
+                  >
+                    {clienteId ? (
+                      <><span style={{flex:1,textAlign:'left',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{clienteNombre}</span>
+                      <span onClick={e=>{e.stopPropagation();setClienteActivo(false);setShowClientSearch(false);setClienteId('');setClienteNombre('');setBusCliente('')}}
+                        style={{flexShrink:0,marginLeft:8,display:'flex',alignItems:'center',opacity:.6}}><X size={13}/></span></>
+                    ) : (
+                      <>+ Consumidor Final <span style={{fontWeight:400,opacity:.6,marginLeft:4}}>(default)</span></>
+                    )}
+                  </button>
+                )}
               </div>
-              {total>0 && (
-                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+
+              {/* Método de pago */}
+              <div>
+                <Label>Método de pago</Label>
+                <Select value={metodoPago} onValueChange={v => { setMetodoPago(v); try{localStorage.setItem('gestify_metodo_pago',v)}catch{} }}>
+                  <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                    <SelectValue placeholder="Método..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {METODOS_PAGO.map(m=><SelectItem key={m.val} value={m.val}>{m.lbl}</SelectItem>)}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Toggle campos opcionales */}
+            <div style={{marginBottom: showOpcionales ? 12 : 0}}>
+              <button type="button" onClick={()=>setShowOpcionales(v=>!v)}
+                style={{
+                  background:'none', border:'none', color:C.textMid, fontSize:12, fontWeight:600,
+                  cursor:'pointer', display:'flex', alignItems:'center', gap:5, padding:0,
+                  transition:'color .1s'
+                }}
+                onMouseEnter={e=>e.currentTarget.style.color=C.textDark}
+                onMouseLeave={e=>e.currentTarget.style.color=C.textMid}
+              >
+                {showOpcionales ? '− Ocultar notas, canal y fechas' : '+ agregar nota / fecha / canal / estado'}
+              </button>
+            </div>
+
+            {showOpcionales && (
+              <>
+                <div className="pv-form-grid" style={{paddingTop:12, borderTop:`1px solid ${C.borderLight}`}}>
+                  {/* Fecha pedido */}
+                  <div ref={fechaPedidoRef} style={{position:'relative'}}>
+                    <Label>Fecha del pedido</Label>
+                    <button type="button"
+                      onClick={()=>{ setPedidoViewDate(new Date(fechaPedido+'T12:00:00')); setFechaPedidoPicker(v=>!v) }}
+                      style={{
+                        width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
+                        fontSize:12,border:`1.5px solid ${C.borderFocus}`,borderRadius:7,
+                        background:C.bg,color:C.textDark,
+                        fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
+                      }}>
+                      <Calendar size={13} color={C.primary} style={{flexShrink:0}}/>
+                      <span style={{flex:1,textAlign:'left'}}>
+                        {new Date(fechaPedido+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
+                      </span>
+                      <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>
+                    </button>
+                    {fechaPedidoPicker && (
+                      <div className="pv-dp-wrap">
+                        <div className="pv-dp-header">
+                          <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
+                          <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pedidoViewDate.getMonth()]} {pedidoViewDate.getFullYear()}</span>
+                          <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
+                        </div>
+                        <div className="pv-dp-grid">
+                          {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
+                          {(()=>{
+                            const yr=pedidoViewDate.getFullYear(), mo=pedidoViewDate.getMonth()
+                            const firstDay=new Date(yr,mo,1).getDay()
+                            const daysInMo=new Date(yr,mo+1,0).getDate()
+                            const todayD=new Date()
+                            const cells=[]
+                            for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
+                            for(let d=1;d<=daysInMo;d++){
+                              const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                              const isSel=fechaPedido===ds
+                              const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
+                              cells.push(
+                                <button key={d} type="button"
+                                  className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                                  onClick={()=>{setFechaPedido(ds);setFechaPedidoPicker(false)}}>
+                                  {d}
+                                </button>
+                              )
+                            }
+                            return cells
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Fecha entrega */}
+                  <div ref={fechaEntregaRef} style={{position:'relative'}}>
+                    <Label>Fecha de entrega <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
+                    <button type="button"
+                      onClick={()=>{ setPickerViewDate(fechaEntrega?new Date(fechaEntrega+'T12:00:00'):new Date()); setFechaEntregaPicker(v=>!v) }}
+                      style={{
+                        width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
+                        fontSize:12,border:`1.5px solid ${fechaEntrega?C.borderFocus:C.border}`,borderRadius:7,
+                        background:C.bg,color:fechaEntrega?C.textDark:C.textLight,
+                        fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
+                      }}>
+                      <Calendar size={13} color={fechaEntrega?C.primary:C.textLight} style={{flexShrink:0}}/>
+                      <span style={{flex:1,textAlign:'left'}}>
+                        {fechaEntrega ? new Date(fechaEntrega+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : 'Sin fecha...'}
+                      </span>
+                      {fechaEntrega
+                        ? <span onMouseDown={e=>{e.stopPropagation();setFechaEntrega('');setFechaEntregaPicker(false)}} style={{color:C.textLight,fontSize:16,lineHeight:1,cursor:'pointer',flexShrink:0,padding:'0 2px'}}>×</span>
+                        : <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>}
+                    </button>
+                    {fechaEntregaPicker && (
+                      <div className="pv-dp-wrap">
+                        <div className="pv-dp-header">
+                          <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
+                          <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pickerViewDate.getMonth()]} {pickerViewDate.getFullYear()}</span>
+                          <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
+                        </div>
+                        <div className="pv-dp-grid">
+                          {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
+                          {(()=>{
+                            const yr=pickerViewDate.getFullYear(), mo=pickerViewDate.getMonth()
+                            const firstDay=new Date(yr,mo,1).getDay()
+                            const daysInMo=new Date(yr,mo+1,0).getDate()
+                            const todayD=new Date()
+                            const cells=[]
+                            for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
+                            for(let d=1;d<=daysInMo;d++){
+                              const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                              const isSel=fechaEntrega===ds
+                              const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
+                              cells.push(
+                                <button key={d} type="button"
+                                  className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                                  onClick={()=>{setFechaEntrega(ds);setFechaEntregaPicker(false)}}>
+                                  {d}
+                                </button>
+                              )
+                            }
+                            return cells
+                          })()}
+                        </div>
+                        {fechaEntrega && (
+                          <div className="pv-dp-footer">
+                            <button type="button" className="pv-dp-clear"
+                              onClick={()=>{setFechaEntrega('');setFechaEntregaPicker(false)}}>
+                              Limpiar fecha
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Estado */}
+                  <div>
+                    <Label>Estado</Label>
+                    <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
+                      <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                        <SelectValue placeholder="Estado..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {ESTADOS_PEDIDO.map(e=><SelectItem key={e.val} value={e.val}>{e.lbl}</SelectItem>)}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Canal de venta */}
+                  <div>
+                    <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
+                    <Select value={canalVenta} onValueChange={setCanalVenta}>
+                      <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                        <SelectValue placeholder="Sin canal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="">Sin canal</SelectItem>
+                          {canales.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Notas */}
+                <div style={{marginTop:8}}>
+                  <Label>Notas (opcional)</Label>
+                  <textarea value={notas} onChange={e=>setNotas(e.target.value)}
+                    placeholder="Observaciones, instrucciones de entrega..."
+                    rows={2}
+                    style={{
+                      width:'100%',padding:'6px 10px',fontSize:12,resize:'vertical',
+                      border:`1.5px solid ${C.border}`,borderRadius:7,
+                      background:C.bg,color:C.textDark,
+                      fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
+                    }}
+                    onFocus={e=>e.target.style.borderColor=C.borderFocus}
+                    onBlur={e =>e.target.style.borderColor=C.border}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* ── Footer: Total + Guardar ── */}
+          <div className="pv-cart-footer">
+            <div style={{display:'flex',alignItems:'flex-end',gap:16,flexWrap:'wrap'}}>
+              <div style={{minWidth:100}}>
+                <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Total</div>
+                <div style={{fontSize:18,fontWeight:800,color:C.textBlack,fontFamily:"'Inter',sans-serif",letterSpacing:'-0.3px',height:34,display:'flex',alignItems:'center'}}>
+                  {fMon(total)}
+                </div>
+              </div>
+              {total > 0 && (
+                <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
                   <div>
                     <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Adelanto</div>
                     <input type="number" value={adelanto} onChange={e=>setAdelanto(e.target.value)} placeholder="0"
@@ -926,13 +928,12 @@ export default function AgregarVentaNimbus({
                       onBlur={e =>e.target.style.borderColor=C.border}
                     />
                   </div>
-                  {/* Botón pagar total */}
                   <button onClick={()=>setAdelanto(String(total))} type="button"
                     style={{
                       height:34,padding:'0 12px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',
                       border:`1.5px solid ${C.success}`,background:'#f0fdf4',color:C.success,
                       display:'flex',alignItems:'center',gap:6,fontFamily:"'Inter',sans-serif",
-                      transition:'background .12s',whiteSpace:'nowrap',
+                      transition:'all .12s',whiteSpace:'nowrap',
                     }}
                     onMouseEnter={e=>e.currentTarget.style.background='#dcfce7'}
                     onMouseLeave={e=>e.currentTarget.style.background='#f0fdf4'}
@@ -944,16 +945,20 @@ export default function AgregarVentaNimbus({
                       padding:'1px 5px',borderRadius:4,letterSpacing:'0.02em',
                     }}>Shift</span>
                   </button>
-                  {adelantoNum>0 && saldo>0 && (
-                    <span style={{fontSize:12,color:C.warning,fontWeight:700,background:C.warnSurf,padding:'3px 8px',borderRadius:6,border:`1px solid ${C.warnBord}`}}>
-                      Saldo: {fMon(saldo)}
-                    </span>
-                  )}
-                  {adelantoNum>=total && total>0 && (
-                    <span style={{fontSize:12,color:C.success,fontWeight:700,background:'#f0fdf4',padding:'3px 8px',borderRadius:6,border:`1px solid ${C.successBord}`}}>✓ Pagado</span>
-                  )}
                 </div>
               )}
+              <div style={{display:'flex',alignItems:'center',height:34,gap:6}}>
+                {adelantoNum > 0 && saldo > 0 && (
+                  <span style={{fontSize:12,color:C.warning,fontWeight:700,background:C.warnSurf,padding:'3px 8px',borderRadius:6,border:`1px solid ${C.warnBord}`}}>
+                    Saldo: {fMon(saldo)}
+                  </span>
+                )}
+                {adelantoNum >= total && total > 0 && (
+                  <span style={{fontSize:11,color:C.success,fontWeight:700,background:'#f0fdf4',padding:'3px 8px',borderRadius:6,border:`1px solid ${C.successBord}`,display:'flex',alignItems:'center',gap:4}}>
+                    <CheckCircle size={12}/> Pagado
+                  </span>
+                )}
+              </div>
             </div>
             <div className="pv-cart-footer-save">
               <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef}>
@@ -962,14 +967,14 @@ export default function AgregarVentaNimbus({
               </BtnPrimary>
             </div>
           </div>
-        </div>
-      </div>
+        </div>{/* fin card unificado */}
 
-      {/* Atajos info */}
-      <div style={{ textAlign:'center', marginTop:16, fontSize:11, color:C.textMid, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:15, opacity:0.8 }}>
-        <span style={{ display:'flex', alignItems:'center', gap:4 }}><Zap size={13} color={C.textMid}/> <b>Enter</b>: Agregar 1° producto</span>
-        <span style={{ display:'flex', alignItems:'center', gap:4 }}><Banknote size={13} color={C.textMid}/> <b>Shift</b>: Saldar total</span>
-        <span style={{ display:'flex', alignItems:'center', gap:4 }}><Save size={13} color={C.textMid}/> <b>F2</b> o <b>Ctrl+Enter</b>: Guardar</span>
+        {/* Atajos info */}
+        <div style={{ textAlign:'center', marginTop:16, fontSize:11, color:C.textMid, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:15, opacity:0.8 }}>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Zap size={13} color={C.textMid}/> <b>Enter</b>: Agregar 1° producto</span>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Banknote size={13} color={C.textMid}/> <b>Shift</b>: Saldar total</span>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Save size={13} color={C.textMid}/> <b>F2</b> o <b>Ctrl+Enter</b>: Guardar</span>
+        </div>
       </div>
 
       <style>{`
@@ -982,34 +987,22 @@ export default function AgregarVentaNimbus({
           .pv-desktop{display:flex!important;}
         }
 
-        /* ── Form grid responsive ── */
         .pv-form-grid {
           display:grid;
           grid-template-columns:1fr 1fr;
-          gap:6px;
+          gap:10px;
         }
         @media (max-width:540px) {
           .pv-form-grid { grid-template-columns:1fr; }
         }
 
-        /* ── Padding de contenido responsive ── */
         .pv-content-pad {
-          max-width:860px; margin:0 auto; padding:8px 16px 16px;
+          max-width:860px; margin:0 auto; padding:16px 24px 24px;
         }
-        @media (max-width:540px) {
+        @media (max-width:600px) {
           .pv-content-pad { padding:8px 12px 16px; }
         }
 
-        /* ── Fecha pedido (native input date) ── */
-        input[type="date"].pv-date {
-          cursor:pointer; color-scheme:light;
-        }
-        input[type="date"].pv-date::-webkit-calendar-picker-indicator {
-          cursor:pointer; opacity:.45;
-          filter:invert(.15) sepia(1) saturate(5) hue-rotate(100deg);
-        }
-
-        /* ── Selects custom ── */
         .app-select {
           width:100%; height:32px; padding:0 28px 0 10px; font-size:12px;
           border:1.5px solid #d1d5db; border-radius:7px; background:#fff;
@@ -1017,12 +1010,10 @@ export default function AgregarVentaNimbus({
           appearance:none; -webkit-appearance:none;
           background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
           background-repeat:no-repeat; background-position:right 10px center;
-          cursor:pointer; box-sizing:border-box;
-          transition:border-color .12s;
+          cursor:pointer; box-sizing:border-box; transition:border-color .12s;
         }
         .app-select:focus { border-color:#334139; }
 
-        /* ── Mini calendario fecha entrega ── */
         .pv-dp-wrap {
           position:absolute; top:calc(100% + 4px); left:0; z-index:500;
           background:#fff; border:1px solid #d1d5db; border-radius:10px;
@@ -1053,15 +1044,13 @@ export default function AgregarVentaNimbus({
         .pv-dp-clear { font-size:11px; font-weight:600; color:#9ca3af; background:none; border:none; cursor:pointer; font-family:'Inter',sans-serif; transition:color .1s; }
         .pv-dp-clear:hover { color:#ef4444; }
 
-        /* ── Responsive tabla carrito ── */
         @media (max-width:600px) {
           .pv-col-costo, .pv-col-stock { display:none; }
         }
 
-        /* ── Carrito footer responsive ── */
         .pv-cart-footer {
-          border-top:2px solid #6b7280;
-          padding:10px 16px;
+          border-top:1px solid #e5e7eb;
+          padding:12px 16px;
           background:#f9fafb;
           display:flex;
           align-items:center;
