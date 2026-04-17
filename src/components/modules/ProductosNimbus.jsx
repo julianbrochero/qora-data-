@@ -355,7 +355,6 @@ export default function ProductosNimbus({
   const [showCsvHelp, setShowCsvHelp] = useState(false)
   const [filtroCat,    setFiltroCat]    = useState("todas")
   const [filtroStock,  setFiltroStock]  = useState("todos")
-  const [sortStock,    setSortStock]    = useState(false)  // ordenar por stock ascendente
   const [pagina, setPagina] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(15)
   const [busqueda, setBusqueda] = useState(searchTerm||"")
@@ -387,14 +386,6 @@ export default function ProductosNimbus({
       filtroStock==="stock-bajo" ? (p.controlaStock&&p.stock>0&&p.stock<=5) : true
     return okQ&&okC&&okS
   })
-
-  if (sortStock) {
-    filtrados.sort((a,b) => {
-      const sa = a.controlaStock ? (a.stock ?? 0) : Infinity
-      const sb = b.controlaStock ? (b.stock ?? 0) : Infinity
-      return sa - sb
-    })
-  }
 
   const totalPags = Math.max(1,Math.ceil(filtrados.length/itemsPerPage))
   const offset    = (pagina-1)*itemsPerPage
@@ -687,27 +678,31 @@ export default function ProductosNimbus({
             onBlur={e =>e.target.style.borderColor=C.border}
           />
         </div>
-        <select value={filtroCat} onChange={e=>setFiltroCat(e.target.value)} className="app-select app-select-sm app-select--inline" style={{ minWidth: 160 }}>
-          {cats.map(c=><option key={c} value={c}>{c==="todas"?"Todas las categorías":c}</option>)}
-        </select>
-        <select value={filtroStock} onChange={e=>setFiltroStock(e.target.value)} className="app-select app-select-sm app-select--inline" style={{ minWidth: 148 }}>
-          <option value="todos">Todo el stock</option>
-          <option value="sin-stock">Sin stock</option>
-          <option value="stock-bajo">Stock bajo</option>
-        </select>
-        <button
-          onClick={()=>setSortStock(v=>!v)}
-          title="Ordenar por stock"
-          style={{
-            height:32, padding:"0 12px", borderRadius:6, fontSize:13, fontWeight:500,
-            border:`1.5px solid ${sortStock ? C.primary : C.border}`,
-            background: sortStock ? C.primarySurf : C.bg,
-            color: sortStock ? C.primary : C.textDark,
-            cursor:"pointer", display:"flex", alignItems:"center", gap:5,
-            fontFamily:"'Inter',sans-serif", whiteSpace:"nowrap",
-          }}>
-          ↑ Stock
-        </button>
+        {/* Selector de Categoría */}
+        <Select value={filtroCat} onValueChange={setFiltroCat}>
+          <SelectTrigger className="w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+            <SelectValue placeholder="Todas las categorías" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {cats.map(c=><SelectItem key={c} value={c}>{c==="todas"?"Todas las categorías":c}</SelectItem>)}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        {/* Selector de Stock */}
+        <Select value={filtroStock} onValueChange={setFiltroStock}>
+          <SelectTrigger className="w-full max-w-[160px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+            <SelectValue placeholder="Todo el stock" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="todos">Todo el stock</SelectItem>
+              <SelectItem value="sin-stock">Sin stock</SelectItem>
+              <SelectItem value="stock-bajo">Stock bajo</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* ── Contenido ── */}

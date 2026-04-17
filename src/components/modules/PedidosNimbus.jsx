@@ -12,7 +12,7 @@ import {
 } from "@nimbus-ds/icons"
 import {
   Clock, Package, Truck, CheckCircle, XCircle,
-  DollarSign, Eye, Edit, Trash2, MoreHorizontal,
+  DollarSign, Eye, Edit, Trash2, MoreHorizontal, AlertTriangle, Calendar, ChevronDown,
 } from "lucide-react"
 import {
   Dialog,
@@ -500,7 +500,7 @@ export default function PedidosNimbus({
       <div style={{ padding:"14px 24px 0", display:"flex", gap:10, flexWrap:"wrap" }}>
         <StatCard
           label="Total ventas" value={resumen.total} color={C.textBlack}
-          active={filtroEstado===null && !soloDeuda}
+          active={false}
           onClick={() => { setFiltroEstado(null); setSoloDeuda(false); setFiltroCanalVenta(null) }}
         />
         <StatCard
@@ -552,41 +552,40 @@ export default function PedidosNimbus({
           />
         </div>
 
-        <select value={filtroEstado||"todos"} onChange={e=>{ const v=e.target.value; setFiltroEstado(v==="todos"?null:v) }} className="app-select app-select--inline" style={{ minWidth: 168 }}>
-          <option value="todos">Todos los estados</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="preparando">Preparando</option>
-          <option value="enviado">Enviado</option>
-          <option value="entregado">Entregado</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
+        {/* Selector de Estado */}
+        <Select value={filtroEstado || "todos"} onValueChange={(v) => setFiltroEstado(v === "todos" ? null : v)}>
+          <SelectTrigger className="w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+            <SelectValue placeholder="Todos los estados" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="todos">Todos los estados</SelectItem>
+              <SelectItem value="pendiente">Pendiente</SelectItem>
+              <SelectItem value="preparando">Preparando</SelectItem>
+              <SelectItem value="enviado">Enviado</SelectItem>
+              <SelectItem value="entregado">Entregado</SelectItem>
+              <SelectItem value="cancelado">Cancelado</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
 
+        {/* Selector de Canal de Venta */}
+        {canalesDisponibles.length > 0 && (
+          <Select value={filtroCanalVenta || "todos"} onValueChange={(v) => setFiltroCanalVenta(v === "todos" ? null : v)}>
+            <SelectTrigger className="w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+              <SelectValue placeholder="Todos los canales" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="todos">Todos los canales</SelectItem>
+                {canalesDisponibles.map(canal => (
+                  <SelectItem key={canal} value={canal}>{canal}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        )}
       </div>
-
-      {/* ── Filtro canal de venta (minimalista) ── */}
-      {canalesDisponibles.length > 0 && (
-        <div style={{ padding:"8px 24px 0", display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
-          <span style={{ fontSize:11, fontWeight:600, color:C.textLight, letterSpacing:"0.05em", marginRight:2 }}>CANAL</span>
-          {canalesDisponibles.map(canal => (
-            <button
-              key={canal}
-              onClick={() => setFiltroCanalVenta(v => v===canal ? null : canal)}
-              style={{
-                padding:"3px 11px", borderRadius:20, fontSize:11, fontWeight:600,
-                border: filtroCanalVenta===canal ? `1.5px solid ${C.primary}` : `1.5px solid ${C.border}`,
-                background: filtroCanalVenta===canal ? C.primary : C.bg,
-                color: filtroCanalVenta===canal ? "#fff" : C.textMid,
-                cursor:"pointer", transition:"all .12s", fontFamily:"'Inter',sans-serif",
-              }}
-            >{canal}</button>
-          ))}
-          {filtroCanalVenta && (
-            <button onClick={() => setFiltroCanalVenta(null)}
-              style={{ fontSize:10, color:C.textLight, background:"none", border:"none", cursor:"pointer", marginLeft:2, textDecoration:"underline" }}
-            >limpiar</button>
-          )}
-        </div>
-      )}
 
       {/* ── Tabla ── */}
       <div style={{ padding:"10px 24px 24px" }}>

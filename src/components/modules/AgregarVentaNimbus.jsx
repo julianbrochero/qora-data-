@@ -6,6 +6,14 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { CheckCircle, CheckCircle2, TrendingUp, Search, Plus, Minus, Trash2, X, Save, Menu, User, ChevronDown, UserPlus, PackagePlus, AlertCircle, Calendar } from 'lucide-react'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { PlusIcon, MenuIcon, SearchIcon, ChevronDownIcon } from '@nimbus-ds/icons'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 /* ══════════════════════════════════════════
    PALETA
@@ -51,30 +59,6 @@ const Label = ({children}) => (
   <div style={{fontSize:11,fontWeight:600,color:C.textMid,letterSpacing:'0.05em',marginBottom:3,fontFamily:"'Inter',sans-serif"}}>
     {children}
   </div>
-)
-
-const SelNativo = ({ value, onChange, children, placeholder }) => (
-  <select
-    value={value}
-    onChange={onChange}
-    style={{
-      width:'100%', height:32, padding:'0 28px 0 10px',
-      fontSize:12, fontWeight:500,
-      border:`1.5px solid ${C.border}`, borderRadius:7,
-      background:`#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 9px center`,
-      color: value ? C.textDark : C.textLight,
-      fontFamily:"'Inter',sans-serif",
-      outline:'none', cursor:'pointer',
-      boxSizing:'border-box',
-      appearance:'none', WebkitAppearance:'none',
-      transition:'border-color .12s',
-    }}
-    onFocus={e  => e.target.style.borderColor = C.borderFocus}
-    onBlur={e   => e.target.style.borderColor = C.border}
-  >
-    {placeholder && <option value="" disabled>{placeholder}</option>}
-    {children}
-  </select>
 )
 
 const InputField = ({value,onChange,placeholder,type='text',min,style:extra,className}) => (
@@ -629,31 +613,47 @@ export default function AgregarVentaNimbus({
             {/* Estado */}
             <div>
               <Label>Estado</Label>
-              <SelNativo value={estado} onChange={e=>{ setEstado(e.target.value); try{localStorage.setItem('gestify_pedido_estado',e.target.value)}catch{} }}>
-                {ESTADOS_PEDIDO.map(e=><option key={e.val} value={e.val}>{e.lbl}</option>)}
-              </SelNativo>
+              <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
+                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+                  <SelectValue placeholder="Estado..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {ESTADOS_PEDIDO.map(e=><SelectItem key={e.val} value={e.val}>{e.lbl}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Método de pago */}
             <div>
               <Label>Método de pago</Label>
-              <SelNativo value={metodoPago} onChange={e=>{ setMetodoPago(e.target.value); try{localStorage.setItem('gestify_metodo_pago',e.target.value)}catch{} }}>
-                {METODOS_PAGO.map(m=><option key={m.val} value={m.val}>{m.lbl}</option>)}
-              </SelNativo>
+              <Select value={metodoPago} onValueChange={v => { setMetodoPago(v); try{localStorage.setItem('gestify_metodo_pago',v)}catch{} }}>
+                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+                  <SelectValue placeholder="Método..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {METODOS_PAGO.map(m=><SelectItem key={m.val} value={m.val}>{m.lbl}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Canal de venta */}
             <div>
               <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
-              <select
-                value={canalVenta}
-                onChange={e => setCanalVenta(e.target.value)}
-                className="app-select"
-                style={{ width:'100%' }}
-              >
-                <option value="">Sin canal</option>
-                {canales.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select value={canalVenta} onValueChange={setCanalVenta}>
+                <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db]">
+                  <SelectValue placeholder="Sin canal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="">Sin canal</SelectItem>
+                    {canales.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
           </div>{/* end pv-form-grid */}
