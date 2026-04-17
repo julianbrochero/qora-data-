@@ -3,7 +3,7 @@
  * Misma lógica que AgregarVenta.jsx, UI completamente rediseñada
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { CheckCircle, CheckCircle2, TrendingUp, Search, Plus, Minus, Trash2, X, Save, Menu, User, ChevronDown, UserPlus, PackagePlus, AlertCircle, Calendar } from 'lucide-react'
+import { CheckCircle, CheckCircle2, TrendingUp, Search, Plus, Minus, Trash2, X, Save, Menu, User, ChevronDown, UserPlus, PackagePlus, AlertCircle, Calendar, Zap, Banknote } from 'lucide-react'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { PlusIcon, MenuIcon, SearchIcon, ChevronDownIcon } from '@nimbus-ds/icons'
 import {
@@ -956,9 +956,9 @@ export default function AgregarVentaNimbus({
 
       {/* Atajos info */}
       <div style={{ textAlign:'center', marginTop:16, fontSize:11, color:C.textMid, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:15, opacity:0.8 }}>
-        <span>🚀 <b>Enter</b>: Agregar 1° producto</span>
-        <span>💸 <b>Shift</b>: Saldar total</span>
-        <span>💾 <b>F2</b> o <b>Ctrl+Enter</b>: Guardar</span>
+        <span style={{ display:'flex', alignItems:'center', gap:4 }}><Zap size={13} color={C.textMid}/> <b>Enter</b>: Agregar 1° producto</span>
+        <span style={{ display:'flex', alignItems:'center', gap:4 }}><Banknote size={13} color={C.textMid}/> <b>Shift</b>: Saldar total</span>
+        <span style={{ display:'flex', alignItems:'center', gap:4 }}><Save size={13} color={C.textMid}/> <b>F2</b> o <b>Ctrl+Enter</b>: Guardar</span>
       </div>
 
       <style>{`
