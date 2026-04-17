@@ -136,13 +136,24 @@ const IcoBtn = ({ icon: Ico, onClick, title, color }) => {
   )
 }
 
-/* ─── Tarjeta resumen ─── */
-const StatCard = ({ label, value, sub, color }) => (
-  <div style={{
-    background:C.bg, borderRadius:8, border:`1px solid ${C.border}`,
-    padding:"12px 16px", flex:"1 1 120px",
-  }}>
-    <div style={{ fontSize:20, fontWeight:700, color: color||C.textBlack, lineHeight:1, marginBottom:3 }}>
+/* ─── Tarjeta resumen clicable ─── */
+const StatCard = ({ label, value, sub, color, onClick, active }) => (
+  <div
+    onClick={onClick}
+    style={{
+      background: active ? (color ? color+'18' : C.primarySurf) : C.bg,
+      borderRadius:8,
+      border: active ? `1.5px solid ${color||C.primary}` : `1px solid ${C.border}`,
+      padding:"12px 16px", flex:"1 1 120px",
+      cursor: onClick ? "pointer" : "default",
+      transition:"all .13s",
+      position:"relative",
+    }}
+    onMouseEnter={e => { if(onClick) { e.currentTarget.style.borderColor = color||C.primary; e.currentTarget.style.background = color ? color+'12' : C.primarySurf } }}
+    onMouseLeave={e => { if(onClick && !active) { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.bg } }}
+  >
+    {active && <div style={{ position:'absolute', top:7, right:9, fontSize:9, fontWeight:700, color: color||C.primary, opacity:.7 }}>✕ filtro</div>}
+    <div style={{ fontSize:20, fontWeight:700, color: active ? (color||C.primary) : (color||C.textBlack), lineHeight:1, marginBottom:3 }}>
       {value}
     </div>
     <div style={{ fontSize:11, fontWeight:600, color:C.textDark, marginBottom:2 }}>{label}</div>
@@ -259,87 +270,98 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
   )
 }
 
-/* ─── Card mobile por venta ─── */
+/* ─── Card mobile por venta — botones grandes ─── */
 const MobileCard = ({ p, onVer, onEditar, onEliminar }) => {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const estCfg  = ESTADOS[p.estado] || ESTADOS.pendiente
   const pagoCfg = getEstadoPago(p)
   const puedeEditar = p.estado !== "cancelado"
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setMenuOpen(false) }
-    document.addEventListener("mousedown", h)
-    return () => document.removeEventListener("mousedown", h)
-  }, [])
 
   return (
-    <div onClick={() => onVer(p)} style={{
-      padding: "14px 16px", borderBottom: `1px solid ${C.border}`,
-      background: C.bg, cursor: "pointer", position: "relative",
+    <div style={{
+      borderBottom: `1px solid ${C.border}`,
+      background: C.bg,
     }}>
-      {/* Fila superior: cliente + total */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.textBlack, marginBottom: 2 }}>
-            {p.cliente_nombre || "Sin nombre"}
-          </div>
-          <div style={{ fontSize: 11, color: C.textMid }}>
-            #{p.codigo || p.id?.toString().slice(-4)} · {fFecha(p.fecha_pedido || p.created_at)}
-          </div>
-        </div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: C.textBlack, flexShrink: 0, marginLeft: 12 }}>
-          {fMonto(p.total)}
-        </div>
-      </div>
-      {/* Fila inferior: badges + acciones */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }} onClick={e => e.stopPropagation()}>
-        <Badge {...estCfg} />
-        <Badge {...pagoCfg} />
-        <div ref={ref} style={{ marginLeft: "auto", position: "relative" }}>
-          <button onClick={e => { e.stopPropagation(); setMenuOpen(v => !v) }}
-            style={{
-              width: 30, height: 30, borderRadius: 6, border: `1px solid ${C.border}`,
-              background: menuOpen ? "#f3f4f6" : C.bg, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-            <MoreHorizontal size={15} color={C.textMid} strokeWidth={1.8}/>
-          </button>
-          {menuOpen && (
-            <div style={{
-              position: "absolute", bottom: "calc(100% + 4px)", right: 0,
-              width: 160, background: C.bg, border: `1px solid ${C.border}`,
-              borderRadius: 8, boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
-              zIndex: 999, padding: "4px 0", overflow: "hidden",
-            }}>
-              <button onClick={() => { setMenuOpen(false); onVer(p) }}
-                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
-                onMouseLeave={e => e.currentTarget.style.background = "none"}
-              >
-                <Eye size={13} color={C.textMid}/> Ver detalle
-              </button>
-              {puedeEditar && (
-                <button onClick={() => { setMenuOpen(false); onEditar(p) }}
-                  style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
-                  onMouseLeave={e => e.currentTarget.style.background = "none"}
-                >
-                  <Edit size={13} color={C.textMid}/> Editar
-                </button>
-              )}
-              <div style={{ height: 1, background: C.border, margin: "4px 0" }} />
-              <button onClick={() => { setMenuOpen(false); onEliminar(p.id) }}
-                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", fontSize: 13, color: "#DC2626", cursor: "pointer", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#fef2f2"}
-                onMouseLeave={e => e.currentTarget.style.background = "none"}
-              >
-                <Trash2 size={13} color="#DC2626"/> Eliminar
-              </button>
+      {/* Fila principal — tap abre/cierra acciones */}
+      <div
+        onClick={() => setExpanded(v => !v)}
+        style={{ padding: "14px 16px", cursor: "pointer", userSelect: "none" }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {p.cliente_nombre || "Sin nombre"}
             </div>
-          )}
+            <div style={{ fontSize: 12, color: C.textMid }}>
+              #{p.codigo || p.id?.toString().slice(-4)} · {fFecha(p.fecha_pedido || p.created_at)}
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: C.textBlack, lineHeight: 1, marginBottom: 4 }}>
+              {fMonto(p.total)}
+            </div>
+            <div style={{ display: "flex", gap: 5 }}>
+              <Badge {...estCfg} />
+              <Badge {...pagoCfg} />
+            </div>
+          </div>
+        </div>
+        {/* Indicador expand */}
+        <div style={{ textAlign: "center", fontSize: 10, color: C.textLight, marginTop: 2 }}>
+          {expanded ? "▲ cerrar" : "▼ acciones"}
         </div>
       </div>
+
+      {/* Panel de acciones — aparece al tap */}
+      {expanded && (
+        <div onClick={e => e.stopPropagation()} style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: 8, padding: "0 12px 14px",
+          borderTop: `1px solid ${C.border}`,
+          paddingTop: 12,
+        }}>
+          {/* Ver detalle — ocupa todo el ancho */}
+          <button
+            onClick={() => { setExpanded(false); onVer(p) }}
+            style={{
+              gridColumn: "1 / -1",
+              height: 48, borderRadius: 10,
+              background: C.primary, color: "#fff",
+              border: "none", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              fontSize: 14, fontWeight: 700, fontFamily: "'Inter',sans-serif",
+            }}
+          >
+            <Eye size={16}/> Ver detalle
+          </button>
+          {puedeEditar && (
+            <button
+              onClick={() => { setExpanded(false); onEditar(p) }}
+              style={{
+                height: 44, borderRadius: 10,
+                background: C.bg, color: C.textDark,
+                border: `1.5px solid ${C.border}`, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                fontSize: 13, fontWeight: 600, fontFamily: "'Inter',sans-serif",
+              }}
+            >
+              <Edit size={14}/> Editar
+            </button>
+          )}
+          <button
+            onClick={() => { setExpanded(false); onEliminar(p.id) }}
+            style={{
+              height: 44, borderRadius: 10,
+              background: "#FEF2F2", color: "#DC2626",
+              border: `1.5px solid #FECACA`, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              fontSize: 13, fontWeight: 600, fontFamily: "'Inter',sans-serif",
+            }}
+          >
+            <Trash2 size={14}/> Eliminar
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -465,32 +487,37 @@ export default function PedidosNimbus({
       {/* ── Contenido centrado ── */}
       <div style={{ maxWidth:1100, margin:"0 auto", width:"100%" }}>
 
-      {/* ── Tarjetas resumen ── */}
+      {/* ── Tarjetas resumen clicables ── */}
       <div style={{ padding:"14px 24px 0", display:"flex", gap:10, flexWrap:"wrap" }}>
-        <StatCard label="Total ventas"  value={resumen.total}       color={C.textBlack}/>
-        <StatCard label="Pendientes"    value={resumen.pendientes}   color="#D97706"/>
-        <StatCard label="En proceso"    value={resumen.enProceso}    color="#2563EB"/>
-        <StatCard label="Entregados"    value={resumen.entregados}   color="#16A34A"/>
+        <StatCard
+          label="Total ventas" value={resumen.total} color={C.textBlack}
+          active={filtroEstado==="todos" && !soloDeuda}
+          onClick={() => { setFiltroEstado("todos"); setSoloDeuda(false) }}
+        />
+        <StatCard
+          label="Pendientes" value={resumen.pendientes} color="#D97706"
+          active={filtroEstado==="pendiente"}
+          onClick={() => setFiltroEstado(v => v==="pendiente" ? "todos" : "pendiente")}
+        />
+        <StatCard
+          label="En proceso" value={resumen.enProceso} color="#2563EB"
+          active={filtroEstado==="preparando"}
+          onClick={() => setFiltroEstado(v => v==="preparando" ? "todos" : "preparando")}
+        />
+        <StatCard
+          label="Entregados" value={resumen.entregados} color="#16A34A"
+          active={filtroEstado==="entregado"}
+          onClick={() => setFiltroEstado(v => v==="entregado" ? "todos" : "entregado")}
+        />
         {/* Deuda */}
-        <div
-          onClick={()=>setSoloDeuda(v=>!v)}
-          style={{
-            background: soloDeuda ? "#FEF2F2" : C.bg,
-            borderRadius:8, border:`1.5px solid ${soloDeuda ? "#FCA5A5" : C.border}`,
-            padding:"12px 16px", flex:"1 1 150px", cursor:"pointer",
-            transition:"all .13s",
-          }}
-          onMouseEnter={e=>{ if(!soloDeuda){ e.currentTarget.style.borderColor="#FCA5A5"; e.currentTarget.style.background="#FEF2F2" } }}
-          onMouseLeave={e=>{ if(!soloDeuda){ e.currentTarget.style.borderColor=C.border; e.currentTarget.style.background=C.bg } }}
-        >
-          <div style={{ fontSize:20, fontWeight:700, color:"#DC2626", lineHeight:1, marginBottom:3 }}>
-            {fMonto(totalDeuda)}
-          </div>
-          <div style={{ fontSize:11, fontWeight:600, color:C.textDark, marginBottom:2 }}>
-            {soloDeuda ? "▼ Saldo deudor" : "Saldo deudor"}
-          </div>
-          <div style={{ fontSize:11, color:C.textMid }}>{pedidosConDeuda.length} venta{pedidosConDeuda.length!==1?"s":""} pendientes</div>
-        </div>
+        <StatCard
+          label={soloDeuda ? "▼ Con deuda" : "Saldo deudor"}
+          value={fMonto(totalDeuda)}
+          sub={`${pedidosConDeuda.length} venta${pedidosConDeuda.length!==1?"s":""}  con saldo`}
+          color="#DC2626"
+          active={soloDeuda}
+          onClick={() => setSoloDeuda(v => !v)}
+        />
       </div>
 
       {/* ── Filtros ── */}

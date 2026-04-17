@@ -41,8 +41,17 @@ const ClienteForm = ({ type, formData, formActions, closeModal }) => {
 
   const isRapido = type === 'cliente-rapido'
   const isEdit = type === 'editar-cliente'
-  const data = isRapido ? clienteRapido : nuevoCliente
-  const setData = isRapido ? setClienteRapido : setNuevoCliente
+
+  // Para edición, usar estado local inicializado con el cliente a editar
+  const selectedItem = formData.selectedItem
+  const [localData, setLocalData] = useState(() => {
+    if (isEdit && selectedItem) return { ...selectedItem }
+    return { nombre: '', telefono: '', email: '', cuit: '', direccion: '', condicionIVA: 'Consumidor Final' }
+  })
+
+  // data/setData unificados
+  const data    = isRapido ? clienteRapido : isEdit ? localData : nuevoCliente
+  const setData = isRapido ? setClienteRapido : isEdit ? setLocalData : setNuevoCliente
 
   const handleChange = (field, value) => setData(prev => ({ ...prev, [field]: value }))
 

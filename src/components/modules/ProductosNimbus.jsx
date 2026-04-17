@@ -627,7 +627,6 @@ export default function ProductosNimbus({
       <div style={{
         background:C.bg, padding:"10px 24px",
         display:"flex", alignItems:"center", gap:8, flexWrap:"wrap",
-        borderBottom:`1px solid ${C.border}`,
       }}>
         <div style={{ flex:"1 1 240px", position:"relative" }}>
           <div style={{

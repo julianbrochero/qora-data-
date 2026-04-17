@@ -212,23 +212,23 @@ const PresupuestoForm = ({
         <div style={{ fontFamily: "'Inter',-apple-system,sans-serif", color: ct1, WebkitFontSmoothing: 'antialiased' }}>
 
             {/* ═══ HEADER ═══ */}
-            <div style={{ background: '#282A28', margin: '-16px -16px 0', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0 14px', borderBottom: `1px solid ${border}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(74,222,128,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <FileText size={15} style={{ color: lime }} />
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(51,65,57,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <FileText size={16} style={{ color: accent }} />
                     </div>
                     <div>
-                        <p style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,.45)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 1 }}>Nuevo</p>
-                        <h2 style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1 }}>Presupuesto</h2>
+                        <p style={{ fontSize: 9, fontWeight: 700, color: ct3, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 1 }}>Nuevo</p>
+                        <h2 style={{ fontSize: 16, fontWeight: 700, color: ct1, lineHeight: 1 }}>Presupuesto</h2>
                     </div>
                 </div>
-                <button onClick={closeModal} style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <button onClick={closeModal} style={{ width: 28, height: 28, borderRadius: 7, background: 'transparent', border: `1px solid ${border}`, cursor: 'pointer', color: ct3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <X size={14} strokeWidth={2.5} />
                 </button>
             </div>
 
             {/* ═══ TABS ═══ */}
-            <div style={{ display: 'flex', borderBottom: `1px solid ${border}`, background: surface2, margin: '0 -16px', padding: '0 18px' }}>
+            <div style={{ display: 'flex', borderBottom: `1px solid ${border}`, margin: '0 -16px', padding: '0 18px' }}>
                 {[['items', 'Productos'], ['datos', 'Datos']].map(([k, lbl]) => (
                     <button key={k} onClick={() => setTab(k)} style={{
                         padding: '9px 14px', fontSize: 12, fontWeight: 700, border: 'none',
@@ -517,11 +517,11 @@ const PresupuestoForm = ({
                 {/* Fila 2: Convertir en Pedido */}
                 <button onClick={handleConvertirPedido} disabled={convirtiendo || items.length === 0 || !clienteInput} style={{
                     width: '100%', height: 38, borderRadius: 9, border: 'none',
-                    background: items.length === 0 || !clienteInput ? surface2 : '#282A28',
+                    background: items.length === 0 || !clienteInput ? surface2 : accent,
                     cursor: convirtiendo || items.length === 0 || !clienteInput ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                     fontSize: 12, fontWeight: 700,
-                    color: items.length > 0 && clienteInput ? lime : ct3,
+                    color: items.length > 0 && clienteInput ? '#fff' : ct3,
                     opacity: items.length === 0 || !clienteInput ? .5 : 1, transition: 'all .15s',
                 }}>
                     {convirtiendo
