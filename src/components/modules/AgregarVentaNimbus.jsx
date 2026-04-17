@@ -285,8 +285,19 @@ export default function AgregarVentaNimbus({
   /* ── atajos de teclado ── */
   useEffect(()=>{
     // F2 o Ctrl+Enter → guardar
+    // Teclas generales para auto-focus en buscador
     const onDown = e => {
-      if(e.key === 'F2' || (e.ctrlKey && e.key==='Enter')){ e.preventDefault(); handleGuardar() }
+      // Guardar con F2 o Ctrl+Enter
+      if(e.key === 'F2' || (e.ctrlKey && e.key==='Enter')){ e.preventDefault(); handleGuardar(); return }
+
+      // Auto-focus buscador de productos al tipear
+      if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const active = document.activeElement
+        if(active && !['INPUT','TEXTAREA','SELECT'].includes(active.tagName)){
+          // No estamos en ningún input, enfocamos buscador
+          busProductoRef.current?.focus()
+        }
+      }
     }
     // Shift solo (keyup) → pagar total. Funciona incluso con cursor en la barra de búsqueda.
     // Se usa keyup + rastreo para distinguir "Shift solo" de "Shift+Letra" (mayúsculas)
