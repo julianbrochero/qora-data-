@@ -14,6 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Menubar,
+  MenubarContent,
+  MenubarGroup,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarTrigger,
+} from "@/components/ui/menubar"
 
 /* ══════════════════════════════════════════
    PALETA
@@ -391,9 +401,53 @@ export default function AgregarVentaNimbus({
           <span style={{fontWeight:700,fontSize:16,color:C.textBlack}}>{pedidoAEditar?'Editar Venta':'Agregar Venta'}</span>
         </div>
         <div style={{ maxWidth:860, margin:'0 auto', width:'100%', display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 24px 12px',gap:12,boxSizing:'border-box' }} className="pv-desktop">
-          <h1 style={{margin:0,fontSize:22,fontWeight:700,color:C.textBlack,letterSpacing:'-0.3px'}}>
-            {pedidoAEditar ? `Editando · ${pedidoAEditar.codigo||''}` : 'Agregar Venta'}
-          </h1>
+          <div style={{display:'flex', alignItems:'center', gap: 24}}>
+            <h1 style={{margin:0,fontSize:22,fontWeight:700,color:C.textBlack,letterSpacing:'-0.3px',borderRight:`1px solid ${C.borderLight}`,paddingRight:24}}>
+              {pedidoAEditar ? `Editando · ${pedidoAEditar.codigo||''}` : 'Agregar Venta'}
+            </h1>
+            
+            <Menubar style={{ border:'none', background:'transparent', padding:0, height:'auto' }}>
+              <MenubarMenu>
+                <MenubarTrigger style={{cursor:'pointer', fontWeight:600, color:C.textDark}}>Venta</MenubarTrigger>
+                <MenubarContent>
+                  <MenubarItem onClick={() => window.location.reload()}>
+                    Limpiar Pantalla (F5) <MenubarShortcut>F5</MenubarShortcut>
+                  </MenubarItem>
+                  <MenubarItem onClick={() => document.querySelector('.pv-cart-footer-save button')?.click()}>
+                    Guardar Pedido <MenubarShortcut>Ctrl+Ent</MenubarShortcut>
+                  </MenubarItem>
+                  <MenubarSeparator />
+                  <MenubarItem style={{color: C.danger}} onClick={() => document.querySelector('.pv-cart-footer-save button')?.click()} disabled={true}>
+                    Descartar Venta Actual
+                  </MenubarItem>
+                </MenubarContent>
+              </MenubarMenu>
+              <MenubarMenu>
+                <MenubarTrigger style={{cursor:'pointer', fontWeight:600, color:C.textDark}}>Cliente</MenubarTrigger>
+                <MenubarContent>
+                  <MenubarItem onClick={() => document.querySelector('button[title="Nuevo cliente"]')?.click()}>
+                    Crear Nuevo Cliente...
+                  </MenubarItem>
+                  <MenubarSeparator />
+                  <MenubarItem onClick={() => document.querySelector('button:contains("+ Consumidor Final")')?.click()}>
+                    Usar Cliente Existente
+                  </MenubarItem>
+                </MenubarContent>
+              </MenubarMenu>
+              <MenubarMenu>
+                <MenubarTrigger style={{cursor:'pointer', fontWeight:600, color:C.textDark}}>Opciones</MenubarTrigger>
+                <MenubarContent>
+                  <MenubarGroup>
+                    <MenubarItem onClick={() => {try{localStorage.setItem('gestify_metodo_pago','efectivo'); window.location.reload()}catch{}}}>Predefinir "Efectivo"</MenubarItem>
+                    <MenubarItem onClick={() => {try{localStorage.setItem('gestify_metodo_pago','transferencia'); window.location.reload()}catch{}}}>Predefinir "Transferencia"</MenubarItem>
+                  </MenubarGroup>
+                  <MenubarSeparator />
+                  <MenubarItem>Atajos de Teclado...</MenubarItem>
+                </MenubarContent>
+              </MenubarMenu>
+            </Menubar>
+          </div>
+
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             {onVentaCreada && (
               <BtnGhost onClick={onVentaCreada}>
