@@ -204,14 +204,11 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
       onMouseLeave={() => setHov(false)}
       style={{ background: hov ? "#f5f5f5" : C.bg, borderBottom: `1px solid ${C.border}`, transition: "background 0.1s", cursor: "pointer" }}
     >
-      {/* Checkbox */}
-      <td style={{ padding: "12px 0 12px 20px", width: 40, verticalAlign: "middle" }} onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
-        <div style={{ opacity: (selectionMode || isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', display:'flex', alignItems:'center' }}>
-          <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ cursor: "pointer", width:16, height:16 }} />
-        </div>
-      </td>
       {/* Código + cliente */}
-      <td style={{ padding: "12px 20px" }}>
+      <td style={{ padding: "12px 20px", position: "relative", paddingLeft: 34 }}>
+        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectionMode || isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', pointerEvents: (selectionMode || isSelected || hov) ? 'auto' : 'none' }} onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
+          <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ cursor: "pointer", width:14, height:14, margin:0, display:"block" }} />
+        </div>
         {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
           <>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.textBlack, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>
@@ -643,9 +640,10 @@ export default function PedidosNimbus({
                   }
                 })
               }}
-              style={{ display:"flex", alignItems:"center", gap:6, padding:"0 12px", height:36, borderRadius:8, background:"#FEF2F2", color:"#DC2626", border:"1px solid #FECACA", fontSize:13, fontWeight:600, cursor:"pointer" }}
+              style={{ display:"flex", alignItems:"center", justifyContent:"center", width:36, height:36, borderRadius:8, background:"#FEF2F2", color:"#DC2626", border:"1px solid #FECACA", cursor:"pointer", transition:"all.1s" }}
+              title={`Eliminar ${selectedIds.length} ventas`}
             >
-              <Trash2 size={14}/> Eliminar ({selectedIds.length})
+              <Trash2 size={16}/>
             </button>
           )}
         </div>
@@ -709,20 +707,20 @@ export default function PedidosNimbus({
                 <table style={{ width:"100%", borderCollapse:"collapse" }}>
                   <thead>
                     <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
-                      <th style={{ padding: "10px 0 10px 20px", width: 40 }}>
-                        <input type="checkbox" 
-                           checked={pageItems.length > 0 && pageItems.every(p => selectedIds.includes(p.id))} 
-                           onChange={(e) => {
-                             if (e.target.checked) {
-                               setSelectedIds(prev => [...new Set([...prev, ...pageItems.map(p=>p.id)])])
-                             } else {
-                               setSelectedIds(prev => prev.filter(id => !pageItems.some(p => p.id === id)))
-                             }
-                           }} 
-                           style={{ opacity: (selectionMode || selectedIds.length > 0) ? 1 : 0, cursor:"pointer", width:16, height:16, transition:'opacity.1s' }} 
-                        />
+                      <th style={{ padding:"10px 20px", textAlign:"left", fontSize:11, fontWeight:600, color:C.textMid, letterSpacing:"0.06em", fontFamily:"'Inter',sans-serif", whiteSpace:"nowrap", position:"relative", paddingLeft: 34 }}>
+                        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectionMode || selectedIds.length > 0) ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: (selectionMode || selectedIds.length > 0) ? 'auto' : 'none' }}>
+                          <input type="checkbox" 
+                             checked={pageItems.length > 0 && pageItems.every(p => selectedIds.includes(p.id))} 
+                             onChange={(e) => {
+                               if (e.target.checked) setSelectedIds(prev => [...new Set([...prev, ...pageItems.map(p=>p.id)])])
+                               else setSelectedIds(prev => prev.filter(id => !pageItems.some(p => p.id === id)))
+                             }} 
+                             style={{ cursor:"pointer", width:14, height:14, margin:0, display:"block" }} 
+                          />
+                        </div>
+                        CLIENTE
                       </th>
-                      {["CLIENTE","FECHA","ESTADO","PAGO","TOTAL","ACCIONES"].map(h=>(
+                      {["FECHA","ESTADO","PAGO","TOTAL","ACCIONES"].map(h=>(
                         <th key={h} style={{
                           padding:"10px 20px", textAlign:"left",
                           fontSize:11, fontWeight:600, color:C.textMid,
