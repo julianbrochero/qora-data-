@@ -104,20 +104,7 @@ const SistemaFacturacion = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, updateUserData])
 
-  const handleBorrarDemo = useCallback(async () => {
-    if (!user) return
-    try {
-      await supabase.from('pedidos').delete().eq('user_id', user.id)
-      await supabase.from('clientes').delete().eq('user_id', user.id)
-      await supabase.from('productos').delete().eq('user_id', user.id)
-      await updateUserData({ demo_data: false })
-      recargarRef.current?.()
-      toast.success('Datos de ejemplo eliminados. ¡El sistema está listo para usar!')
-    } catch (e) {
-      toast.error('Error al borrar: ' + e.message)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, updateUserData])
+  // Eliminada función handleBorrarDemo por riesgo de pérdida de datos.
 
 
   const {
@@ -513,15 +500,7 @@ const SistemaFacturacion = () => {
 
         {/* Contenido principal — empujado a la derecha del sidebar fijo en desktop */}
         <div className="md:pl-[220px]" style={{ minHeight: "100vh", background: "#f8f9fb" }}>
-          {/* Banner datos de ejemplo */}
-          {hasDemoData && demoBannerVisible && (
-            <div style={{ maxWidth: 1200, margin: '0 auto', padding: '8px 20px 0' }}>
-              <DemoBanner
-                onDismiss={() => setDemoBannerVisible(false)}
-                onBorrarTodo={handleBorrarDemo}
-              />
-            </div>
-          )}
+
           <SubscriptionGate>
             {renderActiveModule()}
           </SubscriptionGate>

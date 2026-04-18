@@ -234,7 +234,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
                                 cursor:'pointer',
                               }}
                             >
-                              {p.cliente_nombre?.split(' ')[0] || `#${p.codigo?.slice(-3)}`}
+                              {p.codigo || `#${p.id?.toString().slice(-4)}`}
                             </div>
                           )
                         })}
@@ -277,8 +277,8 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
                   >
                     <div style={{ width:8, height:8, borderRadius:'50%', background:cfg.dot, flexShrink:0 }}/>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:13, fontWeight:600, color:C.textDark }}>{p.cliente_nombre||'Sin nombre'}</div>
-                      <div style={{ fontSize:11, color:C.textMid }}>#{p.codigo||p.id?.toString().slice(-4)}</div>
+                      <div style={{ fontSize:13, fontWeight:600, color:C.textDark }}>{p.codigo || `#${p.id?.toString().slice(-4)}`}</div>
+                      <div style={{ fontSize:11, color:C.textMid }}>{p.cliente_nombre || 'Consumidor final'}</div>
                     </div>
                     <div style={{ fontSize:12, fontWeight:700, color:cfg.color, background:cfg.bg, padding:'2px 8px', borderRadius:4 }}>{cfg.label}</div>
                     <div style={{ fontSize:13, fontWeight:700, color:C.textDark, flexShrink:0 }}>{fMonto(p.total)}</div>
@@ -329,9 +329,9 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
                           <div style={{ width:8, height:8, borderRadius:'50%', background:cfg.dot, flexShrink:0 }}/>
                           <div style={{ flex:1, minWidth:0 }}>
                             <div style={{ fontSize:13, fontWeight:600, color:C.textDark, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
-                              {p.cliente_nombre||'Sin nombre'}
+                              {p.codigo || `#${p.id?.toString().slice(-4)}`}
                             </div>
-                            <div style={{ fontSize:11, color:C.textMid }}>#{p.codigo||p.id?.toString().slice(-4)}</div>
+                            <div style={{ fontSize:11, color:C.textMid }}>{p.cliente_nombre || 'Consumidor final'}</div>
                           </div>
                           <div style={{ fontSize:12, fontWeight:700, color:cfg.color, background:cfg.bg, padding:'2px 8px', borderRadius:4, flexShrink:0 }}>{cfg.label}</div>
                           <div style={{ fontSize:13, fontWeight:700, color:C.textDark, flexShrink:0 }}>{fMonto(p.total)}</div>

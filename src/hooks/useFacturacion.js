@@ -454,7 +454,7 @@ export const useFacturacion = () => {
         const m = ultimoPedidoRes.data[0].codigo.match(/\d+/)
         if (m) num = parseInt(m[0]) + 1
       }
-      const codigoPedido = `PED-${num.toString().padStart(3, '0')}`
+      const codigoPedido = `Order #${num.toString().padStart(4, '0')}`
 
       let ultimoNumero = 0
       if (ultimaFacturaRes.data?.[0]?.numero) {
