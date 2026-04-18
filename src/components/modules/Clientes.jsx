@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ChevronLeftIcon, ChevronRightIcon } from "@nimbus-ds/icons"
+import { Button } from "@/components/ui/button"
 
 /* ══════════════════════════════════════════
    PALETA NIMBUS
@@ -48,28 +49,36 @@ const RESPONSIVE = `
 `
 
 /* ─── Botones base ─── */
-const Btn = ({ children, onClick, primary, disabled, style }) => {
-  const [hov, setHov] = useState(false)
-  return (
+const Btn = ({ children, onClick, primary, disabled, style={} }) => {
+  if (primary) return (
     <button
-      onClick={disabled ? null : onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-        height: 32, padding: "0 18px", borderRadius: 6,
-        fontSize: 13, fontWeight: 500, fontFamily: "'Inter', sans-serif",
-        border: primary ? "none" : `1px solid ${C.border}`,
-        background: primary ? (hov ? C.primaryHov : C.primary) : (hov ? "#f9fafb" : C.bg),
-        color: primary ? "#fff" : C.textDark,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-        transition: "all 0.1s",
+        display:"inline-flex", alignItems:"center", gap:6,
+        height:32, padding:"0 16px", borderRadius:8,
+        background:"#334139", color:"#fff",
+        border:"1.5px solid #334139",
+        fontSize:13, fontWeight:600, cursor:disabled?"not-allowed":"pointer",
+        fontFamily:"'Inter',sans-serif",
+        transition:"background 0.12s",
+        whiteSpace:"nowrap", opacity:disabled?0.5:1,
         ...style
       }}
+      onMouseEnter={e=>!disabled&&(e.currentTarget.style.background="#2b352f")}
+      onMouseLeave={e=>!disabled&&(e.currentTarget.style.background="#334139")}
+    >{children}</button>
+  )
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      style={style}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -104,6 +113,87 @@ const Pill = ({ color, bg, border, children }) => (
   </span>
 )
 
+/* ─── Fila Cliente ─── */
+const ClienteRow = ({ cliente, isSelected, onToggle, openModal, handleEliminar, handleCopy, clienteCopiado }) => {
+  const [hov, setHov] = useState(false)
+  const debe = parseFloat(cliente.deuda) || 0
+  const tieneDeuda = debe > 0
+  const fNum = (n) => (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  return (
+    <tr 
+      onClick={() => onToggle(cliente.id)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{ borderBottom: `1px solid ${C.border}`, background: isSelected ? C.primarySurf : (hov ? "#f9fafb" : "transparent"), transition: "background 0.1s", cursor: "pointer" }}
+    >
+      {/* Nombre Email */}
+      <td style={{ padding: "12px 16px", position: "relative", paddingLeft: 34 }}>
+        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', pointerEvents: (isSelected || hov) ? 'auto' : 'none' }}>
+          <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ cursor: "pointer", width:14, height:14, margin:0, display:"block", accentColor: C.primary }} />
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
+          {cliente.nombre || "Sin nombre"}
+        </div>
+        {cliente.email && (
+          <div style={{ fontSize: 11, color: C.textMid, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+            <Mail size={12} /> {cliente.email}
+          </div>
+        )}
+      </td>
+
+      {/* CUIT */}
+      <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
+        {cliente.cuit || "—"}
+      </td>
+      
+      {/* Teléfono */}
+      <td style={{ padding: "12px 16px" }}>
+        {cliente.telefono ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
+            {cliente.telefono}
+            <button onClick={() => handleCopy(cliente.telefono, cliente.id)} style={{
+              background: "transparent", border: "none", cursor: "pointer", display: "flex", padding: 2, color: clienteCopiado === cliente.id ? C.successTxt : C.textMid
+            }} title="Copiar Teléfono">
+              {clienteCopiado === cliente.id ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </div>
+        ) : (
+          <span style={{ fontSize: 13, color: C.textMid }}>—</span>
+        )}
+      </td>
+
+      {/* Condición IVA */}
+      <td style={{ padding: "12px 16px" }}>
+        <Pill color={C.textDark} bg="#f3f4f6" border={C.border}>
+          {cliente.condicionIVA || "Consumidor Final"}
+        </Pill>
+      </td>
+
+      {/* Estado/Deuda */}
+      <td style={{ padding: "12px 16px" }}>
+        {tieneDeuda ? (
+          <Pill color={C.dangerTxt} bg={C.dangerSurf} border={C.dangerBord}>
+            <AlertCircle size={12} /> $ {fNum(debe)}
+          </Pill>
+        ) : (
+          <Pill color={C.successTxt} bg={C.successSurf} border={C.successBord}>
+            <CheckCircle size={12} /> Al día
+          </Pill>
+        )}
+      </td>
+
+      {/* Acciones */}
+      <td style={{ padding: "12px 16px" }}>
+        <div style={{ display: "flex", gap: 4 }}>
+          <IcoBtn icon={Edit2} title="Editar" onClick={() => openModal && openModal('editar-cliente', cliente)} />
+          <IcoBtn icon={Trash2} title="Eliminar" danger onClick={() => handleEliminar(cliente.id)} />
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 
 /* ════════════════════════════════════════════════════
    COMPONENTE PRINCIPAL
@@ -116,6 +206,7 @@ export default function Clientes({
   eliminarCliente,
   onOpenMobileSidebar
 }) {
+  const [selectedIds, setSelectedIds] = useState([])
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(50)
   const [clienteCopiado, setClienteCopiado] = useState(null)
@@ -209,10 +300,27 @@ export default function Clientes({
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
             Clientes
           </h1>
-          <Btn primary onClick={() => openModal && openModal("nuevo-cliente")}>
-            <PlusIcon size={13} color="#fff" /> Nuevo Cliente
-            <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
-          </Btn>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {selectedIds.length > 0 && (
+              <Btn 
+                onClick={() => setConfirmData({
+                  title: `¿Eliminar ${selectedIds.length} clientes?`,
+                  description: "Se eliminarán permanentemente. Esta acción no se puede deshacer.",
+                  onConfirm: () => { 
+                    setConfirmData(null); 
+                    Promise.all(selectedIds.map(id => eliminarCliente?.(id))).then(() => setSelectedIds([])) 
+                  }
+                })}
+                style={{ background: C.dangerSurf, border: `1px solid ${C.dangerBord}`, color: C.dangerTxt }}
+              >
+                <Trash2 size={13} /> Eliminar ({selectedIds.length})
+              </Btn>
+            )}
+            <Btn primary onClick={() => openModal && openModal("nuevo-cliente")}>
+              <PlusIcon size={13} color="#fff" /> Nuevo Cliente
+              <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
+            </Btn>
+          </div>
         </div>
       </div>
 
@@ -278,7 +386,24 @@ export default function Clientes({
                 <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                   <thead>
                     <tr style={{ background: "#f9fafb", borderBottom: `1px solid ${C.border}` }}>
-                      {["NOMBRE Y CONTACTO", "CUIT / CUIL", "TELÉFONO", "CONDICIÓN IVA", "ESTADO", "ACCIONES"].map(h => (
+                      <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 600, color: C.textMid, letterSpacing: "0.06em", fontFamily: "'Inter', sans-serif", position: "relative", paddingLeft: 34 }}>
+                        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectedIds.length > 0) ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: (selectedIds.length > 0) ? 'auto' : 'none' }}>
+                          <input 
+                            type="checkbox"
+                            checked={paginados.length > 0 && paginados.every(c => selectedIds.includes(c.id))}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedIds([...new Set([...selectedIds, ...paginados.map(c => c.id)])])
+                              else {
+                                const pIds = paginados.map(c => c.id)
+                                setSelectedIds(selectedIds.filter(id => !pIds.includes(id)))
+                              }
+                            }}
+                            style={{ cursor: "pointer", width: 14, height: 14, margin: 0, display: "block", accentColor: C.primary }}
+                          />
+                        </div>
+                        NOMBRE Y CONTACTO
+                      </th>
+                      {["CUIT / CUIL", "TELÉFONO", "CONDICIÓN IVA", "ESTADO", "ACCIONES"].map(h => (
                         <th key={h} style={{
                           padding: "10px 16px", textAlign: "left",
                           fontSize: 10, fontWeight: 600, color: C.textMid,
@@ -288,76 +413,18 @@ export default function Clientes({
                     </tr>
                   </thead>
                   <tbody>
-                    {paginados.map(cliente => {
-                      const debe = parseFloat(cliente.deuda) || 0
-                      const tieneDeuda = debe > 0
-
-                      return (
-                        <tr key={cliente.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                          
-                          {/* Nombre Email */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
-                              {cliente.nombre || "Sin nombre"}
-                            </div>
-                            {cliente.email && (
-                              <div style={{ fontSize: 11, color: C.textMid, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                                <Mail size={12} /> {cliente.email}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* CUIT */}
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
-                            {cliente.cuit || "—"}
-                          </td>
-                          
-                          {/* Teléfono */}
-                          <td style={{ padding: "12px 16px" }}>
-                            {cliente.telefono ? (
-                              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
-                                {cliente.telefono}
-                                <button onClick={() => handleCopy(cliente.telefono, cliente.id)} style={{
-                                  background: "transparent", border: "none", cursor: "pointer", display: "flex", padding: 2, color: clienteCopiado === cliente.id ? C.successTxt : C.textMid
-                                }} title="Copiar Teléfono">
-                                  {clienteCopiado === cliente.id ? <Check size={14} /> : <Copy size={14} />}
-                                </button>
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: 13, color: C.textMid }}>—</span>
-                            )}
-                          </td>
-
-                          {/* Condición IVA */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <Pill color={C.textDark} bg="#f3f4f6" border={C.border}>
-                              {cliente.condicionIVA || "Consumidor Final"}
-                            </Pill>
-                          </td>
-
-                          {/* Estado/Deuda */}
-                          <td style={{ padding: "12px 16px" }}>
-                            {tieneDeuda ? (
-                              <Pill color={C.dangerTxt} bg={C.dangerSurf} border={C.dangerBord}>
-                                <AlertCircle size={12} /> $ {fNum(debe)}
-                              </Pill>
-                            ) : (
-                              <Pill color={C.successTxt} bg={C.successSurf} border={C.successBord}>
-                                <CheckCircle size={12} /> Al día
-                              </Pill>
-                            )}
-                          </td>
-
-                          {/* Acciones */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              <IcoBtn icon={Edit2} title="Editar" onClick={() => openModal && openModal('editar-cliente', cliente)} />
-                              <IcoBtn icon={Trash2} title="Eliminar" danger onClick={() => handleEliminar(cliente.id)} />
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    {paginados.map(cliente => (
+                      <ClienteRow 
+                        key={cliente.id}
+                        cliente={cliente}
+                        isSelected={selectedIds.includes(cliente.id)}
+                        onToggle={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                        openModal={openModal}
+                        handleEliminar={handleEliminar}
+                        handleCopy={handleCopy}
+                        clienteCopiado={clienteCopiado}
+                      />
+                    ))}
                   </tbody>
                 </table>
 

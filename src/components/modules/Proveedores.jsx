@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ChevronLeftIcon, ChevronRightIcon } from "@nimbus-ds/icons"
+import { Button } from "@/components/ui/button"
 
 /* ══════════════════════════════════════════
    PALETA NIMBUS
@@ -48,28 +49,36 @@ const RESPONSIVE = `
 `
 
 /* ─── Botones base ─── */
-const Btn = ({ children, onClick, primary, disabled, style }) => {
-  const [hov, setHov] = useState(false)
-  return (
+const Btn = ({ children, onClick, primary, disabled, style={} }) => {
+  if (primary) return (
     <button
-      onClick={disabled ? null : onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-        height: 32, padding: "0 18px", borderRadius: 6,
-        fontSize: 13, fontWeight: 500, fontFamily: "'Inter', sans-serif",
-        border: primary ? "none" : `1px solid ${C.border}`,
-        background: primary ? (hov ? C.primaryHov : C.primary) : (hov ? "#f9fafb" : C.bg),
-        color: primary ? "#fff" : C.textDark,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-        transition: "all 0.1s",
+        display:"inline-flex", alignItems:"center", gap:6,
+        height:32, padding:"0 16px", borderRadius:8,
+        background:"#334139", color:"#fff",
+        border:"1.5px solid #334139",
+        fontSize:13, fontWeight:600, cursor:disabled?"not-allowed":"pointer",
+        fontFamily:"'Inter',sans-serif",
+        transition:"background 0.12s",
+        whiteSpace:"nowrap", opacity:disabled?0.5:1,
         ...style
       }}
+      onMouseEnter={e=>!disabled&&(e.currentTarget.style.background="#2b352f")}
+      onMouseLeave={e=>!disabled&&(e.currentTarget.style.background="#334139")}
+    >{children}</button>
+  )
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      style={style}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -104,6 +113,90 @@ const Pill = ({ color, bg, border, children }) => (
   </span>
 )
 
+/* ─── Fila Proveedor ─── */
+const ProveedorRow = ({ prov, isSelected, onToggle, openModal, handleEliminar, handleCopy, clienteCopiado }) => {
+  const [hov, setHov] = useState(false)
+  const deuda = parseFloat(prov.deuda) || 0
+  const activo = !prov.estado || prov.estado === 'activo'
+  
+  const fNum = (n) => (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  return (
+    <tr 
+      onClick={() => onToggle(prov.id)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{ borderBottom: `1px solid ${C.border}`, background: isSelected ? C.primarySurf : (hov ? "#f9fafb" : "transparent"), transition: "background 0.1s", cursor: "pointer" }}
+    >
+      {/* Nombre y Contacto */}
+      <td style={{ padding: "12px 16px", position: "relative", paddingLeft: 34 }}>
+        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', pointerEvents: (isSelected || hov) ? 'auto' : 'none' }}>
+          <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ cursor: "pointer", width:14, height:14, margin:0, display:"block", accentColor: C.primary }} />
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
+          {prov.nombre || "Sin nombre"}
+        </div>
+        {prov.telefono && (
+          <div style={{ fontSize: 11, color: C.textMid, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+            <Phone size={12} /> {prov.telefono}
+          </div>
+        )}
+      </td>
+
+      {/* Email */}
+      <td style={{ padding: "12px 16px" }}>
+        {prov.email ? (
+          <div style={{ fontSize: 13, color: C.textDark, display: "flex", alignItems: "center", gap: 6 }}>
+            <Mail size={13} color={C.textMid} />
+            {prov.email}
+          </div>
+        ) : (
+          <span style={{ fontSize: 13, color: C.textMid }}>—</span>
+        )}
+      </td>
+
+      {/* CUIT */}
+      <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
+        {prov.cuit || "—"}
+      </td>
+
+      {/* Estado */}
+      <td style={{ padding: "12px 16px" }}>
+        {activo ? (
+          <Pill color={C.successTxt} bg={C.successSurf} border={C.successBord}>
+            Activo
+          </Pill>
+        ) : (
+          <Pill color={C.dangerTxt} bg={C.dangerSurf} border={C.dangerBord}>
+            Inactivo
+          </Pill>
+        )}
+      </td>
+
+      {/* Deuda */}
+      <td style={{ padding: "12px 16px" }}>
+        {deuda > 0 ? (
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.dangerTxt, display: "flex", alignItems: "center", gap: 4 }}>
+            <AlertCircle size={13} /> $ {fNum(deuda)}
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>
+            $ {fNum(0)}
+          </div>
+        )}
+      </td>
+
+      {/* Acciones */}
+      <td style={{ padding: "12px 16px" }}>
+        <div style={{ display: "flex", gap: 4 }}>
+          <IcoBtn icon={Edit2} title="Editar" onClick={() => openModal && openModal('editar-proveedor', prov)} />
+          <IcoBtn icon={Trash2} title="Eliminar" danger onClick={() => handleEliminar(prov.id)} />
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 
 /* ════════════════════════════════════════════════════
    COMPONENTE PRINCIPAL
@@ -116,6 +209,7 @@ export default function Proveedores({
   eliminarProveedor,
   onOpenMobileSidebar
 }) {
+  const [selectedIds, setSelectedIds] = useState([])
   const [paginaActual, setPaginaActual] = useState(1)
   const [itemsPorPagina, setItemsPorPagina] = useState(50)
 
@@ -197,10 +291,27 @@ export default function Proveedores({
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
             Proveedores
           </h1>
-          <Btn primary onClick={() => openModal && openModal("nuevo-proveedor")}>
-            <PlusIcon size={13} color="#fff" /> Nuevo Proveedor
-            <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
-          </Btn>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {selectedIds.length > 0 && (
+              <Btn 
+                onClick={() => setConfirmData({
+                  title: `¿Eliminar ${selectedIds.length} proveedores?`,
+                  description: "Se eliminarán permanentemente. Esta acción no se puede deshacer.",
+                  onConfirm: () => { 
+                    setConfirmData(null); 
+                    Promise.all(selectedIds.map(id => eliminarProveedor?.(id))).then(() => setSelectedIds([])) 
+                  }
+                })}
+                style={{ background: C.dangerSurf, border: `1px solid ${C.dangerBord}`, color: C.dangerTxt }}
+              >
+                <Trash2 size={13} /> Eliminar ({selectedIds.length})
+              </Btn>
+            )}
+            <Btn primary onClick={() => openModal && openModal("nuevo-proveedor")}>
+              <PlusIcon size={13} color="#fff" /> Nuevo Proveedor
+              <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
+            </Btn>
+          </div>
         </div>
       </div>
 
@@ -266,7 +377,24 @@ export default function Proveedores({
                 <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                   <thead>
                     <tr style={{ background: "#f9fafb", borderBottom: `1px solid ${C.border}` }}>
-                      {["NOMBRE Y CONTACTO", "EMAIL", "CUIT / CUIL", "ESTADO", "DEUDA", "ACCIONES"].map(h => (
+                      <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 600, color: C.textMid, letterSpacing: "0.06em", fontFamily: "'Inter', sans-serif", position: "relative", paddingLeft: 34 }}>
+                        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectedIds.length > 0) ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: (selectedIds.length > 0) ? 'auto' : 'none' }}>
+                          <input 
+                            type="checkbox"
+                            checked={paginados.length > 0 && paginados.every(p => selectedIds.includes(p.id))}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedIds([...new Set([...selectedIds, ...paginados.map(p => p.id)])])
+                              else {
+                                const pIds = paginados.map(p => p.id)
+                                setSelectedIds(selectedIds.filter(id => !pIds.includes(id)))
+                              }
+                            }}
+                            style={{ cursor: "pointer", width: 14, height: 14, margin: 0, display: "block", accentColor: C.primary }}
+                          />
+                        </div>
+                        NOMBRE Y CONTACTO
+                      </th>
+                      {["EMAIL", "CUIT / CUIL", "ESTADO", "DEUDA", "ACCIONES"].map(h => (
                         <th key={h} style={{
                           padding: "10px 16px", textAlign: "left",
                           fontSize: 10, fontWeight: 600, color: C.textMid,
@@ -276,78 +404,16 @@ export default function Proveedores({
                     </tr>
                   </thead>
                   <tbody>
-                    {paginados.map(prov => {
-                      const deuda = parseFloat(prov.deuda) || 0
-                      const activo = !prov.estado || prov.estado === 'activo'
-
-                      return (
-                        <tr key={prov.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                          
-                          {/* Nombre y Contacto */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
-                              {prov.nombre || "Sin nombre"}
-                            </div>
-                            {prov.telefono && (
-                              <div style={{ fontSize: 11, color: C.textMid, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                                <Phone size={12} /> {prov.telefono}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Email */}
-                          <td style={{ padding: "12px 16px" }}>
-                            {prov.email ? (
-                              <div style={{ fontSize: 13, color: C.textDark, display: "flex", alignItems: "center", gap: 6 }}>
-                                <Mail size={13} color={C.textMid} />
-                                {prov.email}
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: 13, color: C.textMid }}>—</span>
-                            )}
-                          </td>
-
-                          {/* CUIT */}
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
-                            {prov.cuit || "—"}
-                          </td>
-
-                          {/* Estado */}
-                          <td style={{ padding: "12px 16px" }}>
-                            {activo ? (
-                              <Pill color={C.successTxt} bg={C.successSurf} border={C.successBord}>
-                                Activo
-                              </Pill>
-                            ) : (
-                              <Pill color={C.dangerTxt} bg={C.dangerSurf} border={C.dangerBord}>
-                                Inactivo
-                              </Pill>
-                            )}
-                          </td>
-
-                          {/* Deuda */}
-                          <td style={{ padding: "12px 16px" }}>
-                            {deuda > 0 ? (
-                              <div style={{ fontSize: 13, fontWeight: 700, color: C.dangerTxt, display: "flex", alignItems: "center", gap: 4 }}>
-                                <AlertCircle size={13} /> $ {fNum(deuda)}
-                              </div>
-                            ) : (
-                              <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark }}>
-                                $ {fNum(0)}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Acciones */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              <IcoBtn icon={Edit2} title="Editar" onClick={() => openModal && openModal('editar-proveedor', prov)} />
-                              <IcoBtn icon={Trash2} title="Eliminar" danger onClick={() => handleEliminar(prov.id)} />
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    {paginados.map(prov => (
+                      <ProveedorRow 
+                        key={prov.id}
+                        prov={prov}
+                        isSelected={selectedIds.includes(prov.id)}
+                        onToggle={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                        openModal={openModal}
+                        handleEliminar={handleEliminar}
+                      />
+                    ))}
                   </tbody>
                 </table>
 

@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -54,6 +55,11 @@ const ESTADOS = {
   enviado:    { label: "Enviado",    bg: "#FAF5FF", color: "#9333EA", border: "#E9D5FF", Icon: Truck },
   entregado:  { label: "Entregado",  bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0", Icon: CheckCircle },
   cancelado:  { label: "Cancelado",  bg: "#FEF2F2", color: "#DC2626", border: "#FECACA", Icon: XCircle },
+}
+
+const fCodigo = (c, id) => {
+  if (!c) return id?.toString().slice(-4) || ""
+  return c.toString().replace(/order\s*#?/i, '').replace(/^#/, '').trim()
 }
 
 const getEstadoPago = (p) => {
@@ -101,23 +107,36 @@ const Badge = ({ label, bg, color, border, Icon }) => (
 )
 
 /* ─── Botón ─── */
-const Btn = ({ children, onClick, primary, small, disabled }) => {
-  const [hov, setHov] = useState(false)
-  return (
-    <button onClick={onClick} disabled={disabled}
-      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+const Btn = ({ children, onClick, primary, small, disabled, style={} }) => {
+  if (primary) return (
+    <button
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       style={{
         display:"inline-flex", alignItems:"center", gap:6,
-        height: small?28:32, padding:`0 ${small?12:18}px`,
-        borderRadius:6, cursor:disabled?"not-allowed":"pointer",
-        fontSize:small?12:13, fontWeight:500, fontFamily:"'Inter',sans-serif",
+        height: small?28:32, padding:`0 ${small?12:16}px`, borderRadius:8,
+        background:"#334139", color:"#fff",
+        border:"1.5px solid #334139",
+        fontSize:small?12:13, fontWeight:600, cursor:disabled?"not-allowed":"pointer",
+        fontFamily:"'Inter',sans-serif",
         transition:"background 0.12s",
-        border: primary ? "none" : `1.5px solid ${hov?C.borderMd:C.border}`,
-        background: primary ? (hov?C.primaryHov:C.primary) : (hov?"#f3f4f6":C.bg),
-        color: primary?"#fff":C.textDark,
-        opacity:disabled?0.5:1, whiteSpace:"nowrap",
+        whiteSpace:"nowrap", opacity:disabled?0.5:1,
+        ...style
       }}
+      onMouseEnter={e=>!disabled&&(e.currentTarget.style.background="#2b352f")}
+      onMouseLeave={e=>!disabled&&(e.currentTarget.style.background="#334139")}
     >{children}</button>
+  )
+  return (
+    <Button
+      variant="outline"
+      size={small ? "sm" : "default"}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      style={style}
+    >
+      {children}
+    </Button>
   )
 }
 
@@ -166,7 +185,7 @@ const StatCard = ({ label, value, sub, color, onClick, active }) => (
 )
 
 /* ─── Fila venta ─── */
-const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, setMenuPos, isSelected, onToggleSelect, selectionMode }) => {
+const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, setMenuPos, isSelected, onToggleSelect, hasSelection }) => {
   const [hov, setHov] = useState(false)
   const estCfg  = ESTADOS[p.estado] || ESTADOS.pendiente
   const pagoCfg = getEstadoPago(p)
@@ -199,20 +218,20 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
 
   return (
     <tr
-      onClick={() => { if(selectionMode) onToggleSelect(p.id); else onVer(p); }}
+      onClick={() => { if(hasSelection) onToggleSelect(p.id); else onVer(p); }}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{ background: hov ? "#f5f5f5" : C.bg, borderBottom: `1px solid ${C.border}`, transition: "background 0.1s", cursor: "pointer" }}
     >
       {/* Código + cliente */}
       <td style={{ padding: "12px 20px", position: "relative", paddingLeft: 34 }}>
-        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectionMode || isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', pointerEvents: (selectionMode || isSelected || hov) ? 'auto' : 'none' }} onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
+        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (hasSelection || isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', pointerEvents: (hasSelection || isSelected || hov) ? 'auto' : 'none' }} onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
           <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ cursor: "pointer", width:14, height:14, margin:0, display:"block" }} />
         </div>
         {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
           <>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.textBlack, fontFamily: "'Inter',sans-serif", marginBottom: 2 }}>
-              #{p.codigo || p.id?.toString().slice(-4)}
+              {fCodigo(p.codigo, p.id)}
             </div>
             <div style={{ fontSize: 11, color: C.textMid, fontFamily: "'Inter',sans-serif" }}>
               Consumidor Final
@@ -224,7 +243,7 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
               {p.cliente_nombre}
             </div>
             <div style={{ fontSize: 11, color: C.textMid, fontFamily: "'Inter',sans-serif" }}>
-              #{p.codigo || p.id?.toString().slice(-4)}
+              {fCodigo(p.codigo, p.id)}
             </div>
           </>
         )}
@@ -291,7 +310,7 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
 }
 
 /* ─── Card mobile por venta — botones grandes ─── */
-const MobileCard = ({ p, onVer, onEditar, onEliminar, isSelected, onToggleSelect, selectionMode }) => {
+const MobileCard = ({ p, onVer, onEditar, onEliminar, isSelected, onToggleSelect, hasSelection }) => {
   const [expanded, setExpanded] = useState(false)
   const estCfg  = ESTADOS[p.estado] || ESTADOS.pendiente
   const pagoCfg = getEstadoPago(p)
@@ -304,11 +323,11 @@ const MobileCard = ({ p, onVer, onEditar, onEliminar, isSelected, onToggleSelect
     }}>
       {/* Fila principal — tap abre/cierra acciones */}
       <div
-        onClick={() => { if(selectionMode) onToggleSelect(p.id); else setExpanded(v => !v); }}
+        onClick={() => { if(hasSelection) onToggleSelect(p.id); else setExpanded(v => !v); }}
         style={{ padding: "14px 16px", cursor: "pointer", userSelect: "none" }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 10 }}>
-          {(selectionMode || isSelected) && (
+          {(hasSelection || isSelected) && (
             <div style={{ display:'flex', alignItems:'center', paddingTop: 2 }} onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
               <input type="checkbox" checked={isSelected} onChange={()=>{}} style={{ width:18, height:18 }} />
             </div>
@@ -317,7 +336,7 @@ const MobileCard = ({ p, onVer, onEditar, onEliminar, isSelected, onToggleSelect
             {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
               <>
                 <div style={{ fontSize: 15, fontWeight: 800, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  #{p.codigo || p.id?.toString().slice(-4)}
+                  {fCodigo(p.codigo, p.id)}
                 </div>
                 <div style={{ fontSize: 12, color: C.textMid }}>
                   Consumidor Final · {fFecha(p.fecha_pedido || p.created_at)}
@@ -329,7 +348,7 @@ const MobileCard = ({ p, onVer, onEditar, onEliminar, isSelected, onToggleSelect
                   {p.cliente_nombre}
                 </div>
                 <div style={{ fontSize: 12, color: C.textMid }}>
-                  #{p.codigo || p.id?.toString().slice(-4)} · {fFecha(p.fecha_pedido || p.created_at)}
+                  {fCodigo(p.codigo, p.id)} · {fFecha(p.fecha_pedido || p.created_at)}
                 </div>
               </>
             )}
@@ -430,7 +449,6 @@ export default function PedidosNimbus({
   const [menuAbierto,       setMenu]              = useState(null)
   const [menuPos,           setMenuPos]           = useState({ top:0, left:0 })
   const [selectedIds, setSelectedIds] = useState([])
-  const [selectionMode, setSelectionMode] = useState(false)
   // Sync búsqueda ↔ searchTerm global
   useEffect(()=>{ const t=setTimeout(()=>setSearchTerm?.(busqueda),200); return()=>clearTimeout(t) }, [busqueda])
   useEffect(()=>{ setPagina(1) }, [busqueda,filtroEstado,soloDeuda,itemsPerPage])
@@ -613,14 +631,7 @@ export default function PedidosNimbus({
 
         {/* ── BOTONERA MINIMALISTA SELECCIÓN MÚLTIPLE ── */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <button onClick={() => { setSelectionMode(!selectionMode); if(selectionMode) setSelectedIds([]); }}
-            title={selectionMode ? "Cancelar selección múltiple" : "Selección múltiple"}
-            style={{ width:36, height:36, borderRadius:8, border:`1px solid ${selectionMode ? C.primary : C.border}`, background: selectionMode ? C.primarySurf : C.bg, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"all .1s" }}
-            onMouseEnter={e=>{ if(!selectionMode) e.currentTarget.style.borderColor=C.primary }}
-            onMouseLeave={e=>{ if(!selectionMode) e.currentTarget.style.borderColor=C.border }}
-          >
-            <CheckIcon size={16} color={selectionMode ? C.primary : C.textMid}/>
-          </button>
+
           
           {selectedIds.length > 0 && (
             <button
@@ -628,15 +639,18 @@ export default function PedidosNimbus({
                 setConfirmData({
                   title: `¿Eliminar ${selectedIds.length} ventas?`,
                   description: "Esta acción no se puede deshacer.",
-                  onConfirm: async () => {
+                  onConfirm: () => {
                     setConfirmData(null)
-                    // Hacemos el loop enviando un id por vez (ya que formActions.eliminarPedido es simple)
-                    if (formActions.eliminarPedido) {
-                      await Promise.all(selectedIds.map(id => formActions.eliminarPedido(id)))
+                    // Hacemos el loop enviando un id por vez en background para que no bloquee y se sienta instantáneo
+                    if (eliminarPedido) {
+                      const ids = [...selectedIds] // clonar
+                      setSelectedIds([])
+                      Promise.all(ids.map(id => eliminarPedido(id))).then(() => {
+                        recargarDatos?.()
+                      })
+                    } else {
+                      setSelectedIds([])
                     }
-                    setSelectedIds([])
-                    setSelectionMode(false)
-                    recargarDatos?.()
                   }
                 })
               }}
@@ -697,7 +711,7 @@ export default function PedidosNimbus({
                     onVer={handleVer} onEditar={handleEditar} onEliminar={handleEliminar}
                     isSelected={selectedIds.includes(p.id)}
                     onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
-                    selectionMode={selectionMode}
+                    hasSelection={selectedIds.length > 0}
                   />
                 ))}
               </div>
@@ -708,7 +722,7 @@ export default function PedidosNimbus({
                   <thead>
                     <tr style={{ borderBottom:`1px solid ${C.border}`, background:"#f9fafb" }}>
                       <th style={{ padding:"10px 20px", textAlign:"left", fontSize:11, fontWeight:600, color:C.textMid, letterSpacing:"0.06em", fontFamily:"'Inter',sans-serif", whiteSpace:"nowrap", position:"relative", paddingLeft: 34 }}>
-                        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectionMode || selectedIds.length > 0) ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: (selectionMode || selectedIds.length > 0) ? 'auto' : 'none' }}>
+                        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: selectedIds.length > 0 ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: selectedIds.length > 0 ? 'auto' : 'none' }}>
                           <input type="checkbox" 
                              checked={pageItems.length > 0 && pageItems.every(p => selectedIds.includes(p.id))} 
                              onChange={(e) => {
@@ -739,7 +753,7 @@ export default function PedidosNimbus({
                         menuPos={menuPos} setMenuPos={setMenuPos}
                         isSelected={selectedIds.includes(p.id)}
                         onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
-                        selectionMode={selectionMode}
+                        hasSelection={selectedIds.length > 0}
                       />
                     ))}
                   </tbody>

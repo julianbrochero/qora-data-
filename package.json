@@ -9,6 +9,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
+    "@chakra-ui/react": "^3.34.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fontsource-variable/geist": "^5.2.8",
     "@nimbus-ds/components": "^5.57.1",
     "@nimbus-ds/icons": "^1.21.0",

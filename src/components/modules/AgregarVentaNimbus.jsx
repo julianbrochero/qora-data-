@@ -4,6 +4,11 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { CheckCircle, CheckCircle2, TrendingUp, Search, Plus, Minus, Trash2, X, Save, Menu, User, ChevronDown, UserPlus, PackagePlus, AlertCircle, Calendar, Zap, Banknote } from 'lucide-react'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { PlusIcon, MenuIcon, SearchIcon, ChevronDownIcon } from '@nimbus-ds/icons'
 import {
@@ -14,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 
 /* ══════════════════════════════════════════
    PALETA
@@ -57,7 +63,7 @@ const ESTADOS_PEDIDO = [
 
 /* ─── helpers visuales ─── */
 const Label = ({children}) => (
-  <div style={{fontSize:11,fontWeight:600,color:C.textMid,letterSpacing:'0.05em',marginBottom:3,fontFamily:"'Inter',sans-serif"}}>
+  <div style={{fontSize:11,fontWeight:600,color:C.textMid,letterSpacing:'0.05em',marginBottom:1,fontFamily:"'Inter',sans-serif"}}>
     {children}
   </div>
 )
@@ -69,7 +75,7 @@ const BtnPrimary = React.forwardRef(({children,onClick,disabled,loading}, ref) =
       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       style={{
         display:'inline-flex',alignItems:'center',gap:7,
-        height:36, padding:'0 18px', borderRadius:6, border:'none',
+        height:32, padding:'0 16px', borderRadius:6, border:'none',
         background:disabled ? C.textLight : hov ? C.primaryHov : C.primary,
         color:'#fff', fontSize:13, fontWeight:500,
         fontFamily:"'Inter',sans-serif", cursor:disabled?'not-allowed':'pointer',
@@ -385,7 +391,7 @@ export default function AgregarVentaNimbus({
       )}
 
       {/* ── Header ── */}
-      <div style={{ background:C.bg }}>
+      <div style={{ background:C.pageBg }}>
         <div style={{ display:'flex',alignItems:'center',gap:10,padding:'11px 16px' }} className="pv-mobile">
           <button onClick={onOpenMobileSidebar} style={{background:'none',border:'none',cursor:'pointer',display:'flex'}}><MenuIcon size={20} color={C.textBlack}/></button>
           <span style={{fontWeight:700,fontSize:16,color:C.textBlack}}>{pedidoAEditar?'Editar Venta':'Agregar Venta'}</span>
@@ -407,82 +413,71 @@ export default function AgregarVentaNimbus({
       {/* ── Contenido centrado ── */}
       <div className="pv-content-pad">
 
-        {/* ┌─────────────────────────────────┐ */}
-        {/* │   CARD: Productos + Detalles    │ */}
-        {/* └─────────────────────────────────┘ */}
-        <div style={{ background:C.bg,borderRadius:10,border:`1px solid ${C.border}`,overflow:'hidden' }}>
+        {/* ═══════════════════════════════════════ */}
+        {/* CARD 1 — Buscar producto + lista items */}
+        {/* ═══════════════════════════════════════ */}
+        <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.border}`, overflow:'visible', marginBottom:10 }}>
 
           {/* ── Buscador de productos ── */}
-          <div style={{padding:'12px 16px 10px',borderBottom:`1px solid ${C.border}`}}>
+          <div style={{padding:'12px 16px 10px'}}>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-              <h2 style={{margin:0,fontSize:13,fontWeight:700,color:C.textBlack}}>Productos</h2>
+              <span style={{fontSize:12,fontWeight:600,color:C.textMid,letterSpacing:'0.04em',textTransform:'uppercase'}}>Buscar producto</span>
               <div style={{display:'flex',gap:5}}>
-                <button title="Nuevo cliente" onClick={()=>{ waitingNewCliente.current=true; openModal?.('nuevo-cliente') }}
-                  style={{display:'flex',alignItems:'center',gap:5,height:28,padding:'0 10px',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer',border:`1.5px solid ${C.border}`,background:C.bg,color:C.textMid,transition:'all .12s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textMid}}
-                >
-                  <UserPlus size={13}/> Cliente
-                </button>
-                <button title="Nuevo producto" onClick={()=>{ waitingNewProd.current=true; openModal?.('nuevo-producto') }}
-                  style={{display:'flex',alignItems:'center',gap:5,height:28,padding:'0 10px',borderRadius:6,fontSize:11,fontWeight:600,cursor:'pointer',border:`1.5px solid ${C.border}`,background:C.bg,color:C.textMid,transition:'all .12s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.color=C.primary}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.color=C.textMid}}
-                >
-                  <PackagePlus size={13}/> Producto
-                </button>
+                <Button size="sm" className="h-6 border shadow-sm px-2 text-[10px] flex items-center gap-1" title="Nuevo cliente" onClick={()=>{ waitingNewCliente.current=true; openModal?.('nuevo-cliente') }}>
+                  <UserPlus size={10}/> Cliente
+                </Button>
+                <Button size="sm" className="h-6 border shadow-sm px-2 text-[10px] flex items-center gap-1" title="Nuevo producto" onClick={()=>{ waitingNewProd.current=true; openModal?.('nuevo-producto') }}>
+                  <PackagePlus size={10}/> Producto
+                </Button>
               </div>
             </div>
 
             <div className="pv-prod-wrap" style={{position:'relative'}}>
-              <div style={{display:'flex',gap:10,alignItems:'center'}}>
-                <div style={{
-                  width:36,height:36,borderRadius:8,flexShrink:0,
-                  border:`1.5px solid ${C.border}`,
-                  display:'flex',alignItems:'center',justifyContent:'center',
-                  background:C.surface,
-                }}>
-                  <Search size={15} color={C.textMid}/>
+              <div style={{position:'relative'}}>
+                <div style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',display:'flex'}}>
+                  <Search size={15} color={C.textLight}/>
                 </div>
-                <div style={{flex:1,position:'relative'}}>
-                  <input
-                    ref={busProductoRef}
-                    type="text"
-                    value={busProducto}
-                    onChange={e=>{setBusProducto(e.target.value);setDropProducto(true);setProdIdx(-1)}}
-                    placeholder="Agregar Producto"
-                    autoFocus={true}
-                    style={{
-                      width:'100%',height:36,padding:'0 32px 0 12px',fontSize:13,
-                      border:`1.5px solid ${C.border}`,borderRadius:8,
-                      background:C.bg,color:C.textDark,
-                      fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
-                    }}
-                    onFocus={e=>{e.target.style.borderColor=C.borderFocus;setDropProducto(true)}}
-                    onBlur={e=>e.target.style.borderColor=C.border}
-                    onKeyDown={e=>{
-                      if(!dropProducto || productosFilt.length===0) return
-                      if(e.key==='ArrowDown'){ e.preventDefault(); setProdIdx(i=>Math.min(i+1,productosFilt.length-1)) }
-                      else if(e.key==='ArrowUp'){ e.preventDefault(); setProdIdx(i=>Math.max(i-1,-1)) }
-                      else if(e.key==='Enter'){
-                        e.preventDefault();
-                        if(prodIdx>=0) agregarProd(productosFilt[prodIdx])
-                        else if(productosFilt.length > 0) agregarProd(productosFilt[0])
-                      }
-                      else if(e.key==='Escape'){ setDropProducto(false); setProdIdx(-1) }
-                    }}
-                  />
-                  <div style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
-                    <ChevronDown size={14} color={C.textMid}/>
+                <input
+                  ref={busProductoRef}
+                  type="text"
+                  placeholder="Nombre, código o escaner..."
+                  value={busProducto}
+                  onChange={e=>{setBusProducto(e.target.value);setDropProducto(true);setProdIdx(-1)}}
+                  onFocus={() => setDropProducto(true)}
+                  onKeyDown={e=>{
+                    if(!dropProducto || productosFilt.length===0) return
+                    if(e.key==='ArrowDown'){ e.preventDefault(); setProdIdx(i=>Math.min(i+1,productosFilt.length-1)) }
+                    else if(e.key==='ArrowUp'){ e.preventDefault(); setProdIdx(i=>Math.max(i-1,-1)) }
+                    else if(e.key==='Enter'){
+                      e.preventDefault();
+                      if(prodIdx>=0) agregarProd(productosFilt[prodIdx])
+                      else if(productosFilt.length === 1) agregarProd(productosFilt[0])
+                    }
+                    else if(e.key==='Escape'){ setDropProducto(false); setProdIdx(-1) }
+                  }}
+                  style={{
+                    width:'100%', height:40, padding:'0 12px 0 36px',
+                    fontSize:14, color:C.textDark,
+                    border:`1.5px solid ${C.border}`, borderRadius:9,
+                    outline:'none', background:'#f9fafb',
+                    fontFamily:"'Inter',sans-serif",
+                    boxSizing:'border-box',
+                  }}
+                  onFocusCapture={e=>{ e.target.style.borderColor=C.borderFocus; e.target.style.background='#fff'; e.target.style.boxShadow='0 0 0 3px rgba(51,65,57,.08)' }}
+                  onBlurCapture={e=>{ e.target.style.borderColor=C.border; e.target.style.background='#f9fafb'; e.target.style.boxShadow='none' }}
+                />
+                {busProducto && (
+                  <div style={{position:'absolute',right:11,top:'50%',transform:'translateY(-50%)',fontSize:11,color:C.textLight,pointerEvents:'none'}}>
+                    {productosFilt.length} {productosFilt.length===1?'resultado':'resultados'}
                   </div>
-                </div>
+                )}
               </div>
 
               {dropProducto && busProducto && productosFilt.length>0 && (
                 <div ref={dropProdRef} style={{
-                  position:'absolute',top:'calc(100% + 4px)',left:50,right:0,zIndex:100,
-                  background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,
-                  boxShadow:'0 4px 20px rgba(0,0,0,.12)',maxHeight:300,overflowY:'auto',
+                  position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:200,
+                  background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,
+                  boxShadow:'0 8px 28px rgba(0,0,0,.14)',maxHeight:300,overflowY:'auto',
                 }}>
                   {productosFilt.map((p,idx)=>{
                     const inCart = carrito.find(i=>i.productoId===p.id)
@@ -492,7 +487,7 @@ export default function AgregarVentaNimbus({
                         onMouseEnter={()=>setProdIdx(idx)}
                         style={{
                           display:'flex',alignItems:'center',justifyContent:'space-between',
-                          padding:'9px 14px 9px 11px',cursor:'pointer',
+                          padding:'8px 14px',cursor:'pointer',
                           borderBottom:`1px solid #f3f4f6`,fontFamily:"'Inter',sans-serif",
                           background: isHl ? C.primarySurf : 'transparent',
                           borderLeft: isHl ? `3px solid ${C.primary}` : '3px solid transparent',
@@ -518,117 +513,126 @@ export default function AgregarVentaNimbus({
             </div>
           </div>
 
-          {/* ── Tabla del carrito ── */}
+          {/* ── Lista de productos en el carrito ── */}
           {carrito.length===0 ? (
-            <div style={{padding:'20px 24px',textAlign:'center'}}>
-              <div style={{fontSize:13,color:C.textMid,marginBottom:6}}>El carrito está vacío</div>
+            <div style={{padding:'16px',textAlign:'center',borderTop:`1px solid ${C.border}`}}>
+              <div style={{fontSize:13,color:C.textMid,marginBottom:4}}>El carrito está vacío</div>
               <div style={{fontSize:12,color:C.textLight}}>Buscá un producto arriba para agregarlo</div>
             </div>
           ) : (
             <>
-              {/* DESKTOP: Tabla clásica */}
-              <div className="pv-hide-mobile" style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr style={{background:C.surface,borderBottom:`1px solid ${C.border}`}}>
-                      {[['Nombre',''],['Precio',''],['Costo','pv-col-costo'],['Stock','pv-col-stock'],['Cant.',''],['Total',''],['','']].map(([h,cls])=>(
-                        <th key={h} className={cls} style={{
-                          padding:'7px 12px',textAlign:'left',
-                          fontSize:11,fontWeight:600,color:C.textMid,
-                          letterSpacing:'0.05em',fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap',
-                        }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {carrito.map(item=>{
-                      const prod = getProd(item.productoId)
-                      return (
-                        <tr key={item.id} style={{borderBottom:`1px solid ${C.border}`}}>
-                          <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                            <div style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif",marginBottom:2}}>{item.nombre}</div>
-                            {item.codigo && <div style={{fontSize:11,color:C.textMid}}>{item.codigo}</div>}
-                            {prod?.variantes && prod.variantes.length > 0 && (
-                              <div style={{marginTop:4}}>
-                                <select
-                                  value={item.variante||''}
-                                  onChange={e=>setVariante(item.id, e.target.value)}
-                                  style={{
-                                    padding:'2px 4px', fontSize:11, borderRadius:4, border:`1px solid ${C.border}`,
-                                    background:C.surface, color:C.textDark, outline:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif"
-                                  }}
-                                >
-                                  {prod.variantes.split(',').map(v => <option key={v.trim()} value={v.trim()}>{v.trim()}</option>)}
-                                </select>
-                              </div>
-                            )}
-                          </td>
-                          <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
-                            <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0"
-                              style={{
-                                width:84,height:30,padding:'0 8px',fontSize:13,
-                                border:`1px solid ${C.border}`,borderRadius:6,
-                                background:C.bg,color:C.textDark,
-                                fontFamily:"'Inter',sans-serif",outline:'none',textAlign:'right',
-                              }}
-                              onFocus={e=>e.target.style.borderColor=C.borderFocus}
-                              onBlur={e =>e.target.style.borderColor=C.border}
-                            />
-                          </td>
-                          <td className="pv-col-costo" style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
-                            <input type="number" value={item.costo??''} onChange={e=>setCosto(item.id,e.target.value)} min="0"
-                              placeholder="—"
-                              style={{
-                                width:80,height:30,padding:'0 8px',fontSize:13,
-                                border:`1px solid ${C.border}`,borderRadius:6,
-                                background:'#fafafa',color:C.textMid,
-                                fontFamily:"'Inter',sans-serif",outline:'none',textAlign:'right',
-                              }}
-                              onFocus={e=>e.target.style.borderColor=C.borderFocus}
-                              onBlur={e =>e.target.style.borderColor=C.border}
-                            />
-                          </td>
-                          <td className="pv-col-stock" style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                            <StockBadge prod={prod}/>
-                          </td>
-                          <td style={{padding:'7px 12px',verticalAlign:'middle'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:4}}>
-                              <button onClick={()=>cambiarCant(item.id,-1)}
-                                style={{width:24,height:24,borderRadius:5,border:`1px solid ${C.border}`,background:C.bg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                                <Minus size={11} color={C.textDark}/>
-                              </button>
-                              <input type="number" value={item.cantidad} onChange={e=>setCant(item.id,e.target.value)} min="1"
-                                style={{width:38,height:24,textAlign:'center',fontSize:13,fontWeight:600,border:`1px solid ${C.border}`,borderRadius:5,background:C.bg,color:C.textDark,fontFamily:"'Inter',sans-serif",outline:'none'}}
-                              />
-                              <button onClick={()=>cambiarCant(item.id,1)}
-                                style={{width:24,height:24,borderRadius:5,border:`1px solid ${C.border}`,background:C.bg,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                                <Plus size={11} color={C.textDark}/>
-                              </button>
-                            </div>
-                          </td>
-                          <td style={{padding:'7px 12px',verticalAlign:'middle',whiteSpace:'nowrap'}}>
-                            <span style={{fontSize:13,fontWeight:600,color:C.textDark,fontFamily:"'Inter',sans-serif"}}>
-                              {fMon(item.precio*item.cantidad)}
-                            </span>
-                          </td>
-                          <td style={{padding:'7px 10px',verticalAlign:'middle'}}>
-                            <button onClick={()=>quitarItem(item.id)}
-                              style={{width:26,height:26,borderRadius:6,border:'none',background:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}
-                              onMouseEnter={e=>e.currentTarget.style.background=C.dangerSurf}
-                              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-                            >
-                              <Trash2 size={13} color={C.danger}/>
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+              {/* DESKTOP: Filas con separador */}
+              <div className="pv-hide-mobile" style={{borderTop:`1px solid ${C.border}`}}>
+                {carrito.map((item, idx) => {
+                  const prod = getProd(item.productoId)
+                  return (
+                    <div key={item.id} style={{
+                      display:'flex', alignItems:'center', gap:12,
+                      padding:'11px 16px',
+                      borderBottom: idx < carrito.length - 1 ? `1px solid ${C.border}` : 'none',
+                      background: C.bg,
+                    }}>
+                      {/* Nombre + SKU */}
+                      <div style={{flex:'1 1 0',minWidth:0}}>
+                        <div style={{fontSize:13,fontWeight:700,color:C.textDark,fontFamily:"'Inter',sans-serif",lineHeight:1.3}}>{item.nombre}</div>
+                        {item.codigo && <div style={{fontSize:11,color:C.textMid,marginTop:1,fontFamily:"'Inter',sans-serif"}}>SKU: {item.codigo}</div>}
+                      </div>
+
+                      {/* Variante */}
+                      {prod?.variantes && prod.variantes.length > 0 && (
+                        <select
+                          value={item.variante||''}
+                          onChange={e=>setVariante(item.id, e.target.value)}
+                          style={{
+                            height:32, padding:'0 28px 0 10px', fontSize:12, borderRadius:8,
+                            border:`1px solid ${C.border}`, background:'#fff', color:C.textDark,
+                            outline:'none', cursor:'pointer', fontFamily:"'Inter',sans-serif",
+                            appearance:'none', WebkitAppearance:'none',
+                            backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                            backgroundRepeat:'no-repeat', backgroundPosition:'right 8px center',
+                            minWidth:110,
+                          }}
+                        >
+                          {prod.variantes.split(',').map(v => <option key={v.trim()} value={v.trim()}>{v.trim()}</option>)}
+                        </select>
+                      )}
+
+                      {/* Precio editable */}
+                      <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0"
+                        title="Precio unitario"
+                        style={{
+                          width:82, height:32, padding:'0 8px', fontSize:13, fontWeight:600,
+                          border:`1px solid ${C.border}`, borderRadius:8,
+                          background:'#f9fafb', color:C.textDark,
+                          fontFamily:"'Inter',sans-serif", outline:'none', textAlign:'right',
+                          boxSizing:'border-box',
+                        }}
+                        onFocus={e=>{e.target.style.borderColor=C.borderFocus; e.target.style.background='#fff'}}
+                        onBlur={e=>{e.target.style.borderColor=C.border; e.target.style.background='#f9fafb'}}
+                      />
+
+                      {/* Controles cantidad */}
+                      <div style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>
+                        <button onClick={()=>cambiarCant(item.id,-1)}
+                          style={{
+                            width:30,height:30,borderRadius:8,
+                            border:`1px solid ${C.border}`,background:'#f9fafb',
+                            cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                          }}
+                          onMouseEnter={e=>e.currentTarget.style.background='#f3f4f6'}
+                          onMouseLeave={e=>e.currentTarget.style.background='#f9fafb'}
+                        >
+                          <Minus size={12} color={C.textDark}/>
+                        </button>
+                        <input type="number" value={item.cantidad} onChange={e=>setCant(item.id,e.target.value)} min="1"
+                          style={{
+                            width:42, height:30, textAlign:'center', fontSize:14, fontWeight:700,
+                            border:`1px solid ${C.border}`, borderRadius:8,
+                            background:'#fff', color:C.textDark,
+                            fontFamily:"'Inter',sans-serif", outline:'none', boxSizing:'border-box',
+                          }}
+                        />
+                        <button onClick={()=>cambiarCant(item.id,1)}
+                          style={{
+                            width:30,height:30,borderRadius:8,
+                            border:`1px solid ${C.border}`,background:'#f9fafb',
+                            cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                          }}
+                          onMouseEnter={e=>e.currentTarget.style.background='#f3f4f6'}
+                          onMouseLeave={e=>e.currentTarget.style.background='#f9fafb'}
+                        >
+                          <Plus size={12} color={C.textDark}/>
+                        </button>
+                      </div>
+
+                      {/* Total ítem */}
+                      <div style={{
+                        minWidth:82, textAlign:'right', fontSize:14, fontWeight:700,
+                        color:C.textDark, fontFamily:"'Inter',sans-serif", flexShrink:0,
+                      }}>
+                        {fMon(item.precio * item.cantidad)}
+                      </div>
+
+                      {/* Eliminar */}
+                      <button onClick={()=>quitarItem(item.id)}
+                        style={{
+                          width:28,height:28,borderRadius:7,border:'none',
+                          background:'transparent',cursor:'pointer',
+                          display:'flex',alignItems:'center',justifyContent:'center',
+                          flexShrink:0,
+                        }}
+                        onMouseEnter={e=>e.currentTarget.style.background=C.dangerSurf}
+                        onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                      >
+                        <Trash2 size={14} color={C.danger}/>
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
 
               {/* MOBILE: Tarjetas lista de Items */}
-              <div className="pv-show-mobile" style={{flexDirection:'column'}}>
+              <div className="pv-show-mobile" style={{flexDirection:'column',borderTop:`1px solid ${C.border}`}}>
                 {carrito.map(item => {
                   const prod = getProd(item.productoId);
                   return (
@@ -638,12 +642,10 @@ export default function AgregarVentaNimbus({
                           <div style={{fontSize:14,fontWeight:700,color:C.textBlack,marginBottom:2,lineHeight:1.2}}>{item.nombre}</div>
                           {item.codigo && <div style={{fontSize:12,color:C.textMid}}>{item.codigo}</div>}
                         </div>
-                        <button onClick={()=>quitarItem(item.id)} 
-                          style={{
-                            width:32,height:32,borderRadius:8,border:'none',
+                        <button onClick={()=>quitarItem(item.id)}
+                          style={{width:32,height:32,borderRadius:8,border:'none',
                             background:C.dangerSurf,color:C.danger,display:'flex',
-                            alignItems:'center',justifyContent:'center',flexShrink:0
-                          }}>
+                            alignItems:'center',justifyContent:'center',flexShrink:0}}>
                           <Trash2 size={15}/>
                         </button>
                       </div>
@@ -659,7 +661,7 @@ export default function AgregarVentaNimbus({
                             <span style={{fontSize:12,color:C.textMid,fontWeight:600}}>Precio:</span>
                             <div style={{position:'relative',display:'flex',alignItems:'center'}}>
                                <span style={{position:'absolute',left:8,fontSize:14,color:C.textMid,fontWeight:600}}>$</span>
-                               <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0" 
+                               <input type="number" value={item.precio} onChange={e=>setPrecio(item.id,e.target.value)} min="0"
                                 style={{ width:88,height:36,padding:'0 8px 0 22px',fontSize:14,fontWeight:600,border:`1.5px solid ${C.border}`,borderRadius:8,background:C.bg,outline:'none' }}/>
                             </div>
                           </div>
@@ -679,358 +681,362 @@ export default function AgregarVentaNimbus({
               </div>
             </>
           )}
+        </div>{/* fin CARD 1 */}
 
-          {/* ── Separador ── */}
-
-          <div style={{borderTop:`1px solid ${C.border}`}}/>
-
-          {/* ── Sección Detalles: cliente + pago ── */}
-          <div style={{padding:'12px 16px'}}>
-            <div className="pv-form-grid" style={{marginBottom:8}}>
-              {/* Cliente */}
-              <div ref={cliRef} style={{position:'relative'}}>
-                <Label>Cliente</Label>
-                {clienteActivo && showClientSearch ? (
-                  <div style={{display:'flex',gap:6}}>
-                    <div style={{position:'relative',flex:1}}>
-                      <div style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
-                        <User size={14} color={C.textMid}/>
+        {/* ═══════════════════════════════════════════ */}
+        {/* CARD 2 — Cliente + Método de pago + extras */}
+        {/* ═══════════════════════════════════════════ */}
+        <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.border}`, padding:'12px 16px', marginBottom:10 }}>
+          <div className="pv-form-grid" style={{marginBottom:8}}>
+            {/* Cliente */}
+            <div ref={cliRef} style={{position:'relative'}}>
+              <Label>Cliente</Label>
+              {clienteActivo && showClientSearch ? (
+                <div style={{display:'flex',gap:6}}>
+                  <div style={{position:'relative',flex:1}}>
+                    <div style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',pointerEvents:'none'}}>
+                      <User size={14} color={C.textMid}/>
+                    </div>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={busCliente}
+                      onChange={e=>{setBusCliente(e.target.value);setDropCliente(true);if(!e.target.value){setClienteId('');setClienteNombre('')}}}
+                      placeholder="Buscar cliente..."
+                      style={{
+                        width:'100%',height:36,padding:'0 10px 0 28px',fontSize:13,
+                        border:`1.5px solid ${C.border}`,borderRadius:8,
+                        background:C.bg,color:C.textDark,
+                        fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
+                      }}
+                      onFocus={e=>{e.target.style.borderColor=C.borderFocus;setDropCliente(true)}}
+                      onBlur={e=>e.target.style.borderColor=C.border}
+                    />
+                    {dropCliente && clientesFilt.length>0 && (
+                      <div style={{
+                        position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:200,
+                        background:C.bg,border:`1px solid ${C.border}`,borderRadius:9,
+                        boxShadow:'0 4px 16px rgba(0,0,0,.1)',maxHeight:200,overflowY:'auto',
+                      }}>
+                        {clientesFilt.slice(0,8).map(c=>(
+                          <div key={c.id} onMouseDown={()=>selCliente(c)}
+                            style={{
+                              padding:'9px 12px',fontSize:13,color:C.textDark,cursor:'pointer',
+                              borderBottom:`1px solid #f3f4f6`,fontFamily:"'Inter',sans-serif",
+                            }}
+                            onMouseEnter={e=>e.currentTarget.style.background='#f9fafb'}
+                            onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                          >
+                            <span style={{fontWeight:500}}>{c.nombre}</span>
+                            {c.telefono && <span style={{fontSize:11,color:C.textMid,marginLeft:8}}>{c.telefono}</span>}
+                          </div>
+                        ))}
                       </div>
-                      <input
-                        autoFocus
-                        type="text"
-                        value={busCliente}
-                        onChange={e=>{setBusCliente(e.target.value);setDropCliente(true);if(!e.target.value){setClienteId('');setClienteNombre('')}}}
-                        placeholder="Buscar cliente..."
-                        style={{
-                          width:'100%',height:32,padding:'0 10px 0 28px',fontSize:12,
-                          border:`1.5px solid ${C.border}`,borderRadius:7,
-                          background:C.bg,color:C.textDark,
-                          fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
-                        }}
-                        onFocus={e=>{e.target.style.borderColor=C.borderFocus;setDropCliente(true)}}
-                        onBlur={e=>e.target.style.borderColor=C.border}
-                      />
-                      {dropCliente && clientesFilt.length>0 && (
-                        <div style={{
-                          position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:100,
-                          background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,
-                          boxShadow:'0 4px 16px rgba(0,0,0,.1)',maxHeight:200,overflowY:'auto',
-                        }}>
-                          {clientesFilt.slice(0,8).map(c=>(
-                            <div key={c.id} onMouseDown={()=>selCliente(c)}
-                              style={{
-                                padding:'9px 12px',fontSize:13,color:C.textDark,cursor:'pointer',
-                                borderBottom:`1px solid #f3f4f6`,fontFamily:"'Inter',sans-serif",
-                              }}
-                              onMouseEnter={e=>e.currentTarget.style.background='#f9fafb'}
-                              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-                            >
-                              <span style={{fontWeight:500}}>{c.nombre}</span>
-                              {c.telefono && <span style={{fontSize:11,color:C.textMid,marginLeft:8}}>{c.telefono}</span>}
-                            </div>
-                          ))}
+                    )}
+                  </div>
+                  <button onClick={()=>{ setClienteActivo(false); setShowClientSearch(false); setClienteId(''); setClienteNombre(''); setBusCliente('') }}
+                    title="Cancelar" style={{width:36,height:36,borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,color:C.textMid,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><X size={14}/></button>
+                </div>
+              ) : (
+                <button type="button" onClick={()=>{ setClienteActivo(true); setShowClientSearch(true) }}
+                  style={{
+                    width:'100%', height:36, padding:'0 12px', fontSize:13, fontWeight:600,
+                    border:`1.5px ${clienteId?'solid':'dashed'} ${clienteId?C.primary:C.border}`, borderRadius:9,
+                    background:clienteId?'#f8fdf9':'transparent',
+                    color:clienteId?C.primary:C.textMid, cursor:'pointer',
+                    display:'flex', alignItems:'center', justifyContent:'flex-start',
+                    transition:'all .12s'
+                  }}
+                  onMouseEnter={e=>{if(!clienteId) e.currentTarget.style.borderColor=C.textMid}}
+                  onMouseLeave={e=>{if(!clienteId) e.currentTarget.style.borderColor=C.border}}
+                >
+                  {clienteId ? (
+                    <><span style={{flex:1,textAlign:'left',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{clienteNombre}</span>
+                    <span onClick={e=>{e.stopPropagation();setClienteActivo(false);setShowClientSearch(false);setClienteId('');setClienteNombre('');setBusCliente('')}}
+                      style={{flexShrink:0,marginLeft:8,display:'flex',alignItems:'center',opacity:.6}}><X size={13}/></span></>
+                  ) : (
+                    <>+ Consumidor Final <span style={{fontWeight:400,opacity:.6,marginLeft:4}}>(default)</span></>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Método de pago */}
+            <div>
+              <Label>Método de pago</Label>
+              <Select value={metodoPago} onValueChange={v => { setMetodoPago(v); try{localStorage.setItem('gestify_metodo_pago',v)}catch{} }}>
+                <SelectTrigger className="w-full h-9 text-sm focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white rounded-[9px]">
+                  <SelectValue placeholder="Método..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {METODOS_PAGO.map(m=><SelectItem key={m.val} value={m.val}>{m.lbl}</SelectItem>)}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Toggle campos opcionales */}
+          <div style={{marginBottom: showOpcionales ? 10 : 0}}>
+            <button type="button" onClick={()=>setShowOpcionales(v=>!v)}
+              style={{
+                background:'none', border:'none', color:C.textMid, fontSize:12, fontWeight:600,
+                cursor:'pointer', display:'flex', alignItems:'center', gap:5, padding:0,
+                transition:'color .1s'
+              }}
+              onMouseEnter={e=>e.currentTarget.style.color=C.textDark}
+              onMouseLeave={e=>e.currentTarget.style.color=C.textMid}
+            >
+              {showOpcionales ? '− Ocultar notas, canal y fechas' : '+ agregar nota / fecha / canal / estado'}
+            </button>
+          </div>
+
+          {showOpcionales && (
+            <>
+              <div className="pv-form-grid" style={{paddingTop:8, borderTop:`1px solid ${C.borderLight}`}}>
+                {/* Fecha pedido */}
+                <div ref={fechaPedidoRef} style={{position:'relative'}}>
+                  <Label>Fecha del pedido</Label>
+                  <button type="button"
+                    onClick={()=>{ setPedidoViewDate(new Date(fechaPedido+'T12:00:00')); setFechaPedidoPicker(v=>!v) }}
+                    style={{
+                      width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
+                      fontSize:12,border:`1.5px solid ${C.borderFocus}`,borderRadius:7,
+                      background:C.bg,color:C.textDark,
+                      fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
+                    }}>
+                    <Calendar size={13} color={C.primary} style={{flexShrink:0}}/>
+                    <span style={{flex:1,textAlign:'left'}}>
+                      {new Date(fechaPedido+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
+                    </span>
+                    <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>
+                  </button>
+                  {fechaPedidoPicker && (
+                    <div className="pv-dp-wrap">
+                      <div className="pv-dp-header">
+                        <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
+                        <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pedidoViewDate.getMonth()]} {pedidoViewDate.getFullYear()}</span>
+                        <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
+                      </div>
+                      <div className="pv-dp-grid">
+                        {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
+                        {(()=>{
+                          const yr=pedidoViewDate.getFullYear(), mo=pedidoViewDate.getMonth()
+                          const firstDay=new Date(yr,mo,1).getDay()
+                          const daysInMo=new Date(yr,mo+1,0).getDate()
+                          const todayD=new Date()
+                          const cells=[]
+                          for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
+                          for(let d=1;d<=daysInMo;d++){
+                            const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                            const isSel=fechaPedido===ds
+                            const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
+                            cells.push(
+                              <button key={d} type="button"
+                                className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                                onClick={()=>{setFechaPedido(ds);setFechaPedidoPicker(false)}}>
+                                {d}
+                              </button>
+                            )
+                          }
+                          return cells
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Fecha entrega */}
+                <div ref={fechaEntregaRef} style={{position:'relative'}}>
+                  <Label>Fecha de entrega <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
+                  <button type="button"
+                    onClick={()=>{ setPickerViewDate(fechaEntrega?new Date(fechaEntrega+'T12:00:00'):new Date()); setFechaEntregaPicker(v=>!v) }}
+                    style={{
+                      width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
+                      fontSize:12,border:`1.5px solid ${fechaEntrega?C.borderFocus:C.border}`,borderRadius:7,
+                      background:C.bg,color:fechaEntrega?C.textDark:C.textLight,
+                      fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
+                    }}>
+                    <Calendar size={13} color={fechaEntrega?C.primary:C.textLight} style={{flexShrink:0}}/>
+                    <span style={{flex:1,textAlign:'left'}}>
+                      {fechaEntrega ? new Date(fechaEntrega+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : 'Sin fecha...'}
+                    </span>
+                    {fechaEntrega
+                      ? <span onMouseDown={e=>{e.stopPropagation();setFechaEntrega('');setFechaEntregaPicker(false)}} style={{color:C.textLight,fontSize:16,lineHeight:1,cursor:'pointer',flexShrink:0,padding:'0 2px'}}>×</span>
+                      : <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>}
+                  </button>
+                  {fechaEntregaPicker && (
+                    <div className="pv-dp-wrap">
+                      <div className="pv-dp-header">
+                        <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
+                        <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pickerViewDate.getMonth()]} {pickerViewDate.getFullYear()}</span>
+                        <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
+                      </div>
+                      <div className="pv-dp-grid">
+                        {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
+                        {(()=>{
+                          const yr=pickerViewDate.getFullYear(), mo=pickerViewDate.getMonth()
+                          const firstDay=new Date(yr,mo,1).getDay()
+                          const daysInMo=new Date(yr,mo+1,0).getDate()
+                          const todayD=new Date()
+                          const cells=[]
+                          for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
+                          for(let d=1;d<=daysInMo;d++){
+                            const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+                            const isSel=fechaEntrega===ds
+                            const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
+                            cells.push(
+                              <button key={d} type="button"
+                                className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
+                                onClick={()=>{setFechaEntrega(ds);setFechaEntregaPicker(false)}}>
+                                {d}
+                              </button>
+                            )
+                          }
+                          return cells
+                        })()}
+                      </div>
+                      {fechaEntrega && (
+                        <div className="pv-dp-footer">
+                          <button type="button" className="pv-dp-clear"
+                            onClick={()=>{setFechaEntrega('');setFechaEntregaPicker(false)}}>
+                            Limpiar fecha
+                          </button>
                         </div>
                       )}
                     </div>
-                    <button onClick={()=>{ setClienteActivo(false); setShowClientSearch(false); setClienteId(''); setClienteNombre(''); setBusCliente('') }}
-                      title="Cancelar" style={{width:32,height:32,borderRadius:7,border:`1px solid ${C.border}`,background:C.bg,color:C.textMid,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}><X size={14}/></button>
-                  </div>
-                ) : (
-                  <button type="button" onClick={()=>{ setClienteActivo(true); setShowClientSearch(true) }}
-                    style={{
-                      width:'100%', height:32, padding:'0 12px', fontSize:13, fontWeight:600,
-                      border:`1.5px ${clienteId?'solid':'dashed'} ${clienteId?C.primary:C.border}`, borderRadius:8,
-                      background:clienteId?'#f8fdf9':'transparent',
-                      color:clienteId?C.primary:C.textMid, cursor:'pointer',
-                      display:'flex', alignItems:'center', justifyContent:'flex-start',
-                      transition:'all .12s'
-                    }}
-                    onMouseEnter={e=>{if(!clienteId) e.currentTarget.style.borderColor=C.textMid}}
-                    onMouseLeave={e=>{if(!clienteId) e.currentTarget.style.borderColor=C.border}}
-                  >
-                    {clienteId ? (
-                      <><span style={{flex:1,textAlign:'left',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{clienteNombre}</span>
-                      <span onClick={e=>{e.stopPropagation();setClienteActivo(false);setShowClientSearch(false);setClienteId('');setClienteNombre('');setBusCliente('')}}
-                        style={{flexShrink:0,marginLeft:8,display:'flex',alignItems:'center',opacity:.6}}><X size={13}/></span></>
-                    ) : (
-                      <>+ Consumidor Final <span style={{fontWeight:400,opacity:.6,marginLeft:4}}>(default)</span></>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Método de pago */}
-              <div>
-                <Label>Método de pago</Label>
-                <Select value={metodoPago} onValueChange={v => { setMetodoPago(v); try{localStorage.setItem('gestify_metodo_pago',v)}catch{} }}>
-                  <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                    <SelectValue placeholder="Método..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {METODOS_PAGO.map(m=><SelectItem key={m.val} value={m.val}>{m.lbl}</SelectItem>)}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Toggle campos opcionales */}
-            <div style={{marginBottom: showOpcionales ? 12 : 0}}>
-              <button type="button" onClick={()=>setShowOpcionales(v=>!v)}
-                style={{
-                  background:'none', border:'none', color:C.textMid, fontSize:12, fontWeight:600,
-                  cursor:'pointer', display:'flex', alignItems:'center', gap:5, padding:0,
-                  transition:'color .1s'
-                }}
-                onMouseEnter={e=>e.currentTarget.style.color=C.textDark}
-                onMouseLeave={e=>e.currentTarget.style.color=C.textMid}
-              >
-                {showOpcionales ? '− Ocultar notas, canal y fechas' : '+ agregar nota / fecha / canal / estado'}
-              </button>
-            </div>
-
-            {showOpcionales && (
-              <>
-                <div className="pv-form-grid" style={{paddingTop:12, borderTop:`1px solid ${C.borderLight}`}}>
-                  {/* Fecha pedido */}
-                  <div ref={fechaPedidoRef} style={{position:'relative'}}>
-                    <Label>Fecha del pedido</Label>
-                    <button type="button"
-                      onClick={()=>{ setPedidoViewDate(new Date(fechaPedido+'T12:00:00')); setFechaPedidoPicker(v=>!v) }}
-                      style={{
-                        width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
-                        fontSize:12,border:`1.5px solid ${C.borderFocus}`,borderRadius:7,
-                        background:C.bg,color:C.textDark,
-                        fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
-                      }}>
-                      <Calendar size={13} color={C.primary} style={{flexShrink:0}}/>
-                      <span style={{flex:1,textAlign:'left'}}>
-                        {new Date(fechaPedido+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}
-                      </span>
-                      <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>
-                    </button>
-                    {fechaPedidoPicker && (
-                      <div className="pv-dp-wrap">
-                        <div className="pv-dp-header">
-                          <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
-                          <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pedidoViewDate.getMonth()]} {pedidoViewDate.getFullYear()}</span>
-                          <button type="button" className="pv-dp-nav" onClick={()=>setPedidoViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
-                        </div>
-                        <div className="pv-dp-grid">
-                          {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
-                          {(()=>{
-                            const yr=pedidoViewDate.getFullYear(), mo=pedidoViewDate.getMonth()
-                            const firstDay=new Date(yr,mo,1).getDay()
-                            const daysInMo=new Date(yr,mo+1,0).getDate()
-                            const todayD=new Date()
-                            const cells=[]
-                            for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
-                            for(let d=1;d<=daysInMo;d++){
-                              const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-                              const isSel=fechaPedido===ds
-                              const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
-                              cells.push(
-                                <button key={d} type="button"
-                                  className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
-                                  onClick={()=>{setFechaPedido(ds);setFechaPedidoPicker(false)}}>
-                                  {d}
-                                </button>
-                              )
-                            }
-                            return cells
-                          })()}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Fecha entrega */}
-                  <div ref={fechaEntregaRef} style={{position:'relative'}}>
-                    <Label>Fecha de entrega <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
-                    <button type="button"
-                      onClick={()=>{ setPickerViewDate(fechaEntrega?new Date(fechaEntrega+'T12:00:00'):new Date()); setFechaEntregaPicker(v=>!v) }}
-                      style={{
-                        width:'100%',height:32,display:'flex',alignItems:'center',gap:7,padding:'0 10px',
-                        fontSize:12,border:`1.5px solid ${fechaEntrega?C.borderFocus:C.border}`,borderRadius:7,
-                        background:C.bg,color:fechaEntrega?C.textDark:C.textLight,
-                        fontFamily:"'Inter',sans-serif",cursor:'pointer',boxSizing:'border-box',
-                      }}>
-                      <Calendar size={13} color={fechaEntrega?C.primary:C.textLight} style={{flexShrink:0}}/>
-                      <span style={{flex:1,textAlign:'left'}}>
-                        {fechaEntrega ? new Date(fechaEntrega+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}) : 'Sin fecha...'}
-                      </span>
-                      {fechaEntrega
-                        ? <span onMouseDown={e=>{e.stopPropagation();setFechaEntrega('');setFechaEntregaPicker(false)}} style={{color:C.textLight,fontSize:16,lineHeight:1,cursor:'pointer',flexShrink:0,padding:'0 2px'}}>×</span>
-                        : <ChevronDown size={12} color={C.textLight} style={{flexShrink:0}}/>}
-                    </button>
-                    {fechaEntregaPicker && (
-                      <div className="pv-dp-wrap">
-                        <div className="pv-dp-header">
-                          <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()-1,1))}>‹</button>
-                          <span className="pv-dp-title">{['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][pickerViewDate.getMonth()]} {pickerViewDate.getFullYear()}</span>
-                          <button type="button" className="pv-dp-nav" onClick={()=>setPickerViewDate(d=>new Date(d.getFullYear(),d.getMonth()+1,1))}>›</button>
-                        </div>
-                        <div className="pv-dp-grid">
-                          {['Do','Lu','Ma','Mi','Ju','Vi','Sa'].map(d=><div key={d} className="pv-dp-lbl">{d}</div>)}
-                          {(()=>{
-                            const yr=pickerViewDate.getFullYear(), mo=pickerViewDate.getMonth()
-                            const firstDay=new Date(yr,mo,1).getDay()
-                            const daysInMo=new Date(yr,mo+1,0).getDate()
-                            const todayD=new Date()
-                            const cells=[]
-                            for(let i=0;i<firstDay;i++) cells.push(<div key={`e${i}`}/>)
-                            for(let d=1;d<=daysInMo;d++){
-                              const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-                              const isSel=fechaEntrega===ds
-                              const isTod=todayD.getFullYear()===yr&&todayD.getMonth()===mo&&todayD.getDate()===d
-                              cells.push(
-                                <button key={d} type="button"
-                                  className={`pv-dp-day${isSel?' sel':''}${isTod?' tod':''}`}
-                                  onClick={()=>{setFechaEntrega(ds);setFechaEntregaPicker(false)}}>
-                                  {d}
-                                </button>
-                              )
-                            }
-                            return cells
-                          })()}
-                        </div>
-                        {fechaEntrega && (
-                          <div className="pv-dp-footer">
-                            <button type="button" className="pv-dp-clear"
-                              onClick={()=>{setFechaEntrega('');setFechaEntregaPicker(false)}}>
-                              Limpiar fecha
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Estado */}
-                  <div>
-                    <Label>Estado</Label>
-                    <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
-                      <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                        <SelectValue placeholder="Estado..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {ESTADOS_PEDIDO.map(e=><SelectItem key={e.val} value={e.val}>{e.lbl}</SelectItem>)}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Canal de venta */}
-                  <div>
-                    <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
-                    <Select value={canalVenta} onValueChange={setCanalVenta}>
-                      <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                        <SelectValue placeholder="Sin canal" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="">Sin canal</SelectItem>
-                          {canales.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  )}
                 </div>
 
-                {/* Notas */}
-                <div style={{marginTop:8}}>
-                  <Label>Notas (opcional)</Label>
-                  <textarea value={notas} onChange={e=>setNotas(e.target.value)}
-                    placeholder="Observaciones, instrucciones de entrega..."
-                    rows={2}
+                {/* Estado */}
+                <div>
+                  <Label>Estado</Label>
+                  <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
+                    <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                      <SelectValue placeholder="Estado..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {ESTADOS_PEDIDO.map(e=><SelectItem key={e.val} value={e.val}>{e.lbl}</SelectItem>)}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Canal de venta */}
+                <div>
+                  <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
+                  <Select value={canalVenta} onValueChange={setCanalVenta}>
+                    <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                      <SelectValue placeholder="Sin canal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="">Sin canal</SelectItem>
+                        {canales.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Notas */}
+              <div style={{marginTop:8}}>
+                <Label>Notas (opcional)</Label>
+                <textarea value={notas} onChange={e=>setNotas(e.target.value)}
+                  rows={2}
+                  placeholder="Observaciones, instrucciones de entrega..."
+                  style={{
+                    width:'100%',padding:'8px 10px',fontSize:12,
+                    border:`1.5px solid ${C.border}`,borderRadius:7,
+                    background:C.bg,color:C.textDark,resize:'none',
+                    fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
+                    minHeight:50
+                  }}
+                  onFocus={e=>e.target.style.borderColor=C.borderFocus}
+                  onBlur={e =>e.target.style.borderColor=C.border}
+                />
+              </div>
+            </>
+          )}
+        </div>{/* fin CARD 2 */}
+
+        {/* ═══════════════════════════════════ */}
+        {/* CARD 3 — Total + Botón guardar     */}
+        {/* ═══════════════════════════════════ */}
+        <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.border}`, padding:'14px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, flexWrap:'wrap' }}>
+          {/* Total + adelanto */}
+          <div style={{display:'flex',alignItems:'flex-end',gap:16,flexWrap:'wrap'}}>
+            <div>
+              <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Total</div>
+              <div style={{fontSize:22,fontWeight:800,color:C.textBlack,fontFamily:"'Inter',sans-serif",letterSpacing:'-0.5px',lineHeight:1}}>
+                {fMon(total)}
+              </div>
+            </div>
+            {total > 0 && (
+              <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
+                <div>
+                  <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Adelanto</div>
+                  <input type="number" value={adelanto} onChange={e=>setAdelanto(e.target.value)} placeholder="0"
                     style={{
-                      width:'100%',padding:'6px 10px',fontSize:12,resize:'vertical',
-                      border:`1.5px solid ${C.border}`,borderRadius:7,
-                      background:C.bg,color:C.textDark,
-                      fontFamily:"'Inter',sans-serif",outline:'none',boxSizing:'border-box',
+                      width:110,height:34,padding:'0 10px',fontSize:13,fontWeight:600,
+                      border:`1.5px solid ${C.border}`,borderRadius:8,
+                      background:C.bg,color:C.textDark,fontFamily:"'Inter',sans-serif",outline:'none',
                     }}
-                    onFocus={e=>e.target.style.borderColor=C.borderFocus}
+                    onFocus={e=>e.target.style.borderColor=C.primary}
                     onBlur={e =>e.target.style.borderColor=C.border}
                   />
                 </div>
-              </>
+                <button onClick={()=>setAdelanto(String(total))} type="button"
+                  style={{
+                    height:34,padding:'0 12px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',
+                    border:`1.5px solid ${C.success}`,background:'#f0fdf4',color:C.success,
+                    display:'flex',alignItems:'center',gap:6,fontFamily:"'Inter',sans-serif",
+                    transition:'all .12s',whiteSpace:'nowrap',
+                  }}
+                  onMouseEnter={e=>e.currentTarget.style.background='#dcfce7'}
+                  onMouseLeave={e=>e.currentTarget.style.background='#f0fdf4'}
+                >
+                  ✓ Pagar total
+                  <span style={{
+                    fontSize:10,fontWeight:700,fontFamily:"'DM Mono',monospace",
+                    background:'rgba(22,163,74,0.15)',color:C.success,
+                    padding:'1px 5px',borderRadius:4,letterSpacing:'0.02em',
+                  }}>Shift</span>
+                </button>
+              </div>
             )}
+            <div style={{display:'flex',alignItems:'center',height:34,gap:6}}>
+              {adelantoNum > 0 && saldo > 0 && (
+                <span style={{fontSize:12,color:C.warning,fontWeight:700,background:C.warnSurf,padding:'3px 8px',borderRadius:6,border:`1px solid ${C.warnBord}`}}>
+                  Saldo: {fMon(saldo)}
+                </span>
+              )}
+              {adelantoNum >= total && total > 0 && (
+                <span style={{fontSize:11,color:C.success,fontWeight:700,background:'#f0fdf4',padding:'3px 8px',borderRadius:6,border:`1px solid ${C.successBord}`,display:'flex',alignItems:'center',gap:4}}>
+                  <CheckCircle size={12}/> Pagado
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* ── Footer: Total + Guardar ── */}
-          <div className="pv-cart-footer">
-            <div style={{display:'flex',alignItems:'flex-end',gap:16,flexWrap:'wrap'}}>
-              <div style={{minWidth:100}}>
-                <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Total</div>
-                <div style={{fontSize:18,fontWeight:800,color:C.textBlack,fontFamily:"'Inter',sans-serif",letterSpacing:'-0.3px',height:34,display:'flex',alignItems:'center'}}>
-                  {fMon(total)}
-                </div>
-              </div>
-              {total > 0 && (
-                <div style={{display:'flex',alignItems:'flex-end',gap:8}}>
-                  <div>
-                    <div style={{fontSize:11,color:C.textMid,fontWeight:500,marginBottom:2}}>Adelanto</div>
-                    <input type="number" value={adelanto} onChange={e=>setAdelanto(e.target.value)} placeholder="0"
-                      style={{
-                        width:110,height:34,padding:'0 10px',fontSize:13,fontWeight:600,
-                        border:`1.5px solid ${C.border}`,borderRadius:6,
-                        background:C.bg,color:C.textDark,fontFamily:"'Inter',sans-serif",outline:'none',
-                      }}
-                      onFocus={e=>e.target.style.borderColor=C.primary}
-                      onBlur={e =>e.target.style.borderColor=C.border}
-                    />
-                  </div>
-                  <button onClick={()=>setAdelanto(String(total))} type="button"
-                    style={{
-                      height:34,padding:'0 12px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',
-                      border:`1.5px solid ${C.success}`,background:'#f0fdf4',color:C.success,
-                      display:'flex',alignItems:'center',gap:6,fontFamily:"'Inter',sans-serif",
-                      transition:'all .12s',whiteSpace:'nowrap',
-                    }}
-                    onMouseEnter={e=>e.currentTarget.style.background='#dcfce7'}
-                    onMouseLeave={e=>e.currentTarget.style.background='#f0fdf4'}
-                  >
-                    ✓ Pagar total
-                    <span style={{
-                      fontSize:10,fontWeight:700,fontFamily:"'DM Mono',monospace",
-                      background:'rgba(22,163,74,0.15)',color:C.success,
-                      padding:'1px 5px',borderRadius:4,letterSpacing:'0.02em',
-                    }}>Shift</span>
-                  </button>
-                </div>
-              )}
-              <div style={{display:'flex',alignItems:'center',height:34,gap:6}}>
-                {adelantoNum > 0 && saldo > 0 && (
-                  <span style={{fontSize:12,color:C.warning,fontWeight:700,background:C.warnSurf,padding:'3px 8px',borderRadius:6,border:`1px solid ${C.warnBord}`}}>
-                    Saldo: {fMon(saldo)}
-                  </span>
-                )}
-                {adelantoNum >= total && total > 0 && (
-                  <span style={{fontSize:11,color:C.success,fontWeight:700,background:'#f0fdf4',padding:'3px 8px',borderRadius:6,border:`1px solid ${C.successBord}`,display:'flex',alignItems:'center',gap:4}}>
-                    <CheckCircle size={12}/> Pagado
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="pv-cart-footer-save">
-              <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef}>
-                <Save size={15}/>{pedidoAEditar?'Actualizar Venta':'Crear Pedido'}
-                <span className="pv-desktop" style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl+Enter</span>
-              </BtnPrimary>
-            </div>
-          </div>
-        </div>{/* fin card unificado */}
+          {/* Botón guardar */}
+          <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef}>
+            <Save size={15}/>{pedidoAEditar?'Actualizar Venta':'Crear Pedido'}
+            <span className="pv-desktop" style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl+Enter</span>
+          </BtnPrimary>
+        </div>{/* fin CARD 3 */}
+
 
         {/* Atajos info */}
-        <div style={{ textAlign:'center', marginTop:16, fontSize:11, color:C.textMid, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:15, opacity:0.8 }}>
-          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Zap size={13} color={C.textMid}/> <b>Enter</b>: Agregar 1° producto</span>
-          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Banknote size={13} color={C.textMid}/> <b>Shift</b>: Saldar total</span>
-          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Save size={13} color={C.textMid}/> <b>F2</b> o <b>Ctrl+Enter</b>: Guardar</span>
+        <div style={{ textAlign:'center', marginTop:8, fontSize:10, color:C.textMid, display:"flex", alignItems:"center", justifyContent:"center", flexWrap:"wrap", gap:15, opacity:0.7 }}>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Zap size={11} color={C.textMid}/> <b>Enter</b>: 1° prod</span>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Banknote size={11} color={C.textMid}/> <b>Shift</b>: Saldo</span>
+          <span style={{ display:'flex', alignItems:'center', gap:4 }}><Save size={11} color={C.textMid}/> <b>F2</b>/<b>Ctrl+Enter</b>: Guardar</span>
         </div>
       </div>
+
 
       <style>{`
         @media (max-width:767px){
@@ -1049,14 +1055,14 @@ export default function AgregarVentaNimbus({
         .pv-form-grid {
           display:grid;
           grid-template-columns:1fr 1fr;
-          gap:14px;
+          gap:10px;
         }
         @media (max-width:540px) {
           .pv-form-grid { grid-template-columns:1fr; }
         }
 
         .pv-content-pad {
-          max-width:860px; margin:0 auto; padding:16px 24px 24px;
+          max-width:860px; margin:0 auto; padding:8px 24px 16px;
         }
         @media (max-width:600px) {
           .pv-content-pad { padding:8px 12px 16px; }
@@ -1109,7 +1115,7 @@ export default function AgregarVentaNimbus({
 
         .pv-cart-footer {
           border-top:1px solid #e5e7eb;
-          padding:12px 16px;
+          padding:8px 16px;
           background:#f9fafb;
           display:flex;
           align-items:center;

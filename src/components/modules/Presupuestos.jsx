@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { MenuIcon, PlusIcon, SearchIcon } from "@nimbus-ds/icons"
 import { generarPDFPresupuesto } from '../../utils/presupuestoGenerator'
+import { Button } from "@/components/ui/button"
 
 /* ══════════════════════════════════════════
    PALETA NIMBUS
@@ -41,28 +42,36 @@ const RESPONSIVE = `
 `
 
 /* ─── Botones base ─── */
-const Btn = ({ children, onClick, primary, disabled, style }) => {
-  const [hov, setHov] = useState(false)
-  return (
+const Btn = ({ children, onClick, primary, disabled, style={} }) => {
+  if (primary) return (
     <button
-      onClick={disabled ? null : onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6,
-        height: 32, padding: "0 14px", borderRadius: 6,
-        fontSize: 13, fontWeight: 600, fontFamily: "'Inter', sans-serif",
-        border: primary ? "none" : `1px solid ${C.border}`,
-        background: primary ? (hov ? C.primaryHov : C.primary) : (hov ? "#f9fafb" : C.bg),
-        color: primary ? "#fff" : C.textDark,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-        transition: "all 0.1s",
+        display:"inline-flex", alignItems:"center", gap:6,
+        height:32, padding:"0 16px", borderRadius:8,
+        background:"#334139", color:"#fff",
+        border:"1.5px solid #334139",
+        fontSize:13, fontWeight:600, cursor:disabled?"not-allowed":"pointer",
+        fontFamily:"'Inter',sans-serif",
+        transition:"background 0.12s",
+        whiteSpace:"nowrap", opacity:disabled?0.5:1,
         ...style
       }}
+      onMouseEnter={e=>!disabled&&(e.currentTarget.style.background="#2b352f")}
+      onMouseLeave={e=>!disabled&&(e.currentTarget.style.background="#334139")}
+    >{children}</button>
+  )
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      style={style}
     >
       {children}
-    </button>
+    </Button>
   )
 }
 
@@ -104,6 +113,81 @@ const Pill = ({ color, bg, border, children }) => (
   </span>
 )
 
+/* ─── Fila Presupuesto ─── */
+const PresupuestoRow = ({ pres, isSelected, onToggle, handlePDF, menuAbierto, setMenu, setMenuPos, openModal, actualizarEstadoPresupuesto, eliminarPresupuesto }) => {
+  const [hov, setHov] = useState(false)
+  const estado = calcEstado(pres)
+  const st = estadoCfg[estado] || estadoCfg.vigente
+  const items = (() => { try { return JSON.parse(pres.items || '[]') } catch { return [] } })()
+
+  return (
+    <tr 
+      onClick={() => onToggle(pres.id)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{ borderBottom: `1px solid ${C.border}`, background: isSelected ? C.primarySurf : (hov ? "#f9fafb" : "transparent"), transition: "background 0.1s", cursor: "pointer" }}
+    >
+      {/* Numero */}
+      <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: C.textDark, position: "relative", paddingLeft: 34 }}>
+        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (isSelected || hov) ? 1 : 0, transition: 'opacity 0.1s', pointerEvents: (isSelected || hov) ? 'auto' : 'none' }}>
+          <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ cursor: "pointer", width:14, height:14, margin:0, display:"block", accentColor: C.primary }} />
+        </div>
+        {pres.numero}
+      </td>
+
+      {/* Cliente e info */}
+      <td style={{ padding: "12px 16px" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
+          {pres.cliente || "Sin cliente"}
+        </div>
+        <div style={{ fontSize: 11, color: C.textMid, marginTop: 4 }}>
+          {items.length} producto{items.length !== 1 ? 's' : ''}
+        </div>
+      </td>
+
+      {/* Fecha */}
+      <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
+        {fDate(pres.fecha)}
+      </td>
+      
+      {/* Valido */}
+      <td style={{ padding: "12px 16px", fontSize: 13, color: C.textMid, fontFamily: "'Inter', sans-serif" }}>
+        {pres.validez ?? 7} días
+      </td>
+
+      {/* Total */}
+      <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
+        $ {fNum(pres.total)}
+      </td>
+
+      {/* Estado */}
+      <td style={{ padding: "12px 16px" }}>
+        <Pill color={st.fg} bg={st.bg} border={st.border}>{st.label}</Pill>
+      </td>
+
+      {/* Acciones */}
+      <td style={{ padding: "12px 16px" }}>
+        <div style={{ display: "flex", gap: 4, position: "relative" }}>
+          <IcoBtn icon={Download} title="Descargar PDF" onClick={() => handlePDF(pres)} />
+          
+          <IcoBtn icon={MoreHorizontal} title="Más acciones" onClick={e => {
+            e.stopPropagation()
+            if (menuAbierto === pres.id) { setMenu(null); return }
+            const r = e.currentTarget.getBoundingClientRect()
+            const menuH = 180
+            const abreArriba = r.bottom + menuH > window.innerHeight - 16
+            setMenuPos({
+              top: abreArriba ? r.top - menuH - 4 : r.bottom + 4,
+              left: Math.min(r.right - 180, window.innerWidth - 196)
+            })
+            setMenu(pres.id)
+          }} />
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 const calcEstado = (pres) => {
   if (pres.estado && pres.estado !== 'vigente') return pres.estado
   const vencimiento = new Date(pres.fecha_vencimiento || pres.fecha)
@@ -125,6 +209,7 @@ export default function Presupuestos({
   actualizarEstadoPresupuesto,
   convertirPresupuestoPedido,
 }) {
+  const [selectedIds, setSelectedIds] = useState([])
   const [search, setSearch] = useState('')
   const [filtroEstado, setFiltro] = useState('todos')
   const [menuAbierto, setMenu] = useState(null)
@@ -195,9 +280,23 @@ export default function Presupuestos({
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
             Presupuestos
           </h1>
-          <Btn primary onClick={() => openModal("nuevo-presupuesto")}>
-            <PlusIcon size={13} color="#fff" /> Nuevo Presupuesto
-          </Btn>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {selectedIds.length > 0 && (
+              <Btn 
+                onClick={() => {
+                  if (confirm(`¿Eliminar ${selectedIds.length} presupuestos?`)) {
+                    Promise.all(selectedIds.map(id => eliminarPresupuesto?.(id))).then(() => setSelectedIds([]))
+                  }
+                }}
+                style={{ background: C.dangerSurf, border: `1px solid ${C.dangerBord}`, color: C.dangerTxt }}
+              >
+                <Trash2 size={13} /> Eliminar ({selectedIds.length})
+              </Btn>
+            )}
+            <Btn primary onClick={() => openModal("nuevo-presupuesto")}>
+              <PlusIcon size={13} color="#fff" /> Nuevo Presupuesto
+            </Btn>
+          </div>
         </div>
       </div>
 
@@ -271,7 +370,24 @@ export default function Presupuestos({
                 <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
                   <thead>
                     <tr style={{ background: "#f9fafb", borderBottom: `1px solid ${C.border}` }}>
-                      {["NÚMERO", "CLIENTE", "FECHA", "VÁLIDO", "TOTAL", "ESTADO", "ACCIONES"].map(h => (
+                      <th style={{ padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 600, color: C.textMid, letterSpacing: "0.06em", fontFamily: "'Inter', sans-serif", position: "relative", paddingLeft: 34 }}>
+                        <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: (selectedIds.length > 0) ? 1 : 0, transition: 'opacity 0.2s', pointerEvents: (selectedIds.length > 0) ? 'auto' : 'none' }}>
+                          <input 
+                            type="checkbox"
+                            checked={filtrados.length > 0 && filtrados.every(p => selectedIds.includes(p.id))}
+                            onChange={(e) => {
+                              if (e.target.checked) setSelectedIds([...new Set([...selectedIds, ...filtrados.map(p => p.id)])])
+                              else {
+                                const pIds = filtrados.map(p => p.id)
+                                setSelectedIds(selectedIds.filter(id => !pIds.includes(id)))
+                              }
+                            }}
+                            style={{ cursor: "pointer", width: 14, height: 14, margin: 0, display: "block", accentColor: C.primary }}
+                          />
+                        </div>
+                        NÚMERO
+                      </th>
+                      {["CLIENTE", "FECHA", "VÁLIDO", "TOTAL", "ESTADO", "ACCIONES"].map(h => (
                         <th key={h} style={{
                           padding: "10px 16px", textAlign: "left",
                           fontSize: 10, fontWeight: 600, color: C.textMid,
@@ -281,112 +397,21 @@ export default function Presupuestos({
                     </tr>
                   </thead>
                   <tbody>
-                    {filtrados.map(pres => {
-                      const estado = calcEstado(pres)
-                      const st = estadoCfg[estado] || estadoCfg.vigente
-                      const items = (() => { try { return JSON.parse(pres.items || '[]') } catch { return [] } })()
-
-                      return (
-                        <tr key={pres.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                          
-                          {/* Numero */}
-                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: C.textDark, background: C.bg }}>
-                            {pres.numero}
-                          </td>
-
-                          {/* Cliente e info */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
-                              {pres.cliente || "Sin cliente"}
-                            </div>
-                            <div style={{ fontSize: 11, color: C.textMid, marginTop: 4 }}>
-                              {items.length} producto{items.length !== 1 ? 's' : ''}
-                            </div>
-                          </td>
-
-                          {/* Fecha */}
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
-                            {fDate(pres.fecha)}
-                          </td>
-                          
-                          {/* Valido */}
-                          <td style={{ padding: "12px 16px", fontSize: 13, color: C.textMid, fontFamily: "'Inter', sans-serif" }}>
-                            {pres.validez ?? 7} días
-                          </td>
-
-                          {/* Total */}
-                          <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 600, color: C.textDark, fontFamily: "'Inter', sans-serif" }}>
-                            $ {fNum(pres.total)}
-                          </td>
-
-                          {/* Estado */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <Pill color={st.fg} bg={st.bg} border={st.border}>{st.label}</Pill>
-                          </td>
-
-                          {/* Acciones */}
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ display: "flex", gap: 4, position: "relative" }}>
-                              <IcoBtn icon={Download} title="Descargar PDF" onClick={() => handlePDF(pres)} />
-                              
-                              <IcoBtn icon={MoreHorizontal} title="Más acciones" onClick={e => {
-                                e.stopPropagation()
-                                if (menuAbierto === pres.id) { setMenu(null); return }
-                                const r = e.currentTarget.getBoundingClientRect()
-                                const menuH = 180
-                                const abreArriba = r.bottom + menuH > window.innerHeight - 16
-                                setMenuPos({
-                                  top: abreArriba ? r.top - menuH - 4 : r.bottom + 4,
-                                  left: Math.min(r.right - 180, window.innerWidth - 196)
-                                })
-                                setMenu(pres.id)
-                              }} />
-
-                              {/* Dropdown de opciones */}
-                              {menuAbierto === pres.id && (
-                                <div onClick={e => e.stopPropagation()} style={{
-                                  position: "fixed", top: menuPos.top, left: menuPos.left,
-                                  width: 180, background: C.bg, borderRadius: 8, border: `1px solid ${C.border}`,
-                                  boxShadow: "0 8px 16px rgba(0,0,0,0.1)", zIndex: 9999, padding: "4px 0",
-                                }}>
-                                  <button onClick={() => {
-                                    const itemsParsed = typeof pres.items === 'string' ? JSON.parse(pres.items) : (pres.items || []);
-                                    const pedidoData = {
-                                        cliente_nombre: pres.cliente || '',
-                                        notas: `Ref: Presupuesto ${pres.numero}`,
-                                        items: itemsParsed.map((it, idx) => ({
-                                            id: Date.now() + idx,
-                                            productoId: it.productoId || null,
-                                            producto: it.producto || it.descripcion,
-                                            precio: parseFloat(it.precio) || 0,
-                                            cantidad: parseFloat(it.cantidad) || 1,
-                                            subtotal: parseFloat(it.subtotal) || 0
-                                        }))
-                                    }
-                                    openModal && openModal('nuevo-pedido', pedidoData);
-                                    setMenu(null)
-                                  }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "transparent", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
-                                    <ShoppingCart size={14} color={C.primary} /> Hacer Venta
-                                  </button>
-                                  <button onClick={() => { actualizarEstadoPresupuesto?.(pres.id, "aceptado"); setMenu(null) }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "transparent", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
-                                    <CheckCircle size={14} color={C.successTxt} /> Aceptado
-                                  </button>
-                                  <button onClick={() => { actualizarEstadoPresupuesto?.(pres.id, "rechazado"); setMenu(null) }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "transparent", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
-                                    <XCircle size={14} color={C.dangerTxt} /> Rechazado
-                                  </button>
-                                  <button onClick={() => { openModal && openModal("editar-presupuesto", pres); setMenu(null) }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "transparent", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
-                                    <Edit2 size={14} color={C.textMid} /> Editar
-                                  </button>
-                                  <button onClick={() => { if (confirm("¿Eliminar este presupuesto?")) { eliminarPresupuesto?.(pres.id) }; setMenu(null) }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "transparent", border: "none", fontSize: 13, color: C.textDark, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
-                                    <Trash2 size={14} color={C.dangerTxt} /> Eliminar
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    {filtrados.map(pres => (
+                      <PresupuestoRow 
+                        key={pres.id}
+                        pres={pres}
+                        isSelected={selectedIds.includes(pres.id)}
+                        onToggle={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
+                        handlePDF={handlePDF}
+                        menuAbierto={menuAbierto}
+                        setMenu={setMenu}
+                        setMenuPos={setMenuPos}
+                        openModal={openModal}
+                        actualizarEstadoPresupuesto={actualizarEstadoPresupuesto}
+                        eliminarPresupuesto={eliminarPresupuesto}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>

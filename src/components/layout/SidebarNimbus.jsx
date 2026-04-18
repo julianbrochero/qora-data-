@@ -32,7 +32,7 @@ const getSections = (pedidosHoy, isAdmin, activeModule) => [
     title: "Comercial",
     items: [
       { id: "agregar-venta", icon: PlusCircleIcon, label: "Agregar Venta" },
-      { id: "pedidos", icon: ShoppingCartIcon, label: "Ventas", badge: pedidosHoy > 0 ? pedidosHoy : null },
+      { id: "pedidos", icon: ShoppingCartIcon, label: "Venta", badge: pedidosHoy > 0 ? pedidosHoy : null },
       // Solo visible en el módulo ventas (pedidos) o calendario
       ...( (activeModule === 'pedidos' || activeModule === 'calendario') ? [
         { id: "calendario", icon: Calendar, label: "Calendario Entregas", isSubItem: true }
