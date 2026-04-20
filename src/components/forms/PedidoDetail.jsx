@@ -320,74 +320,58 @@ export default function PedidoDetail({ pedido, clientes = [], formActions, close
         </div>
       )}
 
-      {/* ══ COBRO ══ */}
-      {!pagado && (
-        <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: C.light, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
-            Cobro <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>· S = parcial · Shift+S = total</span>
-          </div>
-
-          {/* Barra de progreso */}
-          {cobrado > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <div style={{ flex: 1, height: 4, background: "#e5e7eb", borderRadius: 99, overflow: "hidden" }}>
-                <div style={{ height: 4, width: `${pct}%`, background: "#f59e0b", borderRadius: 99, transition: "width 0.3s" }} />
-              </div>
-              <span style={{ fontSize: 11, color: C.mid, whiteSpace: "nowrap" }}>
-                ${fM(cobrado)} cobrado · ${fM(saldo)} pendiente
-              </span>
+      {/* ══ COBRO (Diseño Simplificado) ══ */}
+      <div style={{ padding: "16px 20px", borderBottom: `1px solid ${C.border}`, background: pagado ? "#f0fdf4" : "#fff8f1" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 15 }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.mid, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+              ESTADO DEL PAGO
             </div>
-          )}
+            <div style={{ fontSize: 20, fontWeight: 800, color: pagado ? "#15803d" : "#c2410c", letterSpacing: "-0.5px" }}>
+              {pagado ? "¡Cobrado!" : `Faltan $${fM(saldo)}`}
+            </div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.mid, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+              TOTAL
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#111827" }}>${fM(total)}</div>
+          </div>
+        </div>
 
-          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-            {/* Método */}
+        {!pagado && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
             <select value={metodo} onChange={e => setMetodo(e.target.value)}
-              className="app-select app-select-sm" style={{ width: 140 }} disabled={cargando}>
+              className="app-select" style={{ width: 140, height: 38, fontSize: 13, fontWeight: 600 }}>
               {METODOS.map(m => <option key={m}>{m}</option>)}
             </select>
 
             {modoAbono ? (
-              <>
-                <div style={{ position: "relative", width: 110 }}>
-                  <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: C.light, fontSize: 12, pointerEvents: "none" }}>$</span>
+              <div style={{ display: "flex", gap: 4 }}>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: C.mid, fontWeight: 800 }}>$</span>
                   <input ref={abonoRef} type="number" value={abono} onChange={e => setAbono(e.target.value)}
-                    placeholder="0" min="0.01" step="0.01" autoFocus
-                    style={{ width: "100%", height: 32, padding: "0 8px 0 20px", fontSize: 13, fontWeight: 700, border: "1.5px solid #334139", borderRadius: 7, outline: "none", boxSizing: "border-box", fontFamily: "inherit" }} />
+                    placeholder="Monto" autoFocus
+                    style={{ width: 105, height: 38, padding: "0 10px 0 22px", borderRadius: 8, border: "2px solid #334139", outline: "none", fontSize: 15, fontWeight: 800 }} />
                 </div>
-                <button onClick={registrarAbono} disabled={!abono || cargando}
-                  style={{ height: 32, padding: "0 14px", borderRadius: 7, border: "none", background: "#334139", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: (!abono || cargando) ? 0.5 : 1 }}>
-                  {cargando ? "…" : "OK"}
-                </button>
-                <button onClick={() => { setModoAbono(false); setAbono("") }}
-                  style={{ height: 32, width: 32, borderRadius: 7, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <X size={13} color={C.mid} />
-                </button>
-              </>
+                <button onClick={registrarAbono} style={{ height: 38, padding: "0 16px", borderRadius: 8, background: "#334139", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer" }}>OK</button>
+                <button onClick={() => { setModoAbono(false); setAbono("") }} style={{ height: 38, width: 38, borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", cursor: "pointer" }}>✕</button>
+              </div>
             ) : (
-              <>
-                <button onClick={() => { setModoAbono(true); setTimeout(() => abonoRef.current?.focus(), 60) }} disabled={cargando}
-                  style={{ height: 32, padding: "0 14px", borderRadius: 7, border: "1.5px solid #334139", background: "#fff", color: "#334139", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                  <DollarSign size={12} /> Parcial
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => { setModoAbono(true); setTimeout(() => abonoRef.current?.focus(), 60) }}
+                  style={{ height: 38, padding: "0 16px", borderRadius: 8, border: "1.5px solid #334139", background: "#fff", color: "#334139", fontWeight: 700, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                  Pago Parcial <span style={{ fontSize: 10, opacity: 0.5, background: "#f3f4f6", padding: "1px 5px", borderRadius: 4, fontWeight: 800 }}>S</span>
                 </button>
-                <button onClick={saldarTodo} disabled={cargando}
-                  title="Shift + S para pagar todo"
-                  style={{ height: 32, padding: "0 14px", borderRadius: 7, border: "none", background: "#334139", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                  <Check size={12} /> Saldar todo <span style={{ marginLeft: 4, fontSize: 9, opacity: 0.6, background: "rgba(255,255,255,0.15)", padding: "1px 4px", borderRadius: 3 }}>Shift</span>
+                <button onClick={saldarTodo}
+                  style={{ height: 38, padding: "0 16px", borderRadius: 8, border: "none", background: "#334139", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                  <Check size={15} strokeWidth={3} /> Saldar Todo <span style={{ fontSize: 10, opacity: 0.3, background: "rgba(255,255,255,0.2)", padding: "1px 5px", borderRadius: 4, fontWeight: 800 }}>Shift + S</span>
                 </button>
-              </>
+              </div>
             )}
           </div>
-        </div>
-      )}
-
-      {pagado && (
-        <div style={{ padding: "10px 20px", borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 8, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-            <CheckCircle size={14} color="#16a34a" strokeWidth={2.5} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: "#16a34a" }}>Pagado completo · ${fM(total)}</span>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ══ NOTAS ══ */}
       <div style={{ padding: "12px 20px" }}>

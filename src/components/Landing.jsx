@@ -125,7 +125,9 @@ export default function Landing() {
           <div className="hero-inner">
             <div className="hero-top">
               <div className="hero-badge lu-appear lu-d0">
-                <div className="badge"><span className="badge-dot" />Para PyMEs y negocios argentinos que quieren crecer</div>
+                <div className="badge">
+                  <span className="badge-text-magic">Para PyMEs y negocios argentinos que quieren crecer</span>
+                </div>
               </div>
               <h1 className="hero-h1 lu-appear lu-d100">
                 Dejá Excel.<br /><em>Empezá a saber si ganás plata de verdad.</em>
