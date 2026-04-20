@@ -51,6 +51,15 @@ const RESPONSIVE = `
     .pn-show-mobile { display: flex !important; }
     .pn-hide-mobile { display: none !important; }
   }
+  .pn-select-trigger { transition: all 0.2s ease; cursor: pointer; }
+  .pn-select-trigger:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #9ca3af !important; }
+  [role="option"] { transition: all 0.15s ease !important; cursor: pointer !important; }
+  [role="option"]:hover, [role="option"][data-highlighted] { 
+    background-color: #f9fafb !important; 
+    color: #000 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: translateX(2px);
+  }
 `
 
 /* ─── Pill ─── */
@@ -373,7 +382,14 @@ export default function ProductosNimbus({
   const [filtroCat,    setFiltroCat]    = useState("todas")
   const [filtroStock,  setFiltroStock]  = useState("todos")
   const [pagina, setPagina] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(15)
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    return Number(localStorage.getItem("pn_items_per_page")) || 15
+  })
+
+  useEffect(() => {
+    localStorage.setItem("pn_items_per_page", itemsPerPage)
+  }, [itemsPerPage])
+
   const [busqueda, setBusqueda] = useState(searchTerm||"")
   const [csvLoading,   setCsvLoading]   = useState(false)
   const [csvResultado, setCsvResultado] = useState(null)
@@ -389,8 +405,20 @@ export default function ProductosNimbus({
   useEffect(() => {
     const h = () => { setMenu(null); setCsvMenuOpen(false) }
     window.addEventListener('click', h)
-    return () => window.removeEventListener('click', h)
-  }, [])
+    
+    const handleShorcut = (e) => {
+      if (e.key === "Control" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+        e.preventDefault()
+        openModal?.("nuevo-producto")
+      }
+    }
+    window.addEventListener('keydown', handleShorcut)
+
+    return () => {
+      window.removeEventListener('click', h)
+      window.removeEventListener('keydown', handleShorcut)
+    }
+  }, [openModal])
 
   useEffect(()=>{ setPagina(1) }, [busqueda,filtroCat,filtroStock,itemsPerPage])
 
@@ -406,7 +434,7 @@ export default function ProductosNimbus({
 
   const totalPags = Math.max(1,Math.ceil(filtrados.length/itemsPerPage))
   const offset    = (pagina-1)*itemsPerPage
-  const pageItems = filtrados.slice(offset,offset+PER_PAGE)
+  const pageItems = filtrados.slice(offset,offset+itemsPerPage)
 
   const [confirmData, setConfirmData] = useState(null)
   const handleDel  = p => setConfirmData({ title:`¿Eliminar "${p.nombre}"?`, description:"Se eliminará permanentemente. Esta acción no se puede deshacer.", onConfirm:()=>{ setConfirmData(null); eliminarProducto?.(p.id) } })
@@ -555,7 +583,10 @@ export default function ProductosNimbus({
     finally{ setCsvLoading(false); if(csvInputRef.current) csvInputRef.current.value='' }
   }
 
-  const cats = ["todas",...new Set(productos.map(p=>p.categoria).filter(Boolean))]
+  const cats = ["todas", ...new Set([
+    ...(categoriasDb||[]).map(c => c.nombre || c),
+    ...productos.map(p => p.categoria)
+  ].filter(c => c && String(c).trim() !== ""))]
 
   return (
     <div style={{ minHeight:"100vh", background:C.pageBg, fontFamily:"'Inter',sans-serif" }}>
@@ -755,22 +786,25 @@ export default function ProductosNimbus({
         </div>
         {/* Selector de Categoría */}
         <Select value={filtroCat} onValueChange={setFiltroCat}>
-          <SelectTrigger className="w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+          <SelectTrigger className="pn-select-trigger w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
             <SelectValue placeholder="Todas las categorías" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 200 }}>
             <SelectGroup>
-              {cats.map(c=><SelectItem key={c} value={c}>{c==="todas"?"Todas las categorías":c}</SelectItem>)}
+              <SelectItem value="todas">Todas las categorías</SelectItem>
+              {cats.filter(c => c !== "todas").map(c => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
             </SelectGroup>
           </SelectContent>
         </Select>
 
         {/* Selector de Stock */}
         <Select value={filtroStock} onValueChange={setFiltroStock}>
-          <SelectTrigger className="w-full max-w-[160px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+          <SelectTrigger className="pn-select-trigger w-full max-w-[160px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
             <SelectValue placeholder="Todo el stock" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 160 }}>
             <SelectGroup>
               <SelectItem value="todos">Todo el stock</SelectItem>
               <SelectItem value="sin-stock">Sin stock</SelectItem>
@@ -872,20 +906,21 @@ export default function ProductosNimbus({
           )}
 
           {/* Paginación */}
-          {totalPags>1 && (
+          {filtrados.length > 10 && (
             <div className="flex items-center justify-between gap-4" style={{ padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: 12, color: C.textMid }}>Filas por página:</span>
                 <Select value={String(itemsPerPage)} onValueChange={v => setItemsPerPage(Number(v))}>
-                  <SelectTrigger className="w-20 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
+                  <SelectTrigger className="pn-select-trigger w-24 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent align="start" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
+                  <SelectContent align="start" style={{ backgroundColor: "#ffffff", border: `1px solid ${C.border}`, zIndex: 10000 }}>
                     <SelectGroup>
                       <SelectItem value="10">10</SelectItem>
                       <SelectItem value="15">15</SelectItem>
                       <SelectItem value="25">25</SelectItem>
                       <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="9999">Todos</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>

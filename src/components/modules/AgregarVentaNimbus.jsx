@@ -68,18 +68,20 @@ const Label = ({children}) => (
   </div>
 )
 
-const BtnPrimary = React.forwardRef(({children,onClick,disabled,loading}, ref) => {
+const BtnPrimary = React.forwardRef(({children,onClick,disabled,loading,style={}}, ref) => {
   const [hov,setHov]=useState(false)
   return (
     <button ref={ref} onClick={onClick} disabled={disabled||loading}
       onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       style={{
-        display:'inline-flex',alignItems:'center',gap:7,
-        height:32, padding:'0 16px', borderRadius:6, border:'none',
+        display:'inline-flex',alignItems:'center',justifyContent:'center',gap:7,
+        height:34, padding:'0 16px', borderRadius:6, border:'none',
         background:disabled ? C.textLight : hov ? C.primaryHov : C.primary,
-        color:'#fff', fontSize:13, fontWeight:500,
+        color:'#fff', fontSize:13, fontWeight:600,
         fontFamily:"'Inter',sans-serif", cursor:disabled?'not-allowed':'pointer',
         transition:'background 0.13s',
+        whiteSpace:'nowrap',
+        ...style
       }}
     >
       {loading ? 'Guardando...' : children}
@@ -281,6 +283,11 @@ export default function AgregarVentaNimbus({
   /* ── atajos de teclado ── */
   useEffect(()=>{
     const onDown = e => {
+      if(e.key === 'F5') {
+        e.preventDefault()
+        if (totalRef.current > 0) setAdelanto(String(Math.round(totalRef.current / 2)))
+        return
+      }
       if(e.key === 'F2' || (e.ctrlKey && e.key==='Enter')){ e.preventDefault(); handleGuardar(); return }
       if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const active = document.activeElement
@@ -965,72 +972,89 @@ export default function AgregarVentaNimbus({
         {/* ═══════════════════════════════════ */}
         {/* CARD 3 — Total + Botón guardar     */}
         {/* ═══════════════════════════════════ */}
-        <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.border}`, padding:'12px clamp(10px, 2vw, 20px)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:'clamp(8px, 1.5vw, 16px)' }}>
+        <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.border}`, padding:'10px clamp(8px, 1vw, 20px)', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'nowrap', gap:'clamp(6px, 1vw, 16px)', overflowX:'auto', scrollbarWidth:'none', maxWidth:'100%' }}>
             
           {/* Bloque Total */}
-          <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-            <div className="pv-hide-mobile" style={{fontSize:10,color:C.textMid,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em'}}>Total</div>
-            <div style={{fontSize:'clamp(18px, 4vw, 24px)',fontWeight:900,color:C.textBlack,fontFamily:"'Inter',sans-serif",letterSpacing:'-0.6px'}}>
+          <div style={{ display:'flex', alignItems:'center', gap:'clamp(4px, 1vw, 8px)', flexShrink:0 }}>
+            <div className="pv-hide-mobile" style={{fontSize:9,color:C.textMid,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em'}}>Total</div>
+            <div style={{fontSize:'clamp(16px, 3vw, 24px)',fontWeight:900,color:C.textBlack,fontFamily:"'Inter',sans-serif",letterSpacing:'-0.5px'}}>
               {fMon(total)}
             </div>
           </div>
 
-          <div className="pv-hide-mobile" style={{ width:1, height:24, background:C.border }}></div>
+          <div className="pv-hide-mobile" style={{ width:1, height:24, background:C.border, flexShrink:0 }}></div>
 
           {/* Bloque Adelanto (Clean horizontal pill) */}
           {total > 0 && (
-            <div style={{ display:'flex', alignItems:'center', background:'#f9fafb', border:`1px solid ${C.border}`, borderRadius:8, padding:'4px', gap:4, flexShrink:1 }}>
-              <div className="pv-hide-mobile" style={{fontSize:10,color:C.textMid,fontWeight:700,textTransform:'uppercase', padding:'0 6px'}}>Cobro</div>
+            <div style={{ display:'flex', alignItems:'center', background:'#f9fafb', border:`1px solid ${C.border}`, borderRadius:8, padding:'4px', gap:'clamp(2px, 0.5vw, 4px)', flexShrink:1, minWidth:0 }}>
+              <div className="pv-hide-mobile" style={{fontSize:9,color:C.textMid,fontWeight:700,textTransform:'uppercase', padding:'0 4px'}}>Cobro</div>
               <input type="number" value={adelanto} onChange={e=>setAdelanto(e.target.value)} placeholder="0"
                 onKeyDown={e=>{if(e.key==='F5'){e.preventDefault();setAdelanto(total > 0 ? String(Math.round(total / 2)) : '0')}}}
                 style={{
-                  width:'clamp(60px, 10vw, 85px)',height:32,padding:'0 8px',fontSize:14,fontWeight:800,textAlign:'center',
+                  width: (adelanto && adelanto !== '0') ? 'clamp(90px, 12vw, 140px)' : 'clamp(50px, 8vw, 85px)',
+                  height:32,padding:'0 6px',fontSize:13,fontWeight:800,textAlign:'center',
                   border:`1px solid #d1d5db`,borderRadius:6,
                   background:'white',color:C.textBlack,fontFamily:"'Inter',sans-serif",outline:'none',
+                  minWidth:0, transition:'width 0.2s ease-out'
                 }}
                 onFocus={e=>e.target.style.borderColor=C.primary}
                 onBlur={e =>e.target.style.borderColor='#d1d5db'}
               />
-              <button onClick={()=>setAdelanto(total > 0 ? String(Math.round(total / 2)) : '0')} type="button"
-                style={{
-                  height:32,padding:'0 clamp(6px, 1vw, 10px)',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                  border:`1px solid #d1d5db`,background:'#fff',color:C.textMid,
-                  display:'flex',alignItems:'center',gap:4,
-                }}
-              >
-                50% <span className="pv-hide-mobile" style={{fontSize:9,opacity:0.6}}>F5</span>
-              </button>
-              <button onClick={()=>setAdelanto(String(total))} type="button"
-                style={{
-                  height:32,padding:'0 clamp(6px, 1vw, 10px)',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',
-                  border:`none`,background:'#dcfce7',color:'#166534',
-                  display:'flex',alignItems:'center',gap:4,
-                }}
-              >
-                Total <span className="pv-hide-mobile" style={{fontSize:9,opacity:0.6}}>Shift</span>
-              </button>
+              
+              {(!adelanto || adelanto === '0') ? (
+                <>
+                  <button onClick={()=>setAdelanto(total > 0 ? String(Math.round(total / 2)) : '0')} type="button"
+                    style={{
+                      height:32,padding:'0 clamp(4px, 1vw, 10px)',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',
+                      border:`1px solid #d1d5db`,background:'#fff',color:C.textMid,
+                      display:'flex',alignItems:'center',gap:4, flexShrink:0
+                    }}
+                  >
+                    50% <span className="pv-hide-mobile" style={{fontSize:9,opacity:0.6}}>F5</span>
+                  </button>
+                  <button onClick={()=>setAdelanto(String(total))} type="button"
+                    style={{
+                      height:32,padding:'0 clamp(4px, 1vw, 10px)',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',
+                      border:`none`,background:'#dcfce7',color:'#166534',
+                      display:'flex',alignItems:'center',gap:4, flexShrink:0
+                    }}
+                  >
+                    Total <span className="pv-hide-mobile" style={{fontSize:9,opacity:0.6}}>Shift</span>
+                  </button>
+                </>
+              ) : (
+                <button onClick={()=>setAdelanto('0')} type="button" title="Limpiar pago"
+                  style={{
+                    height:32, width:32, borderRadius:6, cursor:'pointer',
+                    border:`none`,background:'#fee2e2',color:'#b91c1c',
+                    display:'flex',alignItems:'center',justifyContent:'center', flexShrink:0
+                  }}
+                >
+                  <X size={14} strokeWidth={3} />
+                </button>
+              )}
             </div>
           )}
 
           {/* Bloque Estado / Saldo */}
           <div style={{display:'flex',alignItems:'center', flexShrink:0}}>
             {adelantoNum > 0 && saldo > 0 && (
-              <span style={{fontSize:'clamp(11px, 2vw, 13px)',color:'#b45309',fontWeight:800,background:'#fffbeb',padding:'0 clamp(8px, 1.5vw, 12px)', height:32, display:'flex', alignItems:'center', borderRadius:8,border:'1px solid #fde68a', whiteSpace:'nowrap'}}>
+              <span style={{fontSize:'clamp(11px, 1.5vw, 13px)',color:'#b45309',fontWeight:800,background:'#fffbeb',padding:'0 clamp(6px, 1vw, 12px)', height:32, display:'flex', alignItems:'center', borderRadius:8,border:'1px solid #fde68a', whiteSpace:'nowrap'}}>
                 <span className="pv-hide-mobile" style={{marginRight:4}}>Falta:</span> {fMon(saldo)}
               </span>
             )}
             {adelantoNum >= total && total > 0 && (
-              <span style={{fontSize:12,color:C.success,fontWeight:800,background:'#f0fdf4',padding:'0 clamp(8px, 1.5vw, 14px)', height:32, display:'flex', alignItems:'center', borderRadius:8,border:`1px solid ${C.successBord}`,gap:6}}>
-                <CheckCircle size={15} strokeWidth={3}/>
+              <span style={{fontSize:11,color:C.success,fontWeight:800,background:'#f0fdf4',padding:'0 clamp(6px, 1vw, 14px)', height:32, display:'flex', alignItems:'center', borderRadius:8,border:`1px solid ${C.successBord}`,gap:4}}>
+                <CheckCircle size={14} strokeWidth={3}/>
                 <span className="pv-hide-mobile">Pagado</span>
               </span>
             )}
           </div>
 
-          <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef} style={{height:40, padding:'0 20px', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:8, flexShrink:0}}>
-            <Save size={18}/>
-            <span style={{ fontWeight:700 }}>{pedidoAEditar?'Actualizar Venta':'Crear Venta'}</span>
-            <span className="pv-desktop" style={{ padding: "3px 6px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontWeight: 800 }}>Enter</span>
+          <BtnPrimary onClick={handleGuardar} disabled={!puedeGuardar} loading={isProcessing} ref={guardarRef} style={{height:38, padding:'0 clamp(10px, 1.5vw, 20px)', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:'clamp(4px, 1vw, 8px)', flexShrink:0}}>
+            <Save size={16}/>
+            <span style={{ fontWeight:700, fontSize:12 }}>{pedidoAEditar?'Actualizar Venta':'Crear Venta'}</span>
+            <span className="pv-desktop" style={{ padding: "3px 4px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 9, fontWeight: 800 }}>Enter</span>
           </BtnPrimary>
         </div>{/* fin CARD 3 */}
 
