@@ -192,10 +192,9 @@ const MobileCard = ({ prod, onEdit, onDel, onAgregarAlCarrito, isSelected, onTog
         width: 44, height: 44, borderRadius: 8, flexShrink: 0,
         background: "#f9fafb", border: `1px solid ${C.border}`,
         display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+        fontSize: 10, fontWeight: 700, color: C.textMid, textAlign: "center"
       }}>
-        {prod.imagen_url
-          ? <img src={prod.imagen_url} alt={prod.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <BoxPackedIcon size={20} color={C.textLight} />}
+        {prod.codigo ? prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '') : '—'}
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -276,13 +275,12 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <div style={{
-            width:38, height:38, borderRadius:6, flexShrink:0,
+            width:42, height:38, borderRadius:6, flexShrink:0,
             background:"#f9fafb", border:`1px solid ${C.border}`,
             display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden",
+            fontSize: 11, fontWeight: 700, color: C.textMid, textAlign: "center", padding: 2
           }}>
-            {prod.imagen_url
-              ? <img src={prod.imagen_url} alt={prod.nombre} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              : <BoxPackedIcon size={18} color={C.textLight}/>}
+            {prod.codigo ? prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '') : '—'}
           </div>
           <div style={{ minWidth:0 }}>
             <div
@@ -293,7 +291,6 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
               }}
             >{prod.nombre}</div>
             <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginTop:3 }}>
-              {prod.codigo && <Pill>{prod.codigo}</Pill>}
               {prod.categoria && (
                 <Pill color={C.primary} bg={C.primarySurf} border="#c6ddc8">{prod.categoria}</Pill>
               )}
@@ -379,8 +376,8 @@ export default function ProductosNimbus({
   const [selectedIds, setSelectedIds] = useState([])
   const [csvMenuOpen, setCsvMenuOpen] = useState(false)
   const [showCsvHelp, setShowCsvHelp] = useState(false)
-  const [filtroCat,    setFiltroCat]    = useState("todas")
-  const [filtroStock,  setFiltroStock]  = useState("todos")
+  const [filtroCat,    setFiltroCat]    = useState("")
+  const [filtroStock,  setFiltroStock]  = useState("")
   const [pagina, setPagina] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     return Number(localStorage.getItem("pn_items_per_page")) || 15
@@ -425,7 +422,7 @@ export default function ProductosNimbus({
   const filtrados = productos.filter(p => {
     const q = busqueda.toLowerCase()
     const okQ = !q||[p.nombre,p.codigo,p.categoria].some(v=>String(v||"").toLowerCase().includes(q))
-    const okC = filtroCat==="todas"||p.categoria===filtroCat
+    const okC = !filtroCat||p.categoria===filtroCat
     const okS =
       filtroStock==="sin-stock"  ? (p.controlaStock&&p.stock<=0) :
       filtroStock==="stock-bajo" ? (p.controlaStock&&p.stock>0&&p.stock<=5) : true
@@ -787,12 +784,12 @@ export default function ProductosNimbus({
         {/* Selector de Categoría */}
         <Select value={filtroCat} onValueChange={setFiltroCat}>
           <SelectTrigger className="pn-select-trigger w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-            <SelectValue placeholder="Todas las categorías" />
+            <SelectValue placeholder="CATEGORÍA" />
           </SelectTrigger>
           <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 200 }}>
             <SelectGroup>
-              <SelectItem value="todas">Todas las categorías</SelectItem>
-              {cats.filter(c => c !== "todas").map(c => (
+              <SelectItem value="">CATEGORÍA</SelectItem>
+              {cats.filter(c => c && c !== "todas").map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
             </SelectGroup>
@@ -802,11 +799,11 @@ export default function ProductosNimbus({
         {/* Selector de Stock */}
         <Select value={filtroStock} onValueChange={setFiltroStock}>
           <SelectTrigger className="pn-select-trigger w-full max-w-[160px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-            <SelectValue placeholder="Todo el stock" />
+            <SelectValue placeholder="STOCK" />
           </SelectTrigger>
           <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 160 }}>
             <SelectGroup>
-              <SelectItem value="todos">Todo el stock</SelectItem>
+              <SelectItem value="">STOCK</SelectItem>
               <SelectItem value="sin-stock">Sin stock</SelectItem>
               <SelectItem value="stock-bajo">Stock bajo</SelectItem>
             </SelectGroup>

@@ -8,6 +8,14 @@ import {
 import { MenuIcon, PlusIcon, SearchIcon } from "@nimbus-ds/icons"
 import { generarPDFPresupuesto } from '../../utils/presupuestoGenerator'
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 /* ══════════════════════════════════════════
    PALETA NIMBUS
@@ -38,6 +46,19 @@ const RESPONSIVE = `
   @media (max-width: 767px) {
     .pn-show-mobile { display: flex !important; }
     .pn-hide-mobile { display: none !important; }
+  }
+  .pn-select-trigger { transition: all 0.2s ease; cursor: pointer; }
+  .pn-select-trigger:hover { 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    border-color: #9ca3af !important; 
+    transform: scale(1.01);
+  }
+  [role="option"] { transition: all 0.15s ease !important; cursor: pointer !important; }
+  [role="option"]:hover, [role="option"][data-highlighted] { 
+    background-color: #f9fafb !important; 
+    color: #000 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: translateX(4px) scale(1.02);
   }
 `
 
@@ -211,7 +232,7 @@ export default function Presupuestos({
 }) {
   const [selectedIds, setSelectedIds] = useState([])
   const [search, setSearch] = useState('')
-  const [filtroEstado, setFiltro] = useState('todos')
+  const [filtroEstado, setFiltro] = useState('')
   const [menuAbierto, setMenu] = useState(null)
   
   // Para ubicar el dropdown de la tuerquita / 3 puntitos
@@ -228,7 +249,7 @@ export default function Presupuestos({
       const q = search.toLowerCase()
       const match = !q || (p.numero || '').toLowerCase().includes(q) || (p.cliente || '').toLowerCase().includes(q)
       const estado = calcEstado(p)
-      const matchE = filtroEstado === 'todos' || estado === filtroEstado
+      const matchE = !filtroEstado || estado === filtroEstado
       return match && matchE
     })
     .sort((a, b) => new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha))
@@ -326,13 +347,20 @@ export default function Presupuestos({
             />
           </div>
 
-          <select value={filtroEstado} onChange={e => setFiltro(e.target.value)} className="app-select app-select--inline" style={{ minWidth: 200, height: 34, paddingLeft: 12 }}>
-            <option value="todos">Todos los presupuestos</option>
-            <option value="vigente">Vigentes</option>
-            <option value="aceptado">Aceptados</option>
-            <option value="vencido">Vencidos</option>
-            <option value="rechazado">Rechazados</option>
-          </select>
+          <Select value={filtroEstado} onValueChange={setFiltro}>
+            <SelectTrigger className="pn-select-trigger w-full max-w-[220px] h-[34px] text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+              <SelectValue placeholder="PRESUPUESTOS" />
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 220 }}>
+              <SelectGroup>
+                <SelectItem value="">PRESUPUESTOS</SelectItem>
+                <SelectItem value="vigente">Vigentes</SelectItem>
+                <SelectItem value="aceptado">Aceptados</SelectItem>
+                <SelectItem value="vencido">Vencidos</SelectItem>
+                <SelectItem value="rechazado">Rechazados</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* ── Contenido principal ── */}

@@ -49,6 +49,12 @@ const RESPONSIVE = `
   @media (max-width: 480px) {
     .kpi-grid { grid-template-columns: 1fr; }
   }
+  .pn-select-trigger { transition: all 0.2s ease; cursor: pointer; }
+  .pn-select-trigger:hover { 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    border-color: #9ca3af !important; 
+    transform: scale(1.01);
+  }
 `
 
 /* ─── Botones base ─── */
@@ -224,9 +230,9 @@ export default function FacturacionNimbus({
   onNuevaFactura, registrarCobro, eliminarFactura, recargarDatos,
   onOpenMobileSidebar
 }) {
-  const [filtroEstado, setFiltroEstado] = useState("todos")
-  const [filtroCanal, setFiltroCanal] = useState("todos")
-  const [pestaña, setPestaña] = useState("todas")
+  const [filtroEstado, setFiltroEstado] = useState("")
+  const [filtroCanal, setFiltroCanal] = useState("")
+  const [pestaña, setPestaña] = useState("")
   
   const [facturaSeleccionada, setFacturaSel] = useState(null)
   const [mostrarPago, setMostrarPago] = useState(false)
@@ -259,9 +265,9 @@ export default function FacturacionNimbus({
       const bus = (f.numero || "").toLowerCase().includes(q) ||
         (f.cliente_nombre || f.cliente || "").toLowerCase().includes(q) ||
         (getCodigoPedido(f.pedido_id) || "").toLowerCase().includes(q)
-      const pst = pestaña === "todas" || (pestaña === "pagadas" && f.estado === "pagada") || (pestaña === "deudas" && f.estado !== "pagada")
-      const est = filtroEstado === "todos" || f.estado === filtroEstado || (filtroEstado === "pendientes" && (f.estado === "pendiente" || f.estado === "parcial"))
-      const canal = filtroCanal === "todos" || f.canal_venta === filtroCanal || (filtroCanal === "sin-canal" && !f.canal_venta)
+      const pst = !pestaña || (pestaña === "pagadas" && f.estado === "pagada") || (pestaña === "deudas" && f.estado !== "pagada")
+      const est = !filtroEstado || f.estado === filtroEstado || (filtroEstado === "pendientes" && (f.estado === "pendiente" || f.estado === "parcial"))
+      const canal = !filtroCanal || f.canal_venta === filtroCanal || (filtroCanal === "sin-canal" && !f.canal_venta)
       return bus && pst && est && canal
     })
     .sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0))
@@ -393,14 +399,14 @@ export default function FacturacionNimbus({
             />
           </div>
 
-          <select value={pestaña} onChange={e => setPestaña(e.target.value)} className="app-select app-select--inline" style={{ minWidth: 168, height: 34, paddingLeft: 12 }}>
-            <option value="todas">Todas las facturas</option>
+          <select value={pestaña} onChange={e => setPestaña(e.target.value)} className="app-select pn-select-trigger" style={{ minWidth: 168, height: 34, paddingLeft: 12 }}>
+            <option value="">COMPROBANTES</option>
             <option value="pagadas">Pagadas</option>
             <option value="deudas">Con deuda</option>
           </select>
 
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="app-select app-select--inline" style={{ minWidth: 200, height: 34, paddingLeft: 12 }}>
-            <option value="todos">Todos los estados</option>
+          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="app-select pn-select-trigger" style={{ minWidth: 200, height: 34, paddingLeft: 12 }}>
+            <option value="">ESTADO</option>
             <option value="pendientes">Pendientes / Parciales</option>
             <option value="pagada">Totalmente pagada</option>
             <option value="anulada">Anulada</option>
@@ -409,7 +415,7 @@ export default function FacturacionNimbus({
 
         {canalesConfig.length > 0 && (
           <div style={{ padding: "12px 24px 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <PillFilter active={filtroCanal === "todos"} onClick={() => setFiltroCanal("todos")} text="Todos los canales" />
+            <PillFilter active={!filtroCanal} onClick={() => setFiltroCanal("")} text="CANAL" />
             {canalesConfig.map(c => (
               <PillFilter key={c} active={filtroCanal === c} onClick={() => setFiltroCanal(c)} text={c} />
             ))}

@@ -86,6 +86,19 @@ const RESPONSIVE = `
   [data-radix-portal], [data-slot="dialog-portal"] {
     z-index: 10000 !important;
   }
+  .pn-select-trigger { transition: all 0.2s ease; cursor: pointer; }
+  .pn-select-trigger:hover { 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    border-color: #9ca3af !important; 
+    transform: scale(1.01);
+  }
+  [role="option"] { transition: all 0.15s ease !important; cursor: pointer !important; }
+  [role="option"]:hover, [role="option"][data-highlighted] { 
+    background-color: #f9fafb !important; 
+    color: #000 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: translateX(4px) scale(1.02);
+  }
 `
 
 /* ─── helpers ─── */
@@ -440,7 +453,7 @@ export default function PedidosNimbus({
   formActions = {},
 }) {
   const [filtroEstado, setFiltroEstado] = useState(null)
-  const [filtroCanalVenta, setFiltroCanalVenta] = useState(null)
+  const [filtroCanalVenta, setFiltroCanalVenta] = useState("")
   const [soloDeuda, setSoloDeuda] = useState(false)
   const [pagina,       setPagina]      = useState(1)
   const [busqueda, setBusqueda] = useState(searchTerm||"")
@@ -614,13 +627,13 @@ export default function PedidosNimbus({
 
         {/* Selector de Canal de Venta */}
         {canalesDisponibles.length > 0 && (
-          <Select value={filtroCanalVenta || "todos"} onValueChange={(v) => setFiltroCanalVenta(v === "todos" ? null : v)}>
-            <SelectTrigger className="w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+          <Select value={filtroCanalVenta} onValueChange={setFiltroCanalVenta}>
+            <SelectTrigger className="pn-select-trigger w-full max-w-[180px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
               <SelectValue placeholder="CANAL" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 180 }}>
               <SelectGroup>
-                <SelectItem value="todos">CANAL</SelectItem>
+                <SelectItem value="">CANAL</SelectItem>
                 {canalesDisponibles.map(canal => (
                   <SelectItem key={canal} value={canal}>{canal}</SelectItem>
                 ))}
@@ -768,7 +781,7 @@ export default function PedidosNimbus({
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: 12, color: C.textMid }}>Filas por página:</span>
                 <Select value={String(itemsPerPage)} onValueChange={v => setItemsPerPage(Number(v))}>
-                  <SelectTrigger className="w-20 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
+                  <SelectTrigger className="pn-select-trigger w-20 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent align="start" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>

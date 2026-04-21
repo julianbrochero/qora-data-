@@ -266,13 +266,37 @@ export default function AgregarVentaNimbus({
       const ganancia = costoNum!=null ? (i.precio - costoNum) * i.cantidad : null
       return { id:i.id, productoId:i.productoId, producto:i.nombre, variante:(i.variante||''), precio:i.precio, cantidad:i.cantidad, subtotal:i.precio*i.cantidad, costo:costoNum, ganancia }
     })
-    const final = { clienteId:clienteActivo?clienteId:null, clienteNombre:clienteActivo?clienteNombre:'Consumidor Final', fechaPedido, fechaEntrega:fechaEntrega||null, estado, notas, items, montoPagado:adelantoNum, total, canal_venta:canalVenta||null }
+    const final = { 
+      clienteId: clienteActivo ? clienteId : null, 
+      clienteNombre: clienteActivo ? clienteNombre : 'Consumidor Final', 
+      fechaPedido, 
+      fechaEntrega: fechaEntrega || null, 
+      estado, 
+      notas, 
+      items, 
+      montoPagado: adelantoNum, 
+      total, 
+      canal_venta: canalVenta || null,
+      canalVenta: canalVenta || null // Adicionado para compatibilidad con agregarPedidoSolo en useFacturacion
+    }
     try {
       let r
-      if(pedidoAEditar?.id){
-        r = await formActions?.actualizarPedido?.(pedidoAEditar.id,{ cliente_id:final.clienteId, cliente_nombre:final.clienteNombre, fecha_pedido:final.fechaPedido, fecha_entrega_estimada:final.fechaEntrega, estado:final.estado, notas:final.notas, items:JSON.stringify(final.items), monto_abonado:final.montoPagado, saldo_pendiente:Math.max(0,final.total-final.montoPagado), total:final.total })
+      if (pedidoAEditar?.id) {
+        r = await formActions?.actualizarPedido?.(pedidoAEditar.id, { 
+          cliente_id: final.clienteId, 
+          cliente_nombre: final.clienteNombre, 
+          fecha_pedido: final.fechaPedido, 
+          fecha_entrega_estimada: final.fechaEntrega, 
+          estado: final.estado, 
+          notas: final.notas, 
+          items: JSON.stringify(final.items), 
+          monto_abonado: final.montoPagado, 
+          saldo_pendiente: Math.max(0, final.total - final.montoPagado), 
+          total: final.total,
+          canal_venta: final.canal_venta // Agregado aquí para que se actualice el canal
+        })
       } else {
-        r = await formActions?.agregarPedidoSolo?.({...final, canal_venta: canalVenta||null})
+        r = await formActions?.agregarPedidoSolo?.(final)
       }
       if(r?.success){ formActions?.recargarTodosLosDatos?.(); setExito(true); setTimeout(()=>{ setExito(null); limpiarTodo(); onVentaCreada?.() },900) }
       else showToast('Error: '+(r?.mensaje||'Desconocido'))
@@ -503,7 +527,7 @@ export default function AgregarVentaNimbus({
                       >
                         <div>
                           <div style={{fontSize:13,fontWeight: isHl ? 700 : 600,color: isHl ? C.primary : C.textDark}}>{p.nombre}</div>
-                          {p.codigo && <div style={{fontSize:11,color:C.textMid,marginTop:1}}>{p.codigo}</div>}
+                          {p.codigo && <div style={{fontSize:11,color:C.textMid,marginTop:1}}>{p.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '')}</div>}
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
                           <StockBadge prod={p}/>
@@ -542,7 +566,7 @@ export default function AgregarVentaNimbus({
                       {/* Nombre + SKU */}
                       <div style={{flex:'1 1 0',minWidth:0}}>
                         <div style={{fontSize:13,fontWeight:700,color:C.textDark,fontFamily:"'Inter',sans-serif",lineHeight:1.3}}>{item.nombre}</div>
-                        {item.codigo && <div style={{fontSize:11,color:C.textMid,marginTop:1,fontFamily:"'Inter',sans-serif"}}>SKU: {item.codigo}</div>}
+                        {item.codigo && <div style={{fontSize:11,color:C.textMid,marginTop:1,fontFamily:"'Inter',sans-serif"}}>SKU: {item.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '')}</div>}
                       </div>
 
                       {/* Variante */}
@@ -647,7 +671,7 @@ export default function AgregarVentaNimbus({
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
                         <div style={{flex:1,paddingRight:10}}>
                           <div style={{fontSize:14,fontWeight:700,color:C.textBlack,marginBottom:2,lineHeight:1.2}}>{item.nombre}</div>
-                          {item.codigo && <div style={{fontSize:12,color:C.textMid}}>{item.codigo}</div>}
+                          {item.codigo && <div style={{fontSize:11,color:C.textMid,marginTop:1}}>{item.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '')}</div>}
                         </div>
                         <button onClick={()=>quitarItem(item.id)}
                           style={{width:32,height:32,borderRadius:8,border:'none',
@@ -920,7 +944,7 @@ export default function AgregarVentaNimbus({
                 <div>
                   <Label>Estado</Label>
                   <Select value={estado} onValueChange={v => { setEstado(v); try{localStorage.setItem('gestify_pedido_estado',v)}catch{} }}>
-                    <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                    <SelectTrigger className="pv-select-trigger w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
                       <SelectValue placeholder="Estado..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -935,12 +959,12 @@ export default function AgregarVentaNimbus({
                 <div>
                   <Label>Canal de venta <span style={{fontWeight:400,color:C.textLight}}>(opcional)</span></Label>
                   <Select value={canalVenta} onValueChange={setCanalVenta}>
-                    <SelectTrigger className="w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-                      <SelectValue placeholder="Sin canal" />
+                    <SelectTrigger className="pv-select-trigger w-full h-8 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+                      <SelectValue placeholder="CANAL" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 160 }}>
                       <SelectGroup>
-                        <SelectItem value="">Sin canal</SelectItem>
+                        <SelectItem value="">CANAL</SelectItem>
                         {canales.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectGroup>
                     </SelectContent>
@@ -1079,6 +1103,21 @@ export default function AgregarVentaNimbus({
           .pv-desktop{display:flex!important;}
           .pv-hide-mobile{display:block!important;}
           .pv-show-mobile{display:none!important;}
+        }
+
+        .pv-select-trigger { transition: all 0.2s ease; cursor: pointer; }
+        .pv-select-trigger:hover { 
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+          border-color: #9ca3af !important; 
+          transform: scale(1.01);
+        }
+
+        [role="option"] { transition: all 0.15s ease !important; cursor: pointer !important; }
+        [role="option"]:hover, [role="option"][data-highlighted] { 
+          background-color: #f9fafb !important; 
+          color: #000 !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          transform: translateX(4px) scale(1.02);
         }
 
         .pv-form-grid {

@@ -468,6 +468,8 @@ export const useFacturacion = () => {
         fechaEntrega = null // sin fecha de entrega por defecto
       }
 
+      const canalVentaFinal = pedidoData.canal_venta || pedidoData.canalVenta || null
+
       // ── OPTIMISTIC UI: actualizar pantalla inmediatamente, sin esperar Supabase
       const tempId = `temp-${Date.now()}`
       const tempVentaId = `temp-v-${Date.now()}`
@@ -478,7 +480,7 @@ export const useFacturacion = () => {
         items: JSON.stringify(pedidoData.items), total,
         productos_count: pedidoData.items.length, notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
-        canal_venta: pedidoData.canalVenta || null,
+        canal_venta: canalVentaFinal,
         monto_abonado: montoPagadoInicial, saldo_pendiente: saldoNuevoPedido,
         user_id: user.id, created_at: new Date().toISOString()
       }
@@ -509,7 +511,7 @@ export const useFacturacion = () => {
         items: JSON.stringify(pedidoData.items), total,
         productos_count: pedidoData.items.length, notas: pedidoData.notas,
         estado: pedidoData.estado || 'pendiente',
-        canal_venta: pedidoData.canalVenta || null,
+        canal_venta: canalVentaFinal,
         monto_abonado: montoPagadoInicial, saldo_pendiente: total - montoPagadoInicial,
         user_id: user.id, created_at: new Date().toISOString()
       }

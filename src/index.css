@@ -175,6 +175,8 @@ select.app-select:hover,
 select.app-select-sm:hover,
 select.app-select-xs:hover {
   border-color: #9ca3af;
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 select.app-select:focus,
