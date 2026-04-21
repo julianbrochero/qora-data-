@@ -68,10 +68,16 @@ const NavItems = ({ sections, activeModule, onNav }) => (
                 cursor: "pointer", textAlign: "left",
                 fontFamily: "'Inter',sans-serif",
                 marginBottom: 1, position: "relative",
-                transition: "background .1s",
+                transition: "all .15s ease",
               }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#f9fafb" }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent" }}
+              onMouseEnter={e => { 
+                e.currentTarget.style.transform = "scale(1.02)";
+                if (!isActive) e.currentTarget.style.background = "#f9fafb";
+              }}
+              onMouseLeave={e => { 
+                e.currentTarget.style.transform = "scale(1)";
+                if (!isActive) e.currentTarget.style.background = "transparent";
+              }}
             >
               {isActive && (
                 <span style={{
@@ -137,9 +143,9 @@ const UserFooter = ({ setActiveModule }) => {
           </div>
 
           <button onClick={() => navTo("configuracion")}
-            style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#374151", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
-            onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
-            onMouseLeave={e => e.currentTarget.style.background = "none"}
+            style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#374151", fontFamily: "'Inter',sans-serif", textAlign: "left", transition: "all .15s ease" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.transform = "scale(1.02)" }}
+            onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.transform = "scale(1)" }}
           >
             <Settings size={14} strokeWidth={1.8} style={{ color: "#6b7280", flexShrink: 0 }} />
             Configuración
@@ -147,9 +153,9 @@ const UserFooter = ({ setActiveModule }) => {
 
           {isAdmin && (
             <button onClick={() => navTo("admin")}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#334139", fontFamily: "'Inter',sans-serif", textAlign: "left", fontWeight: 600 }}
-              onMouseEnter={e => e.currentTarget.style.background = "#f0fdf4"}
-              onMouseLeave={e => e.currentTarget.style.background = "none"}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#334139", fontFamily: "'Inter',sans-serif", textAlign: "left", fontWeight: 600, transition: "all .15s ease" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#f0fdf4"; e.currentTarget.style.transform = "scale(1.02)" }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.transform = "scale(1)" }}
             >
               <ShieldCheck size={14} strokeWidth={1.8} style={{ color: "#334139", flexShrink: 0 }} />
               Admin
@@ -159,9 +165,9 @@ const UserFooter = ({ setActiveModule }) => {
           <div style={{ height: 1, background: "#f3f4f6", margin: "2px 0" }} />
 
           <button onClick={() => { setOpen(false); logout() }}
-            style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#9ca3af", fontFamily: "'Inter',sans-serif", textAlign: "left" }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#dc2626" }}
-            onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#9ca3af" }}
+            style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#9ca3af", fontFamily: "'Inter',sans-serif", textAlign: "left", transition: "all .15s ease" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.transform = "scale(1.02)" }}
+            onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#9ca3af"; e.currentTarget.style.transform = "scale(1)" }}
           >
             <LogOut size={14} strokeWidth={1.8} style={{ flexShrink: 0 }} />
             Cerrar sesión
@@ -175,10 +181,16 @@ const UserFooter = ({ setActiveModule }) => {
           width: "100%", display: "flex", alignItems: "center", gap: 8,
           padding: "6px 8px", borderRadius: 8,
           background: open ? "#f3f4f6" : "transparent",
-          border: "none", cursor: "pointer", transition: "background .13s",
+          border: "none", cursor: "pointer", transition: "all .13s ease",
         }}
-        onMouseEnter={e => { if (!open) e.currentTarget.style.background = "#f9fafb" }}
-        onMouseLeave={e => { if (!open) e.currentTarget.style.background = "transparent" }}
+        onMouseEnter={e => { 
+          e.currentTarget.style.transform = "scale(1.02)";
+          if (!open) e.currentTarget.style.background = "#f9fafb";
+        }}
+        onMouseLeave={e => { 
+          e.currentTarget.style.transform = "scale(1)";
+          if (!open) e.currentTarget.style.background = "transparent";
+        }}
       >
         {user?.user_metadata?.avatar_url ? (
           <img src={user.user_metadata.avatar_url} alt="avatar"
