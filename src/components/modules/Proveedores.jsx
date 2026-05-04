@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect } from 'react'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -17,9 +17,9 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from "@nimbus-ds/icons"
 import { Button } from "@/components/ui/button"
 
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PALETA NIMBUS
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const C = {
   pageBg:     "#f8f9fb",
   bg:         "#ffffff",
@@ -48,7 +48,7 @@ const RESPONSIVE = `
   }
 `
 
-/* ─── Botones base ─── */
+/* â”€â”€â”€ Botones base â”€â”€â”€ */
 const Btn = ({ children, onClick, primary, disabled, style={} }) => {
   if (primary) return (
     <button
@@ -100,7 +100,7 @@ const IcoBtn = ({ icon: Icon, onClick, title, color = C.textDark, danger }) => {
   )
 }
 
-/* ─── Badge Estado ─── */
+/* â”€â”€â”€ Badge Estado â”€â”€â”€ */
 const Pill = ({ color, bg, border, children }) => (
   <span style={{
     display: "inline-flex", alignItems: "center", gap: 4,
@@ -113,7 +113,7 @@ const Pill = ({ color, bg, border, children }) => (
   </span>
 )
 
-/* ─── Fila Proveedor ─── */
+/* â”€â”€â”€ Fila Proveedor â”€â”€â”€ */
 const ProveedorRow = ({ prov, isSelected, onToggle, openModal, handleEliminar, handleCopy, clienteCopiado }) => {
   const [hov, setHov] = useState(false)
   const deuda = parseFloat(prov.deuda) || 0
@@ -151,13 +151,13 @@ const ProveedorRow = ({ prov, isSelected, onToggle, openModal, handleEliminar, h
             {prov.email}
           </div>
         ) : (
-          <span style={{ fontSize: 13, color: C.textMid }}>—</span>
+          <span style={{ fontSize: 13, color: C.textMid }}>â€”</span>
         )}
       </td>
 
       {/* CUIT */}
       <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
-        {prov.cuit || "—"}
+        {prov.cuit || "â€”"}
       </td>
 
       {/* Estado */}
@@ -198,9 +198,9 @@ const ProveedorRow = ({ prov, isSelected, onToggle, openModal, handleEliminar, h
 }
 
 
-/* ════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COMPONENTE PRINCIPAL
-════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export default function Proveedores({
   proveedores = [],
   searchTerm = "",
@@ -215,12 +215,12 @@ export default function Proveedores({
 
   const proveedoresSeguros = Array.isArray(proveedores) ? proveedores : []
 
-  /* ── Métricas ── */
+  /* â”€â”€ MÃ©tricas â”€â”€ */
   const activos = proveedoresSeguros.filter(p => p.estado === 'activo' || !p.estado).length
   const conDeuda = proveedoresSeguros.filter(p => (parseFloat(p.deuda) || 0) > 0).length
   const totalDeuda = proveedoresSeguros.reduce((s, p) => s + (parseFloat(p.deuda) || 0), 0)
 
-  /* ── Filtrado ── */
+  /* â”€â”€ Filtrado â”€â”€ */
   const filtrados = proveedoresSeguros
     .filter(p => {
       const q = (searchTerm || "").toLowerCase()
@@ -230,7 +230,7 @@ export default function Proveedores({
     })
     .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
 
-  /* ── Paginación ── */
+  /* â”€â”€ PaginaciÃ³n â”€â”€ */
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
   const indiceFin = indiceInicio + itemsPorPagina
   const paginados = filtrados.slice(indiceInicio, indiceFin)
@@ -238,7 +238,7 @@ export default function Proveedores({
 
   useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
-  /* ── Atajo Ctrl → nuevo ── */
+  /* â”€â”€ Atajo Ctrl â†’ nuevo â”€â”€ */
   useEffect(() => {
     const h = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return
@@ -253,11 +253,11 @@ export default function Proveedores({
 
   const [confirmData, setConfirmData] = useState(null)
 
-  /* ── Acciones ── */
+  /* â”€â”€ Acciones â”€â”€ */
   const handleEliminar = (id) => {
     setConfirmData({
-      title: "¿Eliminar proveedor?",
-      description: "Esta acción no se puede deshacer.",
+      title: "Â¿Eliminar proveedor?",
+      description: "Esta acciÃ³n no se puede deshacer.",
       onConfirm: () => { setConfirmData(null); eliminarProveedor?.(id) },
     })
   }
@@ -266,15 +266,14 @@ export default function Proveedores({
     <div style={{ minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
       <style>{RESPONSIVE}</style>
 
-      {/* ── Mobile topbar ── */}
+      {/* â”€â”€ Mobile topbar â”€â”€ */}
       <div className="pn-show-mobile" style={{
-        alignItems: "center", gap: 10, padding: "11px 16px",
-        background: C.bg, borderBottom: `1px solid ${C.border}`
+        position: "relative", alignItems: "center", gap: 10, padding: "11px 16px", minHeight: 58, background: C.bg, borderBottom: `1px solid ${C.border}`
       }}>
-        <button onClick={onOpenMobileSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+        <button onClick={onOpenMobileSidebar} style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
           <MenuIcon size={20} color={C.textBlack} />
         </button>
-        <span style={{ fontWeight: 700, fontSize: 17, color: C.textBlack }}>Proveedores</span>
+        <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, pointerEvents:"none", whiteSpace:"nowrap" }}>Proveedores</span>
         <button onClick={() => openModal && openModal("nuevo-proveedor")} style={{
           marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
           height: 32, padding: "0 18px", borderRadius: 6, fontSize: 13, fontWeight: 500,
@@ -285,7 +284,7 @@ export default function Proveedores({
         </button>
       </div>
 
-      {/* ── Desktop header ── */}
+      {/* â”€â”€ Desktop header â”€â”€ */}
       <div className="pn-hide-mobile" style={{ background: C.pageBg }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 12px", gap: 12, boxSizing: "border-box" }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
@@ -295,8 +294,8 @@ export default function Proveedores({
             {selectedIds.length > 0 && (
               <Btn 
                 onClick={() => setConfirmData({
-                  title: `¿Eliminar ${selectedIds.length} proveedores?`,
-                  description: "Se eliminarán permanentemente. Esta acción no se puede deshacer.",
+                  title: `Â¿Eliminar ${selectedIds.length} proveedores?`,
+                  description: "Se eliminarÃ¡n permanentemente. Esta acciÃ³n no se puede deshacer.",
                   onConfirm: () => { 
                     setConfirmData(null); 
                     Promise.all(selectedIds.map(id => eliminarProveedor?.(id))).then(() => setSelectedIds([])) 
@@ -315,11 +314,11 @@ export default function Proveedores({
         </div>
       </div>
 
-      {/* ── Contenido centrado ── */}
+      {/* â”€â”€ Contenido centrado â”€â”€ */}
       <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
 
 
-        {/* ── Filtros ── */}
+        {/* â”€â”€ Filtros â”€â”€ */}
         <div style={{
           background: C.pageBg, padding: "12px 24px 0",
           display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
@@ -342,7 +341,7 @@ export default function Proveedores({
           </div>
         </div>
 
-        {/* ── Contenido principal ── */}
+        {/* â”€â”€ Contenido principal â”€â”€ */}
         <div style={{ padding: "16px 24px" }}>
           <p style={{ margin: "0 0 10px", fontSize: 12, color: C.textMid }}>
             {filtrados.length} proveedor{filtrados.length !== 1 ? "es" : ""}
@@ -417,11 +416,11 @@ export default function Proveedores({
                   </tbody>
                 </table>
 
-                {/* Paginación */}
+                {/* PaginaciÃ³n */}
                 {totalPaginas > 1 && (
                   <div className="flex items-center justify-between gap-4" style={{ padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
                     <div className="flex items-center gap-2">
-                      <span style={{ fontSize: 12, color: C.textMid }}>Filas por página:</span>
+                      <span style={{ fontSize: 12, color: C.textMid }}>Filas por pÃ¡gina:</span>
                       <Select value={String(itemsPorPagina)} onValueChange={v => setItemsPorPagina(Number(v))}>
                         <SelectTrigger className="w-20 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
                           <SelectValue />
@@ -437,7 +436,7 @@ export default function Proveedores({
                       </Select>
                     </div>
                     <div style={{ fontSize: 12, color: C.textMid }}>
-                      {indiceInicio + 1}–{Math.min(indiceFin, filtrados.length)} de {filtrados.length}
+                      {indiceInicio + 1}â€“{Math.min(indiceFin, filtrados.length)} de {filtrados.length}
                     </div>
                     <div className="flex items-center gap-1">
                       <button

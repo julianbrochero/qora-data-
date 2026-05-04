@@ -1,5 +1,5 @@
-/**
- * ProductosNimbus.jsx — estética TiendaNube
+﻿/**
+ * ProductosNimbus.jsx â€” estÃ©tica TiendaNube
  */
 import { useState, useEffect, useRef } from "react"
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -13,6 +13,7 @@ import { CheckCircle, AlertTriangle, Upload, MoreHorizontal, Edit, Trash2, Shopp
 import { supabase } from "../../lib/supabaseClient"
 import { useAuth } from "../../lib/AuthContext"
 import { Button } from "@/components/ui/button"
+import ProductCard from "@/components/mobile/ProductCard"
 import {
   Select,
   SelectContent,
@@ -47,9 +48,56 @@ const PER_PAGE = 15
 const RESPONSIVE = `
   .pn-show-mobile { display: none; }
   .pn-hide-mobile { display: flex; }
+  .pn-products-mobile-filter,
+  .pn-products-mobile-list { display: none; }
   @media (max-width: 767px) {
     .pn-show-mobile { display: flex !important; }
     .pn-hide-mobile { display: none !important; }
+    .pn-products-mobile-filter {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      padding: 10px 14px 12px !important;
+      position: sticky !important;
+      top: 58px !important;
+      z-index: 50 !important;
+      background: #f8f9fb !important;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .pn-products-mobile-search {
+      width: 100% !important;
+      height: 52px !important;
+      padding: 0 12px 0 38px !important;
+      font-size: 16px !important;
+      border-radius: 12px !important;
+      background: #ffffff !important;
+      box-sizing: border-box !important;
+    }
+    .pn-products-mobile-selects {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+      width: 100% !important;
+    }
+    .pn-products-mobile-selects .pn-select-trigger {
+      width: 100% !important;
+      max-width: none !important;
+      height: 42px !important;
+      border-radius: 10px !important;
+      background: #ffffff !important;
+      font-size: 12px !important;
+    }
+    .pn-products-mobile-content {
+      padding: 16px 14px !important;
+    }
+    .pn-products-mobile-list {
+      display: flex !important;
+      flex-direction: column !important;
+      position: static !important;
+      height: auto !important;
+      min-height: 0 !important;
+      transform: none !important;
+    }
   }
   .pn-select-trigger { transition: all 0.2s ease; cursor: pointer; }
   .pn-select-trigger:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #9ca3af !important; }
@@ -62,7 +110,7 @@ const RESPONSIVE = `
   }
 `
 
-/* ─── Pill ─── */
+/* â”€â”€â”€ Pill â”€â”€â”€ */
 const Pill = ({ children, color, bg, border }) => (
   <span style={{
     display:"inline-flex", alignItems:"center", gap:3,
@@ -74,7 +122,7 @@ const Pill = ({ children, color, bg, border }) => (
   }}>{children}</span>
 )
 
-/* ─── Botón — más alargado, menos altura (TiendaNube style) ─── */
+/* â”€â”€â”€ BotÃ³n â€” mÃ¡s alargado, menos altura (TiendaNube style) â”€â”€â”€ */
 const Btn = ({ children, onClick, primary, disabled, style={} }) => {
   if (primary) return (
     <button
@@ -108,7 +156,7 @@ const Btn = ({ children, onClick, primary, disabled, style={} }) => {
   )
 }
 
-/* ─── Celda inline editable ─── */
+/* â”€â”€â”€ Celda inline editable â”€â”€â”€ */
 const InlineCell = ({ value, onSave, prefix="$" }) => {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState("")
@@ -145,92 +193,24 @@ const InlineCell = ({ value, onSave, prefix="$" }) => {
       onMouseEnter={e=>e.currentTarget.style.borderColor=C.borderMd}
       onMouseLeave={e=>e.currentTarget.style.borderColor="transparent"}
     >
-      {value!=null && value!=='' && parseFloat(value)!==0 ? fmtP(value) : <span style={{color:C.textLight}}>—</span>}
+      {value!=null && value!=='' && parseFloat(value)!==0 ? fmtP(value) : <span style={{color:C.textLight}}>â€”</span>}
     </span>
   )
 }
 
-/* ─── Card Mobile ─── */
-const MobileCard = ({ prod, onEdit, onDel, onAgregarAlCarrito, isSelected, onToggleSelect }) => {
-  const [hov, setHov] = useState(false)
+/* â”€â”€â”€ Card Mobile â”€â”€â”€ */
+const MobileCard = ({ prod, onEdit }) => {
   const sinStock  = prod.controlaStock && (prod.stock ?? 0) <= 0
   const stockBajo = prod.controlaStock && (prod.stock ?? 0) > 0 && (prod.stock ?? 0) <= (prod.stock_minimo||5)
+  const stockLabel = !prod.controlaStock ? "Stock: ∞" : sinStock ? "Sin stock" : `Stock: ${prod.stock}`
+  const stockTone = sinStock ? "danger" : stockBajo ? "warning" : "muted"
 
   return (
-    <div 
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      onClick={() => onEdit(prod)}
-      style={{
-        padding: "12px 16px",
-        background: isSelected ? C.primarySurf : C.bg,
-        borderBottom: `1px solid ${C.border}`,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        position: "relative"
-      }}
-    >
-      <div style={{
-        position: "absolute",
-        left: 8,
-        top: 8,
-        zIndex: 10,
-        opacity: (isSelected || hov) ? 1 : 0,
-        pointerEvents: (isSelected || hov) ? "auto" : "none",
-        transition: "opacity 0.15s"
-      }}>
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={(e) => { e.stopPropagation(); onToggleSelect(prod.id) }}
-          style={{ width: 20, height: 20, cursor: "pointer", accentColor: C.primary }}
-        />
-      </div>
-
-      <div style={{
-        width: 44, height: 44, borderRadius: 8, flexShrink: 0,
-        background: "#f9fafb", border: `1px solid ${C.border}`,
-        display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
-        fontSize: 10, fontWeight: 700, color: C.textMid, textAlign: "center"
-      }}>
-        {prod.codigo ? prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '') : '—'}
-      </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ 
-          fontSize: 14, fontWeight: 600, color: C.textDark, 
-          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" 
-        }}>
-          {prod.nombre}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{fmtP(prod.precio)}</span>
-          {!prod.controlaStock ? (
-             <span style={{ fontSize: 11, color: C.textMid }}>Stock: ∞</span>
-          ) : (
-            sinStock 
-              ? <span style={{ fontSize: 11, color: "#DC2626", fontWeight: 600 }}>Sin stock</span>
-              : stockBajo
-                ? <span style={{ fontSize: 11, color: "#D97706", fontWeight: 600 }}>{prod.stock} bajo</span>
-                : <span style={{ fontSize: 11, color: C.textMid }}>Stock: {prod.stock}</span>
-          )}
-        </div>
-      </div>
-
-      <div style={{ display:"flex", alignItems:"center" }}>
-         <button 
-          onClick={(e) => { e.stopPropagation(); onEdit(prod) }}
-          style={{ background: "none", border: "none", padding: 8, cursor: "pointer" }}
-        >
-          <Edit size={16} color={C.textMid} />
-        </button>
-      </div>
-    </div>
+    <ProductCard name={prod.nombre} price={fmtP(prod.precio)} stockLabel={stockLabel} stockTone={stockTone} onClick={() => onEdit(prod)} />
   )
 }
 
-/* ─── Fila producto ─── */
+/* â”€â”€â”€ Fila producto â”€â”€â”€ */
 const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto, setMenu, menuPos, setMenuPos, isSelected, onToggleSelect }) => {
   const [hov, setHov] = useState(false)
 
@@ -280,7 +260,7 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
             display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden",
             fontSize: 11, fontWeight: 700, color: C.textMid, textAlign: "center", padding: 2
           }}>
-            {prod.codigo ? prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '') : '—'}
+            {prod.codigo ? prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '') : 'â€”'}
           </div>
           <div style={{ minWidth:0 }}>
             <div
@@ -315,7 +295,7 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
               : <span style={{ fontSize:13, color:C.textDark }}>{prod.stock}</span>}
       </td>
 
-      {/* Precio — editable inline */}
+      {/* Precio â€” editable inline */}
       <td style={{ padding:"10px 16px", verticalAlign:"middle", whiteSpace:"nowrap" }} onClick={e => e.stopPropagation()}>
         <InlineCell
           value={prod.precio}
@@ -323,7 +303,7 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
         />
       </td>
 
-      {/* Costo — editable inline */}
+      {/* Costo â€” editable inline */}
       <td style={{ padding:"10px 16px", verticalAlign:"middle", whiteSpace:"nowrap" }} onClick={e => e.stopPropagation()}>
         <InlineCell
           value={prod.costo}
@@ -333,7 +313,7 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
 
       <td style={{ padding:"8px 12px", verticalAlign:"middle" }} onClick={e => e.stopPropagation()}>
         <div style={{ position:"relative" }}>
-          <button onClick={abrirMenu} title="Más acciones"
+          <button onClick={abrirMenu} title="MÃ¡s acciones"
             style={{
               width:30, height:30, borderRadius:6,
               display:"flex", alignItems:"center", justifyContent:"center",
@@ -366,7 +346,7 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
   )
 }
 
-/* ══════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export default function ProductosNimbus({
   productos=[], searchTerm, setSearchTerm,
   openModal, eliminarProducto, eliminarMultiplesProductos, editarProducto, recargarProductos, onOpenMobileSidebar,
@@ -392,6 +372,8 @@ export default function ProductosNimbus({
   const [csvResultado, setCsvResultado] = useState(null)
   const [menuAbierto,  setMenu]         = useState(null)
   const [menuPos,      setMenuPos]      = useState({ top:0, left:0 })
+  const [mobileRenderCount, setMobileRenderCount] = useState(40)
+  const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false)
   const csvInputRef = useRef(null)
 
   useEffect(() => {
@@ -418,6 +400,7 @@ export default function ProductosNimbus({
   }, [openModal])
 
   useEffect(()=>{ setPagina(1) }, [busqueda,filtroCat,filtroStock,itemsPerPage])
+  useEffect(() => { setMobileRenderCount(40) }, [busqueda, filtroCat, filtroStock])
 
   const filtrados = productos.filter(p => {
     const q = busqueda.toLowerCase()
@@ -434,17 +417,62 @@ export default function ProductosNimbus({
   const pageItems = filtrados.slice(offset,offset+itemsPerPage)
 
   const [confirmData, setConfirmData] = useState(null)
-  const handleDel  = p => setConfirmData({ title:`¿Eliminar "${p.nombre}"?`, description:"Se eliminará permanentemente. Esta acción no se puede deshacer.", onConfirm:()=>{ setConfirmData(null); eliminarProducto?.(p.id) } })
+  const handleDel = p => setConfirmData({
+    title: `¿Eliminar "${p.nombre}"?`,
+    description: "Se eliminará permanentemente. Esta acción no se puede deshacer.",
+    onConfirm: () => { setConfirmData(null); eliminarProducto?.(p.id) }
+  })
   const handleEdit = p => openModal?.("editar-producto",p)
+
+  const eliminarProductosPorIds = async (ids) => {
+    const uniqueIds = [...new Set((ids || []).filter(Boolean))]
+    if (uniqueIds.length === 0 || bulkDeleteLoading) return
+    setBulkDeleteLoading(true)
+    try {
+      const result = eliminarMultiplesProductos
+        ? await eliminarMultiplesProductos(uniqueIds)
+        : await Promise.all(uniqueIds.map(id => eliminarProducto?.(id)))
+
+      if (result?.success === false) {
+        setCsvResultado({ tipo:'error', msg: result.mensaje || 'No se pudieron eliminar los productos.' })
+      } else {
+        setSelectedIds([])
+        setCsvResultado({ tipo:'ok', msg: `${uniqueIds.length} producto${uniqueIds.length!==1?'s':''} eliminado${uniqueIds.length!==1?'s':''}.` })
+        recargarProductos?.()
+      }
+    } catch (error) {
+      setCsvResultado({ tipo:'error', msg: error.message || 'Error al eliminar productos.' })
+    } finally {
+      setBulkDeleteLoading(false)
+    }
+  }
+
+  const pedirEliminarProductos = (items, scopeLabel = 'productos') => {
+    const ids = [...new Set((items || []).map(p => p.id).filter(Boolean))]
+    if (ids.length === 0) return
+    const label = scopeLabel === 'productos seleccionados'
+      ? (ids.length === 1 ? 'producto seleccionado' : 'productos seleccionados')
+      : scopeLabel
+    const verb = ids.length === 1 ? 'eliminará' : 'eliminarán'
+    setConfirmData({
+      title: `¿Eliminar ${ids.length} ${label}?`,
+      description: `Se ${verb} en una sola operación. Esta acción no se puede deshacer.`,
+      confirmLabel: bulkDeleteLoading ? "Eliminando..." : "Eliminar",
+      onConfirm: async () => {
+        setConfirmData(null)
+        await eliminarProductosPorIds(ids)
+      }
+    })
+  }
 
   const handleSaveField = async (prodId, field, value) => {
     if (!editarProducto) return
     await editarProducto(prodId, { [field]: value })
   }
 
-  /* ── CSV EXPORT ── */
+  /* â”€â”€ CSV EXPORT â”€â”€ */
   const exportarCSV = () => {
-    const headers = ['Código','Nombre','Categoría','Precio','Costo','Stock','Stock Mínimo','Descripción','Controla Stock']
+    const headers = ['CÃ³digo','Nombre','CategorÃ­a','Precio','Costo','Stock','Stock MÃ­nimo','DescripciÃ³n','Controla Stock']
     const rows = productos.map(p=>[
       p.codigo||'', (p.nombre||'').replace(/;/g,','), (p.categoria||'').replace(/;/g,','),
       p.precio||0, p.costo!=null?p.costo:'', p.stock||0,
@@ -460,7 +488,7 @@ export default function ProductosNimbus({
     URL.revokeObjectURL(url)
   }
 
-  /* ── CSV PARSE ── */
+  /* â”€â”€ CSV PARSE â”€â”€ */
   const parseLine = line => {
     const res=[]; let cur='',inQ=false
     for(let i=0;i<line.length;i++){
@@ -482,7 +510,7 @@ export default function ProductosNimbus({
     const isTN=headers.some(h=>h.toLowerCase().includes('identificador'))
     const prods=[]
     if(isTN){
-      const iN=col('Nombre'),iSKU=col('SKU'),iCat=colC('Categoría'),iP=col('Precio'),iS=col('Stock'),iD=colC('Descripción'),iCosto=col('Costo'),iPV=colC('Valor de propiedad 1')
+      const iN=col('Nombre'),iSKU=col('SKU'),iCat=colC('CategorÃ­a'),iP=col('Precio'),iS=col('Stock'),iD=colC('DescripciÃ³n'),iCosto=col('Costo'),iPV=colC('Valor de propiedad 1')
       let last=''
       for(let i=1;i<lines.length;i++){
         const cols=parseLine(lines[i])
@@ -496,7 +524,7 @@ export default function ProductosNimbus({
         prods.push({nombre:nf,codigo:sku||null,categoria:iCat>=0?(cols[iCat]||'').trim():'',precio:cleanN(pStr),stock:parseInt(sStr)||0,costo:cStr?(cleanN(cStr)||null):null,controlastock:sStr!=='',descripcion:iD>=0?(cols[iD]||'').trim():''})
       }
     } else {
-      const iCod=colC('Código'),iN=col('Nombre'),iCat=colC('Categoría'),iP=col('Precio'),iCosto=col('Costo'),iS=col('Stock'),iSM=colC('Stock Mínimo'),iD=colC('Descripción'),iCS=colC('Controla')
+      const iCod=colC('CÃ³digo'),iN=col('Nombre'),iCat=colC('CategorÃ­a'),iP=col('Precio'),iCosto=col('Costo'),iS=col('Stock'),iSM=colC('Stock MÃ­nimo'),iD=colC('DescripciÃ³n'),iCS=colC('Controla')
       for(let i=1;i<lines.length;i++){
         const cols=parseLine(lines[i])
         const nom=iN>=0?(cols[iN]||'').trim():''; if(!nom) continue
@@ -511,20 +539,20 @@ export default function ProductosNimbus({
     return prods
   }
 
-  /* ── CSV IMPORT (upsert: actualiza existentes, inserta nuevos) ── */
+  /* â”€â”€ CSV IMPORT (upsert: actualiza existentes, inserta nuevos) â”€â”€ */
   const importarCSV = async file => {
     if(!file||!user) return
     setCsvLoading(true); setCsvResultado(null)
     try {
       const text = await file.text()
       const prods = parsearCSV(text)
-      if(prods.length === 0){ setCsvResultado({tipo:'error',msg:'No se encontraron productos válidos.'}); return }
+      if(prods.length === 0){ setCsvResultado({tipo:'error',msg:'No se encontraron productos vÃ¡lidos.'}); return }
 
-      // Índices para match rápido
+      // Ãndices para match rÃ¡pido
       const porCodigo = new Map(productos.filter(p=>p.codigo).map(p=>[p.codigo.trim().toLowerCase(), p]))
       const porNombre = new Map(productos.map(p=>[p.nombre.trim().toLowerCase(), p]))
 
-      // Generar códigos únicos para los que no tienen
+      // Generar cÃ³digos Ãºnicos para los que no tienen
       const existingCodes = new Set(productos.map(p=>p.codigo).filter(Boolean))
       let codeIdx = productos.length + 1
       const genCode = () => { let c; do{ c='PROD-'+String(codeIdx++).padStart(4,'0') }while(existingCodes.has(c)); existingCodes.add(c); return c }
@@ -539,7 +567,7 @@ export default function ProductosNimbus({
         const existing = (keyCode && porCodigo.get(keyCode)) || porNombre.get(keyNom)
 
         if(existing) {
-          // Producto encontrado → actualizar precio (y costo/stock si vienen en el CSV)
+          // Producto encontrado â†’ actualizar precio (y costo/stock si vienen en el CSV)
           const fields = { precio: p.precio }
           if(p.costo != null) fields.costo = p.costo
           if(p.stock != null && p.stock > 0) fields.stock = p.stock
@@ -573,8 +601,8 @@ export default function ProductosNimbus({
       const partes = []
       if(actualizados > 0) partes.push(`${actualizados} actualizado${actualizados!==1?'s':''}`)
       if(insertados  > 0) partes.push(`${insertados} nuevo${insertados!==1?'s':''}`)
-      const resumen = partes.length ? partes.join(' · ') : 'Sin cambios'
-      setCsvResultado({tipo:'ok', msg:`CSV procesado — ${resumen}.`})
+      const resumen = partes.length ? partes.join(' Â· ') : 'Sin cambios'
+      setCsvResultado({tipo:'ok', msg:`CSV procesado â€” ${resumen}.`})
       recargarProductos?.()
     } catch(e){ setCsvResultado({tipo:'error', msg: e.message}) }
     finally{ setCsvLoading(false); if(csvInputRef.current) csvInputRef.current.value='' }
@@ -589,16 +617,15 @@ export default function ProductosNimbus({
     <div style={{ minHeight:"100vh", background:C.pageBg, fontFamily:"'Inter',sans-serif" }}>
       <style>{RESPONSIVE}</style>
 
-      {/* ── Mobile topbar ── */}
+      {/* â”€â”€ Mobile topbar â”€â”€ */}
       <div className="pn-show-mobile" style={{
-        alignItems:"center", gap:10, padding:"11px 16px",
-        background:C.bg, borderBottom:`1px solid ${C.border}`,
+        position:"relative", alignItems:"center", gap:10, padding:"11px 16px", minHeight:58, background:C.bg, borderBottom:`1px solid ${C.border}`,
       }}>
         <button onClick={onOpenMobileSidebar}
-          style={{ background:"none", border:"none", cursor:"pointer", padding:4, display:"flex" }}>
+          style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
           <MenuIcon size={20} color={C.textBlack}/>
         </button>
-        <span style={{ fontWeight:700, fontSize:17, color:C.textBlack }}>Productos</span>
+        <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, pointerEvents:"none", whiteSpace:"nowrap" }}>Productos</span>
         <button onClick={()=>openModal?.("nuevo-producto")} style={{
           marginLeft:"auto", display:"flex", alignItems:"center", gap:5,
           height:30, padding:"0 12px", borderRadius:6, fontSize:13, fontWeight:600,
@@ -608,7 +635,7 @@ export default function ProductosNimbus({
         </button>
       </div>
 
-      {/* ── Desktop header ── */}
+      {/* â”€â”€ Desktop header â”€â”€ */}
       <div className="pn-hide-mobile" style={{ background:C.pageBg }}>
         <div style={{ maxWidth:1200, margin:"0 auto", width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 24px 12px", gap:12, boxSizing:"border-box" }}>
           <h1 style={{ margin:0, fontSize:22, fontWeight:700, color:C.textBlack, letterSpacing:"-0.3px" }}>
@@ -616,22 +643,16 @@ export default function ProductosNimbus({
           </h1>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             {selectedIds.length > 0 && (
-              <Btn 
-                onClick={() => setConfirmData({
-                  title: `¿Eliminar ${selectedIds.length} productos?`,
-                  description: "Esta acción no se puede deshacer.",
-                  onConfirm: () => { 
-                    setConfirmData(null); 
-                    eliminarMultiplesProductos?.(selectedIds).then(() => setSelectedIds([])) 
-                  }
-                })}
+              <Btn
+                onClick={() => pedirEliminarProductos(selectedIds.map(id => ({ id })), 'productos seleccionados')}
+                disabled={bulkDeleteLoading}
                 style={{ background: C.dangerSurf, border: `1px solid ${C.dangerBord}`, color: C.dangerTxt }}
               >
-                <Trash2 size={13} /> Eliminar ({selectedIds.length})
+                <Trash2 size={13} /> {bulkDeleteLoading ? "Eliminando..." : `Eliminar (${selectedIds.length})`}
               </Btn>
             )}
             <Btn onClick={()=>openModal?.("categorias-producto")}>
-              <TagIcon size={13} color={C.textDark}/> Categorías
+              <TagIcon size={13} color={C.textDark}/> CategorÃ­as
             </Btn>
 
             <div style={{ position:"relative" }}>
@@ -672,7 +693,7 @@ export default function ProductosNimbus({
                     onMouseEnter={e => e.currentTarget.style.background="#eaf0eb"}
                     onMouseLeave={e => e.currentTarget.style.background="transparent"}
                   >
-                    ℹ️ Guía TiendaNube CSV
+                    â„¹ï¸ GuÃ­a TiendaNube CSV
                   </button>
                 </div>
               )}
@@ -704,24 +725,24 @@ export default function ProductosNimbus({
         </div>
       </div>
 
-      {/* ── Filtros + Contenido — mismo maxWidth ── */}
+      {/* â”€â”€ Filtros + Contenido â€” mismo maxWidth â”€â”€ */}
       <div style={{ maxWidth:1200, margin:"0 auto", width:"100%" }}>
 
-      {/* ── Guía CSV TiendaNube ── */}
+      {/* â”€â”€ GuÃ­a CSV TiendaNube â”€â”€ */}
       {showCsvHelp && (
         <div style={{ margin:"10px 24px 0", padding:"14px 18px", borderRadius:10, background:C.primarySurf, border:`1px solid rgba(51,65,57,.18)` }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
-            <div style={{ fontWeight:700, fontSize:13, color:C.primary }}>📦 Cómo importar productos desde TiendaNube</div>
+            <div style={{ fontWeight:700, fontSize:13, color:C.primary }}>ðŸ“¦ CÃ³mo importar productos desde TiendaNube</div>
             <button onClick={() => setShowCsvHelp(false)}
-              style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:C.textLight, lineHeight:1 }}>×</button>
+              style={{ background:"none", border:"none", cursor:"pointer", fontSize:16, color:C.textLight, lineHeight:1 }}>Ã—</button>
           </div>
           <ol style={{ margin:0, paddingLeft:18, display:"flex", flexDirection:"column", gap:6 }}>
             {[
-              ['Entrá a tu panel de TiendaNube', 'Panel → Productos → Exportar productos como CSV'],
-              ['Descargá el archivo CSV', 'El archivo se descargará con todas las columnas de TiendaNube'],
-              ['Columnas que se importan automáticamente', <span style={{fontFamily:"monospace",fontSize:11,background:"rgba(51,65,57,.1)",padding:"1px 5px",borderRadius:3}}>nombre, precio, descripcion, sku (→ codigo), stock</span>],
-              ['Importá el archivo', 'Hacé click en CSV → Importar y seleccioná el archivo descargado'],
-              ['Verificá los datos', 'Los productos aparecerán en la lista con sus precios y stock actualizados'],
+              ['EntrÃ¡ a tu panel de TiendaNube', 'Panel â†’ Productos â†’ Exportar productos como CSV'],
+              ['DescargÃ¡ el archivo CSV', 'El archivo se descargarÃ¡ con todas las columnas de TiendaNube'],
+              ['Columnas que se importan automÃ¡ticamente', <span style={{fontFamily:"monospace",fontSize:11,background:"rgba(51,65,57,.1)",padding:"1px 5px",borderRadius:3}}>nombre, precio, descripcion, sku (â†’ codigo), stock</span>],
+              ['ImportÃ¡ el archivo', 'HacÃ© click en CSV â†’ Importar y seleccionÃ¡ el archivo descargado'],
+              ['VerificÃ¡ los datos', 'Los productos aparecerÃ¡n en la lista con sus precios y stock actualizados'],
             ].map(([title, desc], i) => (
               <li key={i} style={{ fontSize:12, color:C.textDark }}>
                 <span style={{ fontWeight:700, color:C.primary }}>{title}</span>
@@ -731,12 +752,12 @@ export default function ProductosNimbus({
             ))}
           </ol>
           <div style={{ marginTop:10, padding:"7px 10px", borderRadius:7, background:"rgba(51,65,57,.07)", fontSize:11, color:C.primary, fontWeight:600 }}>
-            💡 Tip: Si el CSV viene en formato UTF-8 con separador coma (,) se importa sin configuración adicional.
+            ðŸ’¡ Tip: Si el CSV viene en formato UTF-8 con separador coma (,) se importa sin configuraciÃ³n adicional.
           </div>
         </div>
       )}
 
-      {/* ── Banner CSV resultado ── */}
+      {/* â”€â”€ Banner CSV resultado â”€â”€ */}
       {csvResultado && (
         <div style={{
           margin:"10px 24px 0", padding:"9px 14px", borderRadius:8,
@@ -752,13 +773,13 @@ export default function ProductosNimbus({
           {csvResultado.msg}
           <button onClick={()=>setCsvResultado(null)}
             style={{ marginLeft:"auto", background:"none", border:"none", cursor:"pointer", color:"inherit", fontSize:14 }}>
-            ✕
+            âœ•
           </button>
         </div>
       )}
 
-      {/* ── Filtros ── */}
-      <div style={{
+      {/* â”€â”€ Filtros â”€â”€ */}
+      <div className="pn-hide-mobile" style={{
         background:C.pageBg, padding:"10px 24px",
         display:"flex", alignItems:"center", gap:8, flexWrap:"wrap",
       }}>
@@ -770,7 +791,7 @@ export default function ProductosNimbus({
             <SearchIcon size={14} color={C.textLight}/>
           </div>
           <input type="text" value={busqueda} onChange={e=>setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, SKU o categoría"
+            placeholder="Buscar por nombre, SKU o categorÃ­a"
             style={{
               width:"100%", height:32, padding:"0 10px 0 30px", fontSize:13,
               border:`1px solid ${C.border}`, borderRadius:6, outline:"none",
@@ -781,14 +802,14 @@ export default function ProductosNimbus({
             onBlur={e =>e.target.style.borderColor=C.border}
           />
         </div>
-        {/* Selector de Categoría */}
+        {/* Selector de CategorÃ­a */}
         <Select value={filtroCat} onValueChange={setFiltroCat}>
           <SelectTrigger className="pn-select-trigger w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-            <SelectValue placeholder="CATEGORÍA" />
+            <SelectValue placeholder="CATEGORÃA" />
           </SelectTrigger>
           <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 200 }}>
             <SelectGroup>
-              <SelectItem value="">CATEGORÍA</SelectItem>
+              <SelectItem value="">CATEGORÃA</SelectItem>
               {cats.filter(c => c && c !== "todas").map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
@@ -810,9 +831,52 @@ export default function ProductosNimbus({
           </SelectContent>
         </Select>
       </div>
+      <div className="pn-products-mobile-filter" style={{ flexDirection:"column", gap:10, background:C.pageBg, padding:"10px 14px 12px", position:"sticky", top:58, zIndex:50 }}>
+        <div style={{ position:"relative", width:"100%" }}>
+          <div style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}>
+            <SearchIcon size={14} color={C.textLight}/>
+          </div>
+          <input
+            className="pn-products-mobile-search"
+            type="text"
+            value={busqueda}
+            onChange={e=>setBusqueda(e.target.value)}
+            placeholder="Buscar..."
+            style={{ width:"100%", height:52, padding:"0 12px 0 38px", fontSize:16, border:`1px solid ${C.border}`, borderRadius:12, background:C.bg, color:C.textDark, boxSizing:"border-box" }}
+          />
+        </div>
+        <div className="pn-products-mobile-selects" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          <Select value={filtroCat || "todas"} onValueChange={v => setFiltroCat(v === "todas" ? "" : v)}>
+            <SelectTrigger className="pn-select-trigger w-full h-[42px] text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+              <SelectValue placeholder="Categoría" />
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor:"#ffffff", border:`1px solid ${C.border}`, zIndex:10000, color:"#000", minWidth:180 }}>
+              <SelectGroup>
+                <SelectItem value="todas">Todas</SelectItem>
+                {cats.filter(c => c && c !== "todas").map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
-      {/* ── Contenido ── */}
-      <div style={{ padding:"16px 24px" }}>
+          <Select value={filtroStock || "todos"} onValueChange={v => setFiltroStock(v === "todos" ? "" : v)}>
+            <SelectTrigger className="pn-select-trigger w-full h-[42px] text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
+              <SelectValue placeholder="Stock" />
+            </SelectTrigger>
+            <SelectContent style={{ backgroundColor:"#ffffff", border:`1px solid ${C.border}`, zIndex:10000, color:"#000", minWidth:160 }}>
+              <SelectGroup>
+                <SelectItem value="todos">Todo stock</SelectItem>
+                <SelectItem value="sin-stock">Sin stock</SelectItem>
+                <SelectItem value="stock-bajo">Stock bajo</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* â”€â”€ Contenido â”€â”€ */}
+      <div className="pn-products-mobile-content" style={{ padding:"16px 24px" }}>
         <p style={{ margin:"0 0 10px", fontSize:12, color:C.textMid }}>
           {filtrados.length} producto{filtrados.length!==1?"s":""}
         </p>
@@ -834,7 +898,7 @@ export default function ProductosNimbus({
                   No se encontraron productos
                 </div>
                 <div style={{ fontSize:13, color:C.textMid }}>
-                  Intentá con otra búsqueda o agregá un nuevo producto.
+                  IntentÃ¡ con otra bÃºsqueda o agregÃ¡ un nuevo producto.
                 </div>
               </div>
               <Btn primary onClick={()=>openModal?.("nuevo-producto")}>
@@ -844,17 +908,21 @@ export default function ProductosNimbus({
           ) : (
             <>
               {/* Cards mobile */}
-              <div className="pn-show-mobile" style={{ flexDirection:"column" }}>
-                {pageItems.map(prod=>(
+              <div className="pn-products-mobile-list" style={{ flexDirection:"column", position:"static", height:"auto", transform:"none" }}>
+                {filtrados.slice(0, mobileRenderCount).map(prod=>(
                   <MobileCard key={prod.id} prod={prod}
-                    onEdit={handleEdit} onDel={handleDel}
-                    onAgregarAlCarrito={onAgregarAlCarrito}
-                    isSelected={selectedIds.includes(prod.id)}
-                    onToggleSelect={(id) => {
-                      setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-                    }}
+                    onEdit={handleEdit}
                   />
                 ))}
+                {mobileRenderCount < filtrados.length && (
+                  <button
+                    type="button"
+                    onClick={() => setMobileRenderCount((prev) => prev + 40)}
+                    style={{ height:44, border:'none', background:'#eef2ff', color:C.primary, fontSize:12, fontWeight:700 }}
+                  >
+                    Cargar mÃ¡s productos
+                  </button>
+                )}
               </div>
 
               {/* Tabla desktop */}
@@ -902,11 +970,11 @@ export default function ProductosNimbus({
             </>
           )}
 
-          {/* Paginación */}
+          {/* PaginaciÃ³n */}
           {filtrados.length > 10 && (
             <div className="flex items-center justify-between gap-4" style={{ padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
               <div className="flex items-center gap-2">
-                <span style={{ fontSize: 12, color: C.textMid }}>Filas por página:</span>
+                <span style={{ fontSize: 12, color: C.textMid }}>Filas por pÃ¡gina:</span>
                 <Select value={String(itemsPerPage)} onValueChange={v => setItemsPerPage(Number(v))}>
                   <SelectTrigger className="pn-select-trigger w-24 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
                     <SelectValue />
@@ -923,7 +991,7 @@ export default function ProductosNimbus({
                 </Select>
               </div>
               <div style={{ fontSize: 12, color: C.textMid }}>
-                {offset+1}–{Math.min(offset+itemsPerPage,filtrados.length)} de {filtrados.length}
+                {offset+1}â€“{Math.min(offset+itemsPerPage,filtrados.length)} de {filtrados.length}
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -963,6 +1031,7 @@ export default function ProductosNimbus({
         open={!!confirmData}
         title={confirmData?.title}
         description={confirmData?.description}
+        confirmLabel={confirmData?.confirmLabel}
         onConfirm={confirmData?.onConfirm}
         onCancel={()=>setConfirmData(null)}
       />

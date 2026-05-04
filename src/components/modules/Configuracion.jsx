@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState } from "react"
 import { useSubscriptionContext } from "../../lib/SubscriptionContext"
@@ -6,9 +6,9 @@ import { User, Save, Zap, LogOut, Building2, CheckCircle, Tag, Plus, X, CreditCa
 import { useAuth } from "../../lib/AuthContext"
 import { MenuIcon } from "@nimbus-ds/icons"
 
-/* ══════════════════════════════════════════
-   PALETA NIMBUS (ESTÉTICA LIMPIA Y COMPACTA)
-══════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PALETA NIMBUS (ESTÃ‰TICA LIMPIA Y COMPACTA)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const C = {
   pageBg:     "#f8f9fb",
   bg:         "#ffffff",
@@ -35,7 +35,7 @@ const RESPONSIVE = `
   }
 `
 
-/* ── Subcomponentes TiendaNube Compactos ── */
+/* â”€â”€ Subcomponentes TiendaNube Compactos â”€â”€ */
 const ToggleSwitch = ({ enabled, onChange }) => (
     <button type="button" onClick={onChange} aria-pressed={enabled}
         style={{
@@ -105,16 +105,16 @@ const TnButton = ({ onClick, disabled, ok, okLabel, label, icon: Icon, danger, s
     )
 }
 
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COMPONENTE PRINCIPAL
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const Configuracion = ({ onOpenMobileSidebar }) => {
     const { status, daysRemaining, isTrial, isPro, getCheckoutUrl } = useSubscriptionContext()
     const { user, signOut, updateUserData } = useAuth()
 
     const [loadingSub, setLoadingSub] = useState(false)
 
-    /* ── Empresa ── */
+    /* â”€â”€ Empresa â”€â”€ */
     const meta = user?.user_metadata || {}
     const [empresa, setEmpresa] = useState(meta.empresa || meta.gestify_empresa || localStorage.getItem('gestify_empresa') || '')
     const [cuit, setCuit] = useState(meta.cuit || localStorage.getItem('gestify_cuit') || '')
@@ -131,11 +131,11 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
             localStorage.setItem('gestify_cuit', cuit.trim())
             localStorage.setItem('gestify_direccion', direccion.trim())
             setSavedOk(true); setTimeout(() => setSavedOk(false), 2500)
-        } catch { setSaveError('Error al guardar. Revisá tu conexión.') }
+        } catch { setSaveError('Error al guardar. RevisÃ¡ tu conexiÃ³n.') }
         finally { setSavingEmpresa(false) }
     }
 
-    /* ── Canales ── */
+    /* â”€â”€ Canales â”€â”€ */
     const [canales, setCanales] = useState(() => {
         try {
             const fromMeta = meta.canales_venta
@@ -165,7 +165,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
         finally { setSavingCanales(false) }
     }
 
-    /* ── Stock ── */
+    /* â”€â”€ Stock â”€â”€ */
     const [bajoStockActivo, setBajoStockActivo] = useState(() => {
         try { return localStorage.getItem('gestify_bajo_stock_activo') !== 'false' } catch { return true }
     })
@@ -182,7 +182,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
         setStockSavedOk(true); setTimeout(() => setStockSavedOk(false), 2500)
     }
 
-    /* ── Suscripción ── */
+    /* â”€â”€ SuscripciÃ³n â”€â”€ */
     const planActivo = isPro || status === 'active'
     const planTrial = status === 'trial'
     const progreso = planActivo ? Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100)) : 0
@@ -192,31 +192,32 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
         <div style={{ width: '100%', minHeight: '100vh', background: C.pageBg, fontFamily: "'Inter',-apple-system,sans-serif", WebkitFontSmoothing: 'antialiased' }}>
             <style>{RESPONSIVE}</style>
 
-            {/* ── Mobile topbar ── */}
+            {/* â”€â”€ Mobile topbar â”€â”€ */}
             <div className="pn-show-mobile" style={{
-                alignItems: "center", gap: 10, padding: "10px 16px",
+                position: "relative", alignItems: "center", gap: 10, padding: "11px 16px", minHeight: 58,
                 background: C.bg, borderBottom: `1px solid ${C.border}`
             }}>
-                <button onClick={onOpenMobileSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+                <button onClick={onOpenMobileSidebar} style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
                 <MenuIcon size={20} color={C.textBlack} />
                 </button>
-                <span style={{ fontWeight: 600, fontSize: 16, color: C.textBlack }}>Configuración</span>
+                <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, pointerEvents:"none", whiteSpace:"nowrap" }}>Configuración</span>
+                <div style={{ marginLeft:"auto", width:36, flexShrink:0 }} />
             </div>
 
-            {/* ── Desktop header ── */}
+            {/* â”€â”€ Desktop header â”€â”€ */}
             <div className="pn-hide-mobile" style={{ background: C.bg, padding: '16px 24px' }}>
                 <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
                     <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>Configuración</h1>
                 </div>
             </div>
 
-            {/* ── Settings Grid — todas las cards mismo alto ── */}
+            {/* â”€â”€ Settings Grid â€” todas las cards mismo alto â”€â”€ */}
             <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
                 <div className="config-grid">
 
                     {/* EMPRESA */}
                     <div className="tn-card">
-                        <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usarán en presupuestos y comprobantes" />
+                        <SectionTitle icon={Building2} title="Datos de la Empresa" desc="Se usarÃ¡n en presupuestos y comprobantes" />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
                             <div>
                                 <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Nombre comercial <span style={{color: C.dangerTxt}}>*</span></label>
@@ -227,8 +228,8 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 <Inp value={cuit} onChange={e => setCuit(e.target.value)} placeholder="Ej: 20-33444555-6" />
                             </div>
                             <div>
-                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Dirección</label>
-                                <Inp value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Av. San Martín 123" />
+                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>DirecciÃ³n</label>
+                                <Inp value={direccion} onChange={e => setDireccion(e.target.value)} placeholder="Ej: Av. San MartÃ­n 123" />
                             </div>
                             {saveError && <p style={{ fontSize: 11, color: C.dangerTxt, margin: 0 }}>{saveError}</p>}
                             <div style={{ marginTop: 'auto', paddingTop: 8 }}>
@@ -239,7 +240,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
 
                     {/* SUSCRIPCION */}
                     <div className="tn-card">
-                        <SectionTitle icon={CreditCard} title="Suscripción" desc="Detalles de tu plan actual" />
+                        <SectionTitle icon={CreditCard} title="SuscripciÃ³n" desc="Detalles de tu plan actual" />
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <div style={{ background: '#f9fafb', borderRadius: 8, border: `1px solid ${C.border}`, padding: '12px', marginBottom: 14, flex: 1 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -252,13 +253,13 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                     <span style={{ fontSize: 11, fontWeight: 600, color: C.textMid }}>$14.999/mes</span>
                                 </div>
                                 <p style={{ fontSize: 11, color: C.textMid, lineHeight: 1.5, margin: '0 0 10px 0' }}>
-                                    {planActivo ? `Tu cuota se renueva en ${daysRemaining} días.` : planTrial ? `Te quedan ${daysRemaining} días de prueba gratuita.` : `Finalizó el período. Aboná para reactivar.`}
+                                    {planActivo ? `Tu cuota se renueva en ${daysRemaining} dÃ­as.` : planTrial ? `Te quedan ${daysRemaining} dÃ­as de prueba gratuita.` : `FinalizÃ³ el perÃ­odo. AbonÃ¡ para reactivar.`}
                                 </p>
                                 {planActivo && (
                                     <>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                            <span style={{ fontSize: 10, color: C.textMid }}>Período actual</span>
-                                            <span style={{ fontSize: 10, color: C.textMid }}>{daysRemaining} días restantes</span>
+                                            <span style={{ fontSize: 10, color: C.textMid }}>PerÃ­odo actual</span>
+                                            <span style={{ fontSize: 10, color: C.textMid }}>{daysRemaining} dÃ­as restantes</span>
                                         </div>
                                         <div style={{ height: 4, background: C.border, borderRadius: 10, overflow: 'hidden' }}>
                                             <div style={{ height: '100%', borderRadius: 10, background: progreso > 80 ? C.dangerTxt : progreso > 50 ? C.warnBord : C.successTxt, width: `${progreso}%` }} />
@@ -286,7 +287,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 </div>
                             </div>
                             <div style={{ marginTop: 'auto' }}>
-                                <TnButton secondary danger label="Cerrar sesión" icon={LogOut} onClick={signOut} />
+                                <TnButton secondary danger label="Cerrar sesiÃ³n" icon={LogOut} onClick={signOut} />
                             </div>
                         </div>
                     </div>
@@ -303,7 +304,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                                 <ToggleSwitch enabled={bajoStockActivo} onChange={() => setBajoStockActivo(v => !v)} />
                             </div>
                             <div style={{ opacity: bajoStockActivo ? 1 : 0.4, transition: '0.2s', marginBottom: 14, flex: 1 }}>
-                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Unidades mínimas</label>
+                                <label style={{ fontSize: 11, fontWeight: 500, color: C.textDark, display: 'block', marginBottom: 4 }}>Unidades mÃ­nimas</label>
                                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                                     <Inp value={bajoStockUmbral} onChange={e => setBajoStockUmbral(parseInt(e.target.value)||0)} disabled={!bajoStockActivo} />
                                     <span style={{ fontSize: 11, color: C.textMid, whiteSpace: 'nowrap' }}>unid.</span>
@@ -321,7 +322,7 @@ const Configuracion = ({ onOpenMobileSidebar }) => {
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12, minHeight: 32 }}>
                                 {canales.length === 0 ? (
-                                    <p style={{ fontSize: 11, color: C.textMid, margin: 0 }}>Sin canales aún. Agregá el primero.</p>
+                                    <p style={{ fontSize: 11, color: C.textMid, margin: 0 }}>Sin canales aÃºn. AgregÃ¡ el primero.</p>
                                 ) : (
                                     canales.map((canal, idx) => (
                                         <div key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 4, background: '#f3f4f6', border: `1px solid ${C.border}`, fontSize: 11, fontWeight: 500, color: C.textDark }}>

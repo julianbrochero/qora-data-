@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+﻿import React, { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Package, List, Menu } from 'lucide-react'
 
 const C = {
@@ -23,7 +23,7 @@ const ESTADOS = {
 }
 
 const DAYS_SHORT  = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
-const DAYS_FULL   = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const DAYS_FULL   = ['Lun', 'Mar', 'MiÃ©', 'Jue', 'Vie', 'SÃ¡b', 'Dom']
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 const fFecha = (f) => { try { return new Date(f+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) } catch { return '' } }
@@ -38,7 +38,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
   const month = currentDate.getMonth()
   const todayKey = new Date().toISOString().split('T')[0]
 
-  // Días del grid mensual
+  // DÃ­as del grid mensual
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month, 1).getDay()
     const start = firstDay === 0 ? 6 : firstDay - 1
@@ -64,7 +64,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
     return map
   }, [pedidos])
 
-  // Vista lista: próximas entregas
+  // Vista lista: prÃ³ximas entregas
   const proximasEntregas = useMemo(() => {
     const entries = Object.entries(pedidosPorFecha)
       .filter(([k]) => k >= todayKey)
@@ -98,15 +98,16 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
         }
       `}</style>
 
-      {/* ── Mobile topbar ── */}
-      <div className="md:hidden flex items-center h-14 bg-white border-b border-[#e5e7eb] px-4 shrink-0" style={{position:'sticky',top:0,zIndex:40}}>
-        <button onClick={onOpenMobileSidebar} className="mr-3 p-1.5 -ml-1 rounded-md text-[#6b7280] hover:bg-[#f3f4f6]" aria-label="Abrir menú">
+      {/* â”€â”€ Mobile topbar â”€â”€ */}
+      <div className="md:hidden flex items-center bg-white border-b border-[#e5e7eb] px-4 shrink-0" style={{position:'sticky',top:0,zIndex:40,minHeight:58}}>
+        <button onClick={onOpenMobileSidebar} aria-label="Abrir menú" style={{ width:36, height:36, borderRadius:8, background:'transparent', border:`1px solid ${C.border}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', WebkitTapHighlightColor:'transparent', flexShrink:0 }}>
           <Menu size={20} />
         </button>
-        <span className="font-semibold text-sm text-[#111827]">Calendario</span>
+        <span className="font-semibold text-[#111827]" style={{ position:'absolute', left:'50%', transform:'translateX(-50%)', fontSize:17, pointerEvents:'none', whiteSpace:'nowrap' }}>Calendario</span>
+        <div style={{ marginLeft:'auto', width:36, flexShrink:0 }} />
       </div>
 
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div style={{ maxWidth:900, margin:'0 auto', padding:'16px 20px 0' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10, marginBottom:16 }}>
           <div>
@@ -132,7 +133,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
               ))}
             </div>
 
-            {/* Navegación mes */}
+            {/* NavegaciÃ³n mes */}
             {vista === 'mes' && (
               <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                 <button onClick={() => setCurrentDate(new Date(year, month-1, 1))}
@@ -155,10 +156,10 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
           </div>
         </div>
 
-        {/* ── VISTA CALENDARIO ── */}
+        {/* â”€â”€ VISTA CALENDARIO â”€â”€ */}
         {vista === 'mes' && (
           <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.borderLight}`, overflow:'hidden' }}>
-            {/* Cabecera días */}
+            {/* Cabecera dÃ­as */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', background:'#f9fafb', borderBottom:`1px solid ${C.borderLight}` }}>
               {DAYS_FULL.map((d,i) => (
                 <div key={d} className="cal-days-header" style={{ padding:'9px 4px', textAlign:'center', fontSize:11, fontWeight:700, color:C.textMid, letterSpacing:'0.04em' }}>
@@ -168,7 +169,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
               ))}
             </div>
 
-            {/* Grid días */}
+            {/* Grid dÃ­as */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)' }}>
               {calendarDays.map((dObj, idx) => {
                 const key   = dayKey(dObj)
@@ -194,7 +195,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
                     onMouseEnter={e => { if(dObj.curr && !isSel) e.currentTarget.style.background='#f9fafb' }}
                     onMouseLeave={e => { if(dObj.curr && !isSel) e.currentTarget.style.background=C.bg }}
                   >
-                    {/* Número del día */}
+                    {/* NÃºmero del dÃ­a */}
                     <div className="cal-day-num" style={{
                       display:'inline-flex', alignItems:'center', justifyContent:'center',
                       width:24, height:24, borderRadius:'50%', fontSize:12, fontWeight:700,
@@ -240,7 +241,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
                         })}
                         {items.length > 2 && (
                           <div style={{ fontSize:9, color:C.textLight, fontWeight:600, paddingLeft:3 }}>
-                            +{items.length-2} más
+                            +{items.length-2} mÃ¡s
                           </div>
                         )}
                       </div>
@@ -252,14 +253,14 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
           </div>
         )}
 
-        {/* ── Panel detalle día seleccionado ── */}
+        {/* â”€â”€ Panel detalle dÃ­a seleccionado â”€â”€ */}
         {vista==='mes' && selectedDay && pedidosDiaSelected.length > 0 && (
           <div style={{ marginTop:12, background:C.bg, borderRadius:10, border:`1px solid ${C.borderLight}`, overflow:'hidden' }}>
             <div style={{ padding:'10px 16px', background:'#f9fafb', borderBottom:`1px solid ${C.borderLight}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <span style={{ fontSize:13, fontWeight:700, color:C.textDark }}>
-                Entregas {fFecha(selectedDay)} — {pedidosDiaSelected.length} pedido{pedidosDiaSelected.length!==1?'s':''}
+                Entregas {fFecha(selectedDay)} â€” {pedidosDiaSelected.length} pedido{pedidosDiaSelected.length!==1?'s':''}
               </span>
-              <button onClick={() => setSelectedDay(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:16, color:C.textLight }}>×</button>
+              <button onClick={() => setSelectedDay(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:16, color:C.textLight }}>Ã—</button>
             </div>
             <div style={{ display:'flex', flexDirection:'column' }}>
               {pedidosDiaSelected.map(p => {
@@ -289,13 +290,13 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
           </div>
         )}
 
-        {/* ── VISTA LISTA ── */}
+        {/* â”€â”€ VISTA LISTA â”€â”€ */}
         {vista === 'lista' && (
           <div style={{ background:C.bg, borderRadius:12, border:`1px solid ${C.borderLight}`, overflow:'hidden' }}>
             {proximasEntregas.length === 0 ? (
               <div style={{ padding:'48px 24px', textAlign:'center' }}>
                 <Package size={32} color={C.textLight} style={{ marginBottom:12 }}/>
-                <p style={{ margin:0, fontSize:14, color:C.textMid }}>No hay entregas programadas próximamente</p>
+                <p style={{ margin:0, fontSize:14, color:C.textMid }}>No hay entregas programadas prÃ³ximamente</p>
               </div>
             ) : (
               proximasEntregas.map(([dateKey, items]) => {
@@ -313,9 +314,9 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
                       <span style={{ fontSize:11, fontWeight:800, color: isHoy ? C.primary : C.textMid, textTransform:'uppercase', letterSpacing:'0.05em' }}>
                         {label}
                       </span>
-                      <span style={{ fontSize:11, color:C.textLight }}>·  {items.length} entrega{items.length!==1?'s':''}</span>
+                      <span style={{ fontSize:11, color:C.textLight }}>Â·  {items.length} entrega{items.length!==1?'s':''}</span>
                     </div>
-                    {/* Pedidos del día */}
+                    {/* Pedidos del dÃ­a */}
                     {items.map(p => {
                       const cfg = ESTADOS[p.estado]||ESTADOS.pendiente
                       return (
@@ -345,7 +346,7 @@ export default function CalendarioEntregas({ pedidos = [], openModal, onOpenMobi
           </div>
         )}
 
-        {/* ── Leyenda estados ── */}
+        {/* â”€â”€ Leyenda estados â”€â”€ */}
         <div style={{ marginTop:14, display:'flex', gap:12, flexWrap:'wrap', alignItems:'center' }}>
           {Object.entries(ESTADOS).map(([k, cfg]) => (
             <div key={k} style={{ display:'flex', alignItems:'center', gap:4 }}>

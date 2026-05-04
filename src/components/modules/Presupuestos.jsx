@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect } from 'react'
 import {
@@ -17,9 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PALETA NIMBUS
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const C = {
   pageBg:     "#f8f9fb",
   bg:         "#ffffff",
@@ -38,7 +38,7 @@ const C = {
 }
 
 const fNum = (n) => (parseFloat(n) || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-const fDate = (s) => { try { return new Date(s + (s.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) } catch { return s || '—' } }
+const fDate = (s) => { try { return new Date(s + (s.includes('T') ? '' : 'T00:00:00')).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' }) } catch { return s || 'â€”' } }
 
 const RESPONSIVE = `
   .pn-show-mobile { display: none; }
@@ -46,6 +46,40 @@ const RESPONSIVE = `
   @media (max-width: 767px) {
     .pn-show-mobile { display: flex !important; }
     .pn-hide-mobile { display: none !important; }
+    .presupuestos-mobile-filters {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+      padding: 14px 22px 0 !important;
+      background: #f8f9fb !important;
+    }
+    .presupuestos-search-wrap {
+      width: 100% !important;
+      flex: 1 1 auto !important;
+    }
+    .presupuestos-search-input {
+      box-sizing: border-box !important;
+      height: 54px !important;
+      border-radius: 10px !important;
+      background: #ffffff !important;
+      font-size: 16px !important;
+      padding-left: 42px !important;
+      box-shadow: 0 1px 1px rgba(15, 23, 42, 0.02);
+    }
+    .presupuestos-search-input::placeholder {
+      color: #9ca3af;
+    }
+    .presupuestos-mobile-filters .pn-select-trigger {
+      width: 100% !important;
+      max-width: none !important;
+      height: 42px !important;
+      background: #ffffff !important;
+      border-radius: 10px !important;
+    }
+    .presupuestos-mobile-content {
+      padding: 16px 22px !important;
+    }
   }
   .pn-select-trigger { transition: all 0.2s ease; cursor: pointer; }
   .pn-select-trigger:hover { 
@@ -62,7 +96,7 @@ const RESPONSIVE = `
   }
 `
 
-/* ─── Botones base ─── */
+/* â”€â”€â”€ Botones base â”€â”€â”€ */
 const Btn = ({ children, onClick, primary, disabled, style={} }) => {
   if (primary) return (
     <button
@@ -114,7 +148,7 @@ const IcoBtn = ({ icon: Icon, onClick, title, color = C.textDark, danger }) => {
   )
 }
 
-/* ─── Badge Estado ─── */
+/* â”€â”€â”€ Badge Estado â”€â”€â”€ */
 const estadoCfg = {
   vigente: { bg: C.primarySurf, fg: C.primary, border: C.borderMd, label: 'Vigente' },
   vencido: { bg: "#f3f4f6", fg: C.textMid, border: "#d1d5db", label: 'Vencido' },
@@ -134,7 +168,7 @@ const Pill = ({ color, bg, border, children }) => (
   </span>
 )
 
-/* ─── Fila Presupuesto ─── */
+/* â”€â”€â”€ Fila Presupuesto â”€â”€â”€ */
 const PresupuestoRow = ({ pres, isSelected, onToggle, handlePDF, menuAbierto, setMenu, setMenuPos, openModal, actualizarEstadoPresupuesto, eliminarPresupuesto }) => {
   const [hov, setHov] = useState(false)
   const estado = calcEstado(pres)
@@ -173,7 +207,7 @@ const PresupuestoRow = ({ pres, isSelected, onToggle, handlePDF, menuAbierto, se
       
       {/* Valido */}
       <td style={{ padding: "12px 16px", fontSize: 13, color: C.textMid, fontFamily: "'Inter', sans-serif" }}>
-        {pres.validez ?? 7} días
+        {pres.validez ?? 7} dÃ­as
       </td>
 
       {/* Total */}
@@ -191,7 +225,7 @@ const PresupuestoRow = ({ pres, isSelected, onToggle, handlePDF, menuAbierto, se
         <div style={{ display: "flex", gap: 4, position: "relative" }}>
           <IcoBtn icon={Download} title="Descargar PDF" onClick={() => handlePDF(pres)} />
           
-          <IcoBtn icon={MoreHorizontal} title="Más acciones" onClick={e => {
+          <IcoBtn icon={MoreHorizontal} title="MÃ¡s acciones" onClick={e => {
             e.stopPropagation()
             if (menuAbierto === pres.id) { setMenu(null); return }
             const r = e.currentTarget.getBoundingClientRect()
@@ -217,9 +251,9 @@ const calcEstado = (pres) => {
 }
 
 
-/* ════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COMPONENTE PRINCIPAL
-════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export default function Presupuestos({
   presupuestos = [],
   clientes = [],
@@ -238,12 +272,12 @@ export default function Presupuestos({
   // Para ubicar el dropdown de la tuerquita / 3 puntitos
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
 
-  /* ── Métricas ── */
+  /* â”€â”€ MÃ©tricas â”€â”€ */
   const vigentes = presupuestos.filter(p => calcEstado(p) === 'vigente').length
   const aceptados = presupuestos.filter(p => calcEstado(p) === 'aceptado').length
   const totalVal = presupuestos.filter(p => calcEstado(p) === 'aceptado').reduce((s, p) => s + (parseFloat(p.total) || 0), 0)
 
-  /* ── Filtrado ── */
+  /* â”€â”€ Filtrado â”€â”€ */
   const filtrados = presupuestos
     .filter(p => {
       const q = search.toLowerCase()
@@ -254,7 +288,7 @@ export default function Presupuestos({
     })
     .sort((a, b) => new Date(b.created_at || b.fecha) - new Date(a.created_at || a.fecha))
 
-  /* ── Descargar PDF ── */
+  /* â”€â”€ Descargar PDF â”€â”€ */
   const handlePDF = (pres) => {
     generarPDFPresupuesto({
       numero: pres.numero, fecha: pres.fecha, validez: pres.validez,
@@ -266,7 +300,7 @@ export default function Presupuestos({
     })
   }
 
-  /* ── Cerrar menu al click fuera ── */
+  /* â”€â”€ Cerrar menu al click fuera â”€â”€ */
   useEffect(() => {
     const handler = () => setMenu(null)
     window.addEventListener('click', handler)
@@ -277,15 +311,14 @@ export default function Presupuestos({
     <div style={{ minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
       <style>{RESPONSIVE}</style>
 
-      {/* ── Mobile topbar ── */}
+      {/* â”€â”€ Mobile topbar â”€â”€ */}
       <div className="pn-show-mobile" style={{
-        alignItems: "center", gap: 10, padding: "11px 16px",
-        background: C.bg, borderBottom: `1px solid ${C.border}`
+        position: "relative", alignItems: "center", gap: 10, padding: "11px 16px", minHeight: 58, background: C.bg, borderBottom: `1px solid ${C.border}`
       }}>
-        <button onClick={onOpenMobileSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+        <button onClick={onOpenMobileSidebar} style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
           <MenuIcon size={20} color={C.textBlack} />
         </button>
-        <span style={{ fontWeight: 700, fontSize: 17, color: C.textBlack }}>Presupuestos</span>
+        <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, pointerEvents:"none", whiteSpace:"nowrap" }}>Presupuestos</span>
         <button onClick={() => openModal("nuevo-presupuesto")} style={{
           marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
           height: 32, padding: "0 12px", borderRadius: 8, fontSize: 13, fontWeight: 600,
@@ -295,7 +328,7 @@ export default function Presupuestos({
         </button>
       </div>
 
-      {/* ── Desktop header ── */}
+      {/* â”€â”€ Desktop header â”€â”€ */}
       <div className="pn-hide-mobile" style={{ background: C.pageBg }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 12px", gap: 12, boxSizing: "border-box" }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
@@ -305,7 +338,7 @@ export default function Presupuestos({
             {selectedIds.length > 0 && (
               <Btn 
                 onClick={() => {
-                  if (confirm(`¿Eliminar ${selectedIds.length} presupuestos?`)) {
+                  if (confirm(`Â¿Eliminar ${selectedIds.length} presupuestos?`)) {
                     Promise.all(selectedIds.map(id => eliminarPresupuesto?.(id))).then(() => setSelectedIds([]))
                   }
                 }}
@@ -321,22 +354,22 @@ export default function Presupuestos({
         </div>
       </div>
 
-      {/* ── Contenido centrado ── */}
+      {/* â”€â”€ Contenido centrado â”€â”€ */}
       <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
 
 
-        {/* ── Filtros ── */}
-        <div style={{
+        {/* â”€â”€ Filtros â”€â”€ */}
+        <div className="presupuestos-mobile-filters" style={{
           background: C.pageBg, padding: "12px 24px 0",
           display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
         }}>
           {/* Buscador */}
-          <div style={{ flex: "1 1 260px", position: "relative" }}>
+          <div className="presupuestos-search-wrap" style={{ flex: "1 1 260px", position: "relative" }}>
             <div style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
               <SearchIcon size={15} color={C.textLight} />
             </div>
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar p. ej. número o cliente..."
+            <input className="presupuestos-search-input" type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar presupuesto..."
               style={{
                 width: "100%", height: 34, padding: "0 12px 0 34px", fontSize: 13,
                 border: `1px solid ${C.border}`, borderRadius: 8, outline: "none",
@@ -363,8 +396,8 @@ export default function Presupuestos({
           </Select>
         </div>
 
-        {/* ── Contenido principal ── */}
-        <div style={{ padding: "16px 24px" }}>
+        {/* â”€â”€ Contenido principal â”€â”€ */}
+        <div className="presupuestos-mobile-content" style={{ padding: "16px 24px" }}>
           <p style={{ margin: "0 0 10px", fontSize: 12, color: C.textMid }}>
             {filtrados.length} presupuesto{filtrados.length !== 1 ? "s" : ""}
           </p>
@@ -413,9 +446,9 @@ export default function Presupuestos({
                             style={{ cursor: "pointer", width: 14, height: 14, margin: 0, display: "block", accentColor: C.primary }}
                           />
                         </div>
-                        NÚMERO
+                        NÃšMERO
                       </th>
-                      {["CLIENTE", "FECHA", "VÁLIDO", "TOTAL", "ESTADO", "ACCIONES"].map(h => (
+                      {["CLIENTE", "FECHA", "VÃLIDO", "TOTAL", "ESTADO", "ACCIONES"].map(h => (
                         <th key={h} style={{
                           padding: "10px 16px", textAlign: "left",
                           fontSize: 10, fontWeight: 600, color: C.textMid,

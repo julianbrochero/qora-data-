@@ -505,7 +505,6 @@ const SistemaFacturacion = () => {
             {renderActiveModule()}
           </SubscriptionGate>
         </div>
-
         {/* ✅ UNIFICADO: Solo un Modal con todas las props necesarias */}
         <Modal
         isOpen={!!modalType}

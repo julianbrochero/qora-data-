@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect } from "react"
 import {
@@ -10,9 +10,9 @@ import {
 import { MenuIcon, PlusIcon, SearchIcon, DownloadIcon } from "@nimbus-ds/icons"
 import { generarPDFComprobante } from "../../utils/comprobanteGenerator"
 
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PALETA NIMBUS
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const C = {
   pageBg:     "#f8f9fb",
   bg:         "#ffffff",
@@ -32,7 +32,7 @@ const C = {
 
 const fNum = n => (parseFloat(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const fMon = n => (parseFloat(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-const fFec = f => { try { return new Date(f).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }) } catch { return "—" } }
+const fFec = f => { try { return new Date(f).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" }) } catch { return "â€”" } }
 
 const RESPONSIVE = `
   .pn-show-mobile { display: none; }
@@ -57,7 +57,7 @@ const RESPONSIVE = `
   }
 `
 
-/* ─── Botones base ─── */
+/* â”€â”€â”€ Botones base â”€â”€â”€ */
 const Btn = ({ children, onClick, primary, disabled, style }) => {
   const [hov, setHov] = useState(false)
   return (
@@ -101,7 +101,7 @@ const IcoBtn = ({ icon: Icon, onClick, title, color = C.textDark, danger }) => {
   )
 }
 
-/* ─── Menú tres puntitos por fila ─── */
+/* â”€â”€â”€ MenÃº tres puntitos por fila â”€â”€â”€ */
 const RowMenu = ({ factura, saldo, estadoLabel, onVer, onPDF, onCobrar, onEliminar }) => {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
@@ -176,7 +176,7 @@ const RowMenu = ({ factura, saldo, estadoLabel, onVer, onPDF, onCobrar, onElimin
   )
 }
 
-/* ─── Badge Estado ─── */
+/* â”€â”€â”€ Badge Estado â”€â”€â”€ */
 const Pill = ({ color, bg, border, children }) => (
   <span style={{
     display: "inline-flex", alignItems: "center", gap: 4,
@@ -196,7 +196,7 @@ const estadoInfo = (estado) => {
   return { label: "Pendiente", color: C.warnTxt, bg: C.warnSurf, border: C.warnBord }
 }
 
-/* ─── Tarjeta Resumen Superior (KpiCard) ─── */
+/* â”€â”€â”€ Tarjeta Resumen Superior (KpiCard) â”€â”€â”€ */
 const KpiCard = ({ icon: Icon, label, value, color }) => {
   const [hov, setHov] = useState(false)
   return (
@@ -232,7 +232,7 @@ export default function FacturacionNimbus({
 }) {
   const [filtroEstado, setFiltroEstado] = useState("")
   const [filtroCanal, setFiltroCanal] = useState("")
-  const [pestaña, setPestaña] = useState("")
+  const [pestaÃ±a, setPestaÃ±a] = useState("")
   
   const [facturaSeleccionada, setFacturaSel] = useState(null)
   const [mostrarPago, setMostrarPago] = useState(false)
@@ -265,7 +265,7 @@ export default function FacturacionNimbus({
       const bus = (f.numero || "").toLowerCase().includes(q) ||
         (f.cliente_nombre || f.cliente || "").toLowerCase().includes(q) ||
         (getCodigoPedido(f.pedido_id) || "").toLowerCase().includes(q)
-      const pst = !pestaña || (pestaña === "pagadas" && f.estado === "pagada") || (pestaña === "deudas" && f.estado !== "pagada")
+      const pst = !pestaÃ±a || (pestaÃ±a === "pagadas" && f.estado === "pagada") || (pestaÃ±a === "deudas" && f.estado !== "pagada")
       const est = !filtroEstado || f.estado === filtroEstado || (filtroEstado === "pendientes" && (f.estado === "pendiente" || f.estado === "parcial"))
       const canal = !filtroCanal || f.canal_venta === filtroCanal || (filtroCanal === "sin-canal" && !f.canal_venta)
       return bus && pst && est && canal
@@ -282,7 +282,7 @@ export default function FacturacionNimbus({
   const handleRegistrarPago = async () => {
     if (!facturaSeleccionada) return
     const monto = parseFloat(montoPago) || 0
-    if (monto <= 0) { alert2("Monto inválido", "El monto debe ser mayor a 0"); return }
+    if (monto <= 0) { alert2("Monto invÃ¡lido", "El monto debe ser mayor a 0"); return }
     const saldo = parseFloat(facturaSeleccionada.saldopendiente) || parseFloat(facturaSeleccionada.total) || 0
     if (monto > saldo) { alert2("Monto excedido", `El monto excede el saldo ($${fMon(saldo)})`); return }
     if (!registrarCobro) return
@@ -300,7 +300,7 @@ export default function FacturacionNimbus({
     if (!facturaSeleccionada || !registrarCobro) return
     const saldo = parseFloat(facturaSeleccionada.saldopendiente) || parseFloat(facturaSeleccionada.total) || 0
     if (saldo <= 0) return
-    confirm2("Saldar Todo", `¿Registrar pago total?\\n\\nSaldo: $${fMon(saldo)}`, async () => {
+    confirm2("Saldar Todo", `Â¿Registrar pago total?\\n\\nSaldo: $${fMon(saldo)}`, async () => {
       setCargandoPago(true)
       try {
         const cod = getCodigoPedido(facturaSeleccionada.pedido_id)
@@ -315,7 +315,7 @@ export default function FacturacionNimbus({
   const handleCerrarModal = () => { setMostrarPago(false); setFacturaSel(null); setMontoPago(""); setMostrarAbono(false) }
 
   const handleEliminar = factura => {
-    confirm2("Eliminar Factura", `¿Eliminar la factura ${factura.numero}? Esta acción no se puede deshacer.`,
+    confirm2("Eliminar Factura", `Â¿Eliminar la factura ${factura.numero}? Esta acciÃ³n no se puede deshacer.`,
       async () => { const r = await eliminarFactura?.(factura.id); if (r?.success) recargarDatos?.(); else alert2("Error", r?.mensaje || "Error") }, true)
   }
 
@@ -336,15 +336,14 @@ export default function FacturacionNimbus({
     <div style={{ minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
       <style>{RESPONSIVE}</style>
 
-      {/* ── Mobile topbar ── */}
+      {/* â”€â”€ Mobile topbar â”€â”€ */}
       <div className="pn-show-mobile" style={{
-        alignItems: "center", gap: 10, padding: "11px 16px",
-        background: C.bg, borderBottom: `1px solid ${C.border}`
+        position: "relative", alignItems: "center", gap: 10, padding: "11px 16px", minHeight: 58, background: C.bg, borderBottom: `1px solid ${C.border}`
       }}>
-        <button onClick={onOpenMobileSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+        <button onClick={onOpenMobileSidebar} style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
           <MenuIcon size={20} color={C.textBlack} />
         </button>
-        <span style={{ fontWeight: 700, fontSize: 17, color: C.textBlack }}>Facturación</span>
+        <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, pointerEvents:"none", whiteSpace:"nowrap" }}>Facturación</span>
         <button onClick={onNuevaFactura} style={{
           marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
           height: 32, padding: "0 12px", borderRadius: 8, fontSize: 13, fontWeight: 600,
@@ -354,7 +353,7 @@ export default function FacturacionNimbus({
         </button>
       </div>
 
-      {/* ── Desktop header ── */}
+      {/* â”€â”€ Desktop header â”€â”€ */}
       <div className="pn-hide-mobile" style={{ background: C.pageBg }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 12px", gap: 12, boxSizing: "border-box" }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
@@ -366,10 +365,10 @@ export default function FacturacionNimbus({
         </div>
       </div>
 
-      {/* ── Contenido centrado ── */}
+      {/* â”€â”€ Contenido centrado â”€â”€ */}
       <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
 
-        {/* ── Tarjetas resumen ── */}
+        {/* â”€â”€ Tarjetas resumen â”€â”€ */}
         <div className="kpi-grid">
           <KpiCard icon={AlertCircle} label="Deuda Total" value={`$${fNum(resumen.totalDeuda)}`} color={C.dangerTxt} />
           <KpiCard icon={Clock} label="Facturas Pendientes" value={resumen.pendientes} color={C.textBlack} />
@@ -377,7 +376,7 @@ export default function FacturacionNimbus({
           <KpiCard icon={DollarSign} label="Facturado este mes" value={`$${fNum(resumen.mesActual)}`} color={C.successTxt} />
         </div>
 
-        {/* ── Filtros ── */}
+        {/* â”€â”€ Filtros â”€â”€ */}
         <div style={{
           background: C.pageBg, padding: "12px 24px 0",
           display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
@@ -388,7 +387,7 @@ export default function FacturacionNimbus({
               <SearchIcon size={15} color={C.textLight} />
             </div>
             <input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Buscar por número o cliente..."
+              placeholder="Buscar por nÃºmero o cliente..."
               style={{
                 width: "100%", height: 34, padding: "0 12px 0 34px", fontSize: 13,
                 border: `1px solid ${C.border}`, borderRadius: 8, outline: "none",
@@ -399,7 +398,7 @@ export default function FacturacionNimbus({
             />
           </div>
 
-          <select value={pestaña} onChange={e => setPestaña(e.target.value)} className="app-select pn-select-trigger" style={{ minWidth: 168, height: 34, paddingLeft: 12 }}>
+          <select value={pestaÃ±a} onChange={e => setPestaÃ±a(e.target.value)} className="app-select pn-select-trigger" style={{ minWidth: 168, height: 34, paddingLeft: 12 }}>
             <option value="">COMPROBANTES</option>
             <option value="pagadas">Pagadas</option>
             <option value="deudas">Con deuda</option>
@@ -423,7 +422,7 @@ export default function FacturacionNimbus({
           </div>
         )}
 
-        {/* ── Contenido principal ── */}
+        {/* â”€â”€ Contenido principal â”€â”€ */}
         <div style={{ padding: "16px 24px" }}>
           <p style={{ margin: "0 0 10px", fontSize: 12, color: C.textMid }}>
             {filtradas.length} factura{filtradas.length !== 1 ? "s" : ""}
@@ -538,7 +537,7 @@ export default function FacturacionNimbus({
         </div>
       </div>
 
-      {/* ── Modal Pago ── */}
+      {/* â”€â”€ Modal Pago â”€â”€ */}
       {mostrarPago && facturaSeleccionada && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.bg, width: "100%", maxWidth: 400, borderRadius: 12, padding: 24 }}>
@@ -584,14 +583,14 @@ export default function FacturacionNimbus({
         </div>
       )}
 
-      {/* ── Modal Detalle ── */}
+      {/* â”€â”€ Modal Detalle â”€â”€ */}
       {detalleFactura && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.bg, width: "100%", maxWidth: 500, borderRadius: 12, padding: 24 }}>
             <h2 style={{ margin: "0 0 16px", fontSize: 18, color: C.textBlack }}>Detalle de Factura</h2>
             <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
               <div>
-                <div style={{ fontSize: 12, color: C.textMid, textTransform: "uppercase" }}>Número</div>
+                <div style={{ fontSize: 12, color: C.textMid, textTransform: "uppercase" }}>NÃºmero</div>
                 <div style={{ fontSize: 14, fontWeight: 600 }}>{detalleFactura.numero}</div>
               </div>
               <div>
@@ -629,7 +628,7 @@ export default function FacturacionNimbus({
         </div>
       )}
 
-      {/* ── Diálogo Global ── */}
+      {/* â”€â”€ DiÃ¡logo Global â”€â”€ */}
       {dialogo.open && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: C.bg, width: "100%", maxWidth: 350, borderRadius: 12, padding: 24, textAlign: "center" }}>

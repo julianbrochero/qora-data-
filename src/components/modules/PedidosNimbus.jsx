@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import PedidoDetail from "../forms/PedidoDetail"
+import SaleCard from "@/components/mobile/SaleCard"
 
 /* ══════════════════════════════════════════
    PALETA — igual que ProductosNimbus
@@ -59,7 +60,7 @@ const ESTADOS = {
 
 const fCodigo = (c, id) => {
   if (!c) return id?.toString().slice(-4) || ""
-  return c.toString().replace(/order\s*#?/i, '').replace(/^#/, '').trim()
+  return c.toString().replace(/order\s*#?/i, '').replace(/^vta\s*#?/i, '').replace(/^#/, '').trim()
 }
 
 const getEstadoPago = (p) => {
@@ -74,6 +75,8 @@ const getEstadoPago = (p) => {
 const RESPONSIVE = `
   .pn-show-mobile { display: none; }
   .pn-hide-mobile { display: flex; }
+  .ventas-mobile-controls,
+  .ventas-mobile-list { display: none; }
   @media (max-width: 767px) {
     .pn-show-mobile {
       display: flex !important;
@@ -82,6 +85,44 @@ const RESPONSIVE = `
       z-index: 100;
     }
     .pn-hide-mobile { display: none !important; }
+    .ventas-mobile-controls {
+      display: flex !important;
+      flex-direction: column !important;
+      position: sticky !important;
+      top: 54px !important;
+      z-index: 80 !important;
+    }
+    .ventas-mobile-list {
+      display: flex !important;
+      flex-direction: column !important;
+      position: static !important;
+      height: auto !important;
+      transform: none !important;
+    }
+    .ventas-stat-card {
+      flex: 1 1 calc(50% - 4px) !important;
+      padding: 10px 12px !important;
+      min-height: 78px !important;
+    }
+    .ventas-stat-value {
+      font-size: 22px !important;
+      line-height: 1 !important;
+      margin-bottom: 4px !important;
+    }
+    .ventas-stat-label {
+      font-size: 11px !important;
+      line-height: 1.2 !important;
+    }
+    .ventas-stat-sub {
+      font-size: 11px !important;
+    }
+    .ventas-stats-grid {
+      padding: 10px 12px 0 !important;
+      gap: 8px !important;
+    }
+    .ventas-content-shell {
+      padding: 10px 12px 24px !important;
+    }
   }
   [data-radix-portal], [data-slot="dialog-portal"] {
     z-index: 10000 !important;
@@ -104,6 +145,14 @@ const RESPONSIVE = `
 /* ─── helpers ─── */
 const fFecha = (f) => { try { return new Date(f).toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric" }) } catch { return "—" } }
 const fMonto = (m) => (parseFloat(m)||0).toLocaleString("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 })
+const fRelativa = (f) => {
+  const now = new Date()
+  const date = new Date(f)
+  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+  if (diffDays <= 0) return "hoy"
+  if (diffDays === 1) return "hace 1 día"
+  return `hace ${diffDays} días`
+}
 
 /* ─── Pill badge ─── */
 const Badge = ({ label, bg, color, border, Icon }) => (
@@ -175,6 +224,7 @@ const IcoBtn = ({ icon: Ico, onClick, title, color }) => {
 /* ─── Tarjeta resumen clicable ─── */
 const StatCard = ({ label, value, sub, color, onClick, active }) => (
   <div
+    className="ventas-stat-card"
     onClick={onClick}
     style={{
       background: active ? (color ? color+'18' : C.primarySurf) : C.bg,
@@ -189,11 +239,11 @@ const StatCard = ({ label, value, sub, color, onClick, active }) => (
     onMouseLeave={e => { if(onClick && !active) { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.bg } }}
   >
     {active && <div style={{ position:'absolute', top:7, right:9, fontSize:9, fontWeight:700, color: color||C.primary, opacity:.7 }}>✕ filtro</div>}
-    <div style={{ fontSize:20, fontWeight:700, color: active ? (color||C.primary) : (color||C.textBlack), lineHeight:1, marginBottom:3 }}>
+    <div className="ventas-stat-value" style={{ fontSize:20, fontWeight:700, color: active ? (color||C.primary) : (color||C.textBlack), lineHeight:1, marginBottom:3 }}>
       {value}
     </div>
-    <div style={{ fontSize:11, fontWeight:600, color:C.textDark, marginBottom:2 }}>{label}</div>
-    {sub && <div style={{ fontSize:11, color:C.textMid }}>{sub}</div>}
+    <div className="ventas-stat-label" style={{ fontSize:11, fontWeight:600, color:C.textDark, marginBottom:2 }}>{label}</div>
+    {sub && <div className="ventas-stat-sub" style={{ fontSize:11, color:C.textMid }}>{sub}</div>}
   </div>
 )
 
@@ -323,116 +373,22 @@ const Row = ({ p, onVer, onEditar, onEliminar, menuAbierto, setMenu, menuPos, se
 }
 
 /* ─── Card mobile por venta — botones grandes ─── */
-const MobileCard = ({ p, onVer, onEditar, onEliminar, isSelected, onToggleSelect, hasSelection }) => {
-  const [expanded, setExpanded] = useState(false)
+const MobileCard = ({ p, onVer }) => {
   const estCfg  = ESTADOS[p.estado] || ESTADOS.pendiente
   const pagoCfg = getEstadoPago(p)
-  const puedeEditar = p.estado !== "cancelado"
 
   return (
-    <div style={{
-      borderBottom: `1px solid ${C.border}`,
-      background: C.bg,
-    }}>
-      {/* Fila principal — tap abre/cierra acciones */}
-      <div
-        onClick={() => { if(hasSelection) onToggleSelect(p.id); else setExpanded(v => !v); }}
-        style={{ padding: "14px 16px", cursor: "pointer", userSelect: "none" }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, gap: 10 }}>
-          {(hasSelection || isSelected) && (
-            <div style={{ display:'flex', alignItems:'center', paddingTop: 2 }} onClick={e => { e.stopPropagation(); onToggleSelect(p.id); }}>
-              <input type="checkbox" checked={isSelected} onChange={()=>{}} style={{ width:18, height:18 }} />
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
-            {(!p.cliente_nombre || p.cliente_nombre === "Consumidor Final") ? (
-              <>
-                <div style={{ fontSize: 15, fontWeight: 800, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {fCodigo(p.codigo, p.id)}
-                </div>
-                <div style={{ fontSize: 12, color: C.textMid }}>
-                  Consumidor Final · {fFecha(p.fecha_pedido || p.created_at)}
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 15, fontWeight: 800, color: C.textBlack, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {p.cliente_nombre}
-                </div>
-                <div style={{ fontSize: 12, color: C.textMid }}>
-                  {fCodigo(p.codigo, p.id)} · {fFecha(p.fecha_pedido || p.created_at)}
-                </div>
-              </>
-            )}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: C.textBlack, lineHeight: 1, marginBottom: 4 }}>
-              {fMonto(p.total)}
-            </div>
-            <div style={{ display: "flex", gap: 5 }}>
-              <Badge {...estCfg} />
-              <Badge {...pagoCfg} />
-            </div>
-          </div>
-        </div>
-        {/* Indicador expand */}
-        <div style={{ textAlign: "center", fontSize: 10, color: C.textLight, marginTop: 2 }}>
-          {expanded ? "▲ cerrar" : "▼ acciones"}
-        </div>
-      </div>
-
-      {/* Panel de acciones — aparece al tap */}
-      {expanded && (
-        <div onClick={e => e.stopPropagation()} style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: 8, padding: "0 12px 14px",
-          borderTop: `1px solid ${C.border}`,
-          paddingTop: 12,
-        }}>
-          {/* Ver detalle — ocupa todo el ancho */}
-          <button
-            onClick={() => { setExpanded(false); onVer(p) }}
-            style={{
-              gridColumn: "1 / -1",
-              height: 48, borderRadius: 10,
-              background: C.primary, color: "#fff",
-              border: "none", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              fontSize: 14, fontWeight: 700, fontFamily: "'Inter',sans-serif",
-            }}
-          >
-            <Eye size={16}/> Ver detalle
-          </button>
-          {puedeEditar && (
-            <button
-              onClick={() => { setExpanded(false); onEditar(p) }}
-              style={{
-                height: 44, borderRadius: 10,
-                background: C.bg, color: C.textDark,
-                border: `1.5px solid ${C.border}`, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                fontSize: 13, fontWeight: 600, fontFamily: "'Inter',sans-serif",
-              }}
-            >
-              <Edit size={14}/> Editar
-            </button>
-          )}
-          <button
-            onClick={() => { setExpanded(false); onEliminar(p.id) }}
-            style={{
-              height: 44, borderRadius: 10,
-              background: "#FEF2F2", color: "#DC2626",
-              border: `1.5px solid #FECACA`, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-              fontSize: 13, fontWeight: 600, fontFamily: "'Inter',sans-serif",
-            }}
-          >
-            <Trash2 size={14}/> Eliminar
-          </button>
-        </div>
-      )}
-    </div>
+    <SaleCard
+      code={`VTA #${fCodigo(p.codigo, p.id)}`}
+      customer={p.cliente_nombre || "Consumidor Final"}
+      amount={fMonto(p.total)}
+      relativeDate={fRelativa(p.fecha_pedido || p.created_at)}
+      badges={[
+        { label: estCfg.label === "Preparando" ? "Prep." : estCfg.label, className: "bg-blue-100 text-blue-700" },
+        { label: pagoCfg.label.includes("Pagado") ? "Pago" : pagoCfg.label, className: "bg-emerald-100 text-emerald-700" },
+      ]}
+      onClick={() => onVer(p)}
+    />
   )
 }
 
@@ -533,18 +489,18 @@ export default function PedidosNimbus({
 
       {/* ── Mobile topbar ── */}
       <div className="pn-show-mobile" style={{
-        alignItems:"center", gap:0, padding:"0 12px",
-        height: 54,
+        position:"relative", alignItems:"center", gap:10, padding:"11px 16px",
+        minHeight: 58,
         background:C.bg, borderBottom:`1px solid ${C.border}`,
         boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       }}>
         <button onClick={onOpenMobileSidebar}
-          style={{ background:"none",border:"none",cursor:"pointer",padding:8,display:"flex",alignItems:"center",flexShrink:0 }}>
-          <MenuIcon size={22} color={C.textBlack}/>
+          style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
+          <MenuIcon size={20} color={C.textBlack}/>
         </button>
-        <span style={{ flex:1, textAlign:"center", fontWeight:700, fontSize:17, color:C.textBlack, fontFamily:"'Inter',sans-serif", letterSpacing:'-0.2px' }}>Ventas</span>
+        <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, fontFamily:"'Inter',sans-serif", pointerEvents:"none", whiteSpace:"nowrap" }}>Ventas</span>
         <button onClick={onNuevaVenta} style={{
-          display:"flex", alignItems:"center", gap:5, flexShrink:0,
+          marginLeft:"auto", display:"flex", alignItems:"center", gap:5, flexShrink:0,
           height:36, padding:"0 14px", borderRadius:8, fontSize:13, fontWeight:700,
           background:C.primary, color:"#fff", border:"none", cursor:"pointer",
           fontFamily:"'Inter',sans-serif",
@@ -570,7 +526,7 @@ export default function PedidosNimbus({
       <div style={{ maxWidth:1100, margin:"0 auto", width:"100%" }}>
 
       {/* ── Tarjetas resumen clicables ── */}
-      <div style={{ padding:"14px 24px 0", display:"flex", gap:10, flexWrap:"wrap" }}>
+      <div className="ventas-stats-grid" style={{ padding:"14px 24px 0", display:"flex", gap:10, flexWrap:"wrap" }}>
         <StatCard
           label="Total ventas" value={resumen.total} color={C.textBlack}
           active={false}
@@ -603,7 +559,7 @@ export default function PedidosNimbus({
       </div>
 
       {/* ── Filtros ── */}
-      <div style={{
+      <div className="pn-hide-mobile" style={{
         background:C.pageBg, padding:"12px 24px 0",
         display:"flex", alignItems:"center", gap:8, flexWrap:"wrap",
       }}>
@@ -675,9 +631,54 @@ export default function PedidosNimbus({
           )}
         </div>
       </div>
+      <div className="ventas-mobile-controls" style={{ gap:8, background:C.pageBg, padding:"8px 12px" }}>
+        <div style={{ position:"relative", width:"100%" }}>
+          <div style={{ position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",pointerEvents:"none" }}>
+            <SearchIcon size={15} color={C.textLight}/>
+          </div>
+          <input
+            type="text"
+            value={busqueda}
+            onChange={e=>setBusqueda(e.target.value)}
+            placeholder="Buscar venta..."
+            style={{ width:"100%", height:44, padding:"0 12px 0 34px", fontSize:16, border:`1px solid ${C.border}`, borderRadius:10, background:C.bg, color:C.textDark, boxSizing:"border-box" }}
+          />
+        </div>
+        <select
+          value={filtroEstado === "pendiente" ? "pendientes" : filtroEstado === "preparando" ? "en-proceso" : soloDeuda ? "pagado" : "todas"}
+          onChange={(event) => {
+            const value = event.target.value
+            setFiltroEstado(null)
+            setSoloDeuda(false)
+            if (value === "pendientes") setFiltroEstado("pendiente")
+            if (value === "en-proceso") setFiltroEstado("preparando")
+            if (value === "pagado") setSoloDeuda(true)
+          }}
+          style={{
+            width:"100%",
+            height:40,
+            padding:"0 12px",
+            border:`1px solid ${C.border}`,
+            borderRadius:10,
+            background:C.bg,
+            color:C.textDark,
+            fontSize:14,
+            fontWeight:600,
+            fontFamily:"'Inter',sans-serif",
+            outline:"none",
+            boxSizing:"border-box",
+          }}
+        >
+          <option value="todas">Todas las ventas</option>
+          <option value="hoy">Hoy</option>
+          <option value="pendientes">Pendientes</option>
+          <option value="pagado">Pagadas</option>
+          <option value="en-proceso">En proceso</option>
+        </select>
+      </div>
 
       {/* ── Tabla ── */}
-      <div style={{ padding:"10px 24px 24px" }}>
+      <div className="ventas-content-shell" style={{ padding:"10px 24px 24px" }}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
           <p style={{ margin:0, fontSize:13, color:C.textMid }}>
             {filtrados.length} venta{filtrados.length!==1?"s":""}
@@ -718,13 +719,10 @@ export default function PedidosNimbus({
           ) : (
             <>
               {/* Cards mobile */}
-              <div className="pn-show-mobile" style={{ flexDirection:"column" }}>
+              <div className="ventas-mobile-list" style={{ flexDirection:"column", position:"static", height:"auto", transform:"none" }}>
                 {pageItems.map(p=>(
                   <MobileCard key={p.id} p={p}
-                    onVer={handleVer} onEditar={handleEditar} onEliminar={handleEliminar}
-                    isSelected={selectedIds.includes(p.id)}
-                    onToggleSelect={(id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])}
-                    hasSelection={selectedIds.length > 0}
+                    onVer={handleVer}
                   />
                 ))}
               </div>

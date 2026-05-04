@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react"
+﻿import React, { useEffect, useRef } from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { AlertTriangle } from "lucide-react"
 

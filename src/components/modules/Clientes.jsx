@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useEffect } from 'react'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -17,9 +17,9 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from "@nimbus-ds/icons"
 import { Button } from "@/components/ui/button"
 
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PALETA NIMBUS
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const C = {
   pageBg:     "#f8f9fb",
   bg:         "#ffffff",
@@ -45,10 +45,34 @@ const RESPONSIVE = `
   @media (max-width: 767px) {
     .pn-show-mobile { display: flex !important; }
     .pn-hide-mobile { display: none !important; }
+    .clientes-mobile-filters {
+      display: block !important;
+      padding: 14px 22px 0 !important;
+      background: #f8f9fb !important;
+    }
+    .clientes-search-wrap {
+      width: 100% !important;
+      flex: 1 1 auto !important;
+    }
+    .clientes-search-input {
+      box-sizing: border-box !important;
+      height: 54px !important;
+      border-radius: 10px !important;
+      background: #ffffff !important;
+      font-size: 16px !important;
+      padding-left: 42px !important;
+      box-shadow: 0 1px 1px rgba(15, 23, 42, 0.02);
+    }
+    .clientes-search-input::placeholder {
+      color: #9ca3af;
+    }
+    .clientes-mobile-content {
+      padding: 16px 22px !important;
+    }
   }
 `
 
-/* ─── Botones base ─── */
+/* â”€â”€â”€ Botones base â”€â”€â”€ */
 const Btn = ({ children, onClick, primary, disabled, style={} }) => {
   if (primary) return (
     <button
@@ -100,7 +124,7 @@ const IcoBtn = ({ icon: Icon, onClick, title, color = C.textDark, danger }) => {
   )
 }
 
-/* ─── Badge Estado ─── */
+/* â”€â”€â”€ Badge Estado â”€â”€â”€ */
 const Pill = ({ color, bg, border, children }) => (
   <span style={{
     display: "inline-flex", alignItems: "center", gap: 4,
@@ -113,7 +137,7 @@ const Pill = ({ color, bg, border, children }) => (
   </span>
 )
 
-/* ─── Fila Cliente ─── */
+/* â”€â”€â”€ Fila Cliente â”€â”€â”€ */
 const ClienteRow = ({ cliente, isSelected, onToggle, openModal, handleEliminar, handleCopy, clienteCopiado }) => {
   const [hov, setHov] = useState(false)
   const debe = parseFloat(cliente.deuda) || 0
@@ -144,26 +168,26 @@ const ClienteRow = ({ cliente, isSelected, onToggle, openModal, handleEliminar, 
 
       {/* CUIT */}
       <td style={{ padding: "12px 16px", fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
-        {cliente.cuit || "—"}
+        {cliente.cuit || "â€”"}
       </td>
       
-      {/* Teléfono */}
+      {/* TelÃ©fono */}
       <td style={{ padding: "12px 16px" }}>
         {cliente.telefono ? (
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textDark, fontFamily: "'DM Mono', monospace" }}>
             {cliente.telefono}
             <button onClick={() => handleCopy(cliente.telefono, cliente.id)} style={{
               background: "transparent", border: "none", cursor: "pointer", display: "flex", padding: 2, color: clienteCopiado === cliente.id ? C.successTxt : C.textMid
-            }} title="Copiar Teléfono">
+            }} title="Copiar TelÃ©fono">
               {clienteCopiado === cliente.id ? <Check size={14} /> : <Copy size={14} />}
             </button>
           </div>
         ) : (
-          <span style={{ fontSize: 13, color: C.textMid }}>—</span>
+          <span style={{ fontSize: 13, color: C.textMid }}>â€”</span>
         )}
       </td>
 
-      {/* Condición IVA */}
+      {/* CondiciÃ³n IVA */}
       <td style={{ padding: "12px 16px" }}>
         <Pill color={C.textDark} bg="#f3f4f6" border={C.border}>
           {cliente.condicionIVA || "Consumidor Final"}
@@ -178,7 +202,7 @@ const ClienteRow = ({ cliente, isSelected, onToggle, openModal, handleEliminar, 
           </Pill>
         ) : (
           <Pill color={C.successTxt} bg={C.successSurf} border={C.successBord}>
-            <CheckCircle size={12} /> Al día
+            <CheckCircle size={12} /> Al dÃ­a
           </Pill>
         )}
       </td>
@@ -195,9 +219,9 @@ const ClienteRow = ({ cliente, isSelected, onToggle, openModal, handleEliminar, 
 }
 
 
-/* ════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    COMPONENTE PRINCIPAL
-════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 export default function Clientes({
   clientes = [],
   searchTerm = "",
@@ -213,12 +237,12 @@ export default function Clientes({
 
   const clientesSeguros = Array.isArray(clientes) ? clientes : []
 
-  /* ── Métricas ── */
+  /* â”€â”€ MÃ©tricas â”€â”€ */
   const activos = clientesSeguros.filter(c => c.estado === 'activo' || !c.estado).length
   const conDeuda = clientesSeguros.filter(c => (parseFloat(c.deuda) || 0) > 0).length
   const totalDeuda = clientesSeguros.reduce((s, c) => s + (parseFloat(c.deuda) || 0), 0)
 
-  /* ── Filtrado ── */
+  /* â”€â”€ Filtrado â”€â”€ */
   const filtrados = clientesSeguros
     .filter(c => {
       const q = (searchTerm || "").toLowerCase()
@@ -229,7 +253,7 @@ export default function Clientes({
     })
     .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
 
-  /* ── Paginación ── */
+  /* â”€â”€ PaginaciÃ³n â”€â”€ */
   const indiceInicio = (paginaActual - 1) * itemsPorPagina
   const indiceFin = indiceInicio + itemsPorPagina
   const paginados = filtrados.slice(indiceInicio, indiceFin)
@@ -237,7 +261,7 @@ export default function Clientes({
 
   useEffect(() => { setPaginaActual(1) }, [searchTerm, itemsPorPagina])
 
-  /* ── Atajo Ctrl → nuevo ── */
+  /* â”€â”€ Atajo Ctrl â†’ nuevo â”€â”€ */
   useEffect(() => {
     const h = (e) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return
@@ -250,7 +274,7 @@ export default function Clientes({
     return () => window.removeEventListener('keydown', h)
   }, [openModal])
 
-  /* ── Acciones ── */
+  /* â”€â”€ Acciones â”€â”€ */
   const handleCopy = async (texto, clienteId) => {
     try {
       if (!texto) return
@@ -265,8 +289,8 @@ export default function Clientes({
   const [confirmData, setConfirmData] = useState(null)
   const handleEliminar = (id) => {
     setConfirmData({
-      title: "¿Eliminar cliente?",
-      description: "Esta acción no se puede deshacer.",
+      title: "Â¿Eliminar cliente?",
+      description: "Esta acciÃ³n no se puede deshacer.",
       onConfirm: () => { setConfirmData(null); eliminarCliente?.(id) },
     })
   }
@@ -275,26 +299,25 @@ export default function Clientes({
     <div style={{ minHeight: "100vh", background: C.pageBg, fontFamily: "'Inter', sans-serif" }}>
       <style>{RESPONSIVE}</style>
 
-      {/* ── Mobile topbar ── */}
+      {/* â”€â”€ Mobile topbar â”€â”€ */}
       <div className="pn-show-mobile" style={{
-        alignItems: "center", gap: 10, padding: "11px 16px",
-        background: C.bg, borderBottom: `1px solid ${C.border}`
+        position: "relative", alignItems: "center", gap: 10, padding: "11px 16px", minHeight: 58, background: C.bg, borderBottom: `1px solid ${C.border}`
       }}>
-        <button onClick={onOpenMobileSidebar} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+        <button onClick={onOpenMobileSidebar} style={{ width:36, height:36, borderRadius:8, background:"transparent", border:`1px solid ${C.border}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", WebkitTapHighlightColor:"transparent", flexShrink:0 }}>
           <MenuIcon size={20} color={C.textBlack} />
         </button>
-        <span style={{ fontWeight: 700, fontSize: 17, color: C.textBlack }}>Clientes</span>
+        <span style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", fontWeight:700, fontSize:17, color:C.textBlack, pointerEvents:"none", whiteSpace:"nowrap" }}>Clientes</span>
         <button onClick={() => openModal && openModal("nuevo-cliente")} style={{
           marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
           height: 32, padding: "0 18px", borderRadius: 6, fontSize: 13, fontWeight: 500,
           background: C.primary, color: "#fff", border: "none", cursor: "pointer",
         }}>
           <PlusIcon size={13} color="#fff" /> Nuevo
-          <span style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
+          <span className="pn-hide-mobile" style={{ marginLeft: 4, padding: "2px 5px", background: "rgba(0,0,0,0.15)", borderRadius: 4, fontSize: 10, fontFamily: "'DM Mono', monospace", fontWeight: 500 }}>Ctrl</span>
         </button>
       </div>
 
-      {/* ── Desktop header ── */}
+      {/* â”€â”€ Desktop header â”€â”€ */}
       <div className="pn-hide-mobile" style={{ background: C.pageBg }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px 12px", gap: 12, boxSizing: "border-box" }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.textBlack, letterSpacing: "-0.3px" }}>
@@ -304,8 +327,8 @@ export default function Clientes({
             {selectedIds.length > 0 && (
               <Btn 
                 onClick={() => setConfirmData({
-                  title: `¿Eliminar ${selectedIds.length} clientes?`,
-                  description: "Se eliminarán permanentemente. Esta acción no se puede deshacer.",
+                  title: `Â¿Eliminar ${selectedIds.length} clientes?`,
+                  description: "Se eliminarÃ¡n permanentemente. Esta acciÃ³n no se puede deshacer.",
                   onConfirm: () => { 
                     setConfirmData(null); 
                     Promise.all(selectedIds.map(id => eliminarCliente?.(id))).then(() => setSelectedIds([])) 
@@ -324,22 +347,22 @@ export default function Clientes({
         </div>
       </div>
 
-      {/* ── Contenido centrado ── */}
+      {/* â”€â”€ Contenido centrado â”€â”€ */}
       <div style={{ maxWidth: 1100, margin: "0 auto", width: "100%" }}>
 
 
-        {/* ── Filtros ── */}
-        <div style={{
+        {/* â”€â”€ Filtros â”€â”€ */}
+        <div className="clientes-mobile-filters" style={{
           background: C.pageBg, padding: "12px 24px 0",
           display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
         }}>
           {/* Buscador */}
-          <div style={{ flex: "1 1 260px", position: "relative" }}>
+          <div className="clientes-search-wrap" style={{ flex: "1 1 260px", position: "relative" }}>
             <div style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
               <SearchIcon size={15} color={C.textLight} />
             </div>
-            <input type="text" value={searchTerm} onChange={e => setSearchTerm?.(e.target.value)}
-              placeholder="Buscar por nombre, CUIT o teléfono..."
+            <input className="clientes-search-input" type="text" value={searchTerm} onChange={e => setSearchTerm?.(e.target.value)}
+              placeholder="Buscar cliente..."
               style={{
                 width: "100%", height: 34, padding: "0 12px 0 34px", fontSize: 13,
                 border: `1px solid ${C.border}`, borderRadius: 8, outline: "none",
@@ -351,8 +374,8 @@ export default function Clientes({
           </div>
         </div>
 
-        {/* ── Contenido principal ── */}
-        <div style={{ padding: "16px 24px" }}>
+        {/* â”€â”€ Contenido principal â”€â”€ */}
+        <div className="clientes-mobile-content" style={{ padding: "16px 24px" }}>
           <p style={{ margin: "0 0 10px", fontSize: 12, color: C.textMid }}>
             {filtrados.length} cliente{filtrados.length !== 1 ? "s" : ""}
           </p>
@@ -403,7 +426,7 @@ export default function Clientes({
                         </div>
                         NOMBRE Y CONTACTO
                       </th>
-                      {["CUIT / CUIL", "TELÉFONO", "CONDICIÓN IVA", "ESTADO", "ACCIONES"].map(h => (
+                      {["CUIT / CUIL", "TELÃ‰FONO", "CONDICIÃ“N IVA", "ESTADO", "ACCIONES"].map(h => (
                         <th key={h} style={{
                           padding: "10px 16px", textAlign: "left",
                           fontSize: 10, fontWeight: 600, color: C.textMid,
@@ -428,11 +451,11 @@ export default function Clientes({
                   </tbody>
                 </table>
 
-                {/* Paginación */}
+                {/* PaginaciÃ³n */}
                 {totalPaginas > 1 && (
                   <div className="flex items-center justify-between gap-4" style={{ padding: "10px 16px", borderTop: `1px solid ${C.border}` }}>
                     <div className="flex items-center gap-2">
-                      <span style={{ fontSize: 12, color: C.textMid }}>Filas por página:</span>
+                      <span style={{ fontSize: 12, color: C.textMid }}>Filas por pÃ¡gina:</span>
                       <Select value={String(itemsPorPagina)} onValueChange={v => setItemsPorPagina(Number(v))}>
                         <SelectTrigger className="w-20 h-8" style={{ backgroundColor: C.bg, border: `1px solid ${C.border}` }}>
                           <SelectValue />
@@ -448,7 +471,7 @@ export default function Clientes({
                       </Select>
                     </div>
                     <div style={{ fontSize: 12, color: C.textMid }}>
-                      {indiceInicio + 1}–{Math.min(indiceFin, filtrados.length)} de {filtrados.length}
+                      {indiceInicio + 1}â€“{Math.min(indiceFin, filtrados.length)} de {filtrados.length}
                     </div>
                     <div className="flex items-center gap-1">
                       <button

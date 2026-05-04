@@ -333,11 +333,11 @@ const ControlCaja = ({
       <style>{RESPONSIVE}</style>
 
       {/* ── Mobile topbar ── */}
-      <div className="cc-show-mobile" style={{ alignItems: 'center', gap: 10, padding: '11px 16px', background: C.bg, borderBottom: `1px solid ${C.border}` }}>
-        <button onClick={onOpenMobileSidebar} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}>
+      <div className="cc-show-mobile" style={{ position: 'relative', alignItems: 'center', gap: 10, padding: '11px 16px', minHeight: 58, background: C.bg, borderBottom: `1px solid ${C.border}` }}>
+        <button onClick={onOpenMobileSidebar} style={{ width: 36, height: 36, borderRadius: 8, background: 'transparent', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', flexShrink: 0 }}>
           <MenuIcon size={20} color={C.textBlack} />
         </button>
-        <span style={{ fontWeight: 700, fontSize: 17, color: C.textBlack }}>Caja</span>
+        <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontWeight: 700, fontSize: 17, color: C.textBlack, pointerEvents: 'none', whiteSpace: 'nowrap' }}>Caja</span>
         {esHoy && (
           <button onClick={() => openModal?.('egreso-caja')} style={{
             marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5,
