@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ProductosNimbus.jsx â€” estÃ©tica TiendaNube
  */
 import { useState, useEffect, useRef } from "react"
@@ -255,12 +255,12 @@ const Row = ({ prod, onEdit, onDel, onSaveField, onAgregarAlCarrito, menuAbierto
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <div style={{
-            width:42, height:38, borderRadius:6, flexShrink:0,
-            background:"#f9fafb", border:`1px solid ${C.border}`,
+            minWidth: 34, height: 26, borderRadius: 6, flexShrink: 0,
+            background: "#f8fafc", border: `1px solid #e2e8f0`,
             display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden",
-            fontSize: 11, fontWeight: 700, color: C.textMid, textAlign: "center", padding: 2
+            fontSize: 12, fontWeight: 700, color: "#64748b", textAlign: "center", padding: "0 8px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)", letterSpacing: "0.5px"
           }}>
-            {prod.codigo ? prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '') : 'â€”'}
+            {prod.codigo ? `#${prod.codigo.replace(/^[Pp][Rr][Oo][Dd][- ]+/, '').replace(/^0+(?=\d)/, '')}` : '—'}
           </div>
           <div style={{ minWidth:0 }}>
             <div
@@ -472,7 +472,7 @@ export default function ProductosNimbus({
 
   /* â”€â”€ CSV EXPORT â”€â”€ */
   const exportarCSV = () => {
-    const headers = ['CÃ³digo','Nombre','CategorÃ­a','Precio','Costo','Stock','Stock MÃ­nimo','DescripciÃ³n','Controla Stock']
+    const headers = ['Código','Nombre','CATEGORÍA','Precio','Costo','Stock','Stock Mínimo','Descripción','Controla Stock']
     const rows = productos.map(p=>[
       p.codigo||'', (p.nombre||'').replace(/;/g,','), (p.categoria||'').replace(/;/g,','),
       p.precio||0, p.costo!=null?p.costo:'', p.stock||0,
@@ -510,7 +510,7 @@ export default function ProductosNimbus({
     const isTN=headers.some(h=>h.toLowerCase().includes('identificador'))
     const prods=[]
     if(isTN){
-      const iN=col('Nombre'),iSKU=col('SKU'),iCat=colC('CategorÃ­a'),iP=col('Precio'),iS=col('Stock'),iD=colC('DescripciÃ³n'),iCosto=col('Costo'),iPV=colC('Valor de propiedad 1')
+      const iN=col('Nombre'),iSKU=col('SKU'),iCat=colC('CATEGORÍA'),iP=col('Precio'),iS=col('Stock'),iD=colC('Descripción'),iCosto=col('Costo'),iPV=colC('Valor de propiedad 1')
       let last=''
       for(let i=1;i<lines.length;i++){
         const cols=parseLine(lines[i])
@@ -524,7 +524,7 @@ export default function ProductosNimbus({
         prods.push({nombre:nf,codigo:sku||null,categoria:iCat>=0?(cols[iCat]||'').trim():'',precio:cleanN(pStr),stock:parseInt(sStr)||0,costo:cStr?(cleanN(cStr)||null):null,controlastock:sStr!=='',descripcion:iD>=0?(cols[iD]||'').trim():''})
       }
     } else {
-      const iCod=colC('CÃ³digo'),iN=col('Nombre'),iCat=colC('CategorÃ­a'),iP=col('Precio'),iCosto=col('Costo'),iS=col('Stock'),iSM=colC('Stock MÃ­nimo'),iD=colC('DescripciÃ³n'),iCS=colC('Controla')
+      const iCod=colC('Código'),iN=col('Nombre'),iCat=colC('CATEGORÍA'),iP=col('Precio'),iCosto=col('Costo'),iS=col('Stock'),iSM=colC('Stock Mínimo'),iD=colC('Descripción'),iCS=colC('Controla')
       for(let i=1;i<lines.length;i++){
         const cols=parseLine(lines[i])
         const nom=iN>=0?(cols[iN]||'').trim():''; if(!nom) continue
@@ -652,7 +652,7 @@ export default function ProductosNimbus({
               </Btn>
             )}
             <Btn onClick={()=>openModal?.("categorias-producto")}>
-              <TagIcon size={13} color={C.textDark}/> CategorÃ­as
+              <TagIcon size={13} color={C.textDark}/> CATEGORÍAS
             </Btn>
 
             <div style={{ position:"relative" }}>
@@ -791,7 +791,7 @@ export default function ProductosNimbus({
             <SearchIcon size={14} color={C.textLight}/>
           </div>
           <input type="text" value={busqueda} onChange={e=>setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, SKU o categorÃ­a"
+            placeholder="Buscar por nombre, SKU o CATEGORÍAS"
             style={{
               width:"100%", height:32, padding:"0 10px 0 30px", fontSize:13,
               border:`1px solid ${C.border}`, borderRadius:6, outline:"none",
@@ -802,14 +802,14 @@ export default function ProductosNimbus({
             onBlur={e =>e.target.style.borderColor=C.border}
           />
         </div>
-        {/* Selector de CategorÃ­a */}
+        {/* Selector de CATEGORÍA */}
         <Select value={filtroCat} onValueChange={setFiltroCat}>
           <SelectTrigger className="pn-select-trigger w-full max-w-[200px] h-9 text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-            <SelectValue placeholder="CATEGORÃA" />
+            <SelectValue placeholder="CATEGORÍAS" />
           </SelectTrigger>
           <SelectContent style={{ backgroundColor: "#ffffff", border: "1px solid #d1d5db", zIndex: 10000, color: "#000", minWidth: 200 }}>
             <SelectGroup>
-              <SelectItem value="">CATEGORÃA</SelectItem>
+              <SelectItem value="">CATEGORÍAS</SelectItem>
               {cats.filter(c => c && c !== "todas").map(c => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
@@ -848,7 +848,7 @@ export default function ProductosNimbus({
         <div className="pn-products-mobile-selects" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
           <Select value={filtroCat || "todas"} onValueChange={v => setFiltroCat(v === "todas" ? "" : v)}>
             <SelectTrigger className="pn-select-trigger w-full h-[42px] text-xs focus:ring-0 focus:ring-offset-0 border-[#d1d5db] bg-white">
-              <SelectValue placeholder="Categoría" />
+              <SelectValue placeholder="CATEGORÍA" />
             </SelectTrigger>
             <SelectContent style={{ backgroundColor:"#ffffff", border:`1px solid ${C.border}`, zIndex:10000, color:"#000", minWidth:180 }}>
               <SelectGroup>
@@ -1038,3 +1038,4 @@ export default function ProductosNimbus({
     </div>
   )
 }
+
